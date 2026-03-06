@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Painel Inicial Consolidado</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f48c25",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col justify-between">
+<div class="flex-1 overflow-y-auto no-scrollbar pb-24">
+<div class="sticky top-0 z-10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-cover bg-center border-2 border-primary" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAH3E-oI5ad6cf5LB0jf7tO0kixqQ8XepqGymGbAic0PAOxK_HGXBD27kglJ33R6YFoPii4KqARxZtmq1WIeL_xrTUww7-c10iZ6R3adkOEfmG_IGvUDNVzA-Kft4-Nfdz0jC_2-U5vA4RwJjM7EMZt9HU7G7TTCUq_9ztp6gfXFKLS6qiRSyELip0gVAzxEgF-azzlPG4BivER16SyQORmqLPrs_Cg9qwhoPneHQud2RWp-e-OqYTtwV_FMATGXKkNOGni4_JrZPo');"></div>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400">Bem-vindo de volta</p>
+<h1 class="text-lg font-bold">Olá, João!</h1>
+</div>
+</div>
+<button class="p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-800"></span>
+</button>
+</div>
+<div class="flex gap-3">
+<div class="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary fill-1">military_tech</span>
+<div>
+<p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Nível</p>
+<p class="text-sm font-bold">5</p>
+</div>
+</div>
+</div>
+<div class="flex-[1.5] bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex justify-between items-center mb-1">
+<p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">XP Atual</p>
+<p class="text-[10px] font-bold text-primary">350/500</p>
+</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 70%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="px-6 pt-6 pb-2 space-y-6">
+<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Saldo Disponível</p>
+<h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">R$ 2.450,00</h2>
+</div>
+<button class="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-slate-400">visibility</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+<div>
+<div class="flex items-center gap-1.5 mb-1">
+<span class="material-symbols-outlined text-green-500 text-lg">arrow_downward</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">Receitas</span>
+</div>
+<p class="text-base font-bold text-slate-900 dark:text-slate-100">R$ 5.200,00</p>
+</div>
+<div>
+<div class="flex items-center gap-1.5 mb-1">
+<span class="material-symbols-outlined text-red-500 text-lg">arrow_upward</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">Despesas</span>
+</div>
+<p class="text-base font-bold text-slate-900 dark:text-slate-100">R$ 2.750,00</p>
+</div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-3">
+<h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Desafios do Dia</h3>
+<a class="text-xs font-bold text-primary hover:text-orange-600" href="#">Ver todos</a>
+</div>
+<div class="bg-gradient-to-br from-indigo-600 to-indigo-800 p-4 rounded-2xl shadow-lg text-white relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+<div class="flex items-start justify-between relative z-10">
+<div class="flex-1 pr-4">
+<div class="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/20 text-[10px] font-bold mb-2 backdrop-blur-sm">
+<span class="material-symbols-outlined text-xs fill-1 text-yellow-300">bolt</span>
+                                +50 XP
+                            </div>
+<h4 class="font-bold text-lg leading-tight mb-1">Registre um gasto</h4>
+<p class="text-indigo-100 text-xs">Mantenha seu controle em dia registrando uma despesa hoje.</p>
+</div>
+<div class="bg-white p-2 rounded-xl shadow-md">
+<span class="material-symbols-outlined text-indigo-600 text-2xl">receipt_long</span>
+</div>
+</div>
+<div class="mt-4 flex items-center gap-3">
+<div class="flex-1 h-1.5 bg-black/20 rounded-full overflow-hidden">
+<div class="h-full bg-yellow-400 w-1/2 rounded-full"></div>
+</div>
+<span class="text-xs font-bold">1/2</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="bg-orange-100 dark:bg-orange-900/30 w-8 h-8 rounded-lg flex items-center justify-center text-orange-600 dark:text-orange-400 mb-2">
+<span class="material-symbols-outlined text-lg">savings</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400">Economia</p>
+<p class="text-lg font-bold text-slate-900 dark:text-slate-100">R$ 450,00</p>
+<p class="text-[10px] text-green-500 font-bold mt-1 flex items-center">
+<span class="material-symbols-outlined text-sm mr-0.5">trending_up</span> +12%
+                    </p>
+</div>
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="bg-purple-100 dark:bg-purple-900/30 w-8 h-8 rounded-lg flex items-center justify-center text-purple-600 dark:text-purple-400 mb-2">
+<span class="material-symbols-outlined text-lg">pie_chart</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400">Orçamento</p>
+<p class="text-lg font-bold text-slate-900 dark:text-slate-100">65%</p>
+<p class="text-[10px] text-slate-400 font-medium mt-1">utilizado</p>
+</div>
+</div>
+<div>
+<h3 class="text-base font-bold text-slate-900 dark:text-slate-100 mb-3">Transações Recentes</h3>
+<div class="flex flex-col gap-3">
+<div class="flex items-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 mr-3">
+<span class="material-symbols-outlined text-xl">shopping_cart</span>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Supermercado</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Hoje, 14:30</p>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-red-500">- R$ 342,50</p>
+<div class="flex items-center justify-end gap-1 mt-0.5">
+<span class="bg-slate-100 dark:bg-slate-700 text-[9px] font-bold px-1.5 py-0.5 rounded text-slate-500">Alimentação</span>
+</div>
+</div>
+</div>
+<div class="flex items-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">
+<span class="material-symbols-outlined text-xl">directions_car</span>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Uber</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Ontem, 19:15</p>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-red-500">- R$ 24,90</p>
+<div class="flex items-center justify-end gap-1 mt-0.5">
+<span class="bg-slate-100 dark:bg-slate-700 text-[9px] font-bold px-1.5 py-0.5 rounded text-slate-500">Transporte</span>
+</div>
+</div>
+</div>
+<div class="flex items-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 mr-3">
+<span class="material-symbols-outlined text-xl">payments</span>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Freelance</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Ontem, 10:00</p>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-green-500">+ R$ 850,00</p>
+<div class="flex items-center justify-end gap-1 mt-0.5">
+<span class="bg-slate-100 dark:bg-slate-700 text-[9px] font-bold px-1.5 py-0.5 rounded text-slate-500">Renda Extra</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-3 pb-8 z-20">
+<div class="flex justify-between items-center relative">
+<a class="flex flex-col items-center gap-1 text-primary w-16" href="#">
+<span class="material-symbols-outlined fill-1">home</span>
+<span class="text-[10px] font-medium">Início</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors w-16" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="text-[10px] font-medium">Agenda</span>
+</a>
+<div class="absolute left-1/2 -translate-x-1/2 -top-10">
+<a class="flex bg-primary rounded-full p-4 shadow-lg shadow-orange-500/30 border-4 border-white dark:border-slate-900 text-white hover:scale-105 transition-transform" href="#">
+<span class="material-symbols-outlined text-3xl">add</span>
+</a>
+</div>
+<div class="w-12"></div>
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors w-16" href="#">
+<span class="material-symbols-outlined">flag</span>
+<span class="text-[10px] font-medium">Metas</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors w-16" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Perfil</span>
+</a>
+</div>
+</div>
+</body></html>

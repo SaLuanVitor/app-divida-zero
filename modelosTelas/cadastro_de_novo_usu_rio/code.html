@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dívida Zero - Cadastro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f48c25",
+                        "primary-dark": "#d97310", 
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2c2219",
+                        "text-light": "#181411",
+                        "text-dark": "#f0eadd",
+                        "subtle-light": "#8a7560",
+                        "subtle-dark": "#a69380",
+                        "border-light": "#e6e0db",
+                        "border-dark": "#4a3b2f",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+        /* Custom checkbox style to match theme */
+        .custom-checkbox:checked {
+            background-color: #f48c25;
+            border-color: #f48c25;
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col items-center justify-start overflow-x-hidden antialiased selection:bg-primary/30">
+<div class="relative w-full max-w-md mx-auto flex flex-col min-h-screen bg-background-light dark:bg-background-dark shadow-xl">
+<!-- Header / Top Bar -->
+<header class="sticky top-0 z-10 flex items-center justify-between p-4 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm">
+<button aria-label="Voltar" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text-light dark:text-text-dark">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-lg font-bold leading-tight flex-1 text-center pr-10">Cadastro</h2>
+</header>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col px-6 pb-8 pt-2">
+<h1 class="text-[28px] font-extrabold leading-tight tracking-tight text-text-light dark:text-text-dark mb-8">
+                Crie sua conta e <span class="text-primary">comece sua jornada</span>
+</h1>
+<!-- Gamification Teaser -->
+<div class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-5 mb-8 shadow-sm">
+<div class="flex items-center gap-4">
+<div class="relative flex-shrink-0 w-16 h-16 rounded-full bg-background-light dark:bg-background-dark flex items-center justify-center border-2 border-dashed border-subtle-light/40 dark:border-subtle-dark/40 group">
+<!-- Locked Icon (Grayscale) -->
+<span class="material-symbols-outlined text-4xl text-subtle-light dark:text-subtle-dark opacity-50">military_tech</span>
+<div class="absolute inset-0 bg-primary/10 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300"></div>
+</div>
+<div class="flex-1">
+<h3 class="text-base font-bold text-text-light dark:text-text-dark mb-1">Sua Primeira Conquista</h3>
+<p class="text-sm text-subtle-light dark:text-subtle-dark leading-snug">
+                            Complete o cadastro para desbloquear a medalha de <strong class="text-primary font-bold">Novato</strong>!
+                        </p>
+</div>
+</div>
+</div>
+<!-- Form -->
+<form action="#" class="flex flex-col gap-5" method="POST">
+<!-- Nome Completo -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-text-light dark:text-text-dark" for="nome">Nome Completo</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-subtle-light dark:text-subtle-dark">
+<span class="material-symbols-outlined text-[20px]">person</span>
+</span>
+<input class="block w-full pl-10 pr-3 py-3.5 rounded-lg border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark placeholder-subtle-light dark:placeholder-subtle-dark focus:ring-2 focus:ring-primary focus:border-transparent transition shadow-sm border" id="nome" name="nome" placeholder="Seu nome completo" required="" type="text"/>
+</div>
+</div>
+<!-- E-mail -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-text-light dark:text-text-dark" for="email">E-mail</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-subtle-light dark:text-subtle-dark">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+</span>
+<input class="block w-full pl-10 pr-3 py-3.5 rounded-lg border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark placeholder-subtle-light dark:placeholder-subtle-dark focus:ring-2 focus:ring-primary focus:border-transparent transition shadow-sm border" id="email" name="email" placeholder="seu@email.com" required="" type="email"/>
+</div>
+</div>
+<!-- Telefone -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-text-light dark:text-text-dark" for="telefone">Telefone</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-subtle-light dark:text-subtle-dark">
+<span class="material-symbols-outlined text-[20px]">smartphone</span>
+</span>
+<input class="block w-full pl-10 pr-3 py-3.5 rounded-lg border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark placeholder-subtle-light dark:placeholder-subtle-dark focus:ring-2 focus:ring-primary focus:border-transparent transition shadow-sm border" id="telefone" name="telefone" placeholder="(00) 00000-0000" required="" type="tel"/>
+</div>
+</div>
+<!-- Senha -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-text-light dark:text-text-dark" for="senha">Senha</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-subtle-light dark:text-subtle-dark">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+</span>
+<input class="block w-full pl-10 pr-10 py-3.5 rounded-lg border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark placeholder-subtle-light dark:placeholder-subtle-dark focus:ring-2 focus:ring-primary focus:border-transparent transition shadow-sm border" id="senha" name="senha" placeholder="Mínimo 8 caracteres" required="" type="password"/>
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-subtle-light dark:text-subtle-dark hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Terms and LGPD -->
+<div class="flex items-start gap-3 mt-2">
+<div class="flex items-center h-5">
+<input class="custom-checkbox w-5 h-5 rounded border-border-light dark:border-border-dark text-primary focus:ring-primary focus:ring-offset-background-light dark:focus:ring-offset-background-dark bg-surface-light dark:bg-surface-dark transition" id="terms" name="terms" required="" type="checkbox"/>
+</div>
+<label class="text-sm text-subtle-light dark:text-subtle-dark" for="terms">
+                        Eu li e aceito os <a class="text-primary font-semibold hover:underline" href="#">Termos de Uso</a> e concordo com a <a class="text-primary font-semibold hover:underline" href="#">Política de Privacidade</a> (LGPD).
+                    </label>
+</div>
+<!-- Submit Button -->
+<button class="mt-4 w-full bg-primary hover:bg-primary-dark text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-primary/30 active:scale-[0.98] active:shadow-sm transition-all flex items-center justify-center gap-2" type="submit">
+                    Criar Conta
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</form>
+<div class="mt-8 text-center pb-6">
+<p class="text-sm text-subtle-light dark:text-subtle-dark">
+                    Já tem uma conta? <a class="text-primary font-bold hover:underline" href="#">Faça login</a>
+</p>
+</div>
+</main>
+</div>
+</body></html>

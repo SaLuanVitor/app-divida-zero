@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dívida Zero - Novo Lançamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f48c25",
+                        "primary-dark": "#d67412",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2d241b",
+                        "text-light": "#181411",
+                        "text-dark": "#f8f7f5",
+                        "secondary-text-light": "#8a7560",
+                        "secondary-text-dark": "#b09b88",
+                        "border-light": "#e6e0db",
+                        "border-dark": "#3e3226",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "2xl": "2rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hide for cleaner mobile look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-display antialiased min-h-screen flex flex-col overflow-x-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-md border-b border-border-light dark:border-border-dark px-4 py-3 flex items-center justify-between">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text-light dark:text-text-dark">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight">Novo Lançamento</h1>
+<div class="w-10 h-10"></div> <!-- Spacer for visual balance -->
+</header>
+<main class="flex-1 w-full max-w-md mx-auto flex flex-col pb-24">
+<!-- Gamification Stats -->
+<div class="px-4 py-4 grid grid-cols-2 gap-3">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 border border-border-light dark:border-border-dark shadow-sm flex flex-col items-center justify-center text-center">
+<div class="text-primary font-extrabold text-2xl leading-none mb-1">Nível 5</div>
+<div class="text-secondary-text-light dark:text-secondary-text-dark text-xs font-medium uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">stars</span>
+                    Iniciante
+                </div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 border border-border-light dark:border-border-dark shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-gray-100 dark:bg-gray-700">
+<div class="h-full bg-primary w-3/4"></div>
+</div>
+<div class="text-text-light dark:text-text-dark font-extrabold text-2xl leading-none mb-1">1250 XP</div>
+<div class="text-secondary-text-light dark:text-secondary-text-dark text-xs font-medium uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+                    Próximo Nível
+                </div>
+</div>
+</div>
+<!-- Transaction Type Toggle -->
+<div class="px-4 mb-6">
+<div class="bg-border-light dark:bg-border-dark p-1 rounded-xl flex relative">
+<!-- Active Indicator Background (Logic would be handled by JS usually, simulating visually here) -->
+<div class="absolute left-1 top-1 bottom-1 w-[calc(50%-4px)] bg-surface-light dark:bg-surface-dark rounded-lg shadow-sm transition-all duration-300"></div>
+<button class="relative z-10 flex-1 py-2.5 text-sm font-bold text-primary text-center transition-colors">
+                    Receita
+                </button>
+<button class="relative z-10 flex-1 py-2.5 text-sm font-medium text-secondary-text-light dark:text-secondary-text-dark text-center hover:text-text-light dark:hover:text-text-dark transition-colors">
+                    Despesa
+                </button>
+</div>
+</div>
+<!-- Input Form -->
+<div class="px-4 flex flex-col gap-6">
+<!-- Amount Input -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-secondary-text-light dark:text-secondary-text-dark">Valor</label>
+<div class="relative group">
+<div class="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-bold text-xl">R$</div>
+<input class="w-full bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark rounded-2xl py-4 pl-12 pr-4 text-3xl font-bold text-text-light dark:text-text-dark focus:outline-none focus:border-primary focus:ring-0 placeholder:text-gray-300 dark:placeholder:text-gray-600 transition-colors" inputmode="decimal" placeholder="0,00" type="text"/>
+</div>
+</div>
+<!-- Categories -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-secondary-text-light dark:text-secondary-text-dark">Categoria</label>
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4">
+<!-- Category Item: Selected -->
+<button class="flex flex-col items-center gap-2 min-w-[72px]">
+<div class="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-md shadow-primary/20 ring-2 ring-offset-2 ring-primary ring-offset-background-light dark:ring-offset-background-dark">
+<span class="material-symbols-outlined filled">shopping_cart</span>
+</div>
+<span class="text-xs font-bold text-primary">Compras</span>
+</button>
+<!-- Category Item -->
+<button class="flex flex-col items-center gap-2 min-w-[72px] opacity-70 hover:opacity-100 transition-opacity">
+<div class="w-14 h-14 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-secondary-text-light dark:text-secondary-text-dark flex items-center justify-center">
+<span class="material-symbols-outlined">restaurant</span>
+</div>
+<span class="text-xs font-medium text-secondary-text-light dark:text-secondary-text-dark">Alim.</span>
+</button>
+<!-- Category Item -->
+<button class="flex flex-col items-center gap-2 min-w-[72px] opacity-70 hover:opacity-100 transition-opacity">
+<div class="w-14 h-14 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-secondary-text-light dark:text-secondary-text-dark flex items-center justify-center">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<span class="text-xs font-medium text-secondary-text-light dark:text-secondary-text-dark">Transp.</span>
+</button>
+<!-- Category Item -->
+<button class="flex flex-col items-center gap-2 min-w-[72px] opacity-70 hover:opacity-100 transition-opacity">
+<div class="w-14 h-14 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-secondary-text-light dark:text-secondary-text-dark flex items-center justify-center">
+<span class="material-symbols-outlined">home</span>
+</div>
+<span class="text-xs font-medium text-secondary-text-light dark:text-secondary-text-dark">Casa</span>
+</button>
+<!-- Category Item -->
+<button class="flex flex-col items-center gap-2 min-w-[72px] opacity-70 hover:opacity-100 transition-opacity">
+<div class="w-14 h-14 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-secondary-text-light dark:text-secondary-text-dark flex items-center justify-center">
+<span class="material-symbols-outlined">add</span>
+</div>
+<span class="text-xs font-medium text-secondary-text-light dark:text-secondary-text-dark">Outros</span>
+</button>
+</div>
+</div>
+<!-- Date & Status Row -->
+<div class="flex gap-4">
+<div class="flex-1 flex flex-col gap-2">
+<label class="text-sm font-semibold text-secondary-text-light dark:text-secondary-text-dark">Vencimento</label>
+<button class="w-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl px-4 py-3.5 flex items-center gap-2 text-text-light dark:text-text-dark hover:border-primary transition-colors text-left">
+<span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
+<span class="font-medium text-sm">Hoje</span>
+</button>
+</div>
+<div class="flex-1 flex flex-col gap-2">
+<label class="text-sm font-semibold text-secondary-text-light dark:text-secondary-text-dark">Status</label>
+<button class="w-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl px-4 py-3.5 flex items-center justify-between gap-2 text-text-light dark:text-text-dark hover:border-primary transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-green-500 text-[20px] filled">check_circle</span>
+<span class="font-medium text-sm">Paga</span>
+</div>
+<span class="material-symbols-outlined text-secondary-text-light text-[18px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Description (Optional) -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-secondary-text-light dark:text-secondary-text-dark">Descrição</label>
+<div class="relative">
+<input class="w-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl px-4 py-3.5 text-sm font-medium text-text-light dark:text-text-dark focus:outline-none focus:border-primary focus:ring-0 placeholder:text-gray-400 dark:placeholder:text-gray-600 transition-colors" placeholder="Ex: Supermercado Semanal" type="text"/>
+</div>
+</div>
+</div>
+<!-- Motivational Banner -->
+<div class="px-4 mt-8">
+<div class="bg-gradient-to-r from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined filled">emoji_events</span>
+</div>
+<div>
+<p class="text-sm font-bold text-text-light dark:text-text-dark">Ganhe +50 XP!</p>
+<p class="text-xs text-secondary-text-light dark:text-secondary-text-dark">Registre essa transação e suba de nível.</p>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="px-4 mt-6">
+<button class="w-full bg-primary hover:bg-primary-dark text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                Salvar Lançamento
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark px-6 py-3 flex justify-between items-center z-20 pb-safe">
+<a class="flex flex-col items-center gap-1 text-secondary-text-light dark:text-secondary-text-dark hover:text-primary dark:hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">home</span>
+<span class="text-[10px] font-medium">Início</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined filled scale-110">attach_money</span>
+<span class="text-[10px] font-bold">Lançar</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-secondary-text-light dark:text-secondary-text-dark hover:text-primary dark:hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">track_changes</span>
+<span class="text-[10px] font-medium">Metas</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-secondary-text-light dark:text-secondary-text-dark hover:text-primary dark:hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">person</span>
+<span class="text-[10px] font-medium">Perfil</span>
+</a>
+</nav>
+<div class="h-20 w-full"></div> <!-- Bottom nav spacer -->
+</body></html>
