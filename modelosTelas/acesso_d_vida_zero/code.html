@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Acesso Dívida Zero</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f48c25",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col items-center justify-center p-0 m-0">
+<div class="relative flex h-full min-h-screen w-full max-w-md flex-col bg-white dark:bg-slate-900 shadow-xl overflow-hidden mx-auto rounded-none sm:rounded-xl sm:h-auto sm:min-h-[800px] sm:my-8 border-x border-slate-100 dark:border-slate-800">
+<!-- Header / Nav -->
+<div class="flex items-center bg-white dark:bg-slate-900 p-4 pb-2 justify-between sticky top-0 z-10">
+<button class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">Dívida Zero</h2>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto">
+<!-- Hero Image -->
+<div class="@container">
+<div class="@[480px]:px-4 @[480px]:py-3 p-4">
+<div class="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden bg-primary/10 rounded-xl min-h-[220px] relative" data-alt="Modern finance concept with coins and charts" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDYEP9-e5V5H5k99VdyFiftCm8wPidyXfkZSIuvNamsT6vHyTj08-nCvVrw2Jb-Dh2a0o6tZQ6MGmKkFt-cLmyD-PXCEfczLvzOvyxd9LlZsfz6l8a0JjEwpFOvhiH_w6dSrlYSgp_y5PwDkAnnbKT6jLR0T-rvP1xuGBFhgycZIS-LcbH6tfbAM-IliqeLDlFSSlDd2bjc2zrSV00Y_iY2MtUlBGG17QLtT1nVSYM8NRJodvGaVUI3fWtxP5zy4umwX8Aiyk64lE8");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="relative p-6 text-white">
+<h3 class="font-bold text-2xl mb-1">Assuma o controle</h3>
+<p class="text-sm opacity-90">Gamifique suas finanças e zere suas dívidas.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Welcome Title -->
+<h2 class="text-slate-900 dark:text-white tracking-tight text-[28px] font-bold leading-tight px-6 text-center pb-2 pt-2">
+                Bem-vindo de volta!
+            </h2>
+<p class="text-slate-500 dark:text-slate-400 text-center px-6 pb-6 text-sm">
+                Digite suas credenciais para continuar sua jornada.
+            </p>
+<!-- Login Form -->
+<form class="flex flex-col px-6 gap-5">
+<!-- Email Field -->
+<label class="flex flex-col w-full">
+<p class="text-slate-900 dark:text-slate-200 text-base font-medium leading-normal pb-2">E-mail</p>
+<div class="relative">
+<input class="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-1 focus:ring-primary h-14 placeholder:text-slate-400 p-[15px] pl-11 text-base font-normal leading-normal transition-all" placeholder="exemplo@email.com" type="email" value=""/>
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">mail</span>
+</div>
+</label>
+<!-- Password Field -->
+<label class="flex flex-col w-full">
+<div class="flex justify-between items-baseline pb-2">
+<p class="text-slate-900 dark:text-slate-200 text-base font-medium leading-normal">Senha</p>
+</div>
+<div class="flex w-full items-stretch rounded-xl relative">
+<input class="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-1 focus:ring-primary h-14 placeholder:text-slate-400 p-[15px] pl-11 pr-12 text-base font-normal leading-normal transition-all" placeholder="Insira sua senha" type="password" value=""/>
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">lock</span>
+<button class="text-slate-400 hover:text-primary absolute right-0 top-0 h-full px-4 flex items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined">visibility_off</span>
+</button>
+</div>
+<div class="flex justify-end pt-2">
+<a class="text-sm font-medium text-primary hover:text-orange-600 transition-colors" href="#">
+                            Esqueci minha senha
+                        </a>
+</div>
+</label>
+<!-- Submit Button -->
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] w-full mt-2 hover:bg-orange-600 active:scale-[0.98] transition-all shadow-md shadow-orange-200 dark:shadow-none">
+<span class="truncate">Entrar</span>
+</button>
+</form>
+<div class="h-8"></div>
+</div>
+<!-- Footer -->
+<div class="p-6 pt-2 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+<div class="text-center mb-4">
+<p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Motivação do dia</p>
+<p class="text-sm text-slate-600 dark:text-slate-300 italic mt-1">"Pequenos passos todos os dias levam a grandes conquistas financeiras."</p>
+</div>
+<div class="flex items-center justify-center gap-2">
+<p class="text-slate-500 dark:text-slate-400 text-sm">Não tem uma conta?</p>
+<a class="text-primary font-bold text-sm hover:underline" href="#">Cadastre-se</a>
+</div>
+<!-- Decorative geometric element -->
+<div class="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-tr-full -z-10 pointer-events-none"></div>
+<div class="absolute bottom-0 right-0 w-16 h-16 bg-primary/10 rounded-tl-full -z-10 pointer-events-none"></div>
+</div>
+</div>
+</body></html>
