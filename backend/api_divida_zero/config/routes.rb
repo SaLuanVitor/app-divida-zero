@@ -9,6 +9,8 @@
       post "auth/forgot_password", to: "auth#forgot_password"
       post "auth/reset_password", to: "auth#reset_password"
       get "auth/me", to: "auth#me"
+      get "gamification/summary", to: "gamification#summary"
+      get "gamification/events", to: "gamification#events"
 
       resources :financial_records, only: [:index, :create, :destroy] do
         member do

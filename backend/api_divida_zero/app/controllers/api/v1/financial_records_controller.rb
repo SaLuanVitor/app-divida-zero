@@ -20,11 +20,19 @@
       def create
         payload = create_params
         generated = generate_records(payload)
+        xp_feedback = GamificationService.award!(
+          user: @current_user,
+          event_type: "record_created",
+          points: generated.size * 50,
+          source: generated.first,
+          metadata: { created_count: generated.size, mode: payload[:mode].presence || "launch" }
+        )
 
         render json: {
           message: "Registro criado com sucesso.",
           created_count: generated.size,
-          records: generated.map { |record| serialize_record(record) }
+          records: generated.map { |record| serialize_record(record) },
+          xp_feedback: xp_feedback
         }, status: :created
       rescue ArgumentError => error
         render json: { error: error.message }, status: :unprocessable_entity
@@ -32,13 +40,29 @@
 
       def pay
         record = @current_user.financial_records.find(params[:id])
+        if record.status != "pending"
+          return render json: {
+            message: "Este registro já estava concluído.",
+            record: serialize_record(record),
+            xp_feedback: nil
+          }, status: :ok
+        end
+
         new_status = record.flow_type == "income" ? "received" : "paid"
         message = record.flow_type == "income" ? "Registro marcado como recebido." : "Registro marcado como pago."
         record.update!(status: new_status, paid_at: Time.current)
+        xp_feedback = GamificationService.award!(
+          user: @current_user,
+          event_type: record.flow_type == "income" ? "income_received" : "expense_paid",
+          points: 20,
+          source: record,
+          metadata: { flow_type: record.flow_type, record_type: record.record_type }
+        )
 
         render json: {
           message: message,
-          record: serialize_record(record)
+          record: serialize_record(record),
+          xp_feedback: xp_feedback
         }, status: :ok
       end
 
@@ -46,13 +70,28 @@
         record = @current_user.financial_records.find(params[:id])
         scope = params[:scope].to_s
         if scope == "group" && record.group_code.present?
-          deleted_count = @current_user.financial_records.where(group_code: record.group_code).delete_all
-          return render json: { message: "Registros do grupo excluídos com sucesso.", deleted_count: deleted_count }, status: :ok
+          records_to_delete = @current_user.financial_records.where(group_code: record.group_code).to_a
+          deleted_count = records_to_delete.size
+          settled_count = records_to_delete.count { |item| item.status != "pending" }
+          @current_user.financial_records.where(group_code: record.group_code).delete_all
+
+          xp_feedback = revert_xp_for_deletion!(deleted_count: deleted_count, settled_count: settled_count, source: record)
+          return render json: {
+            message: "Registros do grupo excluídos com sucesso.",
+            deleted_count: deleted_count,
+            xp_feedback: xp_feedback
+          }, status: :ok
         end
 
+        settled_count = record.status == "pending" ? 0 : 1
         record.destroy!
+        xp_feedback = revert_xp_for_deletion!(deleted_count: 1, settled_count: settled_count, source: record)
 
-        render json: { message: "Registro excluído com sucesso.", deleted_count: 1 }, status: :ok
+        render json: {
+          message: "Registro excluído com sucesso.",
+          deleted_count: 1,
+          xp_feedback: xp_feedback
+        }, status: :ok
       end
 
       private
@@ -299,6 +338,22 @@
           notes: record.notes,
           group_code: record.group_code
         }
+      end
+
+      def revert_xp_for_deletion!(deleted_count:, settled_count:, source:)
+        points_to_revert = (deleted_count * 50) + (settled_count * 20)
+        return nil if points_to_revert <= 0
+
+        GamificationService.award!(
+          user: @current_user,
+          event_type: "record_deleted",
+          points: -points_to_revert,
+          source: source,
+          metadata: {
+            deleted_count: deleted_count,
+            settled_count: settled_count
+          }
+        )
       end
 
       def authenticate_access_token!
