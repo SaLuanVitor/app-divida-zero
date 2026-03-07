@@ -17,6 +17,7 @@ interface AuthContextData {
     resetPassword(email: string, token: string, newPassword: string): Promise<void>;
     signOut(): Promise<void>;
     refreshToken(): Promise<void>;
+    updateUser(user: User): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -113,6 +114,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await AsyncStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token);
     }
 
+    async function updateUser(nextUser: User) {
+        setUser(nextUser);
+        await AsyncStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    }
+
     return (
         <AuthContext.Provider
             value={{
@@ -126,6 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 resetPassword,
                 signOut,
                 refreshToken,
+                updateUser,
             }}
         >
             {children}

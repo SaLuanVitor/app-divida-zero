@@ -7,6 +7,12 @@ import Metas from '../screens/app/Metas';
 import Relatorios from '../screens/app/Relatorios';
 import Profile from '../screens/app/Profile';
 import Lancamentos from '../screens/app/Lancamentos';
+import XpHistory from '../screens/app/XpHistory';
+import PersonalData from '../screens/app/PersonalData';
+import AppSettings from '../screens/app/AppSettings';
+import NotificationSettings from '../screens/app/NotificationSettings';
+import SecuritySettings from '../screens/app/SecuritySettings';
+import HelpSupport from '../screens/app/HelpSupport';
 import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, Landmark } from 'lucide-react-native';
 import { useOverlay } from '../context/OverlayContext';
 
@@ -133,6 +139,48 @@ export const AppNavigator = () => {
             <Tab.Screen
                 name="Lançamentos"
                 component={Lancamentos}
+                options={{
+                    tabBarButton: () => null,
+                }}
+            />
+            <Tab.Screen
+                name="Histórico XP"
+                component={XpHistory}
+                options={{
+                    tabBarButton: () => null,
+                }}
+            />
+            <Tab.Screen
+                name="Dados Pessoais"
+                component={PersonalData}
+                options={{
+                    tabBarButton: () => null,
+                }}
+            />
+            <Tab.Screen
+                name="Configurações App"
+                component={AppSettings}
+                options={{
+                    tabBarButton: () => null,
+                }}
+            />
+            <Tab.Screen
+                name="Notificações"
+                component={NotificationSettings}
+                options={{
+                    tabBarButton: () => null,
+                }}
+            />
+            <Tab.Screen
+                name="Segurança"
+                component={SecuritySettings}
+                options={{
+                    tabBarButton: () => null,
+                }}
+            />
+            <Tab.Screen
+                name="Ajuda e Suporte"
+                component={HelpSupport}
                 options={{
                     tabBarButton: () => null,
                 }}

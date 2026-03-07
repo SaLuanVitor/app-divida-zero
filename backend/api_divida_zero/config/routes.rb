@@ -9,6 +9,8 @@
       post "auth/forgot_password", to: "auth#forgot_password"
       post "auth/reset_password", to: "auth#reset_password"
       get "auth/me", to: "auth#me"
+      patch "auth/profile", to: "auth#update_profile"
+      patch "auth/change_password", to: "auth#change_password"
       get "gamification/summary", to: "gamification#summary"
       get "gamification/events", to: "gamification#events"
 

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import {
     User as UserIcon,
@@ -13,6 +13,7 @@ import {
     Trophy,
     Crown,
 } from 'lucide-react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
@@ -20,11 +21,14 @@ import { useAuth } from '../../context/AuthContext';
 import { listFinancialRecords } from '../../services/financialRecords';
 import { FinancialRecordDto } from '../../types/financialRecord';
 import { buildGamificationSummary, formatAchievementProgress } from '../../utils/gamification';
-import { getGamificationSummary, listGamificationEvents } from '../../services/gamification';
-import { GamificationSummaryDto, GamificationEventDto } from '../../types/gamification';
+import { getGamificationSummary } from '../../services/gamification';
+import { GamificationSummaryDto } from '../../types/gamification';
 
 const Profile = () => {
     const { user, signOut } = useAuth();
+    const navigation = useNavigation<any>();
+    const route = useRoute<any>();
+
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [logoutLoading, setLogoutLoading] = useState(false);
     const [records, setRecords] = useState<FinancialRecordDto[]>([]);
@@ -38,14 +42,17 @@ const Profile = () => {
         xp_to_next_level: 500,
         level_progress_pct: 0,
     });
-    const [events, setEvents] = useState<GamificationEventDto[]>([]);
+    const [historySectionY, setHistorySectionY] = useState(0);
+    const [highlightHistoryCta, setHighlightHistoryCta] = useState(false);
+
+    const scrollRef = useRef<ScrollView>(null);
 
     const menuItems = [
-        { label: 'Dados pessoais', icon: UserIcon, color: '#3b82f6' },
-        { label: 'Configuracoes', icon: Settings, color: '#64748b' },
-        { label: 'Notificacoes', icon: Bell, color: '#f59e0b' },
-        { label: 'Seguranca', icon: Shield, color: '#10b981' },
-        { label: 'Ajuda e suporte', icon: HelpCircle, color: '#8b5cf6' },
+        { label: 'Dados pessoais', icon: UserIcon, color: '#3b82f6', route: 'Dados Pessoais' },
+        { label: 'Configurações do app', icon: Settings, color: '#64748b', route: 'Configurações App' },
+        { label: 'Notificações', icon: Bell, color: '#f59e0b', route: 'Notificações' },
+        { label: 'Segurança', icon: Shield, color: '#10b981', route: 'Segurança' },
+        { label: 'Ajuda e suporte', icon: HelpCircle, color: '#8b5cf6', route: 'Ajuda e Suporte' },
     ];
 
     const gamification = useMemo(() => buildGamificationSummary(records), [records]);
@@ -60,14 +67,12 @@ const Profile = () => {
         const loadGamification = async () => {
             setLoadingGamification(true);
             try {
-                const [recordsResult, summaryResult, eventsResult] = await Promise.all([
+                const [recordsResult, summaryResult] = await Promise.all([
                     listFinancialRecords(),
                     getGamificationSummary(),
-                    listGamificationEvents(),
                 ]);
                 setRecords(recordsResult.records);
                 setSummary(summaryResult.summary);
-                setEvents(eventsResult.events);
             } finally {
                 setLoadingGamification(false);
             }
@@ -76,10 +81,29 @@ const Profile = () => {
         loadGamification();
     }, []);
 
+    useEffect(() => {
+        const shouldFocusHistory = Boolean(route.params?.focusHistory);
+        if (!shouldFocusHistory || !scrollRef.current) return;
+
+        const timer = setTimeout(() => {
+            scrollRef.current?.scrollTo({ y: Math.max(historySectionY - 20, 0), animated: true });
+            setHighlightHistoryCta(true);
+            navigation.setParams({ focusHistory: false });
+        }, 120);
+
+        return () => clearTimeout(timer);
+    }, [route.params?.focusHistory, historySectionY, navigation]);
+
+    useEffect(() => {
+        if (!highlightHistoryCta) return;
+        const timer = setTimeout(() => setHighlightHistoryCta(false), 1800);
+        return () => clearTimeout(timer);
+    }, [highlightHistoryCta]);
+
     return (
         <>
             <Layout contentContainerClassName="p-0 bg-[#f8f7f5]">
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false}>
                     <View className="bg-white px-6 pt-8 pb-8 items-center border-b border-slate-100">
                         <View className="relative">
                             <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border-2 border-primary/20">
@@ -171,27 +195,18 @@ const Profile = () => {
                         </Card>
                     </View>
 
-                    <View className="px-6">
+                    <View className="px-6" onLayout={(event) => setHistorySectionY(event.nativeEvent.layout.y)}>
                         <Text className="text-slate-900 font-bold text-lg mb-3">Histórico de XP</Text>
-                        <Card className="mb-6" noPadding>
-                            {events.slice(0, 5).map((event, index) => (
-                                <View key={event.id} className={`p-4 ${index !== Math.min(events.length, 5) - 1 ? 'border-b border-slate-50' : ''}`}>
-                                    <View className="flex-row items-center justify-between">
-                                        <Text className="text-slate-700 text-sm font-semibold">{event.event_type.replaceAll('_', ' ')}</Text>
-                                        <Text className={`text-xs font-bold ${event.points >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                            {event.points >= 0 ? `+${event.points}` : event.points} XP
-                                        </Text>
-                                    </View>
-                                    <Text className="text-slate-400 text-xs mt-1">
-                                        {new Date(event.created_at).toLocaleString('pt-BR')}
-                                    </Text>
-                                </View>
-                            ))}
-                            {events.length === 0 ? (
-                                <View className="p-4">
-                                    <Text className="text-slate-500 text-sm">Sem eventos de XP por enquanto.</Text>
-                                </View>
-                            ) : null}
+                        <Card className="mb-6 p-4">
+                            <Text className="text-slate-600 text-sm mb-3">
+                                Acesse uma visão detalhada de todos os eventos de ganho e perda de XP.
+                            </Text>
+                            <Button
+                                title="Ver histórico completo"
+                                variant={highlightHistoryCta ? 'primary' : 'outline'}
+                                onPress={() => navigation.navigate('Histórico XP')}
+                                className="h-11"
+                            />
                         </Card>
                     </View>
 
@@ -203,6 +218,7 @@ const Profile = () => {
                                     key={item.label}
                                     className={`flex-row items-center justify-between p-4 bg-white ${i !== menuItems.length - 1 ? 'border-b border-slate-50' : ''}`}
                                     activeOpacity={0.7}
+                                    onPress={() => navigation.navigate(item.route)}
                                 >
                                     <View className="flex-row items-center">
                                         <item.icon size={20} color={item.color} />
