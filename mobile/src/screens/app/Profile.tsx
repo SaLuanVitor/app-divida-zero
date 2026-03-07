@@ -1,25 +1,44 @@
-﻿import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Pressable } from 'react-native';
+﻿import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import {
     User as UserIcon,
     Settings,
     Shield,
+    Target,
     Bell,
     HelpCircle,
     LogOut,
     ChevronRight,
     Camera,
     Trophy,
+    Crown,
 } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
+import { listFinancialRecords } from '../../services/financialRecords';
+import { FinancialRecordDto } from '../../types/financialRecord';
+import { buildGamificationSummary, formatAchievementProgress } from '../../utils/gamification';
+import { getGamificationSummary, listGamificationEvents } from '../../services/gamification';
+import { GamificationSummaryDto, GamificationEventDto } from '../../types/gamification';
 
 const Profile = () => {
     const { user, signOut } = useAuth();
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [logoutLoading, setLogoutLoading] = useState(false);
+    const [records, setRecords] = useState<FinancialRecordDto[]>([]);
+    const [loadingGamification, setLoadingGamification] = useState(false);
+    const [summary, setSummary] = useState<GamificationSummaryDto>({
+        total_xp: 0,
+        level: 1,
+        level_title: 'Iniciante',
+        level_icon: 'sprout',
+        xp_in_level: 0,
+        xp_to_next_level: 500,
+        level_progress_pct: 0,
+    });
+    const [events, setEvents] = useState<GamificationEventDto[]>([]);
 
     const menuItems = [
         { label: 'Dados pessoais', icon: UserIcon, color: '#3b82f6' },
@@ -28,6 +47,34 @@ const Profile = () => {
         { label: 'Seguranca', icon: Shield, color: '#10b981' },
         { label: 'Ajuda e suporte', icon: HelpCircle, color: '#8b5cf6' },
     ];
+
+    const gamification = useMemo(() => buildGamificationSummary(records), [records]);
+    const badgeIconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+        sprout: Trophy,
+        target: Target,
+        shield: Shield,
+        crown: Crown,
+    };
+
+    useEffect(() => {
+        const loadGamification = async () => {
+            setLoadingGamification(true);
+            try {
+                const [recordsResult, summaryResult, eventsResult] = await Promise.all([
+                    listFinancialRecords(),
+                    getGamificationSummary(),
+                    listGamificationEvents(),
+                ]);
+                setRecords(recordsResult.records);
+                setSummary(summaryResult.summary);
+                setEvents(eventsResult.events);
+            } finally {
+                setLoadingGamification(false);
+            }
+        };
+
+        loadGamification();
+    }, []);
 
     return (
         <>
@@ -62,19 +109,93 @@ const Profile = () => {
                                         <Trophy size={18} color="#f48c25" />
                                     </View>
                                     <View className="ml-3">
-                                        <Text className="text-slate-900 font-bold">Nivel 5</Text>
-                                        <Text className="text-slate-500 text-xs">350/500 XP para o nivel 6</Text>
+                                        <Text className="text-slate-900 font-bold">Nível {summary.level} • {summary.level_title}</Text>
+                                        <Text className="text-slate-500 text-xs">
+                                            {summary.xp_in_level}/{summary.xp_in_level + summary.xp_to_next_level} XP para o nível {summary.level + 1}
+                                        </Text>
                                     </View>
                                 </View>
-                                <ChevronRight size={20} color="#94a3b8" />
+                                {loadingGamification ? <ActivityIndicator size="small" color="#f48c25" /> : <ChevronRight size={20} color="#94a3b8" />}
                             </View>
                             <View className="h-2 bg-slate-200 rounded-full overflow-hidden mt-3">
-                                <View className="h-full w-[70%] bg-primary rounded-full" />
+                                <View className="h-full bg-primary rounded-full" style={{ width: `${summary.level_progress_pct}%` }} />
                             </View>
                         </Card>
                     </View>
 
-                    <View className="px-6 py-6">
+                    <View className="px-6 pt-6">
+                        <Text className="text-slate-900 font-bold text-lg mb-3">Conquistas</Text>
+                        <Card className="mb-6" noPadding>
+                            <View className="p-4 border-b border-slate-100">
+                                <Text className="text-slate-700 text-sm font-semibold">
+                                    {gamification.unlockedCount}/{gamification.achievements.length} desbloqueadas • Total XP {summary.total_xp}
+                                </Text>
+                            </View>
+                            {gamification.achievements.map((achievement, index) => (
+                                <View key={achievement.id} className={`p-4 ${index !== gamification.achievements.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                                    <View className="flex-row items-center justify-between mb-1">
+                                        <Text className={`font-bold ${achievement.unlocked ? 'text-slate-900' : 'text-slate-500'}`}>{achievement.title}</Text>
+                                        <Text className={`text-xs font-bold ${achievement.unlocked ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                            {achievement.unlocked ? `+${achievement.rewardXp} XP` : formatAchievementProgress(achievement.progress, achievement.target)}
+                                        </Text>
+                                    </View>
+                                    <Text className="text-slate-500 text-xs mb-2">{achievement.description}</Text>
+                                    <View className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <View
+                                            className={`h-full rounded-full ${achievement.unlocked ? 'bg-emerald-500' : 'bg-primary'}`}
+                                            style={{ width: `${Math.round((Math.min(achievement.progress, achievement.target) / achievement.target) * 100)}%` }}
+                                        />
+                                    </View>
+                                </View>
+                            ))}
+                        </Card>
+                    </View>
+
+                    <View className="px-6">
+                        <Text className="text-slate-900 font-bold text-lg mb-3">Badges</Text>
+                        <Card className="mb-6 p-4">
+                            <View className="flex-row flex-wrap justify-between">
+                                {gamification.badges.map((badge) => {
+                                    const Icon = badgeIconMap[badge.icon] || Trophy;
+                                    return (
+                                        <View key={badge.id} className="w-[48%] mb-3 rounded-xl border border-slate-100 p-3 bg-white">
+                                            <View className={`w-9 h-9 rounded-full items-center justify-center mb-2 ${badge.unlocked ? 'bg-primary/15' : 'bg-slate-100'}`}>
+                                                <Icon size={18} color={badge.unlocked ? '#f48c25' : '#94a3b8'} />
+                                            </View>
+                                            <Text className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900' : 'text-slate-400'}`}>{badge.title}</Text>
+                                            <Text className="text-slate-500 text-xs mt-1">{badge.description}</Text>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        </Card>
+                    </View>
+
+                    <View className="px-6">
+                        <Text className="text-slate-900 font-bold text-lg mb-3">Histórico de XP</Text>
+                        <Card className="mb-6" noPadding>
+                            {events.slice(0, 5).map((event, index) => (
+                                <View key={event.id} className={`p-4 ${index !== Math.min(events.length, 5) - 1 ? 'border-b border-slate-50' : ''}`}>
+                                    <View className="flex-row items-center justify-between">
+                                        <Text className="text-slate-700 text-sm font-semibold">{event.event_type.replaceAll('_', ' ')}</Text>
+                                        <Text className={`text-xs font-bold ${event.points >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                            {event.points >= 0 ? `+${event.points}` : event.points} XP
+                                        </Text>
+                                    </View>
+                                    <Text className="text-slate-400 text-xs mt-1">
+                                        {new Date(event.created_at).toLocaleString('pt-BR')}
+                                    </Text>
+                                </View>
+                            ))}
+                            {events.length === 0 ? (
+                                <View className="p-4">
+                                    <Text className="text-slate-500 text-sm">Sem eventos de XP por enquanto.</Text>
+                                </View>
+                            ) : null}
+                        </Card>
+                    </View>
+
+                    <View className="px-6">
                         <Text className="text-slate-900 font-bold text-lg mb-4">Conta</Text>
                         <Card className="mb-6 overflow-hidden" noPadding>
                             {menuItems.map((item, i) => (
@@ -102,7 +223,7 @@ const Profile = () => {
                         />
                     </View>
 
-                    <View className="items-center pb-10">
+                    <View className="items-center pb-10 pt-6">
                         <Text className="text-slate-400 text-xs text-center">Divida Zero App - v1.0.0</Text>
                     </View>
                 </ScrollView>

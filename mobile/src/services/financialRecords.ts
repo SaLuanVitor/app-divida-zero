@@ -1,5 +1,6 @@
 ﻿import api from './api';
 import { CreateFinancialRecordPayload, FinancialRecordDto } from '../types/financialRecord';
+import { XpFeedbackDto } from '../types/gamification';
 
 export const createFinancialRecord = async (payload: CreateFinancialRecordPayload) => {
   const { data } = await api.post('/financial_records', payload);
@@ -7,6 +8,7 @@ export const createFinancialRecord = async (payload: CreateFinancialRecordPayloa
     message: string;
     created_count: number;
     records: FinancialRecordDto[];
+    xp_feedback?: XpFeedbackDto | null;
   };
 };
 
@@ -28,6 +30,7 @@ export const payFinancialRecord = async (id: number) => {
   return data as {
     message: string;
     record: FinancialRecordDto;
+    xp_feedback?: XpFeedbackDto | null;
   };
 };
 
@@ -40,5 +43,6 @@ export const deleteFinancialRecord = async (id: number, scope: 'single' | 'group
   return data as {
     message: string;
     deleted_count: number;
+    xp_feedback?: XpFeedbackDto | null;
   };
 };
