@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_06_012000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_06_190000) do
   create_table "financial_records", force: :cascade do |t|
     t.decimal "amount", precision: 12, scale: 2, null: false
     t.string "category"
@@ -38,6 +38,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_06_012000) do
     t.index ["user_id"], name: "index_financial_records_on_user_id"
   end
 
+  create_table "gamification_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "event_type", null: false
+    t.json "metadata", default: {}, null: false
+    t.integer "points", default: 0, null: false
+    t.integer "source_id"
+    t.string "source_type"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["event_type"], name: "index_gamification_events_on_event_type"
+    t.index ["source_type", "source_id"], name: "index_gamification_events_on_source_type_and_source_id"
+    t.index ["user_id", "created_at"], name: "index_gamification_events_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_gamification_events_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -51,4 +66,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_06_012000) do
   end
 
   add_foreign_key "financial_records", "users"
+  add_foreign_key "gamification_events", "users"
 end
