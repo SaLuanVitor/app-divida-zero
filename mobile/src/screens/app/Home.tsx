@@ -50,6 +50,8 @@ type ConfirmState = {
     onConfirm: () => Promise<void>;
 };
 
+const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
 const formatDateKey = (date: Date) => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -131,11 +133,15 @@ const Home = () => {
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
+    const [showPeriodPicker, setShowPeriodPicker] = useState(false);
+    const [pickerMode, setPickerMode] = useState<'month' | 'year'>('month');
+    const [pickerYear, setPickerYear] = useState(currentMonth.getFullYear());
 
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const showDayDetails = isOverlayOpen('dayDetails');
     const showConfirm = !!confirmState;
+    const showPeriodSelector = showPeriodPicker;
 
     const pushFeedback = (kind: FeedbackState['kind'], title: string, message: string) => {
         setFeedback({ kind, title, message });
@@ -221,6 +227,7 @@ const Home = () => {
         const todayKey = formatDateKey(new Date());
         return entriesByDate[todayKey] ?? [];
     }, [entriesByDate]);
+    const todayKey = useMemo(() => formatDateKey(new Date()), []);
 
     const openDayDetails = (dateKey: string) => {
         setSelectedDateKey(dateKey);
@@ -233,6 +240,38 @@ const Home = () => {
         setSelectedDateKey('');
         closeOverlay();
     };
+
+    const focusToday = () => {
+        const now = new Date();
+        setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+        setSelectedDateKey(todayKey);
+        closeOverlay();
+    };
+
+    const openPeriodPicker = () => {
+        setPickerYear(currentMonth.getFullYear());
+        setPickerMode('month');
+        setShowPeriodPicker(true);
+    };
+
+    const closePeriodPicker = () => setShowPeriodPicker(false);
+
+    const selectMonth = (monthIndex: number) => {
+        setCurrentMonth(new Date(pickerYear, monthIndex, 1));
+        setSelectedDateKey('');
+        closePeriodPicker();
+    };
+
+    const selectYear = (year: number) => {
+        setPickerYear(year);
+        setCurrentMonth(new Date(year, currentMonth.getMonth(), 1));
+        setSelectedDateKey('');
+        setPickerMode('month');
+    };
+
+    const yearOptions = useMemo(() => {
+        return Array.from({ length: 16 }, (_, index) => pickerYear - 8 + index);
+    }, [pickerYear]);
 
     const executePay = async (entry: CalendarEntry) => {
         const result = await payFinancialRecord(entry.id);
@@ -341,10 +380,17 @@ const Home = () => {
                                 <TouchableOpacity className="p-2 rounded-full bg-slate-100" onPress={() => changeMonth(-1)}>
                                     <ChevronLeft size={16} color="#1f2937" />
                                 </TouchableOpacity>
-                                <Text className="text-slate-900 text-lg font-bold">{toMonthLabel(currentMonth)}</Text>
-                                <TouchableOpacity className="p-2 rounded-full bg-slate-100" onPress={() => changeMonth(1)}>
-                                    <ChevronRight size={16} color="#1f2937" />
+                                <TouchableOpacity className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200" onPress={openPeriodPicker}>
+                                    <Text className="text-slate-900 text-sm font-bold">{toMonthLabel(currentMonth)}</Text>
                                 </TouchableOpacity>
+                                <View className="flex-row items-center gap-2">
+                                    <TouchableOpacity className="px-3 h-9 rounded-full bg-primary/10 border border-primary/20 items-center justify-center" onPress={focusToday}>
+                                        <Text className="text-primary text-xs font-bold">Hoje</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity className="p-2 rounded-full bg-slate-100" onPress={() => changeMonth(1)}>
+                                        <ChevronRight size={16} color="#1f2937" />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
 
                             {loading ? (
@@ -363,6 +409,7 @@ const Home = () => {
                                     <View className="flex-row flex-wrap justify-between">
                                         {monthGrid.map((cell, idx) => {
                                             const isSelected = cell.dateKey === selectedDateKey;
+                                            const isToday = cell.dateKey === todayKey;
                                             const marks = cell.dateKey ? (entriesByDate[cell.dateKey] ?? []) : [];
                                             const hasPending = marks.some((m) => m.status === 'pending');
                                             const hasPaid = marks.some((m) => m.status === 'paid' || m.status === 'received');
@@ -371,10 +418,10 @@ const Home = () => {
                                                 <View key={`${cell.dateKey ?? 'empty'}-${idx}`} className="w-8 h-9 mb-1 items-center justify-center relative">
                                                     {cell.day ? (
                                                         <TouchableOpacity
-                                                            className={`w-7 h-7 rounded-lg items-center justify-center ${isSelected ? 'bg-primary' : ''}`}
+                                                            className={`w-7 h-7 rounded-lg items-center justify-center ${isSelected ? 'bg-primary' : isToday ? 'bg-primary/10 border border-primary/40' : ''}`}
                                                             onPress={() => openDayDetails(cell.dateKey!)}
                                                         >
-                                                            <Text className={`text-sm font-medium ${isSelected ? 'text-white font-bold' : 'text-slate-700'}`}>
+                                                            <Text className={`text-sm font-medium ${isSelected ? 'text-white font-bold' : isToday ? 'text-primary font-bold' : 'text-slate-700'}`}>
                                                                 {cell.day}
                                                             </Text>
                                                         </TouchableOpacity>
@@ -538,6 +585,78 @@ const Home = () => {
                             onPress={() => setConfirmState(null)}
                             className="h-11"
                         />
+                    </View>
+                </View>
+            ) : null}
+
+            {showPeriodSelector ? (
+                <View className="absolute inset-0 z-[65]">
+                    <Pressable className="absolute inset-0 bg-black/30" onPress={closePeriodPicker} />
+                    <View className="absolute left-4 right-4 top-[24%] bg-white rounded-2xl border border-slate-200 p-4">
+                        <View className="flex-row items-center justify-between mb-3">
+                            <Text className="text-slate-900 text-base font-bold">Navegar por período</Text>
+                            <TouchableOpacity className="p-1" onPress={closePeriodPicker}>
+                                <X size={18} color="#64748b" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View className="flex-row gap-2 mb-3">
+                            <TouchableOpacity
+                                className={`flex-1 h-10 rounded-xl items-center justify-center border ${pickerMode === 'month' ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                                onPress={() => setPickerMode('month')}
+                            >
+                                <Text className={`font-bold text-sm ${pickerMode === 'month' ? 'text-white' : 'text-slate-700'}`}>Meses</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className={`flex-1 h-10 rounded-xl items-center justify-center border ${pickerMode === 'year' ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                                onPress={() => setPickerMode('year')}
+                            >
+                                <Text className={`font-bold text-sm ${pickerMode === 'year' ? 'text-white' : 'text-slate-700'}`}>Anos</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {pickerMode === 'month' ? (
+                            <>
+                                <View className="flex-row items-center justify-between mb-3">
+                                    <TouchableOpacity className="p-2 rounded-full bg-slate-100" onPress={() => setPickerYear((prev) => prev - 1)}>
+                                        <ChevronLeft size={14} color="#334155" />
+                                    </TouchableOpacity>
+                                    <Text className="text-slate-900 font-bold">{pickerYear}</Text>
+                                    <TouchableOpacity className="p-2 rounded-full bg-slate-100" onPress={() => setPickerYear((prev) => prev + 1)}>
+                                        <ChevronRight size={14} color="#334155" />
+                                    </TouchableOpacity>
+                                </View>
+                                <View className="flex-row flex-wrap justify-between">
+                                    {monthNames.map((label, index) => {
+                                        const active = currentMonth.getFullYear() === pickerYear && currentMonth.getMonth() === index;
+                                        return (
+                                            <TouchableOpacity
+                                                key={label}
+                                                className={`w-[31%] h-10 mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                                                onPress={() => selectMonth(index)}
+                                            >
+                                                <Text className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700'}`}>{label}</Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </>
+                        ) : (
+                            <View className="flex-row flex-wrap justify-between">
+                                {yearOptions.map((year) => {
+                                    const active = currentMonth.getFullYear() === year;
+                                    return (
+                                        <TouchableOpacity
+                                            key={year}
+                                            className={`w-[31%] h-10 mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                                            onPress={() => selectYear(year)}
+                                        >
+                                            <Text className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700'}`}>{year}</Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        )}
                     </View>
                 </View>
             ) : null}
