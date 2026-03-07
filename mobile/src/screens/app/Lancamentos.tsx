@@ -1,11 +1,12 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, TextInput, ScrollView, ActivityIndicator, Pressable } from 'react-native';
-import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, ChevronRight, Trophy, Target, Shield, Crown } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Button from '../../components/Button';
 import { createFinancialRecord } from '../../services/financialRecords';
 import { CreateFinancialRecordPayload, FinancialRecurrenceType } from '../../types/financialRecord';
+import { XpFeedbackDto } from '../../types/gamification';
 
 type RegisterTab = 'income' | 'debt';
 
@@ -70,6 +71,13 @@ const chipClass = (active: boolean) =>
 const chipTextClass = (active: boolean) =>
     `text-xs font-bold ${active ? 'text-white' : 'text-slate-600'}`;
 
+const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+    sprout: Trophy,
+    target: Target,
+    shield: Shield,
+    crown: Crown,
+};
+
 const Lancamentos = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
@@ -96,6 +104,7 @@ const Lancamentos = () => {
     const [pickerMonth, setPickerMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 
     const [loading, setLoading] = useState(false);
+    const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
 
     useEffect(() => {
         const incomingMode = route.params?.mode as string | undefined;
@@ -247,12 +256,11 @@ const Lancamentos = () => {
         try {
             const result = await createFinancialRecord(payload);
             resetForm();
-
-            Alert.alert(
-                'Registro criado',
-                `${result.message}\nForam gerados ${result.created_count} registro(s).\nFormulário limpo para novo cadastro.`,
-                [{ text: 'OK' }]
-            );
+            if (result.xp_feedback) {
+                setXpPopup(result.xp_feedback);
+            } else {
+                Alert.alert('Registro criado', `${result.message}\nForam gerados ${result.created_count} registro(s).`);
+            }
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível salvar o registro.';
             Alert.alert('Erro ao salvar', message);
@@ -505,6 +513,45 @@ const Lancamentos = () => {
                         <Button title="Fechar" variant="outline" onPress={closeDatePicker} className="h-11" />
                     </View>
                 </Pressable>
+            ) : null}
+
+            {xpPopup ? (
+                <View className="absolute inset-0 z-50">
+                    <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
+                    <View className="absolute left-5 right-5 top-[22%] bg-white rounded-3xl border border-orange-100 p-5">
+                        <View className="items-center">
+                            <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border border-primary/20 mb-3">
+                                {(() => {
+                                    const Icon = levelIconMap[xpPopup.summary.level_icon] || Trophy;
+                                    return <Icon size={40} color="#f48c25" />;
+                                })()}
+                            </View>
+                            <Text className="text-slate-900 text-2xl font-extrabold text-center">
+                                {xpPopup.leveled_up ? 'Subiu de nível!' : 'Lançamento realizado!'}
+                            </Text>
+                            <Text className="text-slate-500 text-sm text-center mt-1">
+                                {xpPopup.leveled_up
+                                    ? `Você chegou ao nível ${xpPopup.summary.level} (${xpPopup.summary.level_title}).`
+                                    : 'Você ganhou pontos por manter o controle financeiro.'}
+                            </Text>
+
+                            <View className="w-full mt-4 bg-[#fff7ed] rounded-2xl border border-orange-100 p-4">
+                                <Text className="text-primary text-xs font-bold uppercase text-center">Recompensa</Text>
+                                <Text className="text-slate-900 text-3xl font-black text-center mt-1">
+                                    {xpPopup.points > 0 ? `+${xpPopup.points}` : xpPopup.points} XP
+                                </Text>
+                                <Text className="text-slate-600 text-sm text-center mt-1">
+                                    Nível {xpPopup.summary.level} • {xpPopup.summary.level_title}
+                                </Text>
+                                <View className="h-2 bg-slate-200 rounded-full overflow-hidden mt-3">
+                                    <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup.summary.level_progress_pct}%` }} />
+                                </View>
+                            </View>
+
+                            <Button title="Continuar" onPress={() => setXpPopup(null)} className="h-12 mt-4 w-full" />
+                        </View>
+                    </View>
+                </View>
             ) : null}
         </>
     );

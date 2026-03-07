@@ -1,5 +1,5 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, ActivityIndicator, TextInput } from 'react-native';
 import {
     Bell,
     Bolt,
@@ -11,6 +11,10 @@ import {
     Wallet,
     X,
     Trash2,
+    Trophy,
+    Target,
+    Shield,
+    Crown,
 } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -20,6 +24,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useOverlay } from '../../context/OverlayContext';
 import { deleteFinancialRecord, listFinancialRecords, payFinancialRecord } from '../../services/financialRecords';
 import { FinancialRecordDto } from '../../types/financialRecord';
+import { GamificationSummaryDto, XpFeedbackDto } from '../../types/gamification';
+import { getGamificationSummary } from '../../services/gamification';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
 
@@ -50,6 +56,19 @@ type ConfirmState = {
     onConfirm: () => Promise<void>;
 };
 
+type XpPopupState = {
+    title: string;
+    message: string;
+    points: number;
+    level: number;
+    levelTitle: string;
+    levelProgressPct: number;
+    leveledUp: boolean;
+    levelIcon: string;
+};
+
+type MonthListFilter = 'all' | 'pending' | 'completed';
+
 const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 const formatDateKey = (date: Date) => {
@@ -75,6 +94,12 @@ const toMonthLabel = (date: Date) => {
     return raw.charAt(0).toUpperCase() + raw.slice(1);
 };
 
+const formatDateBRFromISO = (isoDate: string) => {
+    const [y, m, d] = isoDate.split('-');
+    if (!y || !m || !d) return isoDate;
+    return `${d}/${m}/${y}`;
+};
+
 const recurrenceLabel = (record: FinancialRecordDto) => {
     if (!record.recurring || record.recurrence_type === 'none') return 'Registro único';
     if (record.recurrence_type === 'daily') return 'Recorrência diária';
@@ -90,6 +115,23 @@ const statusLabel = (status: CalendarStatus) => {
 };
 
 const statusColorClass = (status: CalendarStatus) => (status === 'pending' ? 'text-primary' : 'text-teal-500');
+
+const defaultGamificationSummary: GamificationSummaryDto = {
+    total_xp: 0,
+    level: 1,
+    level_title: 'Iniciante',
+    level_icon: 'sprout',
+    xp_in_level: 0,
+    xp_to_next_level: 500,
+    level_progress_pct: 0,
+};
+
+const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+    sprout: Trophy,
+    target: Target,
+    shield: Shield,
+    crown: Crown,
+};
 
 const toCalendarEntry = (record: FinancialRecordDto): CalendarEntry => {
     const isDebt = record.record_type === 'debt';
@@ -133,15 +175,20 @@ const Home = () => {
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
+    const [xpPopup, setXpPopup] = useState<XpPopupState | null>(null);
+    const [gamificationSummary, setGamificationSummary] = useState<GamificationSummaryDto>(defaultGamificationSummary);
     const [showPeriodPicker, setShowPeriodPicker] = useState(false);
     const [pickerMode, setPickerMode] = useState<'month' | 'year'>('month');
     const [pickerYear, setPickerYear] = useState(currentMonth.getFullYear());
+    const [monthListFilter, setMonthListFilter] = useState<MonthListFilter>('all');
+    const [searchQuery, setSearchQuery] = useState('');
 
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const showDayDetails = isOverlayOpen('dayDetails');
     const showConfirm = !!confirmState;
     const showPeriodSelector = showPeriodPicker;
+    const showXpPopup = !!xpPopup;
 
     const pushFeedback = (kind: FeedbackState['kind'], title: string, message: string) => {
         setFeedback({ kind, title, message });
@@ -166,8 +213,12 @@ const Home = () => {
     const loadRecords = useCallback(async () => {
         setLoading(true);
         try {
-            const result = await listFinancialRecords(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
-            setRecords(result.records);
+            const [monthResult, summaryResult] = await Promise.all([
+                listFinancialRecords(currentMonth.getFullYear(), currentMonth.getMonth() + 1),
+                getGamificationSummary(),
+            ]);
+            setRecords(monthResult.records);
+            setGamificationSummary(summaryResult.summary);
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível carregar os registros do mês.';
             pushFeedback('error', 'Falha ao carregar', message);
@@ -184,10 +235,38 @@ const Home = () => {
 
     const entries = useMemo(() => records.map(toCalendarEntry), [records]);
 
+    const visibleEntries = useMemo(() => {
+        let base = entries;
+        if (monthListFilter === 'pending') {
+            base = base.filter((item) => item.status === 'pending');
+        }
+        if (monthListFilter === 'completed') {
+            base = base.filter((item) => item.status !== 'pending');
+        }
+
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return base;
+
+        return base.filter((item) => {
+            const haystack = [
+                item.title,
+                item.subtitle,
+                item.value,
+                formatDateBRFromISO(item.date),
+                statusLabel(item.status),
+                item.reminder,
+            ]
+                .join(' ')
+                .toLowerCase();
+
+            return haystack.includes(query);
+        });
+    }, [entries, monthListFilter, searchQuery]);
+
     const entriesByDate = useMemo(() => {
         const map: Record<string, CalendarEntry[]> = {};
 
-        for (const item of entries) {
+        for (const item of visibleEntries) {
             if (!map[item.date]) {
                 map[item.date] = [];
             }
@@ -195,7 +274,7 @@ const Home = () => {
         }
 
         return map;
-    }, [entries]);
+    }, [visibleEntries]);
 
     const selectedEntries = selectedDateKey ? (entriesByDate[selectedDateKey] ?? []) : [];
 
@@ -223,10 +302,9 @@ const Home = () => {
         return cells;
     }, [currentMonth]);
 
-    const todayItems = useMemo(() => {
-        const todayKey = formatDateKey(new Date());
-        return entriesByDate[todayKey] ?? [];
-    }, [entriesByDate]);
+    const filteredMonthItems = useMemo(() => {
+        return [...visibleEntries].sort((a, b) => a.date.localeCompare(b.date));
+    }, [visibleEntries]);
     const todayKey = useMemo(() => formatDateKey(new Date()), []);
 
     const openDayDetails = (dateKey: string) => {
@@ -246,6 +324,25 @@ const Home = () => {
         setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 1));
         setSelectedDateKey(todayKey);
         closeOverlay();
+    };
+
+    const openXpFeedback = (xpFeedback: XpFeedbackDto | null | undefined, fallbackTitle = 'XP ganho') => {
+        if (!xpFeedback) return;
+        setGamificationSummary(xpFeedback.summary);
+        setXpPopup({
+            title: xpFeedback.leveled_up ? 'Subiu de nível!' : fallbackTitle,
+            message: xpFeedback.leveled_up
+                ? `Agora você está no nível ${xpFeedback.summary.level} (${xpFeedback.summary.level_title}).`
+                : xpFeedback.points >= 0
+                  ? `${xpFeedback.points} XP adicionados ao seu progresso.`
+                  : `${Math.abs(xpFeedback.points)} XP removidos após ajuste de registros.`,
+            points: xpFeedback.points,
+            level: xpFeedback.summary.level,
+            levelTitle: xpFeedback.summary.level_title,
+            levelProgressPct: xpFeedback.summary.level_progress_pct,
+            leveledUp: xpFeedback.leveled_up,
+            levelIcon: xpFeedback.summary.level_icon,
+        });
     };
 
     const openPeriodPicker = () => {
@@ -278,6 +375,7 @@ const Home = () => {
         setRecords((prev) => prev.map((item) => (item.id === entry.id ? result.record : item)));
         await loadRecords();
         pushFeedback('success', 'Status atualizado', result.message);
+        openXpFeedback(result.xp_feedback, 'Ação concluída');
     };
 
     const executeDelete = async (entry: CalendarEntry, scope: 'single' | 'group') => {
@@ -291,6 +389,7 @@ const Home = () => {
 
         await loadRecords();
         pushFeedback('success', 'Registro excluído', `${result.message} (${result.deleted_count} registro(s)).`);
+        openXpFeedback(result.xp_feedback, 'XP ajustado');
     };
 
     const openConfirm = (state: ConfirmState) => setConfirmState(state);
@@ -342,12 +441,14 @@ const Home = () => {
                                     <Text className="text-primary font-extrabold">{(user?.name || 'U').charAt(0).toUpperCase()}</Text>
                                 </View>
                                 <View className="absolute -bottom-1 -right-1 bg-primary px-1.5 py-0.5 rounded-full border border-white">
-                                    <Text className="text-white text-[9px] font-bold">Lvl 5</Text>
+                                    <Text className="text-white text-[9px] font-bold">Lvl {gamificationSummary.level}</Text>
                                 </View>
                             </View>
                             <View>
                                 <Text className="text-slate-900 text-xl font-bold">Olá, {user?.name || 'Usuário'}</Text>
-                                <Text className="text-[#8a7560] text-xs font-medium">Vamos zerar as contas hoje?</Text>
+                                <Text className="text-[#8a7560] text-xs font-medium">
+                                    {gamificationSummary.level_title} • XP {gamificationSummary.xp_in_level}/{gamificationSummary.xp_in_level + gamificationSummary.xp_to_next_level}
+                                </Text>
                             </View>
                         </View>
                         <TouchableOpacity className="bg-[#f8f7f5] p-2 rounded-full">
@@ -453,20 +554,48 @@ const Home = () => {
                         </View>
                     </Card>
 
-                    <View className="flex-row items-center justify-between mb-4">
-                        <Text className="text-slate-900 font-bold text-xl">Hoje</Text>
-                        <Text className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full">{todayItems.length} registros</Text>
+                    <View className="flex-row items-center justify-between mb-3">
+                        <Text className="text-slate-900 font-bold text-xl">Lançamentos do mês</Text>
+                        <Text className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full">{filteredMonthItems.length} registros</Text>
                     </View>
 
-                    {!loading && todayItems.length === 0 ? (
+                    <View className="flex-row gap-2 mb-4">
+                        <TouchableOpacity
+                            className={`px-3 py-2 rounded-full border ${monthListFilter === 'all' ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                            onPress={() => setMonthListFilter('all')}
+                        >
+                            <Text className={`text-xs font-bold ${monthListFilter === 'all' ? 'text-white' : 'text-slate-600'}`}>Todos</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            className={`px-3 py-2 rounded-full border ${monthListFilter === 'pending' ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                            onPress={() => setMonthListFilter('pending')}
+                        >
+                            <Text className={`text-xs font-bold ${monthListFilter === 'pending' ? 'text-white' : 'text-slate-600'}`}>Pendentes</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            className={`px-3 py-2 rounded-full border ${monthListFilter === 'completed' ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                            onPress={() => setMonthListFilter('completed')}
+                        >
+                            <Text className={`text-xs font-bold ${monthListFilter === 'completed' ? 'text-white' : 'text-slate-600'}`}>Concluídos</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <TextInput
+                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 mb-4 text-slate-900"
+                        placeholder="Buscar por título, categoria, valor, data ou status"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+
+                    {!loading && filteredMonthItems.length === 0 ? (
                         <Card className="mb-3" noPadding>
                             <View className="p-4">
-                                <Text className="text-slate-600 text-sm">Sem lançamentos para hoje.</Text>
+                                <Text className="text-slate-600 text-sm">Sem lançamentos para os filtros e busca informados neste mês.</Text>
                             </View>
                         </Card>
                     ) : null}
 
-                    {todayItems.map((item, index) => (
+                    {filteredMonthItems.map((item, index) => (
                         <Card key={String(item.id) + index} className="mb-3" noPadding>
                             <View className="p-4">
                                 <View className="flex-row items-start justify-between">
@@ -476,7 +605,7 @@ const Home = () => {
                                         </View>
                                         <View className="ml-3">
                                             <Text className="text-slate-900 font-bold">{item.title}</Text>
-                                            <Text className="text-slate-500 text-xs">{item.subtitle}</Text>
+                                            <Text className="text-slate-500 text-xs">{item.subtitle} • {formatDateBRFromISO(item.date)}</Text>
                                         </View>
                                     </View>
                                     <View className="items-end">
@@ -585,6 +714,39 @@ const Home = () => {
                             onPress={() => setConfirmState(null)}
                             className="h-11"
                         />
+                    </View>
+                </View>
+            ) : null}
+
+            {showXpPopup ? (
+                <View className="absolute inset-0 z-[62]">
+                    <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
+                    <View className="absolute left-5 right-5 top-[24%] bg-white rounded-3xl border border-orange-100 p-5">
+                        <View className="items-center">
+                            <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border border-primary/20 mb-3">
+                                {(() => {
+                                    const Icon = levelIconMap[xpPopup?.levelIcon || 'sprout'] || Trophy;
+                                    return <Icon size={40} color="#f48c25" />;
+                                })()}
+                            </View>
+                            <Text className="text-slate-900 text-2xl font-extrabold text-center">{xpPopup?.title}</Text>
+                            <Text className="text-slate-500 text-sm text-center mt-1">{xpPopup?.message}</Text>
+
+                            <View className="w-full mt-4 bg-[#fff7ed] rounded-2xl border border-orange-100 p-4">
+                                <Text className="text-primary text-xs font-bold uppercase text-center">Recompensa</Text>
+                                <Text className="text-slate-900 text-3xl font-black text-center mt-1">
+                                    {(xpPopup?.points ?? 0) > 0 ? `+${xpPopup?.points}` : xpPopup?.points} XP
+                                </Text>
+                                <Text className="text-slate-600 text-sm text-center mt-1">
+                                    Nível {xpPopup?.level} • {xpPopup?.levelTitle}
+                                </Text>
+                                <View className="h-2 bg-slate-200 rounded-full overflow-hidden mt-3">
+                                    <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup?.levelProgressPct ?? 0}%` }} />
+                                </View>
+                            </View>
+
+                            <Button title="Continuar" onPress={() => setXpPopup(null)} className="h-12 mt-4 w-full" />
+                        </View>
                     </View>
                 </View>
             ) : null}
