@@ -4,7 +4,7 @@ require "securerandom"
 module Api
   module V1
     class AuthController < ApplicationController
-      before_action :authenticate_access_token!, only: [:me]
+      before_action :authenticate_access_token!, only: [:me, :update_profile, :change_password]
 
       def register
         user = User.new(register_params)
@@ -81,6 +81,34 @@ module Api
         render json: { user: @current_user.public_payload }, status: :ok
       end
 
+      def update_profile
+        @current_user.update!(profile_params)
+
+        render json: {
+          message: "Dados pessoais atualizados com sucesso.",
+          user: @current_user.public_payload
+        }, status: :ok
+      end
+
+      def change_password
+        current_password = params.require(:current_password).to_s
+        new_password = params.require(:new_password).to_s
+
+        unless @current_user.authenticate(current_password)
+          return render json: { error: "A senha atual está incorreta." }, status: :unprocessable_entity
+        end
+
+        if current_password == new_password
+          return render json: { error: "A nova senha deve ser diferente da atual." }, status: :unprocessable_entity
+        end
+
+        @current_user.password = new_password
+        @current_user.password_confirmation = new_password
+        @current_user.save!
+
+        render json: { message: "Senha alterada com sucesso." }, status: :ok
+      end
+
       private
 
       def register_params
@@ -102,6 +130,10 @@ module Api
         @current_user = User.find(payload["sub"])
       rescue JWT::DecodeError, ActiveRecord::RecordNotFound
         render json: { error: "Nao autorizado." }, status: :unauthorized
+      end
+
+      def profile_params
+        params.permit(:name, :email)
       end
 
       def bearer_token

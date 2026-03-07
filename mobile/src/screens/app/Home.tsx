@@ -441,7 +441,7 @@ const Home = () => {
                                     <Text className="text-primary font-extrabold">{(user?.name || 'U').charAt(0).toUpperCase()}</Text>
                                 </View>
                                 <View className="absolute -bottom-1 -right-1 bg-primary px-1.5 py-0.5 rounded-full border border-white">
-                                    <Text className="text-white text-[9px] font-bold">Lvl {gamificationSummary.level}</Text>
+                                    <Text className="text-white text-[9px] font-bold">Nível {gamificationSummary.level}</Text>
                                 </View>
                             </View>
                             <View>
