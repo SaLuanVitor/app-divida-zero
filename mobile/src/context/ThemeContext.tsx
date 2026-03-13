@@ -6,6 +6,7 @@ interface ThemeContextData {
   darkMode: boolean;
   setDarkMode: (value: boolean) => Promise<void>;
   loadingTheme: boolean;
+  switchingTheme: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextData | undefined>(undefined);
@@ -14,11 +15,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const { setColorScheme } = useColorScheme();
   const [darkMode, setDarkModeState] = useState(false);
   const [loadingTheme, setLoadingTheme] = useState(true);
+  const [switchingTheme, setSwitchingTheme] = useState(false);
+  const [prefsCache, setPrefsCache] = useState<Awaited<ReturnType<typeof getAppPreferences>> | null>(null);
 
   useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      setLoadingTheme(false);
+    }, 1500);
+
     const loadTheme = async () => {
       try {
         const prefs = await getAppPreferences();
+        setPrefsCache(prefs);
         const useDark = !!prefs.dark_mode;
         setDarkModeState(useDark);
         setColorScheme(useDark ? 'dark' : 'light');
@@ -28,16 +36,26 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     loadTheme();
-  }, [setColorScheme]);
+
+    return () => clearTimeout(safetyTimer);
+  }, []);
 
   const setDarkMode = async (value: boolean) => {
+    if (value === darkMode) return;
+    setSwitchingTheme(true);
     setDarkModeState(value);
     setColorScheme(value ? 'dark' : 'light');
-    const current = await getAppPreferences();
-    await saveAppPreferences({
-      ...current,
-      dark_mode: value,
-    });
+    try {
+      const current = prefsCache ?? (await getAppPreferences());
+      const next = {
+        ...current,
+        dark_mode: value,
+      };
+      setPrefsCache(next);
+      await saveAppPreferences(next);
+    } finally {
+      setTimeout(() => setSwitchingTheme(false), 220);
+    }
   };
 
   const value = useMemo(
@@ -45,8 +63,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       darkMode,
       setDarkMode,
       loadingTheme,
+      switchingTheme,
     }),
-    [darkMode, loadingTheme]
+    [darkMode, loadingTheme, switchingTheme]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
