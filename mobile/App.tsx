@@ -1,4 +1,17 @@
-﻿import "./src/global.css";
+﻿// Disable Reanimated strict mode logger (safe guard for versions that don't expose setLogLevel)
+if (__DEV__) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Reanimated = require('react-native-reanimated');
+    if (Reanimated && typeof Reanimated.setLogLevel === 'function') {
+      const { ReanimatedLogLevel } = Reanimated;
+      Reanimated.setLogLevel(ReanimatedLogLevel.off);
+    }
+  } catch (error) {
+    // Ignore errors if Reanimated is not available or setLogLevel doesn't exist
+  }
+}
+
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -10,14 +23,14 @@ import { StatusBar } from 'expo-status-bar';
 export default function App() {
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <AuthProvider>
+      <AuthProvider>
+        <NavigationContainer>
           <OverlayProvider>
             <RootNavigator />
             <StatusBar style="dark" />
           </OverlayProvider>
-        </AuthProvider>
-      </NavigationContainer>
+        </NavigationContainer>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

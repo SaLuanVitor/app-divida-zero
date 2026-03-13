@@ -4,10 +4,10 @@ import {
     Text,
     TextInput,
     TextInputProps,
-    TouchableOpacity
+    TouchableOpacity,
+    StyleSheet
 } from 'react-native';
 import { Eye, EyeOff, LucideIcon } from 'lucide-react-native';
-import { cn } from '../utils/cn';
 
 interface InputProps extends TextInputProps {
     label?: string;
@@ -40,33 +40,30 @@ const Input: React.FC<InputProps> = ({
     const actualSecureTextEntry = isPassword && !isPasswordVisible;
 
     return (
-        <View className={cn('w-full mb-4', containerClassName)}>
+        <View style={styles.container}>
             {label && (
-                <Text className="text-slate-900 font-medium text-base mb-2">
+                <Text style={styles.label}>
                     {label}
                 </Text>
             )}
 
             <View
-                className={cn(
-                    'flex-row items-center w-full h-14 px-4 rounded-xl border bg-white transition-all',
-                    isFocused ? 'border-primary ring-1 ring-primary' : 'border-slate-200',
-                    error ? 'border-red-500' : '',
-                )}
+                style={[
+                    styles.inputContainer,
+                    isFocused && styles.inputContainerFocused,
+                    error && styles.inputContainerError,
+                ]}
             >
                 {Icon && (
                     <Icon
                         size={20}
                         color={isFocused ? '#f48c25' : '#94a3b8'}
-                        className="mr-3"
+                        style={styles.icon}
                     />
                 )}
 
                 <TextInput
-                    className={cn(
-                        'flex-1 h-full text-slate-900 text-base font-normal',
-                        className
-                    )}
+                    style={styles.textInput}
                     placeholderTextColor="#94a3b8"
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
@@ -78,7 +75,7 @@ const Input: React.FC<InputProps> = ({
                     <TouchableOpacity
                         onPress={togglePasswordVisibility}
                         activeOpacity={0.7}
-                        className="p-2"
+                        style={styles.rightIcon}
                     >
                         {isPasswordVisible ? (
                             <EyeOff size={20} color="#94a3b8" />
@@ -90,7 +87,7 @@ const Input: React.FC<InputProps> = ({
                     <TouchableOpacity
                         onPress={onRightIconPress}
                         activeOpacity={0.7}
-                        className="p-2"
+                        style={styles.rightIcon}
                         disabled={!onRightIconPress}
                     >
                         <RightIcon size={20} color="#94a3b8" />
@@ -99,12 +96,60 @@ const Input: React.FC<InputProps> = ({
             </View>
 
             {error && (
-                <Text className="text-red-500 text-sm mt-1 ml-1">
+                <Text style={styles.errorText}>
                     {error}
                 </Text>
             )}
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        width: '100%',
+        marginBottom: 16,
+    },
+    label: {
+        color: '#0f172a',
+        fontSize: 16,
+        fontWeight: '500',
+        marginBottom: 8,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        height: 56,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#ffffff',
+    },
+    inputContainerFocused: {
+        borderColor: '#f48c25',
+    },
+    inputContainerError: {
+        borderColor: '#ef4444',
+    },
+    icon: {
+        marginRight: 12,
+    },
+    textInput: {
+        flex: 1,
+        height: '100%',
+        color: '#0f172a',
+        fontSize: 16,
+        fontWeight: '400',
+    },
+    rightIcon: {
+        padding: 8,
+    },
+    errorText: {
+        color: '#ef4444',
+        fontSize: 14,
+        marginTop: 4,
+    },
+});
 
 export default Input;

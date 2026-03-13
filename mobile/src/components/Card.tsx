@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, ViewProps, Text } from 'react-native';
-import { cn } from '../utils/cn';
+import { View, ViewProps, Text, StyleSheet } from 'react-native';
 
 interface CardProps extends ViewProps {
     title?: string;
@@ -18,32 +17,63 @@ const Card: React.FC<CardProps> = ({
     ...rest
 }) => {
     return (
-        <View
-            className={cn(
-                'bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden',
-                className
-            )}
-            {...rest}
-        >
+        <View style={styles.card} {...rest}>
             {(title || subtitle) && (
-                <View className="p-4 border-b border-slate-50">
+                <View style={styles.header}>
                     {title && (
-                        <Text className="text-slate-900 font-bold text-lg leading-tight">
+                        <Text style={styles.title}>
                             {title}
                         </Text>
                     )}
                     {subtitle && (
-                        <Text className="text-slate-500 text-sm mt-1">
+                        <Text style={styles.subtitle}>
                             {subtitle}
                         </Text>
                     )}
                 </View>
             )}
-            <View className={cn(noPadding ? 'p-0' : 'p-4')}>
+            <View style={noPadding ? styles.contentNoPadding : styles.content}>
                 {children}
             </View>
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    card: {
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#f1f5f9',
+        overflow: 'hidden',
+    },
+    header: {
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f8fafc',
+    },
+    title: {
+        color: '#0f172a',
+        fontSize: 18,
+        fontWeight: '700',
+        lineHeight: 22,
+    },
+    subtitle: {
+        color: '#64748b',
+        fontSize: 14,
+        marginTop: 4,
+    },
+    content: {
+        padding: 16,
+    },
+    contentNoPadding: {
+        padding: 0,
+    },
+});
 
 export default Card;
