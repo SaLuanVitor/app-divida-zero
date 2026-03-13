@@ -1,5 +1,5 @@
 ﻿import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Home from '../screens/app/Home';
@@ -29,9 +29,9 @@ const NavItem = ({
     onPress: () => void;
     icon: React.ReactNode;
 }) => (
-    <TouchableOpacity onPress={onPress} className="flex-1 items-center justify-center">
+    <TouchableOpacity onPress={onPress} style={styles.navItem}>
         {icon}
-        <Text className={`text-[10px] mt-1 font-bold ${active ? 'text-primary' : 'text-[#8a7560]'}`}>{label}</Text>
+        <Text style={[styles.navText, active && styles.navTextActive]}>{label}</Text>
     </TouchableOpacity>
 );
 
@@ -41,11 +41,13 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 
     const showActions = isOverlayOpen('actions');
 
-    const activeRouteName = useMemo(() => state.routes[state.index]?.name, [state.index, state.routes]);
+    const activeRouteName = useMemo(() => state?.routes?.[state?.index]?.name, [state?.index, state?.routes]);
 
     const goTo = (name: string, params?: Record<string, unknown>) => {
         closeOverlay();
-        (navigation as any).navigate(name, params);
+        if (navigation && typeof navigation.navigate === 'function') {
+            navigation.navigate(name as any, params);
+        }
     };
 
     const toggleActions = () => {
@@ -60,32 +62,31 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     return (
         <>
             {showActions ? (
-                <Pressable className="absolute inset-0 bg-black/20 z-40" onPress={closeOverlay}>
-                    <View className="absolute bottom-24 left-4 right-4 bg-white rounded-2xl border border-slate-200 p-3">
+                <Pressable style={styles.overlay} onPress={closeOverlay}>
+                    <View style={styles.actionsContainer}>
                         <TouchableOpacity
-                            className="flex-row items-center gap-3 p-3 rounded-xl bg-slate-50 mb-2"
+                            style={styles.actionButton}
                             onPress={() => goTo('Lançamentos', { mode: 'income' })}
                         >
                             <Wallet size={18} color="#f48c25" />
-                            <Text className="text-slate-900 font-bold">Novo ganho</Text>
+                            <Text style={styles.actionText}>Novo ganho</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            className="flex-row items-center gap-3 p-3 rounded-xl bg-slate-50"
+                            style={styles.actionButton}
                             onPress={() => goTo('Lançamentos', { mode: 'debt' })}
                         >
                             <Landmark size={18} color="#f48c25" />
-                            <Text className="text-slate-900 font-bold">Nova dívida</Text>
+                            <Text style={styles.actionText}>Nova dívida</Text>
                         </TouchableOpacity>
                     </View>
                 </Pressable>
             ) : null}
 
             <View
-                style={{ paddingBottom: Math.max(10, insets.bottom) }}
-                className="absolute left-0 right-0 bottom-0 bg-white border-t border-[#f1ede9] pt-2 z-50"
+                style={[styles.tabBar, { paddingBottom: Math.max(10, insets.bottom) }]}
             >
-                <View className="flex-row items-end px-2">
+                <View style={styles.tabBarContent}>
                     <NavItem
                         label="Início"
                         active={activeRouteName === 'Início'}
@@ -100,14 +101,14 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                         icon={<Trophy size={20} color={activeRouteName === 'Metas' ? '#f48c25' : '#8a7560'} />}
                     />
 
-                    <View className="flex-1 items-center -mt-7">
+                    <View style={styles.centerButtonContainer}>
                         <TouchableOpacity
                             onPress={toggleActions}
-                            className="w-14 h-14 rounded-full bg-primary items-center justify-center border-4 border-white"
+                            style={styles.centerButton}
                         >
                             {showActions ? <CirclePlus size={22} color="#fff" /> : <Plus size={24} color="#fff" />}
                         </TouchableOpacity>
-                        <Text className="text-[10px] mt-1 font-bold text-[#8a7560]">Ações</Text>
+                        <Text style={styles.centerButtonText}>Ações</Text>
                     </View>
 
                     <NavItem
@@ -188,3 +189,86 @@ export const AppNavigator = () => {
         </Tab.Navigator>
     );
 };
+
+const styles = StyleSheet.create({
+    navItem: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    navText: {
+        fontSize: 10,
+        marginTop: 4,
+        fontWeight: '700',
+        color: '#8a7560',
+    },
+    navTextActive: {
+        color: '#f48c25',
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+        zIndex: 40,
+    },
+    actionsContainer: {
+        position: 'absolute',
+        bottom: 96,
+        left: 16,
+        right: 16,
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        padding: 12,
+    },
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        padding: 12,
+        borderRadius: 12,
+        backgroundColor: '#f8fafc',
+        marginBottom: 8,
+    },
+    actionText: {
+        color: '#0f172a',
+        fontWeight: '700',
+    },
+    tabBar: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: '#ffffff',
+        borderTopWidth: 1,
+        borderTopColor: '#f1ede9',
+        paddingTop: 8,
+        zIndex: 50,
+    },
+    tabBarContent: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        paddingHorizontal: 8,
+    },
+    centerButtonContainer: {
+        flex: 1,
+        alignItems: 'center',
+        marginTop: -28,
+    },
+    centerButton: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#f48c25',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 4,
+        borderColor: '#ffffff',
+    },
+    centerButtonText: {
+        fontSize: 10,
+        marginTop: 4,
+        fontWeight: '700',
+        color: '#8a7560',
+    },
+});

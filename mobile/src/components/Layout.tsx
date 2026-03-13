@@ -4,10 +4,10 @@ import {
     Platform,
     ScrollView,
     View,
-    useWindowDimensions
+    useWindowDimensions,
+    StyleSheet
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { cn } from '../utils/cn';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -26,31 +26,30 @@ const Layout: React.FC<LayoutProps> = ({
     const shouldConstrain = width >= 768;
 
     const contentWrapperStyle = {
-        width: '100%' as const,
-        alignSelf: 'center' as const,
+        width: '100%',
+        alignSelf: 'center',
         maxWidth: shouldConstrain ? 460 : 9999,
     };
 
     return (
-        <SafeAreaView edges={['top', 'left', 'right']} className={cn('flex-1 bg-white', className)}>
+        <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
-                className="flex-1"
+                style={styles.keyboardAvoiding}
             >
                 {scrollable ? (
                     <ScrollView
-                        className="flex-1"
-                        contentContainerClassName={cn('p-6 pb-8', contentContainerClassName)}
-                        contentContainerStyle={{ flexGrow: 1 }}
+                        style={styles.scrollView}
+                        contentContainerStyle={[styles.scrollContent, { flexGrow: 1 }]}
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
                         <View style={contentWrapperStyle}>{children}</View>
                     </ScrollView>
                 ) : (
-                    <View className={cn('flex-1 p-6 pb-8', contentContainerClassName)}>
-                        <View style={contentWrapperStyle} className="flex-1">
+                    <View style={styles.nonScrollableContainer}>
+                        <View style={[contentWrapperStyle, styles.nonScrollableContent]}>
                             {children}
                         </View>
                     </View>
@@ -59,5 +58,30 @@ const Layout: React.FC<LayoutProps> = ({
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#ffffff',
+    },
+    keyboardAvoiding: {
+        flex: 1,
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingHorizontal: 24,
+        paddingBottom: 32,
+    },
+    nonScrollableContainer: {
+        flex: 1,
+        paddingHorizontal: 24,
+        paddingBottom: 32,
+    },
+    nonScrollableContent: {
+        flex: 1,
+    },
+});
 
 export default Layout;

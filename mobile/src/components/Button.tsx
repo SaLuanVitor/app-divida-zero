@@ -4,9 +4,9 @@ import {
     TouchableOpacityProps,
     Text,
     ActivityIndicator,
-    View
+    View,
+    StyleSheet
 } from 'react-native';
-import { cn } from '../utils/cn';
 
 interface ButtonProps extends TouchableOpacityProps {
     title: string;
@@ -28,26 +28,67 @@ const Button: React.FC<ButtonProps> = ({
     disabled,
     ...rest
 }) => {
-    const variants = {
-        primary: 'bg-primary shadow-md shadow-orange-200',
-        secondary: 'bg-slate-800',
-        outline: 'bg-transparent border border-slate-200',
-        ghost: 'bg-transparent',
-        danger: 'bg-red-500 shadow-md shadow-red-200',
+    const getButtonStyle = () => {
+        const baseStyles = [styles.base];
+
+        // Add variant styles
+        switch (variant) {
+            case 'primary':
+                baseStyles.push(styles.primary);
+                break;
+            case 'secondary':
+                baseStyles.push(styles.secondary);
+                break;
+            case 'outline':
+                baseStyles.push(styles.outline);
+                break;
+            case 'ghost':
+                baseStyles.push(styles.ghost);
+                break;
+            case 'danger':
+                baseStyles.push(styles.danger);
+                break;
+        }
+
+        // Add size styles
+        switch (size) {
+            case 'sm':
+                baseStyles.push(styles.sm);
+                break;
+            case 'md':
+                baseStyles.push(styles.md);
+                break;
+            case 'lg':
+                baseStyles.push(styles.lg);
+                break;
+        }
+
+        // Add disabled/loading styles
+        if (loading || disabled) {
+            baseStyles.push(styles.disabled);
+        }
+
+        return baseStyles;
     };
 
-    const textVariants = {
-        primary: 'text-white',
-        secondary: 'text-white',
-        outline: 'text-slate-900',
-        ghost: 'text-primary',
-        danger: 'text-white',
-    };
+    const getTextStyle = () => {
+        const baseStyles = [styles.textBase];
 
-    const sizes = {
-        sm: 'h-10 px-4 rounded-lg',
-        md: 'h-12 px-6 rounded-xl',
-        lg: 'h-14 px-8 rounded-2xl',
+        switch (variant) {
+            case 'primary':
+            case 'secondary':
+            case 'danger':
+                baseStyles.push(styles.textLight);
+                break;
+            case 'outline':
+                baseStyles.push(styles.textDark);
+                break;
+            case 'ghost':
+                baseStyles.push(styles.textPrimary);
+                break;
+        }
+
+        return baseStyles;
     };
 
     const isDark = variant === 'secondary' || variant === 'primary' || variant === 'danger';
@@ -56,27 +97,15 @@ const Button: React.FC<ButtonProps> = ({
         <TouchableOpacity
             activeOpacity={0.7}
             disabled={loading || disabled}
-            className={cn(
-                'flex-row items-center justify-center transition-all',
-                variants[variant],
-                sizes[size],
-                (loading || disabled) && 'opacity-60',
-                className
-            )}
+            style={getButtonStyle()}
             {...rest}
         >
             {loading ? (
                 <ActivityIndicator color={isDark ? '#fff' : '#f48c25'} />
             ) : (
-                <View className="flex-row items-center justify-center">
-                    {icon && <View className="mr-2">{icon}</View>}
-                    <Text
-                        className={cn(
-                            'text-base font-bold tracking-tight',
-                            textVariants[variant],
-                            textClassName
-                        )}
-                    >
+                <View style={styles.content}>
+                    {icon && <View style={styles.iconContainer}>{icon}</View>}
+                    <Text style={getTextStyle()}>
                         {title}
                     </Text>
                 </View>
@@ -84,5 +113,80 @@ const Button: React.FC<ButtonProps> = ({
         </TouchableOpacity>
     );
 };
+
+const styles = StyleSheet.create({
+    base: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    primary: {
+        backgroundColor: '#f48c25',
+        shadowColor: '#fb923c',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    secondary: {
+        backgroundColor: '#1e293b',
+    },
+    outline: {
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    ghost: {
+        backgroundColor: 'transparent',
+    },
+    danger: {
+        backgroundColor: '#ef4444',
+        shadowColor: '#fca5a5',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    sm: {
+        height: 40,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    md: {
+        height: 48,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+    },
+    lg: {
+        height: 56,
+        paddingHorizontal: 32,
+        borderRadius: 16,
+    },
+    disabled: {
+        opacity: 0.6,
+    },
+    content: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    iconContainer: {
+        marginRight: 8,
+    },
+    textBase: {
+        fontSize: 16,
+        fontWeight: '700',
+        letterSpacing: -0.025,
+    },
+    textLight: {
+        color: '#ffffff',
+    },
+    textDark: {
+        color: '#0f172a',
+    },
+    textPrimary: {
+        color: '#f48c25',
+    },
+});
 
 export default Button;

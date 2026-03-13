@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const pkg = require\\(''./node_modules/@react-navigation/native/package.json''\\); console.log\\(''native:'', pkg.version\\)\")",
+      "Bash(node -e \"const pkg = require\\(''./node_modules/@react-navigation/stack/package.json''\\); console.log\\(''stack:'', pkg.version\\)\")",
+      "Bash(node -e \"const pkg = require\\(''./node_modules/@react-navigation/bottom-tabs/package.json''\\); console.log\\(''bottom-tabs:'', pkg.version\\)\")",
+      "Bash(node -e \"const pkg = require\\(''./node_modules/react-native-reanimated/package.json''\\); console.log\\(''reanimated:'', pkg.version\\)\")",
+      "Bash(node -e \"const pkg = require\\(''./node_modules/@react-navigation/stack/package.json''\\); console.log\\(''peerDeps:'', JSON.stringify\\(pkg.peerDependencies, null, 2\\)\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(node -e \"const pkg = require\\(''./node_modules/react-native-worklets/package.json''\\); console.log\\(''version:'', pkg.version\\); console.log\\(''has plugin?'', !!pkg.exports?.[''./plugin''] || !!require.resolve\\(''react-native-worklets/plugin''\\)\\)\")",
+      "Bash(node -p \"require\\(''./node_modules/react-native-worklets/package.json''\\).version\")",
+      "Bash(grep -n \"isDefault\" node_modules/@react-navigation/core/lib/module/*.js)"
+    ]
+  }
+}
