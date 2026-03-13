@@ -314,6 +314,7 @@ const Lancamentos = () => {
                         <TextInput
                             className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                             placeholder={activeTab === 'debt' ? 'Ex: Cartão Nubank' : 'Ex: Salário'}
+                            placeholderTextColor="#94a3b8"
                             value={title}
                             onChangeText={setTitle}
                         />
@@ -322,6 +323,7 @@ const Lancamentos = () => {
                         <TextInput
                             className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                             placeholder="R$ 0,00"
+                            placeholderTextColor="#94a3b8"
                             keyboardType="number-pad"
                             value={formatCurrencyFromDigits(amountDigits)}
                             onChangeText={handleAmountChange}
@@ -354,6 +356,7 @@ const Lancamentos = () => {
                                 <TextInput
                                     className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                                     placeholder="Ex: Assinaturas"
+                                    placeholderTextColor="#94a3b8"
                                     value={customCategory}
                                     onChangeText={setCustomCategory}
                                 />
@@ -376,6 +379,7 @@ const Lancamentos = () => {
                         <TextInput
                             className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 mb-3 text-slate-900 dark:text-slate-100"
                             placeholder="Detalhes úteis para esse registro"
+                            placeholderTextColor="#94a3b8"
                             multiline
                             value={description}
                             onChangeText={setDescription}
@@ -385,6 +389,7 @@ const Lancamentos = () => {
                         <TextInput
                             className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
                             placeholder="Ex: débito automático, lembrete, conta compartilhada..."
+                            placeholderTextColor="#94a3b8"
                             multiline
                             value={notes}
                             onChangeText={setNotes}
@@ -425,6 +430,7 @@ const Lancamentos = () => {
                                     className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
                                     keyboardType="number-pad"
                                     placeholder={recurrenceType === 'daily' ? '30' : '6'}
+                                    placeholderTextColor="#94a3b8"
                                     value={recurrenceCount}
                                     onChangeText={handleRecurrenceCountChange}
                                 />
@@ -443,6 +449,7 @@ const Lancamentos = () => {
                                 className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                                 keyboardType="number-pad"
                                 placeholder="1"
+                                placeholderTextColor="#94a3b8"
                                 value={installmentsTotal}
                                 onChangeText={handleInstallmentsChange}
                             />
@@ -452,6 +459,7 @@ const Lancamentos = () => {
                                 className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
                                 keyboardType="number-pad"
                                 placeholder="Opcional"
+                                placeholderTextColor="#94a3b8"
                                 value={dayOfMonth}
                                 onChangeText={handleDayOfMonthChange}
                             />

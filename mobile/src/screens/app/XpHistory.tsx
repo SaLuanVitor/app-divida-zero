@@ -168,6 +168,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                         <TextInput
                             className="flex-1 ml-2 text-slate-900 dark:text-slate-100"
                             placeholder="Buscar eventos, ações ou detalhes"
+                            placeholderTextColor="#94a3b8"
                             value={query}
                             onChangeText={setQuery}
                         />
