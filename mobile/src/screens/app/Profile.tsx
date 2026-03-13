@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import {
     User as UserIcon,
@@ -23,6 +23,7 @@ import { FinancialRecordDto } from '../../types/financialRecord';
 import { buildGamificationSummary, formatAchievementProgress } from '../../utils/gamification';
 import { getGamificationSummary } from '../../services/gamification';
 import { DEFAULT_GAMIFICATION_SUMMARY, GamificationSummaryDto, normalizeGamificationSummary } from '../../types/gamification';
+import { runWhenIdle } from '../../utils/idle';
 
 const Profile = () => {
     const { user, signOut } = useAuth();
@@ -41,9 +42,9 @@ const Profile = () => {
 
     const menuItems = [
         { label: 'Dados pessoais', icon: UserIcon, color: '#3b82f6', route: 'Dados Pessoais' },
-        { label: 'Configurações do app', icon: Settings, color: '#64748b', route: 'Configurações App' },
-        { label: 'Notificações', icon: Bell, color: '#f59e0b', route: 'Notificações' },
-        { label: 'Segurança', icon: Shield, color: '#10b981', route: 'Segurança' },
+        { label: 'Configurações do app', icon: Settings, color: '#64748b', route: 'Configuracoes App' },
+        { label: 'Notificações', icon: Bell, color: '#f59e0b', route: 'Notificacoes' },
+        { label: 'Segurança', icon: Shield, color: '#10b981', route: 'Seguranca' },
         { label: 'Ajuda e suporte', icon: HelpCircle, color: '#8b5cf6', route: 'Ajuda e Suporte' },
     ];
 
@@ -70,7 +71,10 @@ const Profile = () => {
             }
         };
 
-        loadGamification();
+        const cancel = runWhenIdle(() => {
+            loadGamification();
+        });
+        return cancel;
     }, []);
 
     useEffect(() => {
@@ -94,9 +98,9 @@ const Profile = () => {
 
     return (
         <>
-            <Layout contentContainerClassName="p-0 bg-[#f8f7f5]">
+            <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
                 <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false}>
-                    <View className="bg-white px-6 pt-8 pb-8 items-center border-b border-slate-100">
+                    <View className="bg-white dark:bg-[#121212] px-6 pt-8 pb-8 items-center border-b border-slate-100 dark:border-slate-800">
                         <View className="relative">
                             <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border-2 border-primary/20">
                                 <UserIcon size={48} color="#f48c25" />
@@ -109,11 +113,11 @@ const Profile = () => {
                             </TouchableOpacity>
                         </View>
 
-                        <Text className="text-slate-900 text-2xl font-bold mt-4">{user?.name}</Text>
-                        <Text className="text-slate-500 text-sm">{user?.email}</Text>
+                        <Text className="text-slate-900 dark:text-slate-100 text-2xl font-bold mt-4">{user?.name}</Text>
+                        <Text className="text-slate-500 dark:text-slate-300 text-sm">{user?.email}</Text>
 
-                        <View className="mt-4 bg-[#f8f7f5] px-4 py-2 rounded-full">
-                            <Text className="text-slate-700 text-xs font-bold">Editar perfil</Text>
+                        <View className="mt-4 bg-[#f8f7f5] dark:bg-black px-4 py-2 rounded-full">
+                            <Text className="text-slate-700 dark:text-slate-200 text-xs font-bold">Editar perfil</Text>
                         </View>
                     </View>
 
@@ -125,9 +129,9 @@ const Profile = () => {
                                         <Trophy size={18} color="#f48c25" />
                                     </View>
                                     <View className="ml-3">
-                                        <Text className="text-slate-900 font-bold">Nível {summary.level} • {summary.level_title}</Text>
-                                        <Text className="text-slate-500 text-xs">
-                                            {summary.xp_in_level}/{summary.xp_in_level + summary.xp_to_next_level} XP para o nível {summary.level + 1}
+                                        <Text className="text-slate-900 dark:text-slate-100 font-bold">Nivel {summary.level} - {summary.level_title}</Text>
+                                        <Text className="text-slate-500 dark:text-slate-300 text-xs">
+                                            {summary.xp_in_level}/{summary.xp_in_level + summary.xp_to_next_level} XP para o nivel {summary.level + 1}
                                         </Text>
                                     </View>
                                 </View>
@@ -140,22 +144,22 @@ const Profile = () => {
                     </View>
 
                     <View className="px-6 pt-6">
-                        <Text className="text-slate-900 font-bold text-lg mb-3">Conquistas</Text>
+                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Conquistas</Text>
                         <Card className="mb-6" noPadding>
-                            <View className="p-4 border-b border-slate-100">
-                                <Text className="text-slate-700 text-sm font-semibold">
-                                    {gamification.unlockedCount}/{gamification.achievements.length} desbloqueadas • Total XP {summary.total_xp}
+                            <View className="p-4 border-b border-slate-100 dark:border-slate-800">
+                                <Text className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
+                                    {gamification.unlockedCount}/{gamification.achievements.length} desbloqueadas - Total XP {summary.total_xp}
                                 </Text>
                             </View>
                             {gamification.achievements.map((achievement, index) => (
                                 <View key={achievement.id} className={`p-4 ${index !== gamification.achievements.length - 1 ? 'border-b border-slate-50' : ''}`}>
                                     <View className="flex-row items-center justify-between mb-1">
-                                        <Text className={`font-bold ${achievement.unlocked ? 'text-slate-900' : 'text-slate-500'}`}>{achievement.title}</Text>
-                                        <Text className={`text-xs font-bold ${achievement.unlocked ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                        <Text className={`font-bold ${achievement.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'}`}>{achievement.title}</Text>
+                                        <Text className={`text-xs font-bold ${achievement.unlocked ? 'text-emerald-600' : 'text-slate-400 dark:text-slate-300'}`}>
                                             {achievement.unlocked ? `+${achievement.rewardXp} XP` : formatAchievementProgress(achievement.progress, achievement.target)}
                                         </Text>
                                     </View>
-                                    <Text className="text-slate-500 text-xs mb-2">{achievement.description}</Text>
+                                    <Text className="text-slate-500 dark:text-slate-300 text-xs mb-2">{achievement.description}</Text>
                                     <View className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                                         <View
                                             className={`h-full rounded-full ${achievement.unlocked ? 'bg-emerald-500' : 'bg-primary'}`}
@@ -168,18 +172,18 @@ const Profile = () => {
                     </View>
 
                     <View className="px-6">
-                        <Text className="text-slate-900 font-bold text-lg mb-3">Badges</Text>
+                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Badges</Text>
                         <Card className="mb-6 p-4">
                             <View className="flex-row flex-wrap justify-between">
                                 {gamification.badges.map((badge) => {
                                     const Icon = badgeIconMap[badge.icon] || Trophy;
                                     return (
-                                        <View key={badge.id} className="w-[48%] mb-3 rounded-xl border border-slate-100 p-3 bg-white">
-                                            <View className={`w-9 h-9 rounded-full items-center justify-center mb-2 ${badge.unlocked ? 'bg-primary/15' : 'bg-slate-100'}`}>
+                                        <View key={badge.id} className="w-[48%] mb-3 rounded-xl border border-slate-100 dark:border-slate-800 p-3 bg-white dark:bg-[#121212]">
+                                            <View className={`w-9 h-9 rounded-full items-center justify-center mb-2 ${badge.unlocked ? 'bg-primary/15' : 'bg-slate-100 dark:bg-slate-800'}`}>
                                                 <Icon size={18} color={badge.unlocked ? '#f48c25' : '#94a3b8'} />
                                             </View>
-                                            <Text className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900' : 'text-slate-400'}`}>{badge.title}</Text>
-                                            <Text className="text-slate-500 text-xs mt-1">{badge.description}</Text>
+                                            <Text className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-300'}`}>{badge.title}</Text>
+                                            <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">{badge.description}</Text>
                                         </View>
                                     );
                                 })}
@@ -188,33 +192,33 @@ const Profile = () => {
                     </View>
 
                     <View className="px-6" onLayout={(event) => setHistorySectionY(event.nativeEvent.layout.y)}>
-                        <Text className="text-slate-900 font-bold text-lg mb-3">Histórico de XP</Text>
+                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Histórico de XP</Text>
                         <Card className="mb-6 p-4">
-                            <Text className="text-slate-600 text-sm mb-3">
-                                Acesse uma visão detalhada de todos os eventos de ganho e perda de XP.
+                            <Text className="text-slate-600 dark:text-slate-300 text-sm mb-3">
+                                Acesse uma visao detalhada de todos os eventos de ganho e perda de XP.
                             </Text>
                             <Button
-                                title="Ver histórico completo"
+                                title="Ver historico completo"
                                 variant={highlightHistoryCta ? 'primary' : 'outline'}
-                                onPress={() => navigation.navigate('Histórico XP')}
+                                onPress={() => navigation.navigate('Historico XP')}
                                 className="h-11"
                             />
                         </Card>
                     </View>
 
                     <View className="px-6">
-                        <Text className="text-slate-900 font-bold text-lg mb-4">Conta</Text>
+                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-4">Conta</Text>
                         <Card className="mb-6 overflow-hidden" noPadding>
                             {menuItems.map((item, i) => (
                                 <TouchableOpacity
                                     key={item.label}
-                                    className={`flex-row items-center justify-between p-4 bg-white ${i !== menuItems.length - 1 ? 'border-b border-slate-50' : ''}`}
+                                    className={`flex-row items-center justify-between p-4 bg-white dark:bg-[#121212] ${i !== menuItems.length - 1 ? 'border-b border-slate-50' : ''}`}
                                     activeOpacity={0.7}
                                     onPress={() => navigation.navigate(item.route)}
                                 >
                                     <View className="flex-row items-center">
                                         <item.icon size={20} color={item.color} />
-                                        <Text className="text-slate-700 font-medium ml-3">{item.label}</Text>
+                                        <Text className="text-slate-700 dark:text-slate-200 font-medium ml-3">{item.label}</Text>
                                     </View>
                                     <ChevronRight size={18} color="#cbd5e1" />
                                 </TouchableOpacity>
@@ -232,7 +236,7 @@ const Profile = () => {
                     </View>
 
                     <View className="items-center pb-10 pt-6">
-                        <Text className="text-slate-400 text-xs text-center">Divida Zero App - v1.0.0</Text>
+                        <Text className="text-slate-400 dark:text-slate-300 text-xs text-center">Divida Zero App - v1.0.0</Text>
                     </View>
                 </ScrollView>
             </Layout>
@@ -240,9 +244,9 @@ const Profile = () => {
             {showLogoutConfirm ? (
                 <View className="absolute inset-0 z-50">
                     <Pressable className="absolute inset-0 bg-black/30" onPress={() => !logoutLoading && setShowLogoutConfirm(false)} />
-                    <View className="absolute left-4 right-4 top-[38%] bg-white rounded-2xl border border-slate-200 p-4">
-                        <Text className="text-slate-900 text-base font-bold">Sair da conta</Text>
-                        <Text className="text-slate-600 text-sm mt-2 mb-4">
+                    <View className="absolute left-4 right-4 top-[38%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+                        <Text className="text-slate-900 dark:text-slate-100 text-base font-bold">Sair da conta</Text>
+                        <Text className="text-slate-600 dark:text-slate-300 text-sm mt-2 mb-4">
                             Deseja realmente sair do aplicativo?
                         </Text>
 
@@ -277,3 +281,7 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
+
+

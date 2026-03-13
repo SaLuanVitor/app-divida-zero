@@ -26,3 +26,4 @@ export const listGamificationEvents = async () => {
     events: Array.isArray(payload?.events) ? payload.events : [],
   };
 };
+

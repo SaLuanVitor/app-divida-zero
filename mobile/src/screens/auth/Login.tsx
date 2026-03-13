@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Alert, useWindowDimensions } from 'react-native';
 import { Mail, Lock } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -52,7 +52,7 @@ const Login = () => {
             setEmailError('Informe seu e-mail.');
             valid = false;
         } else if (!emailRegex.test(email.trim())) {
-            setEmailError('Informe um e-mail válido.');
+            setEmailError('Informe um e-mail valido.');
             valid = false;
         } else {
             setEmailError('');
@@ -87,13 +87,13 @@ const Login = () => {
     };
 
     return (
-        <Layout scrollable contentContainerClassName="p-0 bg-[#f8f7f5]">
-            <View className="px-4 pt-4 pb-2 bg-[#f8f7f5]">
-                <Text className="text-slate-900 text-center text-lg font-bold">Dívida Zero</Text>
+        <Layout scrollable contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black dark:bg-black">
+            <View className="px-4 pt-4 pb-2 bg-[#f8f7f5] dark:bg-black dark:bg-black">
+                <Text className="text-slate-900 dark:text-slate-100 text-center text-lg font-bold">Divida Zero</Text>
             </View>
 
-            <View className="px-4 pb-2 bg-[#f8f7f5]">
-                <View className="relative w-full bg-orange-100 overflow-hidden rounded-2xl" style={{ height: heroHeight }}>
+            <View className="px-4 pb-2 bg-[#f8f7f5] dark:bg-black dark:bg-black">
+                <View className="relative w-full bg-orange-100 dark:bg-[#1a1a1a] overflow-hidden rounded-2xl" style={{ height: heroHeight }}>
                     <Image
                         source={{ uri: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=2071&auto=format&fit=crop' }}
                         className="w-full h-full opacity-80"
@@ -102,28 +102,28 @@ const Login = () => {
                     <View className="absolute inset-0 bg-black/40" />
                     <View className="absolute bottom-6 left-6 right-6">
                         <Text className="text-white text-3xl font-bold">Assuma o controle</Text>
-                        <Text className="text-white/90 text-sm mt-1">Gamifique suas finanças e zere suas dívidas.</Text>
+                        <Text className="text-white/90 text-sm mt-1">Gamifique suas financas e zere suas dividas.</Text>
                     </View>
                 </View>
             </View>
 
-            <View className="px-6 py-5 bg-[#f8f7f5]">
-                <Text className="text-slate-900 text-3xl font-bold text-center">
+            <View className="px-6 py-5 bg-[#f8f7f5] dark:bg-black dark:bg-black">
+                <Text className="text-slate-900 dark:text-slate-100 text-3xl font-bold text-center">
                     Bem-vindo de volta!
                 </Text>
-                <Text className="text-slate-500 text-center mt-2 mb-5">
+                <Text className="text-slate-500 dark:text-slate-300 text-center mt-2 mb-5">
                     Digite suas credenciais para continuar sua jornada.
                 </Text>
 
                 {infoMessage ? (
-                    <View className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                        <Text className="text-emerald-700 text-sm font-medium">{infoMessage}</Text>
+                    <View className="mb-4 rounded-xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3">
+                        <Text className="text-emerald-700 dark:text-emerald-300 text-sm font-medium">{infoMessage}</Text>
                     </View>
                 ) : null}
 
                 {authError ? (
-                    <View className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                        <Text className="text-red-700 text-sm font-medium">{authError}</Text>
+                    <View className="mb-4 rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-4 py-3">
+                        <Text className="text-red-700 dark:text-red-300 text-sm font-medium">{authError}</Text>
                     </View>
                 ) : null}
 
@@ -172,16 +172,16 @@ const Login = () => {
                 />
 
                 <View className="mt-10 items-center">
-                    <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-                        Motivação do dia
+                    <Text className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest">
+                        Motivacao do dia
                     </Text>
-                    <Text className="text-slate-600 italic text-center text-sm mt-2 px-4">
+                    <Text className="text-slate-600 dark:text-slate-300 italic text-center text-sm mt-2 px-4">
                         "Pequenos passos todos os dias levam a grandes conquistas financeiras."
                     </Text>
                 </View>
 
                 <View className="mt-8 flex-row justify-center items-center pb-8">
-                    <Text className="text-slate-500 text-sm">Não tem uma conta? </Text>
+                    <Text className="text-slate-500 dark:text-slate-300 text-sm">Nao tem uma conta? </Text>
                     <TouchableOpacity onPress={() => navigation.navigate('Register')}>
                         <Text className="text-primary font-bold text-sm">Cadastre-se</Text>
                     </TouchableOpacity>
@@ -194,3 +194,6 @@ const Login = () => {
 };
 
 export default Login;
+
+
+

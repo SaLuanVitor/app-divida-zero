@@ -1,4 +1,4 @@
-﻿import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ACCESS_TOKEN_KEY = '@DividaZero:accessToken';
@@ -63,3 +63,4 @@ api.interceptors.response.use(
 
 export default api;
 export { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY };
+

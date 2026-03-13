@@ -5,6 +5,7 @@ import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import { listGamificationEvents } from '../../services/gamification';
 import { GamificationEventDto } from '../../types/gamification';
+import { runWhenIdle } from '../../utils/idle';
 
 type EventFilter = 'all' | 'gain' | 'loss';
 
@@ -107,7 +108,10 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
             }
         };
 
-        load();
+        const cancel = runWhenIdle(() => {
+            load();
+        });
+        return cancel;
     }, []);
 
     const filteredEvents = useMemo(() => {
@@ -137,9 +141,9 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
     }, [events, filter, query]);
 
     return (
-        <Layout contentContainerClassName="p-0 bg-[#f8f7f5]">
+        <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
             <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-24">
-                <View className="bg-white px-4 pt-4 pb-4 border-b border-slate-100">
+                <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                     <View className="flex-row items-center mb-3">
                         <TouchableOpacity
                             onPress={() => {
@@ -154,15 +158,15 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                             <ArrowLeft size={22} color="#0f172a" />
                         </TouchableOpacity>
                         <View>
-                            <Text className="text-slate-900 text-xl font-bold">Histórico de XP</Text>
-                            <Text className="text-slate-500 text-xs">Detalhes de cada ganho e perda de pontuação.</Text>
+                            <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">Histórico de XP</Text>
+                            <Text className="text-slate-500 dark:text-slate-300 text-xs">Detalhes de cada ganho e perda de pontuação.</Text>
                         </View>
                     </View>
 
-                    <View className="h-11 rounded-xl border border-slate-200 bg-[#f8f7f5] px-3 flex-row items-center">
+                    <View className="h-11 rounded-xl border border-slate-200 bg-[#f8f7f5] dark:bg-black px-3 flex-row items-center">
                         <Search size={16} color="#64748b" />
                         <TextInput
-                            className="flex-1 ml-2 text-slate-900"
+                            className="flex-1 ml-2 text-slate-900 dark:text-slate-100"
                             placeholder="Buscar eventos, ações ou detalhes"
                             value={query}
                             onChangeText={setQuery}
@@ -171,22 +175,22 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
 
                     <View className="flex-row gap-2 mt-3">
                         <TouchableOpacity
-                            className={`px-3 py-2 rounded-full border ${filter === 'all' ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                            className={`px-3 py-2 rounded-full border ${filter === 'all' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200'}`}
                             onPress={() => setFilter('all')}
                         >
-                            <Text className={`text-xs font-bold ${filter === 'all' ? 'text-white' : 'text-slate-600'}`}>Todos</Text>
+                            <Text className={`text-xs font-bold ${filter === 'all' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Todos</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            className={`px-3 py-2 rounded-full border ${filter === 'gain' ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                            className={`px-3 py-2 rounded-full border ${filter === 'gain' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200'}`}
                             onPress={() => setFilter('gain')}
                         >
-                            <Text className={`text-xs font-bold ${filter === 'gain' ? 'text-white' : 'text-slate-600'}`}>Ganhos</Text>
+                            <Text className={`text-xs font-bold ${filter === 'gain' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Ganhos</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            className={`px-3 py-2 rounded-full border ${filter === 'loss' ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                            className={`px-3 py-2 rounded-full border ${filter === 'loss' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200'}`}
                             onPress={() => setFilter('loss')}
                         >
-                            <Text className={`text-xs font-bold ${filter === 'loss' ? 'text-white' : 'text-slate-600'}`}>Perdas</Text>
+                            <Text className={`text-xs font-bold ${filter === 'loss' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Perdas</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -195,14 +199,14 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                     {loading ? (
                         <View className="items-center py-10">
                             <ActivityIndicator color="#f48c25" />
-                            <Text className="text-slate-500 text-xs mt-2">Carregando histórico...</Text>
+                            <Text className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando histórico...</Text>
                         </View>
                     ) : null}
 
                     {!loading && filteredEvents.length === 0 ? (
                         <Card noPadding>
                             <View className="p-4">
-                                <Text className="text-slate-600 text-sm">Sem eventos para os filtros informados.</Text>
+                                <Text className="text-slate-600 dark:text-slate-300 text-sm">Sem eventos para os filtros informados.</Text>
                             </View>
                         </Card>
                     ) : null}
@@ -223,8 +227,8 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                                                 <Sparkles size={18} color={isGain ? '#059669' : '#dc2626'} />
                                             </View>
                                             <View className="ml-3">
-                                                <Text className="text-slate-900 font-bold capitalize">{title}</Text>
-                                                <Text className="text-slate-500 text-xs">{description}</Text>
+                                                <Text className="text-slate-900 dark:text-slate-100 font-bold capitalize">{title}</Text>
+                                                <Text className="text-slate-500 dark:text-slate-300 text-xs">{description}</Text>
                                             </View>
                                         </View>
                                         <Text className={`text-sm font-bold ${isGain ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -232,29 +236,29 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                                         </Text>
                                     </View>
 
-                                    <View className="mt-3 pt-3 border-t border-slate-100">
+                                    <View className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                                         <View className="flex-row items-center mb-2">
                                             <Clock3 size={13} color="#94a3b8" />
-                                            <Text className="text-slate-400 text-xs ml-1">
+                                            <Text className="text-slate-400 dark:text-slate-300 text-xs ml-1">
                                                 {new Date(event.created_at).toLocaleString('pt-BR')}
                                             </Text>
                                         </View>
 
-                                        <View className="bg-slate-50 rounded-lg p-3 border border-slate-100 mb-2">
-                                            <Text className="text-slate-600 text-xs font-bold uppercase mb-1">Motivo do XP</Text>
-                                            <Text className="text-slate-600 text-xs">{reason}</Text>
+                                        <View className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-3 border border-slate-100 dark:border-slate-800 mb-2">
+                                            <Text className="text-slate-600 dark:text-slate-300 text-xs font-bold uppercase mb-1">Motivo do XP</Text>
+                                            <Text className="text-slate-600 dark:text-slate-300 text-xs">{reason}</Text>
                                         </View>
 
                                         {metadata.length > 0 ? (
-                                            <View className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                                            <View className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-3 border border-slate-100 dark:border-slate-800">
                                                 <View className="flex-row items-center mb-2">
                                                     <Filter size={12} color="#64748b" />
-                                                    <Text className="text-slate-600 text-xs font-bold ml-1 uppercase">Detalhes</Text>
+                                                    <Text className="text-slate-600 dark:text-slate-300 text-xs font-bold ml-1 uppercase">Detalhes</Text>
                                                 </View>
                                                 {metadata.map((item) => (
                                                     <View key={`${event.id}-${item.label}`} className="flex-row justify-between mb-1">
-                                                        <Text className="text-slate-500 text-xs capitalize">{item.label}</Text>
-                                                        <Text className="text-slate-700 text-xs font-semibold">{item.value}</Text>
+                                                        <Text className="text-slate-500 dark:text-slate-300 text-xs capitalize">{item.label}</Text>
+                                                        <Text className="text-slate-700 dark:text-slate-200 text-xs font-semibold">{item.value}</Text>
                                                     </View>
                                                 ))}
                                             </View>
@@ -271,3 +275,8 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
 };
 
 export default XpHistory;
+
+
+
+
+

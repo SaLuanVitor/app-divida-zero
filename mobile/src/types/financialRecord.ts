@@ -1,4 +1,4 @@
-﻿export type FinancialRecordMode = 'launch' | 'debt';
+export type FinancialRecordMode = 'launch' | 'debt';
 export type FinancialFlowType = 'income' | 'expense';
 export type FinancialRecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -38,5 +38,6 @@ export interface FinancialRecordDto {
   notes?: string;
   group_code?: string;
 }
+
 
 

@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import SecuritySettings from '../screens/app/SecuritySettings';
 import HelpSupport from '../screens/app/HelpSupport';
 import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, Landmark } from 'lucide-react-native';
 import { useOverlay } from '../context/OverlayContext';
+import { useThemeMode } from '../context/ThemeContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -23,24 +24,27 @@ const NavItem = ({
     active,
     onPress,
     icon,
+    darkMode,
 }: {
     label: string;
     active: boolean;
     onPress: () => void;
     icon: React.ReactNode;
+    darkMode: boolean;
 }) => (
     <TouchableOpacity onPress={onPress} style={styles.navItem}>
         {icon}
-        <Text style={[styles.navText, active && styles.navTextActive]}>{label}</Text>
+        <Text style={[styles.navText, darkMode && styles.navTextDark, active && styles.navTextActive]}>{label}</Text>
     </TouchableOpacity>
 );
 
 const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     const insets = useSafeAreaInsets();
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
+    const { darkMode } = useThemeMode();
 
     const showActions = isOverlayOpen('actions');
-
+    const inactiveIcon = darkMode ? '#94a3b8' : '#8a7560';
     const activeRouteName = useMemo(() => state?.routes?.[state?.index]?.name, [state?.index, state?.routes]);
 
     const goTo = (name: string, params?: Record<string, unknown>) => {
@@ -55,7 +59,6 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
             closeOverlay();
             return;
         }
-
         openOverlay('actions');
     };
 
@@ -63,66 +66,65 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
         <>
             {showActions ? (
                 <Pressable style={styles.overlay} onPress={closeOverlay}>
-                    <View style={styles.actionsContainer}>
+                    <View style={[styles.actionsContainer, darkMode && styles.actionsContainerDark]}>
                         <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={() => goTo('Lançamentos', { mode: 'income' })}
+                            style={[styles.actionButton, darkMode && styles.actionButtonDark]}
+                            onPress={() => goTo('Lancamentos', { mode: 'income' })}
                         >
                             <Wallet size={18} color="#f48c25" />
-                            <Text style={styles.actionText}>Novo ganho</Text>
+                            <Text style={[styles.actionText, darkMode && styles.actionTextDark]}>Novo ganho</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={() => goTo('Lançamentos', { mode: 'debt' })}
+                            style={[styles.actionButton, darkMode && styles.actionButtonDark]}
+                            onPress={() => goTo('Lancamentos', { mode: 'debt' })}
                         >
                             <Landmark size={18} color="#f48c25" />
-                            <Text style={styles.actionText}>Nova dívida</Text>
+                            <Text style={[styles.actionText, darkMode && styles.actionTextDark]}>Nova dívida</Text>
                         </TouchableOpacity>
                     </View>
                 </Pressable>
             ) : null}
 
-            <View
-                style={[styles.tabBar, { paddingBottom: Math.max(10, insets.bottom) }]}
-            >
+            <View style={[styles.tabBar, darkMode && styles.tabBarDark, { paddingBottom: Math.max(10, insets.bottom) }]}>
                 <View style={styles.tabBarContent}>
                     <NavItem
                         label="Início"
-                        active={activeRouteName === 'Início'}
-                        onPress={() => goTo('Início')}
-                        icon={<House size={20} color={activeRouteName === 'Início' ? '#f48c25' : '#8a7560'} />}
+                        darkMode={darkMode}
+                        active={activeRouteName === 'Inicio'}
+                        onPress={() => goTo('Inicio')}
+                        icon={<House size={20} color={activeRouteName === 'Inicio' ? '#f48c25' : inactiveIcon} />}
                     />
 
                     <NavItem
                         label="Metas"
+                        darkMode={darkMode}
                         active={activeRouteName === 'Metas'}
                         onPress={() => goTo('Metas')}
-                        icon={<Trophy size={20} color={activeRouteName === 'Metas' ? '#f48c25' : '#8a7560'} />}
+                        icon={<Trophy size={20} color={activeRouteName === 'Metas' ? '#f48c25' : inactiveIcon} />}
                     />
 
                     <View style={styles.centerButtonContainer}>
-                        <TouchableOpacity
-                            onPress={toggleActions}
-                            style={styles.centerButton}
-                        >
+                        <TouchableOpacity onPress={toggleActions} style={[styles.centerButton, darkMode && styles.centerButtonDark]}>
                             {showActions ? <CirclePlus size={22} color="#fff" /> : <Plus size={24} color="#fff" />}
                         </TouchableOpacity>
-                        <Text style={styles.centerButtonText}>Ações</Text>
+                        <Text style={[styles.centerButtonText, darkMode && styles.centerButtonTextDark]}>Ações</Text>
                     </View>
 
                     <NavItem
                         label="Relatórios"
-                        active={activeRouteName === 'Relatórios'}
-                        onPress={() => goTo('Relatórios')}
-                        icon={<ChartColumnIncreasing size={20} color={activeRouteName === 'Relatórios' ? '#f48c25' : '#8a7560'} />}
+                        darkMode={darkMode}
+                        active={activeRouteName === 'Relatorios'}
+                        onPress={() => goTo('Relatorios')}
+                        icon={<ChartColumnIncreasing size={20} color={activeRouteName === 'Relatorios' ? '#f48c25' : inactiveIcon} />}
                     />
 
                     <NavItem
                         label="Perfil"
+                        darkMode={darkMode}
                         active={activeRouteName === 'Perfil'}
                         onPress={() => goTo('Perfil')}
-                        icon={<User size={20} color={activeRouteName === 'Perfil' ? '#f48c25' : '#8a7560'} />}
+                        icon={<User size={20} color={activeRouteName === 'Perfil' ? '#f48c25' : inactiveIcon} />}
                     />
                 </View>
             </View>
@@ -133,59 +135,17 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 export const AppNavigator = () => {
     return (
         <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
-            <Tab.Screen name="Início" component={Home} />
+            <Tab.Screen name="Inicio" component={Home} />
             <Tab.Screen name="Metas" component={Metas} />
-            <Tab.Screen name="Relatórios" component={Relatorios} />
+            <Tab.Screen name="Relatorios" component={Relatorios} />
             <Tab.Screen name="Perfil" component={Profile} />
-            <Tab.Screen
-                name="Lançamentos"
-                component={Lancamentos}
-                options={{
-                    tabBarButton: () => null,
-                }}
-            />
-            <Tab.Screen
-                name="Histórico XP"
-                component={XpHistory}
-                options={{
-                    tabBarButton: () => null,
-                }}
-            />
-            <Tab.Screen
-                name="Dados Pessoais"
-                component={PersonalData}
-                options={{
-                    tabBarButton: () => null,
-                }}
-            />
-            <Tab.Screen
-                name="Configurações App"
-                component={AppSettings}
-                options={{
-                    tabBarButton: () => null,
-                }}
-            />
-            <Tab.Screen
-                name="Notificações"
-                component={NotificationSettings}
-                options={{
-                    tabBarButton: () => null,
-                }}
-            />
-            <Tab.Screen
-                name="Segurança"
-                component={SecuritySettings}
-                options={{
-                    tabBarButton: () => null,
-                }}
-            />
-            <Tab.Screen
-                name="Ajuda e Suporte"
-                component={HelpSupport}
-                options={{
-                    tabBarButton: () => null,
-                }}
-            />
+            <Tab.Screen name="Lancamentos" component={Lancamentos} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Historico XP" component={XpHistory} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Dados Pessoais" component={PersonalData} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Configuracoes App" component={AppSettings} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Notificacoes" component={NotificationSettings} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Seguranca" component={SecuritySettings} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Ajuda e Suporte" component={HelpSupport} options={{ tabBarButton: () => null }} />
         </Tab.Navigator>
     );
 };
@@ -201,6 +161,9 @@ const styles = StyleSheet.create({
         marginTop: 4,
         fontWeight: '700',
         color: '#8a7560',
+    },
+    navTextDark: {
+        color: '#94a3b8',
     },
     navTextActive: {
         color: '#f48c25',
@@ -221,6 +184,10 @@ const styles = StyleSheet.create({
         borderColor: '#e2e8f0',
         padding: 12,
     },
+    actionsContainerDark: {
+        backgroundColor: '#121212',
+        borderColor: '#334155',
+    },
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -230,9 +197,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#f8fafc',
         marginBottom: 8,
     },
+    actionButtonDark: {
+        backgroundColor: '#1f2937',
+    },
     actionText: {
         color: '#0f172a',
         fontWeight: '700',
+    },
+    actionTextDark: {
+        color: '#e2e8f0',
     },
     tabBar: {
         position: 'absolute',
@@ -244,6 +217,10 @@ const styles = StyleSheet.create({
         borderTopColor: '#f1ede9',
         paddingTop: 8,
         zIndex: 50,
+    },
+    tabBarDark: {
+        backgroundColor: '#000000',
+        borderTopColor: '#1f2937',
     },
     tabBarContent: {
         flexDirection: 'row',
@@ -265,10 +242,17 @@ const styles = StyleSheet.create({
         borderWidth: 4,
         borderColor: '#ffffff',
     },
+    centerButtonDark: {
+        borderColor: '#000000',
+    },
     centerButtonText: {
         fontSize: 10,
         marginTop: 4,
         fontWeight: '700',
         color: '#8a7560',
     },
+    centerButtonTextDark: {
+        color: '#94a3b8',
+    },
 });
+

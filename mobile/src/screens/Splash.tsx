@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, ActivityIndicator, Animated, StyleSheet } from 'react-native';
 import { ShieldCheck } from 'lucide-react-native';
+import { useThemeMode } from '../context/ThemeContext';
 
 const Splash = () => {
-    const fadeAnim = new Animated.Value(0);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const { darkMode } = useThemeMode();
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
@@ -11,20 +13,18 @@ const Splash = () => {
             duration: 1000,
             useNativeDriver: true,
         }).start();
-    }, []);
+    }, [fadeAnim]);
 
     return (
-        <View style={styles.container}>
-            <Animated.View
-                style={[styles.content, { opacity: fadeAnim }]}
-            >
+        <View style={[styles.container, { backgroundColor: darkMode ? '#000000' : '#ffffff' }]}>
+            <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
                 <View style={styles.logoContainer}>
                     <ShieldCheck size={64} color="#f48c25" />
                 </View>
-                <Text style={styles.title}>
+                <Text style={[styles.title, { color: darkMode ? '#e2e8f0' : '#0f172a' }]}>
                     Dívida<Text style={styles.titleHighlight}>Zero</Text>
                 </Text>
-                <Text style={styles.subtitle}>
+                <Text style={[styles.subtitle, { color: darkMode ? '#64748b' : '#94a3b8' }]}>
                     Assuma o Controle
                 </Text>
 
@@ -39,7 +39,6 @@ const Splash = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#ffffff',
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -53,7 +52,6 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     title: {
-        color: '#0f172a',
         fontSize: 36,
         fontWeight: '700',
         letterSpacing: -1,
@@ -62,7 +60,6 @@ const styles = StyleSheet.create({
         color: '#f48c25',
     },
     subtitle: {
-        color: '#94a3b8',
         marginTop: 8,
         fontWeight: '500',
         letterSpacing: 2,
@@ -75,3 +72,6 @@ const styles = StyleSheet.create({
 });
 
 export default Splash;
+
+
+

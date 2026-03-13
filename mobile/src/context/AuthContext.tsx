@@ -1,4 +1,4 @@
-﻿import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, AuthResponse } from '../types/auth';
 import api, { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '../services/api';
@@ -149,3 +149,4 @@ export function useAuth() {
 
     return context;
 }
+

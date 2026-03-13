@@ -66,10 +66,10 @@ const toMonthLabel = (date: Date) => {
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const chipClass = (active: boolean) =>
-    `px-3 py-2 rounded-full border ${active ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`;
+    `px-3 py-2 rounded-full border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`;
 
 const chipTextClass = (active: boolean) =>
-    `text-xs font-bold ${active ? 'text-white' : 'text-slate-600'}`;
+    `text-xs font-bold ${active ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`;
 
 const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
     sprout: Trophy,
@@ -274,32 +274,32 @@ const Lancamentos = () => {
 
     return (
         <>
-            <Layout className="bg-[#f8f7f5]" contentContainerClassName="p-0 bg-[#f8f7f5]">
+            <Layout className="bg-[#f8f7f5] dark:bg-black" contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
                 <ScrollView className="flex-1" contentContainerClassName="px-4 pb-28" showsVerticalScrollIndicator={false}>
                     <View className="flex-row items-center mt-4 mb-4">
                         <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-1">
                             <ArrowLeft size={22} color="#0f172a" />
                         </TouchableOpacity>
                         <View>
-                            <Text className="text-slate-900 text-xl font-bold">{formTitle}</Text>
-                            <Text className="text-slate-500 text-xs">Preencha os dados para registrar no sistema.</Text>
+                            <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">{formTitle}</Text>
+                            <Text className="text-slate-500 dark:text-slate-300 text-xs">Preencha os dados para registrar no sistema.</Text>
                         </View>
                     </View>
 
-                    <View className="bg-white rounded-2xl border border-slate-200 p-4 mb-4">
-                        <Text className="text-slate-800 font-bold mb-3">Tipo de cadastro</Text>
+                    <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
+                        <Text className="text-slate-800 dark:text-slate-100 font-bold mb-3">Tipo de cadastro</Text>
                         <View className="flex-row gap-2">
                             {tabOptions.map((option) => {
                                 const active = activeTab === option.value;
                                 return (
                                     <TouchableOpacity
                                         key={option.value}
-                                        className={`flex-1 rounded-xl border px-3 py-2 ${active ? 'bg-primary border-primary' : 'bg-white border-slate-200'}`}
+                                        className={`flex-1 rounded-xl border px-3 py-2 ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                                         onPress={() => setActiveTab(option.value)}
                                     >
                                         <View className="flex-row items-center justify-center gap-2">
                                             {option.icon}
-                                            <Text className={`${active ? 'text-white' : 'text-slate-700'} font-bold text-sm`}>{option.label}</Text>
+                                            <Text className={`${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'} font-bold text-sm`}>{option.label}</Text>
                                         </View>
                                     </TouchableOpacity>
                                 );
@@ -307,36 +307,36 @@ const Lancamentos = () => {
                         </View>
                     </View>
 
-                    <View className="bg-white rounded-2xl border border-slate-200 p-4 mb-4">
-                        <Text className="text-slate-800 font-bold mb-3">Dados principais</Text>
+                    <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
+                        <Text className="text-slate-800 dark:text-slate-100 font-bold mb-3">Dados principais</Text>
 
-                        <Text className="text-slate-600 text-xs mb-1">Título</Text>
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Título</Text>
                         <TextInput
-                            className="h-11 rounded-xl border border-slate-200 px-3 mb-3 text-slate-900"
+                            className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                             placeholder={activeTab === 'debt' ? 'Ex: Cartão Nubank' : 'Ex: Salário'}
                             value={title}
                             onChangeText={setTitle}
                         />
 
-                        <Text className="text-slate-600 text-xs mb-1">Valor (R$)</Text>
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Valor (R$)</Text>
                         <TextInput
-                            className="h-11 rounded-xl border border-slate-200 px-3 mb-3 text-slate-900"
+                            className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                             placeholder="R$ 0,00"
                             keyboardType="number-pad"
                             value={formatCurrencyFromDigits(amountDigits)}
                             onChangeText={handleAmountChange}
                         />
 
-                        <Text className="text-slate-600 text-xs mb-1">Data inicial</Text>
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data inicial</Text>
                         <TouchableOpacity
-                            className="h-11 rounded-xl border border-slate-200 px-3 mb-3 flex-row items-center justify-between bg-white"
+                            className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
                             onPress={openDatePicker}
                         >
-                            <Text className="text-slate-900">{formatDateBR(startDate)}</Text>
+                            <Text className="text-slate-900 dark:text-slate-100">{formatDateBR(startDate)}</Text>
                             <CalendarDays size={18} color="#64748b" />
                         </TouchableOpacity>
 
-                        <Text className="text-slate-600 text-xs mb-2">Categoria ({activeTab === 'debt' ? 'dívida' : 'ganho'})</Text>
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Categoria ({activeTab === 'debt' ? 'dívida' : 'ganho'})</Text>
                         <View className="flex-row flex-wrap gap-2 mb-3">
                             {categoryOptions.map((option) => {
                                 const active = category === option;
@@ -350,9 +350,9 @@ const Lancamentos = () => {
 
                         {category === 'Outro' ? (
                             <>
-                                <Text className="text-slate-600 text-xs mb-1">Informe a categoria</Text>
+                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Informe a categoria</Text>
                                 <TextInput
-                                    className="h-11 rounded-xl border border-slate-200 px-3 mb-3 text-slate-900"
+                                    className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                                     placeholder="Ex: Assinaturas"
                                     value={customCategory}
                                     onChangeText={setCustomCategory}
@@ -360,7 +360,7 @@ const Lancamentos = () => {
                             </>
                         ) : null}
 
-                        <Text className="text-slate-600 text-xs mb-2">Prioridade</Text>
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Prioridade</Text>
                         <View className="flex-row gap-2 mb-3">
                             {priorityOptions.map((option) => {
                                 const active = priority === option.value;
@@ -372,18 +372,18 @@ const Lancamentos = () => {
                             })}
                         </View>
 
-                        <Text className="text-slate-600 text-xs mb-1">Descrição (opcional)</Text>
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Descrição (opcional)</Text>
                         <TextInput
-                            className="min-h-[70px] rounded-xl border border-slate-200 px-3 py-2 mb-3 text-slate-900"
+                            className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 mb-3 text-slate-900 dark:text-slate-100"
                             placeholder="Detalhes úteis para esse registro"
                             multiline
                             value={description}
                             onChangeText={setDescription}
                         />
 
-                        <Text className="text-slate-600 text-xs mb-1">Observações extras (opcional)</Text>
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Observações extras (opcional)</Text>
                         <TextInput
-                            className="min-h-[70px] rounded-xl border border-slate-200 px-3 py-2 text-slate-900"
+                            className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
                             placeholder="Ex: débito automático, lembrete, conta compartilhada..."
                             multiline
                             value={notes}
@@ -391,11 +391,11 @@ const Lancamentos = () => {
                         />
                     </View>
 
-                    <View className="bg-white rounded-2xl border border-slate-200 p-4 mb-4">
+                    <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
                         <View className="flex-row items-center justify-between mb-3">
                             <View className="flex-row items-center gap-2">
                                 <Repeat size={16} color="#334155" />
-                                <Text className="text-slate-800 font-bold">Recorrência</Text>
+                                <Text className="text-slate-800 dark:text-slate-100 font-bold">Recorrência</Text>
                             </View>
                             <TouchableOpacity onPress={() => setRecurring((prev) => !prev)} className={chipClass(recurring)}>
                                 <Text className={chipTextClass(recurring)}>{recurring ? 'Recorrente' : 'Único'}</Text>
@@ -404,7 +404,7 @@ const Lancamentos = () => {
 
                         {recurring ? (
                             <>
-                                <Text className="text-slate-600 text-xs mb-2">Frequência</Text>
+                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Frequência</Text>
                                 <View className="flex-row gap-2 mb-3 flex-wrap">
                                     {recurrenceOptions.map((option) => {
                                         const active = recurrenceType === option.value;
@@ -416,13 +416,13 @@ const Lancamentos = () => {
                                     })}
                                 </View>
 
-                                <Text className="text-slate-600 text-xs mb-1">
+                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">
                                     {recurrenceType === 'daily'
                                         ? 'Quantidade de dias (máx. 365)'
                                         : 'Quantidade de ocorrências (máx. 36)'}
                                 </Text>
                                 <TextInput
-                                    className="h-11 rounded-xl border border-slate-200 px-3 text-slate-900"
+                                    className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
                                     keyboardType="number-pad"
                                     placeholder={recurrenceType === 'daily' ? '30' : '6'}
                                     value={recurrenceCount}
@@ -430,26 +430,26 @@ const Lancamentos = () => {
                                 />
                             </>
                         ) : (
-                            <Text className="text-slate-500 text-xs">Registro único: será criado apenas um lançamento.</Text>
+                            <Text className="text-slate-500 dark:text-slate-300 text-xs">Registro único: será criado apenas um lançamento.</Text>
                         )}
                     </View>
 
                     {activeTab === 'debt' && !recurring ? (
-                        <View className="bg-white rounded-2xl border border-slate-200 p-4 mb-4">
-                            <Text className="text-slate-800 font-bold mb-3">Parcelamento</Text>
+                        <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
+                            <Text className="text-slate-800 dark:text-slate-100 font-bold mb-3">Parcelamento</Text>
 
-                            <Text className="text-slate-600 text-xs mb-1">Número de parcelas</Text>
+                            <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Número de parcelas</Text>
                             <TextInput
-                                className="h-11 rounded-xl border border-slate-200 px-3 mb-3 text-slate-900"
+                                className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                                 keyboardType="number-pad"
                                 placeholder="1"
                                 value={installmentsTotal}
                                 onChangeText={handleInstallmentsChange}
                             />
 
-                            <Text className="text-slate-600 text-xs mb-1">Dia preferencial de pagamento (1 a 28)</Text>
+                            <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Dia preferencial de pagamento (1 a 28)</Text>
                             <TextInput
-                                className="h-11 rounded-xl border border-slate-200 px-3 text-slate-900"
+                                className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
                                 keyboardType="number-pad"
                                 placeholder="Opcional"
                                 value={dayOfMonth}
@@ -475,20 +475,20 @@ const Lancamentos = () => {
 
             {showDatePicker ? (
                 <Pressable className="absolute inset-0 bg-black/20 z-40" onPress={closeDatePicker}>
-                    <View className="absolute bottom-24 left-4 right-4 bg-white rounded-2xl border border-slate-200 p-3">
+                    <View className="absolute bottom-24 left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3">
                         <View className="flex-row items-center justify-between mb-3">
-                            <TouchableOpacity className="p-2 rounded-full bg-slate-100" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
+                            <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
                                 <ChevronLeft size={16} color="#1f2937" />
                             </TouchableOpacity>
-                            <Text className="text-slate-900 font-bold">{toMonthLabel(pickerMonth)}</Text>
-                            <TouchableOpacity className="p-2 rounded-full bg-slate-100" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 1))}>
+                            <Text className="text-slate-900 dark:text-slate-100 font-bold">{toMonthLabel(pickerMonth)}</Text>
+                            <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 1))}>
                                 <ChevronRight size={16} color="#1f2937" />
                             </TouchableOpacity>
                         </View>
 
                         <View className="flex-row justify-between mb-2 px-1">
                             {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
-                                <Text key={`${day}-${idx}`} className="w-8 text-center text-xs font-bold text-[#8a7560]">{day}</Text>
+                                <Text key={`${day}-${idx}`} className="w-8 text-center text-xs font-bold text-[#8a7560] dark:text-slate-300">{day}</Text>
                             ))}
                         </View>
 
@@ -503,7 +503,7 @@ const Lancamentos = () => {
                                                 className={`w-7 h-7 rounded-lg items-center justify-center ${isSelected ? 'bg-primary' : ''}`}
                                                 onPress={() => selectDate(cell.date!)}
                                             >
-                                                <Text className={`${isSelected ? 'text-white font-bold' : 'text-slate-700'} text-sm`}>
+                                                <Text className={`${isSelected ? 'text-white font-bold' : 'text-slate-700 dark:text-slate-200'} text-sm`}>
                                                     {cell.day}
                                                 </Text>
                                             </TouchableOpacity>
@@ -521,7 +521,7 @@ const Lancamentos = () => {
             {xpPopup ? (
                 <View className="absolute inset-0 z-50">
                     <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
-                    <View className="absolute left-5 right-5 top-[22%] bg-white rounded-3xl border border-orange-100 p-5">
+                    <View className="absolute left-5 right-5 top-[22%] bg-white dark:bg-[#121212] rounded-3xl border border-orange-100 p-5">
                         <View className="items-center">
                             <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border border-primary/20 mb-3">
                                 {(() => {
@@ -529,10 +529,10 @@ const Lancamentos = () => {
                                     return <Icon size={40} color="#f48c25" />;
                                 })()}
                             </View>
-                            <Text className="text-slate-900 text-2xl font-extrabold text-center">
+                            <Text className="text-slate-900 dark:text-slate-100 text-2xl font-extrabold text-center">
                                 {xpPopup.leveled_up ? 'Subiu de nível!' : 'Lançamento realizado!'}
                             </Text>
-                            <Text className="text-slate-500 text-sm text-center mt-1">
+                            <Text className="text-slate-500 dark:text-slate-300 text-sm text-center mt-1">
                                 {xpPopup.leveled_up
                                     ? `Você chegou ao nível ${xpPopup.summary.level} (${xpPopup.summary.level_title}).`
                                     : 'Você ganhou pontos por manter o controle financeiro.'}
@@ -540,10 +540,10 @@ const Lancamentos = () => {
 
                             <View className="w-full mt-4 bg-[#fff7ed] rounded-2xl border border-orange-100 p-4">
                                 <Text className="text-primary text-xs font-bold uppercase text-center">Recompensa</Text>
-                                <Text className="text-slate-900 text-3xl font-black text-center mt-1">
+                                <Text className="text-slate-900 dark:text-slate-100 text-3xl font-black text-center mt-1">
                                     {xpPopup.points > 0 ? `+${xpPopup.points}` : xpPopup.points} XP
                                 </Text>
-                                <Text className="text-slate-600 text-sm text-center mt-1">
+                                <Text className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
                                     Nível {xpPopup.summary.level} • {xpPopup.summary.level_title}
                                 </Text>
                                 <View className="h-2 bg-slate-200 rounded-full overflow-hidden mt-3">
@@ -561,3 +561,8 @@ const Lancamentos = () => {
 };
 
 export default Lancamentos;
+
+
+
+
+

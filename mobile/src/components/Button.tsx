@@ -33,7 +33,7 @@ const Button: React.FC<ButtonProps> = ({
     const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
         primary: 'bg-primary shadow-md shadow-orange-200',
         secondary: 'bg-slate-800',
-        outline: 'bg-transparent border border-slate-200',
+        outline: 'bg-transparent border border-slate-200 dark:border-slate-700',
         ghost: 'bg-transparent',
         danger: 'bg-red-500 shadow-md shadow-red-200',
     };
@@ -41,7 +41,7 @@ const Button: React.FC<ButtonProps> = ({
     const textVariants: Record<NonNullable<ButtonProps['variant']>, string> = {
         primary: 'text-white',
         secondary: 'text-white',
-        outline: 'text-slate-900',
+        outline: 'text-slate-900 dark:text-slate-100',
         ghost: 'text-primary',
         danger: 'text-white',
     };
@@ -84,3 +84,4 @@ const Button: React.FC<ButtonProps> = ({
 };
 
 export default Button;
+
