@@ -581,6 +581,7 @@ const Home = () => {
                     <TextInput
                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 mb-4 text-slate-900 dark:text-slate-100"
                         placeholder="Buscar por título, categoria, valor, data ou status"
+                        placeholderTextColor="#94a3b8"
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />

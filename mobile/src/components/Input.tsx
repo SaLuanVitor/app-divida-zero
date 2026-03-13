@@ -66,7 +66,7 @@ const Input: React.FC<InputProps> = ({
 
                 <TextInput
                     className={cn('flex-1 h-full text-slate-900 dark:text-slate-100 text-base font-normal', className)}
-                    placeholderTextColor="#64748b"
+                    placeholderTextColor="#94a3b8"
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     secureTextEntry={actualSecureTextEntry}
