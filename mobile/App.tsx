@@ -21,9 +21,14 @@ import { OverlayProvider } from './src/context/OverlayContext';
 import { ThemeProvider, useThemeMode } from './src/context/ThemeContext';
 import { RootNavigator } from './src/navigation';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 
 function AppContent() {
-  const { darkMode } = useThemeMode();
+  const { darkMode, loadingTheme } = useThemeMode();
+
+  if (loadingTheme) {
+    return <View style={{ flex: 1, backgroundColor: '#f8f7f5' }} />;
+  }
 
   return (
     <NavigationContainer>

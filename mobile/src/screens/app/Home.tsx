@@ -477,7 +477,7 @@ const Home = () => {
                         <View className="p-4">
                             <View className="flex-row items-center justify-between mb-4">
                                 <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(-1)}>
-                                    <ChevronLeft size={16} color="#1f2937" />
+                                    <ChevronLeft size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} />
                                 </TouchableOpacity>
                                 <TouchableOpacity className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" onPress={openPeriodPicker}>
                                     <Text className="text-slate-900 dark:text-slate-100 text-sm font-bold">{toMonthLabel(currentMonth)}</Text>
@@ -487,7 +487,7 @@ const Home = () => {
                                         <Text className="text-primary text-xs font-bold">Hoje</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(1)}>
-                                        <ChevronRight size={16} color="#1f2937" />
+                                        <ChevronRight size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} />
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -672,8 +672,8 @@ const Home = () => {
                                     </View>
 
                                     <View className="flex-row items-center justify-end gap-2 mt-3">
-                                        <TouchableOpacity onPress={() => requestDeleteSingle(item)} className="px-3 py-2 rounded-lg bg-slate-200">
-                                            <Text className="text-slate-700 dark:text-slate-200 text-xs font-bold">Excluir</Text>
+                                        <TouchableOpacity onPress={() => requestDeleteSingle(item)} className="px-3 py-2 rounded-lg bg-slate-200 dark:bg-slate-700">
+                                            <Text className="text-slate-700 dark:text-white text-xs font-bold">Excluir</Text>
                                         </TouchableOpacity>
                                         {item.status === 'pending' ? (
                                             <TouchableOpacity onPress={() => requestPay(item)} className="px-3 py-2 rounded-lg bg-primary">
@@ -779,11 +779,11 @@ const Home = () => {
                             <>
                                 <View className="flex-row items-center justify-between mb-3">
                                     <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerYear((prev) => prev - 1)}>
-                                        <ChevronLeft size={14} color="#334155" />
+                                        <ChevronLeft size={14} color={darkMode ? '#e2e8f0' : '#334155'} />
                                     </TouchableOpacity>
                                     <Text className="text-slate-900 dark:text-slate-100 font-bold">{pickerYear}</Text>
                                     <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerYear((prev) => prev + 1)}>
-                                        <ChevronRight size={14} color="#334155" />
+                                        <ChevronRight size={14} color={darkMode ? '#e2e8f0' : '#334155'} />
                                     </TouchableOpacity>
                                 </View>
                                 <View className="flex-row flex-wrap justify-between">
