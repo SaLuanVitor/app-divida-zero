@@ -1,4 +1,4 @@
-﻿// Disable Reanimated strict mode logger (safe guard for versions that don't expose setLogLevel)
+// Disable Reanimated strict mode logger (safe guard for versions that don't expose setLogLevel)
 if (__DEV__) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -18,19 +18,30 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import { OverlayProvider } from './src/context/OverlayContext';
+import { ThemeProvider, useThemeMode } from './src/context/ThemeContext';
 import { RootNavigator } from './src/navigation';
 import { StatusBar } from 'expo-status-bar';
+
+function AppContent() {
+  const { darkMode } = useThemeMode();
+
+  return (
+    <NavigationContainer>
+      <OverlayProvider>
+        <RootNavigator />
+        <StatusBar style={darkMode ? 'light' : 'dark'} />
+      </OverlayProvider>
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer>
-          <OverlayProvider>
-            <RootNavigator />
-            <StatusBar style="dark" />
-          </OverlayProvider>
-        </NavigationContainer>
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

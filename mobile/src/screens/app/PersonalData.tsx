@@ -34,7 +34,7 @@ const PersonalData = () => {
     }
 
     if (!email.includes('@')) {
-      setFeedback({ kind: 'error', message: 'Informe um e-mail válido.' });
+      setFeedback({ kind: 'error', message: 'Informe um e-mail valido.' });
       return;
     }
 
@@ -52,15 +52,15 @@ const PersonalData = () => {
   };
 
   return (
-    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] p-0">
-      <View className="bg-white px-4 pt-4 pb-3 border-b border-slate-100">
+    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
+      <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100">
         <View className="flex-row items-center">
           <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
             <ArrowLeft size={22} color="#0f172a" />
           </TouchableOpacity>
           <View>
             <Text className="text-slate-900 text-xl font-bold">Dados pessoais</Text>
-            <Text className="text-slate-500 text-xs">Atualize seu nome e e-mail da conta.</Text>
+            <Text className="text-slate-500 dark:text-slate-300 text-xs">Atualize seu nome e e-mail da conta.</Text>
           </View>
         </View>
       </View>
@@ -85,7 +85,7 @@ const PersonalData = () => {
             </View>
           ) : null}
 
-          <Button title="Salvar alterações" onPress={onSave} loading={loading} disabled={loading || !hasChanges} />
+          <Button title="Salvar alteracoes" onPress={onSave} loading={loading} disabled={loading || !hasChanges} />
         </Card>
       </View>
     </Layout>
@@ -93,3 +93,7 @@ const PersonalData = () => {
 };
 
 export default PersonalData;
+
+
+
+

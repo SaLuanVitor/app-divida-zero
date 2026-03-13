@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import Login from '../screens/auth/Login';
 import Register from '../screens/auth/Register';
@@ -22,3 +22,4 @@ export const AuthNavigator = () => {
         </Stack.Navigator>
     );
 };
+

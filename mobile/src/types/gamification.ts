@@ -1,4 +1,4 @@
-﻿export interface GamificationSummaryDto {
+export interface GamificationSummaryDto {
   total_xp: number;
   level: number;
   level_title: string;
@@ -54,3 +54,4 @@ export const normalizeGamificationSummary = (
     ? summary.level_progress_pct
     : DEFAULT_GAMIFICATION_SUMMARY.level_progress_pct,
 });
+

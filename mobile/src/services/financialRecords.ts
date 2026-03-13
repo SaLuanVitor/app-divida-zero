@@ -1,4 +1,4 @@
-﻿import api from './api';
+import api from './api';
 import { CreateFinancialRecordPayload, FinancialRecordDto } from '../types/financialRecord';
 import { XpFeedbackDto } from '../types/gamification';
 
@@ -69,3 +69,4 @@ export const deleteFinancialRecord = async (id: number, scope: 'single' | 'group
     xp_feedback: payload?.xp_feedback ?? null,
   };
 };
+

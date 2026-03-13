@@ -27,12 +27,12 @@ const SecuritySettings = () => {
     }
 
     if (newPassword.length < 8) {
-      setFeedback({ kind: 'error', message: 'A nova senha deve ter no mínimo 8 caracteres.' });
+      setFeedback({ kind: 'error', message: 'A nova senha deve ter no minimo 8 caracteres.' });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setFeedback({ kind: 'error', message: 'A confirmação da nova senha não confere.' });
+      setFeedback({ kind: 'error', message: 'A confirmacao da nova senha nao confere.' });
       return;
     }
 
@@ -55,15 +55,15 @@ const SecuritySettings = () => {
   };
 
   return (
-    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] p-0">
-      <View className="bg-white px-4 pt-4 pb-3 border-b border-slate-100">
+    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
+      <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100">
         <View className="flex-row items-center">
           <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
             <ArrowLeft size={22} color="#0f172a" />
           </TouchableOpacity>
           <View>
             <Text className="text-slate-900 text-xl font-bold">Segurança</Text>
-            <Text className="text-slate-500 text-xs">Gerencie senha e proteção da conta.</Text>
+            <Text className="text-slate-500 dark:text-slate-300 text-xs">Gerencie senha e protecao da conta.</Text>
           </View>
         </View>
       </View>
@@ -113,3 +113,7 @@ const SecuritySettings = () => {
 };
 
 export default SecuritySettings;
+
+
+
+

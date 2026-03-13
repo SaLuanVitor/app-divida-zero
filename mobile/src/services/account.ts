@@ -10,3 +10,4 @@ export const changePassword = async (payload: { current_password: string; new_pa
   const { data } = await api.patch('/auth/change_password', payload);
   return data as { message: string };
 };
+

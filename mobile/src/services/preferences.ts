@@ -10,7 +10,6 @@ export const defaultAppPreferences: AppPreferences = {
   notify_weekly_summary: true,
   notify_xp_and_badges: true,
   dark_mode: false,
-  compact_mode: false,
   large_text: false,
 };
 
@@ -32,3 +31,4 @@ export const getAppPreferences = async (): Promise<AppPreferences> => {
 export const saveAppPreferences = async (next: AppPreferences) => {
   await AsyncStorage.setItem(APP_PREFERENCES_KEY, JSON.stringify(next));
 };
+

@@ -37,7 +37,7 @@ const NotificationSettings = () => {
     setPrefs(next);
     setMessage('');
     await saveAppPreferences(next);
-    setMessage('Preferências de notificação salvas.');
+    setMessage('Preferencias de notificacao salvas.');
   };
 
   const Item = ({
@@ -57,7 +57,7 @@ const NotificationSettings = () => {
       <View className="flex-row items-center justify-between">
         <View className="flex-1 pr-3">
           <Text className="text-slate-900 font-semibold">{title}</Text>
-          <Text className="text-slate-500 text-xs mt-0.5">{subtitle}</Text>
+          <Text className="text-slate-500 dark:text-slate-300 text-xs mt-0.5">{subtitle}</Text>
         </View>
         <Switch
           value={value}
@@ -70,15 +70,15 @@ const NotificationSettings = () => {
   );
 
   return (
-    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] p-0">
-      <View className="bg-white px-4 pt-4 pb-3 border-b border-slate-100">
+    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
+      <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100">
         <View className="flex-row items-center">
           <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
             <ArrowLeft size={22} color="#0f172a" />
           </TouchableOpacity>
           <View>
             <Text className="text-slate-900 text-xl font-bold">Notificações</Text>
-            <Text className="text-slate-500 text-xs">Defina o que você quer receber.</Text>
+            <Text className="text-slate-500 dark:text-slate-300 text-xs">Defina o que voce quer receber.</Text>
           </View>
         </View>
       </View>
@@ -91,14 +91,14 @@ const NotificationSettings = () => {
           </View>
 
           <Item
-            title="Ativar notificações"
-            subtitle="Liga ou desliga todas as notificações do app."
+            title="Ativar notificacoes"
+            subtitle="Liga ou desliga todas as notificacoes do app."
             value={prefs.notifications_enabled}
             onChange={(value) => update('notifications_enabled', value)}
           />
           <Item
             title="Vencimentos de hoje"
-            subtitle="Aviso no dia de vencimento das dívidas e lançamentos."
+            subtitle="Aviso no dia de vencimento das dividas e lancamentos."
             value={prefs.notify_due_today}
             onChange={(value) => update('notify_due_today', value)}
             disabled={!prefs.notifications_enabled}
@@ -137,3 +137,7 @@ const NotificationSettings = () => {
 };
 
 export default NotificationSettings;
+
+
+
+

@@ -85,20 +85,20 @@ const ResetPassword = () => {
     };
 
     return (
-        <Layout scrollable className="bg-[#f8f7f5]" contentContainerClassName="bg-[#f8f7f5] pb-10">
+        <Layout scrollable className="bg-[#f8f7f5] dark:bg-black" contentContainerClassName="bg-[#f8f7f5] dark:bg-black pb-10">
             <View className="flex-row items-center mb-6">
                 <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 self-start">
                     <ArrowLeft size={24} color="#0f172a" />
                 </TouchableOpacity>
-                <Text className="text-slate-900 text-lg font-bold ml-2">Redefinir Senha</Text>
+                <Text className="text-slate-900 dark:text-slate-100 text-lg font-bold ml-2">Redefinir Senha</Text>
             </View>
 
             <View className="items-center pt-3 pb-4">
                 <View className="mb-5 h-20 w-20 rounded-full bg-primary/10 items-center justify-center">
                     <KeyRound size={38} color="#f48c25" />
                 </View>
-                <Text className="text-2xl font-extrabold text-slate-900 text-center mb-2">Informe o token de recuperação</Text>
-                <Text className="text-sm text-slate-600 text-center">Use o token recebido para concluir a redefinição da senha.</Text>
+                <Text className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 text-center mb-2">Informe o token de recuperação</Text>
+                <Text className="text-sm text-slate-600 dark:text-slate-300 text-center">Use o token recebido para concluir a redefinição da senha.</Text>
             </View>
 
             <Input
@@ -154,3 +154,8 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
+
+
+
+
+

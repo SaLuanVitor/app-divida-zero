@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -36,7 +36,7 @@ const Layout: React.FC<LayoutProps> = ({
     return (
         <SafeAreaView
             edges={['top', 'left', 'right']}
-            className={cn('flex-1 bg-white', className)}
+            className={cn('flex-1 bg-white dark:bg-black', className)}
         >
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -66,3 +66,4 @@ const Layout: React.FC<LayoutProps> = ({
 };
 
 export default Layout;
+

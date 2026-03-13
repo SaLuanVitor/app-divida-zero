@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Mail, Lock, User, ArrowLeft, Trophy } from 'lucide-react-native';
 import Layout from '../../components/Layout';
@@ -29,7 +29,7 @@ const Register = () => {
     const passwordHint = useMemo(() => {
         if (!password) return 'Mínimo de 8 caracteres.';
         if (password.length < 8) return 'Senha ainda curta.';
-        return 'Senha com tamanho mínimo válido.';
+        return 'Senha com tamanho minimo valido.';
     }, [password]);
 
     const validate = () => {
@@ -46,7 +46,7 @@ const Register = () => {
             setEmailError('Informe seu e-mail.');
             valid = false;
         } else if (!emailRegex.test(email.trim())) {
-            setEmailError('Informe um e-mail válido.');
+            setEmailError('Informe um e-mail valido.');
             valid = false;
         } else {
             setEmailError('');
@@ -99,7 +99,7 @@ const Register = () => {
             if (passwordFieldError) setPasswordError(passwordFieldError);
 
             if (backendCode === 'email_taken') {
-                Alert.alert('E-mail já cadastrado', backendMessage || 'Use outro e-mail, faça login ou recupere sua senha.');
+                Alert.alert('E-mail ja cadastrado', backendMessage || 'Use outro e-mail, faca login ou recupere sua senha.');
                 return;
             }
 
@@ -111,7 +111,7 @@ const Register = () => {
     };
 
     return (
-        <Layout scrollable className="bg-[#f8f7f5]" contentContainerClassName="bg-[#f8f7f5] pb-10">
+        <Layout scrollable className="bg-[#f8f7f5] dark:bg-black" contentContainerClassName="bg-[#f8f7f5] dark:bg-black pb-10">
             <View className="flex-row items-center mb-5">
                 <TouchableOpacity
                     onPress={() => navigation.goBack()}
@@ -126,14 +126,14 @@ const Register = () => {
                 Crie sua conta e <Text className="text-primary">comece sua jornada</Text>
             </Text>
 
-            <View className="bg-white border border-[#e6e0db] rounded-2xl p-5 mb-8">
+            <View className="bg-white dark:bg-[#121212] border border-[#e6e0db] rounded-2xl p-5 mb-8">
                 <View className="flex-row items-center gap-4">
-                    <View className="w-16 h-16 rounded-full bg-[#f8f7f5] items-center justify-center border-2 border-dashed border-slate-300">
+                    <View className="w-16 h-16 rounded-full bg-[#f8f7f5] dark:bg-black items-center justify-center border-2 border-dashed border-slate-300">
                         <Trophy size={30} color="#94a3b8" />
                     </View>
                     <View className="flex-1">
                         <Text className="text-slate-900 font-bold text-base mb-1">Sua primeira conquista</Text>
-                        <Text className="text-slate-600 text-sm">
+                        <Text className="text-slate-600 dark:text-slate-300 text-sm">
                             Complete o cadastro para desbloquear a medalha de <Text className="text-primary font-bold">Novato</Text>.
                         </Text>
                     </View>
@@ -180,7 +180,7 @@ const Register = () => {
                 error={passwordError}
             />
 
-            <Text className={`text-xs mb-4 ml-1 ${password.length >= 8 ? 'text-emerald-600' : 'text-slate-500'}`}>
+            <Text className={`text-xs mb-4 ml-1 ${password.length >= 8 ? 'text-emerald-600' : 'text-slate-500 dark:text-slate-300'}`}>
                 {passwordHint}
             </Text>
 
@@ -193,10 +193,10 @@ const Register = () => {
             />
 
             <View className="mt-8 items-center">
-                <Text className="text-slate-500 text-sm">
-                    Já tem uma conta?{' '}
+                <Text className="text-slate-500 dark:text-slate-300 text-sm">
+                    Ja tem uma conta?{' '}
                     <Text className="text-primary font-bold" onPress={() => navigation.goBack()}>
-                        Faça login
+                        Faca login
                     </Text>
                 </Text>
             </View>
@@ -205,3 +205,7 @@ const Register = () => {
 };
 
 export default Register;
+
+
+
+

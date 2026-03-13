@@ -1,4 +1,4 @@
-﻿import { FinancialRecordDto } from '../types/financialRecord';
+import { FinancialRecordDto } from '../types/financialRecord';
 
 export type GamificationAchievementId =
   | 'first_record'
@@ -152,3 +152,4 @@ export const buildGamificationSummary = (records: FinancialRecordDto[]): Gamific
 };
 
 export const formatAchievementProgress = (progress: number, target: number) => `${Math.min(progress, target)}/${target}`;
+

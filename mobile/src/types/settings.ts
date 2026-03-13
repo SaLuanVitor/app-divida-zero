@@ -5,6 +5,6 @@ export interface AppPreferences {
   notify_weekly_summary: boolean;
   notify_xp_and_badges: boolean;
   dark_mode: boolean;
-  compact_mode: boolean;
   large_text: boolean;
 }
+
