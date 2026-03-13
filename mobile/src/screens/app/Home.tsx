@@ -24,7 +24,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useOverlay } from '../../context/OverlayContext';
 import { deleteFinancialRecord, listFinancialRecords, payFinancialRecord } from '../../services/financialRecords';
 import { FinancialRecordDto } from '../../types/financialRecord';
-import { GamificationSummaryDto, XpFeedbackDto } from '../../types/gamification';
+import {
+    DEFAULT_GAMIFICATION_SUMMARY,
+    GamificationSummaryDto,
+    normalizeGamificationSummary,
+    XpFeedbackDto
+} from '../../types/gamification';
 import { getGamificationSummary } from '../../services/gamification';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
@@ -116,16 +121,6 @@ const statusLabel = (status: CalendarStatus) => {
 
 const statusColorClass = (status: CalendarStatus) => (status === 'pending' ? 'text-primary' : 'text-teal-500');
 
-const defaultGamificationSummary: GamificationSummaryDto = {
-    total_xp: 0,
-    level: 1,
-    level_title: 'Iniciante',
-    level_icon: 'sprout',
-    xp_in_level: 0,
-    xp_to_next_level: 500,
-    level_progress_pct: 0,
-};
-
 const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
     sprout: Trophy,
     target: Target,
@@ -176,7 +171,7 @@ const Home = () => {
     const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpPopupState | null>(null);
-    const [gamificationSummary, setGamificationSummary] = useState<GamificationSummaryDto>(defaultGamificationSummary);
+    const [gamificationSummary, setGamificationSummary] = useState<GamificationSummaryDto>(DEFAULT_GAMIFICATION_SUMMARY);
     const [showPeriodPicker, setShowPeriodPicker] = useState(false);
     const [pickerMode, setPickerMode] = useState<'month' | 'year'>('month');
     const [pickerYear, setPickerYear] = useState(currentMonth.getFullYear());
@@ -217,8 +212,8 @@ const Home = () => {
                 listFinancialRecords(currentMonth.getFullYear(), currentMonth.getMonth() + 1),
                 getGamificationSummary(),
             ]);
-            setRecords(monthResult.records);
-            setGamificationSummary(summaryResult.summary);
+            setRecords(Array.isArray(monthResult.records) ? monthResult.records : []);
+            setGamificationSummary(normalizeGamificationSummary(summaryResult.summary));
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível carregar os registros do mês.';
             pushFeedback('error', 'Falha ao carregar', message);
@@ -328,20 +323,21 @@ const Home = () => {
 
     const openXpFeedback = (xpFeedback: XpFeedbackDto | null | undefined, fallbackTitle = 'XP ganho') => {
         if (!xpFeedback) return;
-        setGamificationSummary(xpFeedback.summary);
+        const summary = normalizeGamificationSummary(xpFeedback.summary);
+        setGamificationSummary(summary);
         setXpPopup({
             title: xpFeedback.leveled_up ? 'Subiu de nível!' : fallbackTitle,
             message: xpFeedback.leveled_up
-                ? `Agora você está no nível ${xpFeedback.summary.level} (${xpFeedback.summary.level_title}).`
+                ? `Agora você está no nível ${summary.level} (${summary.level_title}).`
                 : xpFeedback.points >= 0
                   ? `${xpFeedback.points} XP adicionados ao seu progresso.`
                   : `${Math.abs(xpFeedback.points)} XP removidos após ajuste de registros.`,
             points: xpFeedback.points,
-            level: xpFeedback.summary.level,
-            levelTitle: xpFeedback.summary.level_title,
-            levelProgressPct: xpFeedback.summary.level_progress_pct,
+            level: summary.level,
+            levelTitle: summary.level_title,
+            levelProgressPct: summary.level_progress_pct,
             leveledUp: xpFeedback.leveled_up,
-            levelIcon: xpFeedback.summary.level_icon,
+            levelIcon: summary.level_icon,
         });
     };
 

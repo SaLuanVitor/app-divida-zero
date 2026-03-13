@@ -4,11 +4,18 @@ import { XpFeedbackDto } from '../types/gamification';
 
 export const createFinancialRecord = async (payload: CreateFinancialRecordPayload) => {
   const { data } = await api.post('/financial_records', payload);
-  return data as {
+  const payloadData = data as {
     message: string;
-    created_count: number;
-    records: FinancialRecordDto[];
+    created_count?: number;
+    records?: FinancialRecordDto[] | null;
     xp_feedback?: XpFeedbackDto | null;
+  };
+
+  return {
+    message: payloadData?.message ?? 'Registro criado com sucesso.',
+    created_count: typeof payloadData?.created_count === 'number' ? payloadData.created_count : 0,
+    records: Array.isArray(payloadData?.records) ? payloadData.records : [],
+    xp_feedback: payloadData?.xp_feedback ?? null,
   };
 };
 
@@ -20,17 +27,27 @@ export const listFinancialRecords = async (year?: number, month?: number) => {
     },
   });
 
-  return data as {
-    records: FinancialRecordDto[];
+  const payload = data as {
+    records?: FinancialRecordDto[] | null;
+  };
+
+  return {
+    records: Array.isArray(payload?.records) ? payload.records : [],
   };
 };
 
 export const payFinancialRecord = async (id: number) => {
   const { data } = await api.patch(`/financial_records/${id}/pay`);
-  return data as {
+  const payload = data as {
     message: string;
-    record: FinancialRecordDto;
+    record?: FinancialRecordDto;
     xp_feedback?: XpFeedbackDto | null;
+  };
+
+  return {
+    message: payload?.message ?? 'Registro atualizado com sucesso.',
+    record: payload.record as FinancialRecordDto,
+    xp_feedback: payload?.xp_feedback ?? null,
   };
 };
 
@@ -40,9 +57,15 @@ export const deleteFinancialRecord = async (id: number, scope: 'single' | 'group
       scope: scope === 'group' ? 'group' : 'single',
     },
   });
-  return data as {
+  const payload = data as {
     message: string;
-    deleted_count: number;
+    deleted_count?: number;
     xp_feedback?: XpFeedbackDto | null;
+  };
+
+  return {
+    message: payload?.message ?? 'Registro removido com sucesso.',
+    deleted_count: typeof payload?.deleted_count === 'number' ? payload.deleted_count : 0,
+    xp_feedback: payload?.xp_feedback ?? null,
   };
 };

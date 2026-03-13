@@ -1,7 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, TextInput } from 'react-native';
 import { ArrowLeft, Clock3, Filter, Search, Sparkles } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import { listGamificationEvents } from '../../services/gamification';
@@ -87,8 +86,11 @@ const normalizeMetadata = (metadata?: Record<string, unknown>) => {
         }));
 };
 
-const XpHistory = () => {
-    const navigation = useNavigation<any>();
+type XpHistoryProps = {
+    navigation: any;
+};
+
+const XpHistory = ({ navigation }: XpHistoryProps) => {
     const [events, setEvents] = useState<GamificationEventDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [query, setQuery] = useState('');
@@ -99,7 +101,7 @@ const XpHistory = () => {
             setLoading(true);
             try {
                 const result = await listGamificationEvents();
-                setEvents(result.events);
+                setEvents(Array.isArray(result.events) ? result.events : []);
             } finally {
                 setLoading(false);
             }
@@ -139,7 +141,16 @@ const XpHistory = () => {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-24">
                 <View className="bg-white px-4 pt-4 pb-4 border-b border-slate-100">
                     <View className="flex-row items-center mb-3">
-                        <TouchableOpacity onPress={() => navigation.navigate('Perfil', { focusHistory: true })} className="p-2 -ml-2 mr-1">
+                        <TouchableOpacity
+                            onPress={() => {
+                                if (navigation?.canGoBack?.()) {
+                                    navigation.goBack();
+                                    return;
+                                }
+                                navigation?.navigate?.('Perfil');
+                            }}
+                            className="p-2 -ml-2 mr-1"
+                        >
                             <ArrowLeft size={22} color="#0f172a" />
                         </TouchableOpacity>
                         <View>

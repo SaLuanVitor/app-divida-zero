@@ -22,7 +22,7 @@ import { listFinancialRecords } from '../../services/financialRecords';
 import { FinancialRecordDto } from '../../types/financialRecord';
 import { buildGamificationSummary, formatAchievementProgress } from '../../utils/gamification';
 import { getGamificationSummary } from '../../services/gamification';
-import { GamificationSummaryDto } from '../../types/gamification';
+import { DEFAULT_GAMIFICATION_SUMMARY, GamificationSummaryDto, normalizeGamificationSummary } from '../../types/gamification';
 
 const Profile = () => {
     const { user, signOut } = useAuth();
@@ -33,15 +33,7 @@ const Profile = () => {
     const [logoutLoading, setLogoutLoading] = useState(false);
     const [records, setRecords] = useState<FinancialRecordDto[]>([]);
     const [loadingGamification, setLoadingGamification] = useState(false);
-    const [summary, setSummary] = useState<GamificationSummaryDto>({
-        total_xp: 0,
-        level: 1,
-        level_title: 'Iniciante',
-        level_icon: 'sprout',
-        xp_in_level: 0,
-        xp_to_next_level: 500,
-        level_progress_pct: 0,
-    });
+    const [summary, setSummary] = useState<GamificationSummaryDto>(DEFAULT_GAMIFICATION_SUMMARY);
     const [historySectionY, setHistorySectionY] = useState(0);
     const [highlightHistoryCta, setHighlightHistoryCta] = useState(false);
 
@@ -72,7 +64,7 @@ const Profile = () => {
                     getGamificationSummary(),
                 ]);
                 setRecords(recordsResult.records);
-                setSummary(summaryResult.summary);
+                setSummary(normalizeGamificationSummary(summaryResult.summary));
             } finally {
                 setLoadingGamification(false);
             }
