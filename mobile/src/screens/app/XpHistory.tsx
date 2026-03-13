@@ -81,7 +81,7 @@ const normalizeMetadata = (metadata?: Record<string, unknown>) => {
     return Object.entries(metadata)
         .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== '')
         .map(([key, value]) => ({
-            label: metadataLabelMap[key] || key.replaceAll('_', ' '),
+            label: metadataLabelMap[key] || key.replace(/_/g, ' '),
             value: metadataValueMap[key]?.[String(value)] || String(value),
         }));
 };
