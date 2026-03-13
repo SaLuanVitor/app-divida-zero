@@ -20,13 +20,11 @@ export const RootNavigator = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    if (loading || showSplash) {
-        return <Splash />;
-    }
-
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-            {signed ? (
+            {loading || showSplash ? (
+                <Stack.Screen name="Splash" component={Splash} />
+            ) : signed ? (
                 <Stack.Screen name="App" component={AppNavigator} />
             ) : (
                 <Stack.Screen name="Auth" component={AuthNavigator} />

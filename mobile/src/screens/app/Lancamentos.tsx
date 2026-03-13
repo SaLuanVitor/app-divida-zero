@@ -6,7 +6,7 @@ import Layout from '../../components/Layout';
 import Button from '../../components/Button';
 import { createFinancialRecord } from '../../services/financialRecords';
 import { CreateFinancialRecordPayload, FinancialRecurrenceType } from '../../types/financialRecord';
-import { XpFeedbackDto } from '../../types/gamification';
+import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamification';
 
 type RegisterTab = 'income' | 'debt';
 
@@ -257,7 +257,10 @@ const Lancamentos = () => {
             const result = await createFinancialRecord(payload);
             resetForm();
             if (result.xp_feedback) {
-                setXpPopup(result.xp_feedback);
+                setXpPopup({
+                    ...result.xp_feedback,
+                    summary: normalizeGamificationSummary(result.xp_feedback.summary),
+                });
             } else {
                 Alert.alert('Registro criado', `${result.message}\nForam gerados ${result.created_count} registro(s).`);
             }
