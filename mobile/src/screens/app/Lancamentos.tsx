@@ -10,9 +10,9 @@ import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamific
 
 type RegisterTab = 'income' | 'debt';
 
-const tabOptions: Array<{ value: RegisterTab; label: string; icon: React.ReactNode }> = [
-    { value: 'income', label: 'Ganho', icon: <Wallet size={14} color="#334155" /> },
-    { value: 'debt', label: 'Dívida', icon: <Landmark size={14} color="#334155" /> },
+const tabOptions = [
+    { value: 'income', label: 'Ganho', icon: Wallet },
+    { value: 'debt', label: 'Dívida', icon: Landmark },
 ];
 
 const recurrenceOptions: Array<{ value: FinancialRecurrenceType; label: string }> = [
@@ -278,7 +278,7 @@ const Lancamentos = () => {
                 <ScrollView className="flex-1" contentContainerClassName="px-4 pb-28" showsVerticalScrollIndicator={false}>
                     <View className="flex-row items-center mt-4 mb-4">
                         <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-1">
-                            <ArrowLeft size={22} color="#0f172a" />
+                            <ArrowLeft size={22} color="#f8f7f5" />
                         </TouchableOpacity>
                         <View>
                             <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">{formTitle}</Text>
@@ -290,20 +290,32 @@ const Lancamentos = () => {
                         <Text className="text-slate-800 dark:text-slate-100 font-bold mb-3">Tipo de cadastro</Text>
                         <View className="flex-row gap-2">
                             {tabOptions.map((option) => {
-                                const active = activeTab === option.value;
-                                return (
-                                    <TouchableOpacity
-                                        key={option.value}
-                                        className={`flex-1 rounded-xl border px-3 py-2 ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
-                                        onPress={() => setActiveTab(option.value)}
-                                    >
-                                        <View className="flex-row items-center justify-center gap-2">
-                                            {option.icon}
-                                            <Text className={`${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'} font-bold text-sm`}>{option.label}</Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            })}
+    const active = activeTab === option.value;
+    const Icon = option.icon;
+
+    return (
+        <TouchableOpacity
+            key={option.value}
+            className={`flex-1 rounded-xl border px-3 py-2 ${
+                active
+                    ? 'bg-primary border-primary'
+                    : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'
+            }`}
+            onPress={() => setActiveTab(option.value as RegisterTab)}
+        >
+            <View className="flex-row items-center justify-center gap-2">
+                <Icon
+                    size={14}
+                    color={active ? "#fff" : "#475569"}
+                />
+
+                <Text className={`${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'} font-bold text-sm`}>
+                    {option.label}
+                </Text>
+            </View>
+        </TouchableOpacity>
+    );
+})}
                         </View>
                     </View>
 
