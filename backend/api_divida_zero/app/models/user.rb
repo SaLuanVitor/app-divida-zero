@@ -16,9 +16,8 @@
             }
 
   validates :email,
-            presence: { message: "E-mail é obrigatório." },
-            uniqueness: { case_sensitive: false, message: "E-mail já está em uso." },
-            format: { with: URI::MailTo::EMAIL_REGEXP, message: "E-mail inválido." }
+            presence: { message: "Usuário é obrigatório." },
+            uniqueness: { case_sensitive: false, message: "Usuário já está em uso." }
 
   validates :password,
             presence: { message: "Senha é obrigatória." },

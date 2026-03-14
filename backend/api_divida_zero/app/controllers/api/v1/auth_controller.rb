@@ -18,7 +18,7 @@ module Api
         password = params.require(:password)
 
         unless user&.authenticate(password)
-          return render json: { error: "E-mail ou senha invalidos." }, status: :unauthorized
+          return render json: { error: "Usuário ou senha inválidos." }, status: :unauthorized
         end
 
         render_auth_payload(user)
@@ -44,12 +44,12 @@ module Api
             reset_password_sent_at: Time.current
           )
 
-          response = { message: "Se o e-mail existir, as instrucoes foram enviadas." }
+          response = { message: "Se o usuário existir, as instruções foram enviadas." }
           response[:dev_reset_token] = raw_token if Rails.env.development? || Rails.env.test?
           return render json: response, status: :ok
         end
 
-        render json: { message: "Se o e-mail existir, as instrucoes foram enviadas." }, status: :ok
+        render json: { message: "Se o usuário existir, as instruções foram enviadas." }, status: :ok
       end
 
       def reset_password
@@ -85,7 +85,7 @@ module Api
         @current_user.update!(profile_params)
 
         render json: {
-          message: "Dados pessoais atualizados com sucesso.",
+          message: "Dados do usuário atualizados com sucesso.",
           user: @current_user.public_payload
         }, status: :ok
       end
@@ -129,7 +129,7 @@ module Api
         payload = JsonWebToken.decode(bearer_token, expected_type: "access")
         @current_user = User.find(payload["sub"])
       rescue JWT::DecodeError, ActiveRecord::RecordNotFound
-        render json: { error: "Nao autorizado." }, status: :unauthorized
+        render json: { error: "Não autorizado." }, status: :unauthorized
       end
 
       def profile_params

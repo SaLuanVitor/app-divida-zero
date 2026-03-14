@@ -21,12 +21,12 @@ const ForgotPassword = () => {
         setInfoMessage('');
 
         if (!email.trim()) {
-            setEmailError('Informe seu e-mail.');
+            setEmailError('Informe seu usuário.');
             return;
         }
 
         if (!emailRegex.test(email.trim())) {
-            setEmailError('Informe um e-mail válido.');
+            setEmailError('Informe um usuário válido.');
             return;
         }
 
@@ -35,7 +35,7 @@ const ForgotPassword = () => {
             const devToken = await requestPasswordReset(email.trim());
             const message = devToken
                 ? `Solicitação enviada. Token de desenvolvimento: ${devToken}`
-                : 'Se o e-mail existir, enviaremos as instruções para redefinição.';
+                : 'Se o usuário existir, enviaremos as instruções para redefinição.';
 
             setInfoMessage(message);
             Alert.alert('Solicitação enviada', 'Agora você pode usar o token para redefinir a senha.');
@@ -67,7 +67,7 @@ const ForgotPassword = () => {
                     Esqueceu sua senha?
                 </Text>
                 <Text className="text-base text-slate-600 dark:text-slate-300 text-center px-2">
-                    Informe seu e-mail e siga as instruções para redefinir seu acesso.
+                    Informe seu usuário e siga as instruções para redefinir seu acesso.
                 </Text>
             </View>
 
@@ -78,8 +78,8 @@ const ForgotPassword = () => {
             ) : null}
 
             <Input
-                label="E-mail"
-                placeholder="seu@email.com"
+                label="Usuário"
+                placeholder="usuario"
                 value={email}
                 onChangeText={(value) => {
                     setEmail(value);

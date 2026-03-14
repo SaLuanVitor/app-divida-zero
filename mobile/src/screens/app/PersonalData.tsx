@@ -29,12 +29,12 @@ const PersonalData = () => {
     setFeedback(null);
 
     if (name.trim().length < 2) {
-      setFeedback({ kind: 'error', message: 'Informe um nome com pelo menos 2 caracteres.' });
+      setFeedback({ kind: 'error', message: 'Informe um identificador com pelo menos 2 caracteres.' });
       return;
     }
 
     if (!email.includes('@')) {
-      setFeedback({ kind: 'error', message: 'Informe um e-mail valido.' });
+      setFeedback({ kind: 'error', message: 'Informe um identificador de acesso válido.' });
       return;
     }
 
@@ -44,7 +44,7 @@ const PersonalData = () => {
       await updateUser(result.user);
       setFeedback({ kind: 'success', message: result.message });
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Não foi possível atualizar os dados pessoais.';
+      const message = error?.response?.data?.error ?? 'Não foi possível atualizar os dados do usuário.';
       setFeedback({ kind: 'error', message });
     } finally {
       setLoading(false);
@@ -59,17 +59,17 @@ const PersonalData = () => {
             <ArrowLeft size={22} color="#0f172a" />
           </TouchableOpacity>
           <View>
-            <Text className="text-slate-900 text-xl font-bold">Dados pessoais</Text>
-            <Text className="text-slate-500 dark:text-slate-300 text-xs">Atualize seu nome e e-mail da conta.</Text>
+            <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">Dados do usuário</Text>
+            <Text className="text-slate-500 dark:text-slate-300 text-xs">Atualize os identificadores visuais da conta.</Text>
           </View>
         </View>
       </View>
 
       <View className="p-4">
         <Card className="p-4">
-          <Input label="Nome" value={name} onChangeText={setName} autoCapitalize="words" icon={User} />
+          <Input label="Nome do usuário" value={name} onChangeText={setName} autoCapitalize="words" icon={User} />
           <Input
-            label="E-mail"
+            label="Usuário"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -85,7 +85,7 @@ const PersonalData = () => {
             </View>
           ) : null}
 
-          <Button title="Salvar alteracoes" onPress={onSave} loading={loading} disabled={loading || !hasChanges} />
+          <Button title="Salvar alterações" onPress={onSave} loading={loading} disabled={loading || !hasChanges} />
         </Card>
       </View>
     </Layout>
@@ -93,7 +93,3 @@ const PersonalData = () => {
 };
 
 export default PersonalData;
-
-
-
-

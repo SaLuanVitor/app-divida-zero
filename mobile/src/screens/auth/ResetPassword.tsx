@@ -32,10 +32,10 @@ const ResetPassword = () => {
         let valid = true;
 
         if (!email.trim()) {
-            setEmailError('Informe seu e-mail.');
+            setEmailError('Informe seu usuário.');
             valid = false;
         } else if (!emailRegex.test(email.trim())) {
-            setEmailError('Informe um e-mail válido.');
+            setEmailError('Informe um usuário válido.');
             valid = false;
         } else {
             setEmailError('');
@@ -102,8 +102,8 @@ const ResetPassword = () => {
             </View>
 
             <Input
-                label="E-mail"
-                placeholder="seu@email.com"
+                label="Usuário"
+                placeholder="usuario"
                 value={email}
                 onChangeText={(value) => {
                     setEmail(value);

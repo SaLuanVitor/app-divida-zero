@@ -7,8 +7,6 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 type LoginRouteParams = {
     prefillEmail?: string;
     infoMessage?: string;
@@ -49,10 +47,7 @@ const Login = () => {
         let valid = true;
 
         if (!email.trim()) {
-            setEmailError('Informe seu e-mail.');
-            valid = false;
-        } else if (!emailRegex.test(email.trim())) {
-            setEmailError('Informe um e-mail valido.');
+            setEmailError('Informe seu usuário.');
             valid = false;
         } else {
             setEmailError('');
@@ -102,7 +97,7 @@ const Login = () => {
                     <View className="absolute inset-0 bg-black/40" />
                     <View className="absolute bottom-6 left-6 right-6">
                         <Text className="text-white text-3xl font-bold">Assuma o controle</Text>
-                        <Text className="text-white/90 text-sm mt-1">Gamifique suas financas e zere suas dividas.</Text>
+                        <Text className="text-white/90 text-sm mt-1">Gamifique suas finanças e zere suas dívidas.</Text>
                     </View>
                 </View>
             </View>
@@ -128,8 +123,8 @@ const Login = () => {
                 ) : null}
 
                 <Input
-                    label="E-mail"
-                    placeholder="exemplo@email.com"
+                    label="Usuário"
+                    placeholder="usuario"
                     value={email}
                     onChangeText={(value) => {
                         setEmail(value);
@@ -137,7 +132,7 @@ const Login = () => {
                         if (authError) setAuthError('');
                     }}
                     icon={Mail}
-                    keyboardType="email-address"
+                    keyboardType="default"
                     autoCapitalize="none"
                     autoCorrect={false}
                     error={emailError}
@@ -173,7 +168,7 @@ const Login = () => {
 
                 <View className="mt-10 items-center">
                     <Text className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest">
-                        Motivacao do dia
+                        Motivação do dia
                     </Text>
                     <Text className="text-slate-600 dark:text-slate-300 italic text-center text-sm mt-2 px-4">
                         "Pequenos passos todos os dias levam a grandes conquistas financeiras."
@@ -181,7 +176,7 @@ const Login = () => {
                 </View>
 
                 <View className="mt-8 flex-row justify-center items-center pb-8">
-                    <Text className="text-slate-500 dark:text-slate-300 text-sm">Nao tem uma conta? </Text>
+                    <Text className="text-slate-500 dark:text-slate-300 text-sm">Não tem uma conta? </Text>
                     <TouchableOpacity onPress={() => navigation.navigate('Register')}>
                         <Text className="text-primary font-bold text-sm">Cadastre-se</Text>
                     </TouchableOpacity>
