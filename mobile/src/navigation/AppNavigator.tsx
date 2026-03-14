@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -108,7 +108,7 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                         <TouchableOpacity onPress={toggleActions} style={[styles.centerButton, darkMode && styles.centerButtonDark]}>
                             {showActions ? <CirclePlus size={22} color="#fff" /> : <Plus size={24} color="#fff" />}
                         </TouchableOpacity>
-                        <Text style={[styles.centerButtonText, darkMode && styles.centerButtonTextDark]}>Ações</Text>
+                        <Text style={[styles.centerButtonText, darkMode && styles.centerButtonTextDark]}>Lançamentos</Text>
                     </View>
 
                     <NavItem

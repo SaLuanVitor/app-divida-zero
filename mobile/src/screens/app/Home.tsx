@@ -472,7 +472,7 @@ const Home = () => {
                     </View>
                 </View>
 
-                <View className="p-4 pb-28">
+                <View className="pt-4 pb-28">
                     <Card className="mb-5" noPadding>
                         <View className="p-4">
                             <View className="flex-row items-center justify-between mb-4">

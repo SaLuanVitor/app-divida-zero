@@ -41,7 +41,7 @@ const Profile = () => {
     const scrollRef = useRef<ScrollView>(null);
 
     const menuItems = [
-        { label: 'Dados pessoais', icon: UserIcon, color: '#3b82f6', route: 'Dados Pessoais' },
+        { label: 'Dados do usuário', icon: UserIcon, color: '#3b82f6', route: 'Dados Pessoais' },
         { label: 'Configurações do app', icon: Settings, color: '#64748b', route: 'Configuracoes App' },
         { label: 'Notificações', icon: Bell, color: '#f59e0b', route: 'Notificacoes' },
         { label: 'Segurança', icon: Shield, color: '#10b981', route: 'Seguranca' },
@@ -113,11 +113,11 @@ const Profile = () => {
                             </TouchableOpacity>
                         </View>
 
-                        <Text className="text-slate-900 dark:text-slate-100 text-2xl font-bold mt-4">{user?.name}</Text>
-                        <Text className="text-slate-500 dark:text-slate-300 text-sm">{user?.email}</Text>
+                        <Text className="text-slate-900 dark:text-slate-100 text-2xl font-bold mt-4">{user?.name || 'Usuário'}</Text>
+                        <Text className="text-slate-500 dark:text-slate-300 text-sm">{user?.email || 'usuario'}</Text>
 
                         <View className="mt-4 bg-[#f8f7f5] dark:bg-black px-4 py-2 rounded-full">
-                            <Text className="text-slate-700 dark:text-slate-200 text-xs font-bold">Editar perfil</Text>
+                            <Text className="text-slate-700 dark:text-slate-200 text-xs font-bold">Editar dados do usuário</Text>
                         </View>
                     </View>
 
@@ -129,9 +129,9 @@ const Profile = () => {
                                         <Trophy size={18} color="#f48c25" />
                                     </View>
                                     <View className="ml-3">
-                                        <Text className="text-slate-900 dark:text-slate-100 font-bold">Nivel {summary.level} - {summary.level_title}</Text>
+                                        <Text className="text-slate-900 dark:text-slate-100 font-bold">Nível {summary.level} - {summary.level_title}</Text>
                                         <Text className="text-slate-500 dark:text-slate-300 text-xs">
-                                            {summary.xp_in_level}/{summary.xp_in_level + summary.xp_to_next_level} XP para o nivel {summary.level + 1}
+                                            {summary.xp_in_level}/{summary.xp_in_level + summary.xp_to_next_level} XP para o nível {summary.level + 1}
                                         </Text>
                                     </View>
                                 </View>
@@ -195,10 +195,10 @@ const Profile = () => {
                         <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Histórico de XP</Text>
                         <Card className="mb-6 p-4">
                             <Text className="text-slate-600 dark:text-slate-300 text-sm mb-3">
-                                Acesse uma visao detalhada de todos os eventos de ganho e perda de XP.
+                                Acesse uma visão detalhada de todos os eventos de ganho e perda de XP.
                             </Text>
                             <Button
-                                title="Ver historico completo"
+                                title="Ver histórico completo"
                                 variant={highlightHistoryCta ? 'primary' : 'outline'}
                                 onPress={() => navigation.navigate('Historico XP')}
                                 className="h-11"
@@ -236,7 +236,7 @@ const Profile = () => {
                     </View>
 
                     <View className="items-center pb-10 pt-6">
-                        <Text className="text-slate-400 dark:text-slate-300 text-xs text-center">Divida Zero App - v1.0.0</Text>
+                        <Text className="text-slate-400 dark:text-slate-300 text-xs text-center">Dívida Zero App - v1.0.0</Text>
                     </View>
                 </ScrollView>
             </Layout>
@@ -281,7 +281,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
-
-
-

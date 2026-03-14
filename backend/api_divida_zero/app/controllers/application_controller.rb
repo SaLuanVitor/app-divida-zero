@@ -18,7 +18,7 @@
 
     if email_taken
       payload[:error_code] = "email_taken"
-      payload[:error] = "Este e-mail ja esta cadastrado. Faca login ou recupere sua senha."
+      payload[:error] = "Este usuário já está cadastrado. Faça login ou recupere sua senha."
     end
 
     render json: payload, status: :unprocessable_entity

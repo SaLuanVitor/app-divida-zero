@@ -7,8 +7,6 @@ import Button from '../../components/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const getFirstError = (value: unknown) => {
     if (Array.isArray(value) && value.length > 0) return String(value[0]);
     if (typeof value === 'string') return value;
@@ -29,24 +27,21 @@ const Register = () => {
     const passwordHint = useMemo(() => {
         if (!password) return 'Mínimo de 8 caracteres.';
         if (password.length < 8) return 'Senha ainda curta.';
-        return 'Senha com tamanho minimo valido.';
+        return 'Senha com tamanho mínimo válido.';
     }, [password]);
 
     const validate = () => {
         let valid = true;
 
         if (!name.trim()) {
-            setNameError('Informe seu nome.');
+            setNameError('Informe o nome do usuário.');
             valid = false;
         } else {
             setNameError('');
         }
 
         if (!email.trim()) {
-            setEmailError('Informe seu e-mail.');
-            valid = false;
-        } else if (!emailRegex.test(email.trim())) {
-            setEmailError('Informe um e-mail valido.');
+            setEmailError('Informe seu usuário.');
             valid = false;
         } else {
             setEmailError('');
@@ -99,7 +94,7 @@ const Register = () => {
             if (passwordFieldError) setPasswordError(passwordFieldError);
 
             if (backendCode === 'email_taken') {
-                Alert.alert('E-mail ja cadastrado', backendMessage || 'Use outro e-mail, faca login ou recupere sua senha.');
+                Alert.alert('Usuário já cadastrado', backendMessage || 'Use outro identificador, faça login ou recupere sua senha.');
                 return;
             }
 
@@ -141,8 +136,8 @@ const Register = () => {
             </View>
 
             <Input
-                label="Nome"
-                placeholder="Seu nome"
+                label="Nome do usuário"
+                placeholder="Nome do usuário"
                 value={name}
                 onChangeText={(value) => {
                     setName(value);
@@ -153,15 +148,15 @@ const Register = () => {
             />
 
             <Input
-                label="E-mail"
-                placeholder="seu@email.com"
+                label="Usuário"
+                placeholder="usuario"
                 value={email}
                 onChangeText={(value) => {
                     setEmail(value);
                     if (emailError) setEmailError('');
                 }}
                 icon={Mail}
-                keyboardType="email-address"
+                keyboardType="default"
                 autoCapitalize="none"
                 autoCorrect={false}
                 error={emailError}
@@ -194,9 +189,9 @@ const Register = () => {
 
             <View className="mt-8 items-center">
                 <Text className="text-slate-500 dark:text-slate-300 text-sm">
-                    Ja tem uma conta?{' '}
+                    Já tem uma conta?{' '}
                     <Text className="text-primary font-bold" onPress={() => navigation.goBack()}>
-                        Faca login
+                        Faça login
                     </Text>
                 </Text>
             </View>
