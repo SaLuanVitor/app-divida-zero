@@ -1,5 +1,5 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
     CalendarDays,
@@ -76,20 +76,26 @@ type FeedbackState = {
     message: string;
 };
 
+type GoalDateField = 'start' | 'target';
+
 const Metas = () => {
     const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [activeDateField, setActiveDateField] = useState<GoalDateField>('target');
     const [submitting, setSubmitting] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
     const [editingGoal, setEditingGoal] = useState<FinancialGoalDto | null>(null);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+    const [goalPendingDelete, setGoalPendingDelete] = useState<FinancialGoalDto | null>(null);
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [targetAmountDigits, setTargetAmountDigits] = useState('');
+    const [startDate, setStartDate] = useState<Date>(new Date());
     const [targetDate, setTargetDate] = useState<Date | null>(null);
     const [goalType, setGoalType] = useState<FinancialGoalType>('save');
     const [pickerMonth, setPickerMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -170,6 +176,7 @@ const Metas = () => {
         setTitle('');
         setDescription('');
         setTargetAmountDigits('');
+        setStartDate(new Date());
         setTargetDate(null);
         setGoalType('save');
         setPickerMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -178,8 +185,10 @@ const Metas = () => {
 
     const canSubmit = title.trim().length >= 2 && Number(targetAmountDigits || '0') > 0;
 
-    const openDatePicker = () => {
-        setPickerMonth(new Date((targetDate || new Date()).getFullYear(), (targetDate || new Date()).getMonth(), 1));
+    const openDatePicker = (field: GoalDateField) => {
+        const baseDate = field === 'start' ? startDate : (targetDate || new Date());
+        setActiveDateField(field);
+        setPickerMonth(new Date(baseDate.getFullYear(), baseDate.getMonth(), 1));
         setShowDatePicker(true);
     };
 
@@ -198,9 +207,11 @@ const Metas = () => {
         setTitle(goal.title);
         setDescription(goal.description || '');
         setTargetAmountDigits(String(Math.round(Number(goal.target_amount || '0') * 100)));
+        setStartDate(goal.start_date ? new Date(`${goal.start_date}T00:00:00`) : new Date());
         setTargetDate(goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : null);
         setGoalType(goal.goal_type);
-        setPickerMonth(new Date((goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : new Date()).getFullYear(), (goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : new Date()).getMonth(), 1));
+        const baseDate = goal.start_date ? new Date(`${goal.start_date}T00:00:00`) : new Date();
+        setPickerMonth(new Date(baseDate.getFullYear(), baseDate.getMonth(), 1));
         setShowCreateModal(true);
     };
 
@@ -214,6 +225,7 @@ const Metas = () => {
             title: title.trim(),
             description: description.trim() || undefined,
             target_amount: Number(targetAmountDigits) / 100,
+            start_date: formatDateISO(startDate),
             target_date: targetDate ? formatDateISO(targetDate) : undefined,
             goal_type: goalType,
         };
@@ -250,24 +262,25 @@ const Metas = () => {
         }
     };
 
-    const handleDeleteGoal = (goal: FinancialGoalDto) => {
-        Alert.alert('Remover meta', `Deseja remover "${goal.title}"?`, [
-            { text: 'Cancelar', style: 'cancel' },
-            {
-                text: 'Remover',
-                style: 'destructive',
-                onPress: async () => {
-                    try {
-                        await deleteFinancialGoal(goal.id);
-                        await loadGoals();
-                        pushFeedback('success', 'Meta removida', 'A meta foi removida com sucesso.');
-                    } catch (error: any) {
-                        const message = error?.response?.data?.error ?? 'Não foi possível remover a meta.';
-                        pushFeedback('error', 'Erro ao remover', message);
-                    }
-                },
-            },
-        ]);
+    const requestDeleteGoal = (goal: FinancialGoalDto) => {
+        setGoalPendingDelete(goal);
+    };
+
+    const confirmDeleteGoal = async () => {
+        if (!goalPendingDelete) return;
+
+        setDeleteLoading(true);
+        try {
+            await deleteFinancialGoal(goalPendingDelete.id);
+            await loadGoals();
+            pushFeedback('success', 'Meta removida', 'A meta foi removida com sucesso.');
+            setGoalPendingDelete(null);
+        } catch (error: any) {
+            const message = error?.response?.data?.error ?? 'Não foi possível remover a meta.';
+            pushFeedback('error', 'Erro ao remover', message);
+        } finally {
+            setDeleteLoading(false);
+        }
     };
 
     return (
@@ -358,7 +371,7 @@ const Metas = () => {
                                         <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => openEditModal(goal)}>
                                             <Pencil size={14} color="#475569" />
                                         </TouchableOpacity>
-                                        <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => handleDeleteGoal(goal)}>
+                                        <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => requestDeleteGoal(goal)}>
                                             <Trash2 size={14} color="#ef4444" />
                                         </TouchableOpacity>
                                     </View>
@@ -394,6 +407,12 @@ const Metas = () => {
                                             ? 'Meta concluída com sucesso.'
                                             : `Faltam ${formatCurrency(goal.remaining_amount)} para concluir.`}
                                     </Text>
+                                    <View className="flex-row items-center gap-2 mt-2">
+                                        <CalendarDays size={14} color="#94a3b8" />
+                                        <Text className="text-slate-500 dark:text-slate-300 text-xs">
+                                            Início: {formatDateBR(goal.start_date)}
+                                        </Text>
+                                    </View>
                                     <View className="flex-row items-center gap-2 mt-2">
                                         <CalendarDays size={14} color="#94a3b8" />
                                         <Text className="text-slate-500 dark:text-slate-300 text-xs">{formatDateBR(goal.target_date)}</Text>
@@ -437,10 +456,19 @@ const Metas = () => {
                             onChangeText={(value) => setTargetAmountDigits(onlyDigits(value).slice(0, 10))}
                         />
 
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data de início</Text>
+                        <TouchableOpacity
+                            className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
+                            onPress={() => openDatePicker('start')}
+                        >
+                            <Text className="text-slate-900 dark:text-slate-100">{formatDateBR(formatDateISO(startDate))}</Text>
+                            <CalendarDays size={18} color="#64748b" />
+                        </TouchableOpacity>
+
                         <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data alvo (opcional)</Text>
                         <TouchableOpacity
                             className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
-                            onPress={openDatePicker}
+                            onPress={() => openDatePicker('target')}
                         >
                             <Text className="text-slate-900 dark:text-slate-100">{targetDate ? formatDateBR(formatDateISO(targetDate)) : 'Selecionar data alvo'}</Text>
                             <CalendarDays size={18} color="#64748b" />
@@ -514,7 +542,14 @@ const Metas = () => {
                                             <TouchableOpacity
                                                 className={`w-7 h-7 rounded-lg items-center justify-center ${isSelected ? 'bg-primary' : ''}`}
                                                 onPress={() => {
-                                                    setTargetDate(cell.date);
+                                                    if (activeDateField === 'start') {
+                                                        setStartDate(cell.date);
+                                                        if (targetDate && cell.date > targetDate) {
+                                                            setTargetDate(null);
+                                                        }
+                                                    } else {
+                                                        setTargetDate(cell.date);
+                                                    }
                                                     setShowDatePicker(false);
                                                 }}
                                             >
@@ -529,7 +564,23 @@ const Metas = () => {
                         </View>
 
                         <View className="flex-row gap-2">
-                            <Button title="Limpar data" variant="outline" onPress={() => { setTargetDate(null); setShowDatePicker(false); }} className="h-11 flex-1" />
+                            <Button
+                                title={activeDateField === 'start' ? 'Hoje' : 'Limpar data'}
+                                variant="outline"
+                                onPress={() => {
+                                    if (activeDateField === 'start') {
+                                        const today = new Date();
+                                        setStartDate(today);
+                                        if (targetDate && today > targetDate) {
+                                            setTargetDate(null);
+                                        }
+                                    } else {
+                                        setTargetDate(null);
+                                    }
+                                    setShowDatePicker(false);
+                                }}
+                                className="h-11 flex-1"
+                            />
                             <Button title="Fechar" onPress={() => setShowDatePicker(false)} className="h-11 flex-1" />
                         </View>
                     </View>
@@ -602,6 +653,34 @@ const Metas = () => {
 
                             <Button title="Continuar" onPress={() => setXpPopup(null)} className="h-12 mt-4 w-full" />
                         </View>
+                    </View>
+                </View>
+            ) : null}
+
+            {goalPendingDelete ? (
+                <View className="absolute inset-0 z-[65]">
+                    <Pressable className="absolute inset-0 bg-black/30" onPress={() => !deleteLoading && setGoalPendingDelete(null)} />
+                    <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
+                        <Text className="text-slate-900 dark:text-slate-100 text-base font-bold">Excluir meta</Text>
+                        <Text className="text-slate-600 dark:text-slate-300 text-sm mt-2 mb-4">
+                            Deseja remover a meta "{goalPendingDelete.title}"? Essa ação atualiza o progresso e o histórico de XP vinculado.
+                        </Text>
+
+                        <Button
+                            title="Excluir meta"
+                            variant="danger"
+                            loading={deleteLoading}
+                            disabled={deleteLoading}
+                            onPress={confirmDeleteGoal}
+                            className="h-12 mb-2"
+                        />
+                        <Button
+                            title="Cancelar"
+                            variant="outline"
+                            disabled={deleteLoading}
+                            onPress={() => setGoalPendingDelete(null)}
+                            className="h-11"
+                        />
                     </View>
                 </View>
             ) : null}

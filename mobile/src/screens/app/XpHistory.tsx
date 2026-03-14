@@ -18,6 +18,7 @@ const eventTitleMap: Record<string, string> = {
     goal_created: 'Meta criada',
     goal_progress_milestone: 'Marco de progresso',
     goal_completed: 'Meta concluída',
+    goal_deleted: 'Meta excluída',
 };
 
 const eventDescriptionMap: Record<string, string> = {
@@ -29,6 +30,7 @@ const eventDescriptionMap: Record<string, string> = {
     goal_created: 'Você criou uma nova meta financeira.',
     goal_progress_milestone: 'Sua meta alcançou um novo marco de progresso.',
     goal_completed: 'Uma meta foi concluída com sucesso.',
+    goal_deleted: 'Uma meta foi excluída e o XP correspondente foi ajustado.',
 };
 
 const eventReasonMap: Record<string, string> = {
@@ -40,6 +42,7 @@ const eventReasonMap: Record<string, string> = {
     goal_created: 'Pontuação por criar uma nova meta financeira.',
     goal_progress_milestone: 'Pontuação por alcançar marcos de progresso na meta.',
     goal_completed: 'Bônus por concluir uma meta financeira.',
+    goal_deleted: 'Estorno de XP por exclusão de meta e dos marcos já alcançados.',
 };
 
 const metadataLabelMap: Record<string, string> = {
@@ -55,6 +58,7 @@ const metadataLabelMap: Record<string, string> = {
     goal_title: 'Título da meta',
     goal_type: 'Tipo da meta',
     milestone: 'Marco',
+    removed_milestones: 'Marcos revertidos',
     achievement_key: 'Conquista',
     achievement_label: 'Conquista desbloqueada',
 };
@@ -146,6 +150,8 @@ const resolveSubtitle = (event: GamificationEventDto) => {
         }
         case 'goal_completed':
             return 'Meta concluída';
+        case 'goal_deleted':
+            return 'Meta excluída';
         case 'achievement_unlocked':
             return 'Conquista desbloqueada';
         default:
@@ -160,7 +166,9 @@ const normalizeMetadata = (metadata?: Record<string, unknown>) => {
         .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== '')
         .map(([key, value]) => ({
             label: metadataLabelMap[key] || key.replace(/_/g, ' '),
-            value: metadataValueMap[key]?.[String(value)] || String(value),
+            value: Array.isArray(value)
+                ? value.join(', ')
+                : metadataValueMap[key]?.[String(value)] || String(value),
         }));
 };
 

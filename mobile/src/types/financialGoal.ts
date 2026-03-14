@@ -13,6 +13,7 @@ export interface FinancialGoalDto {
   progress_pct: number;
   goal_type: FinancialGoalType;
   status: FinancialGoalStatus;
+  start_date: string;
   target_date?: string | null;
   completed_at?: string | null;
 }
@@ -21,6 +22,7 @@ export interface CreateFinancialGoalPayload {
   title: string;
   description?: string;
   target_amount: number;
+  start_date: string;
   target_date?: string;
   goal_type: FinancialGoalType;
 }
