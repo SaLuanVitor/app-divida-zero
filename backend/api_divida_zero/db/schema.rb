@@ -10,7 +10,27 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_06_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_14_000100) do
+  create_table "financial_goals", force: :cascade do |t|
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.decimal "current_amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.text "description"
+    t.string "goal_type", null: false
+    t.integer "last_awarded_milestone", default: 0, null: false
+    t.integer "progress_pct", default: 0, null: false
+    t.string "status", default: "active", null: false
+    t.decimal "target_amount", precision: 12, scale: 2, null: false
+    t.date "target_date"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "goal_type"], name: "index_financial_goals_on_user_id_and_goal_type"
+    t.index ["user_id", "status"], name: "index_financial_goals_on_user_id_and_status"
+    t.index ["user_id", "target_date"], name: "index_financial_goals_on_user_id_and_target_date"
+    t.index ["user_id"], name: "index_financial_goals_on_user_id"
+  end
+
   create_table "financial_records", force: :cascade do |t|
     t.decimal "amount", precision: 12, scale: 2, null: false
     t.string "category"
@@ -65,6 +85,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_06_190000) do
     t.index ["reset_password_token_digest"], name: "index_users_on_reset_password_token_digest"
   end
 
+  add_foreign_key "financial_goals", "users"
   add_foreign_key "financial_records", "users"
   add_foreign_key "gamification_events", "users"
 end

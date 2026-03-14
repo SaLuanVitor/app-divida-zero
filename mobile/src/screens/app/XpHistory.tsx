@@ -15,6 +15,9 @@ const eventTitleMap: Record<string, string> = {
     expense_paid: 'Dívida/despesa quitada',
     record_deleted: 'Registro excluído',
     achievement_unlocked: 'Conquista desbloqueada',
+    goal_created: 'Meta criada',
+    goal_progress_milestone: 'Marco de progresso',
+    goal_completed: 'Meta concluída',
 };
 
 const eventDescriptionMap: Record<string, string> = {
@@ -23,6 +26,9 @@ const eventDescriptionMap: Record<string, string> = {
     expense_paid: 'Uma dívida/despesa foi marcada como paga.',
     record_deleted: 'Um registro foi removido e o XP foi ajustado.',
     achievement_unlocked: 'Uma conquista foi desbloqueada.',
+    goal_created: 'Você criou uma nova meta financeira.',
+    goal_progress_milestone: 'Sua meta alcançou um novo marco de progresso.',
+    goal_completed: 'Uma meta foi concluída com sucesso.',
 };
 
 const eventReasonMap: Record<string, string> = {
@@ -31,6 +37,9 @@ const eventReasonMap: Record<string, string> = {
     expense_paid: 'Pontuação por marcar dívida/despesa como paga.',
     record_deleted: 'Estorno automático de XP por exclusão de registros.',
     achievement_unlocked: 'Bônus de conquista desbloqueada.',
+    goal_created: 'Pontuação por criar uma nova meta financeira.',
+    goal_progress_milestone: 'Pontuação por alcançar marcos de progresso na meta.',
+    goal_completed: 'Bônus por concluir uma meta financeira.',
 };
 
 const metadataLabelMap: Record<string, string> = {
@@ -40,6 +49,12 @@ const metadataLabelMap: Record<string, string> = {
     record_type: 'Registro',
     deleted_count: 'Registros excluídos',
     settled_count: 'Registros concluídos',
+    goal_id: 'Meta',
+    goal_title: 'Título da meta',
+    goal_type: 'Tipo da meta',
+    milestone: 'Marco',
+    achievement_key: 'Conquista',
+    achievement_label: 'Conquista desbloqueada',
 };
 
 const metadataValueMap: Record<string, Record<string, string>> = {
@@ -55,6 +70,16 @@ const metadataValueMap: Record<string, Record<string, string>> = {
         launch: 'Lançamento',
         debt: 'Dívida',
     },
+    goal_type: {
+        save: 'Economizar',
+        debt: 'Quitar dívida',
+        specific: 'Objetivo específico',
+    },
+    achievement_key: {
+        first_goal_created: 'Primeira meta criada',
+        first_goal_completed: 'Primeira meta concluída',
+        goal_before_deadline: 'Meta concluída antes do prazo',
+    },
 };
 
 const keywordMap: Record<string, string> = {
@@ -68,6 +93,9 @@ const keywordMap: Record<string, string> = {
     achievement: 'Conquista',
     unlocked: 'Desbloqueada',
     event: 'Evento',
+    goal: 'Meta',
+    progress: 'Progresso',
+    milestone: 'Marco',
 };
 
 const toPtBrTitleFallback = (rawType: string) =>

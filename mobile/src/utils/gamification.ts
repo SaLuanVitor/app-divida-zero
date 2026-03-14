@@ -1,11 +1,15 @@
+import { FinancialGoalDto } from '../types/financialGoal';
 import { FinancialRecordDto } from '../types/financialRecord';
+import { GamificationEventDto, GamificationSummaryDto } from '../types/gamification';
 
 export type GamificationAchievementId =
   | 'first_record'
   | 'first_settlement'
   | 'ten_records'
   | 'five_settled'
-  | 'thirty_settled';
+  | 'first_goal_created'
+  | 'first_goal_completed'
+  | 'goal_before_deadline';
 
 export interface GamificationAchievement {
   id: GamificationAchievementId;
@@ -15,6 +19,14 @@ export interface GamificationAchievement {
   progress: number;
   target: number;
   rewardXp: number;
+}
+
+export interface GamificationBadge {
+  id: string;
+  title: string;
+  description: string;
+  icon: 'sprout' | 'target' | 'shield' | 'crown';
+  unlocked: boolean;
 }
 
 export interface GamificationSummary {
@@ -28,25 +40,37 @@ export interface GamificationSummary {
   unlockedCount: number;
   settledCount: number;
   recordCount: number;
+  goalCount: number;
+  completedGoalCount: number;
 }
-
-export interface GamificationBadge {
-  id: string;
-  title: string;
-  description: string;
-  icon: 'sprout' | 'target' | 'shield' | 'crown';
-  unlocked: boolean;
-}
-
-const LEVEL_XP = 500;
-const XP_PER_RECORD = 50;
-const XP_PER_SETTLED = 20;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-export const buildGamificationSummary = (records: FinancialRecordDto[]): GamificationSummary => {
+const hasAchievementEvent = (events: GamificationEventDto[], key: string) =>
+  events.some(
+    (event) => event.event_type === 'achievement_unlocked' && String(event.metadata?.achievement_key || '') === key
+  );
+
+export const buildGamificationSummary = ({
+  records,
+  goals,
+  events,
+  summary,
+}: {
+  records: FinancialRecordDto[];
+  goals: FinancialGoalDto[];
+  events: GamificationEventDto[];
+  summary: GamificationSummaryDto;
+}): GamificationSummary => {
   const recordCount = records.length;
   const settledCount = records.filter((record) => record.status !== 'pending').length;
+  const goalCount = goals.length;
+  const completedGoalCount = goals.filter((goal) => goal.status === 'completed').length;
+
+  const completedBeforeDeadlineCount = goals.filter((goal) => {
+    if (goal.status !== 'completed' || !goal.target_date || !goal.completed_at) return false;
+    return new Date(goal.completed_at).getTime() <= new Date(goal.target_date).getTime();
+  }).length;
 
   const achievements: GamificationAchievement[] = [
     {
@@ -61,7 +85,7 @@ export const buildGamificationSummary = (records: FinancialRecordDto[]): Gamific
     {
       id: 'first_settlement',
       title: 'Conta resolvida',
-      description: 'Marque o primeiro item como pago/recebido.',
+      description: 'Marque o primeiro item como pago ou recebido.',
       unlocked: settledCount >= 1,
       progress: clamp(settledCount, 0, 1),
       target: 1,
@@ -69,7 +93,7 @@ export const buildGamificationSummary = (records: FinancialRecordDto[]): Gamific
     },
     {
       id: 'ten_records',
-      title: 'Organizacao ativa',
+      title: 'Organização ativa',
       description: 'Cadastre 10 registros no total.',
       unlocked: recordCount >= 10,
       progress: clamp(recordCount, 0, 10),
@@ -86,25 +110,33 @@ export const buildGamificationSummary = (records: FinancialRecordDto[]): Gamific
       rewardXp: 140,
     },
     {
-      id: 'thirty_settled',
-      title: 'Mestre das finanças',
-      description: 'Conclua 30 registros.',
-      unlocked: settledCount >= 30,
-      progress: clamp(settledCount, 0, 30),
-      target: 30,
-      rewardXp: 250,
+      id: 'first_goal_created',
+      title: 'Primeira meta criada',
+      description: 'Cadastre sua primeira meta financeira.',
+      unlocked: goalCount >= 1 || hasAchievementEvent(events, 'first_goal_created'),
+      progress: clamp(goalCount, 0, 1),
+      target: 1,
+      rewardXp: 60,
+    },
+    {
+      id: 'first_goal_completed',
+      title: 'Primeira meta concluída',
+      description: 'Conclua sua primeira meta financeira.',
+      unlocked: completedGoalCount >= 1 || hasAchievementEvent(events, 'first_goal_completed'),
+      progress: clamp(completedGoalCount, 0, 1),
+      target: 1,
+      rewardXp: 80,
+    },
+    {
+      id: 'goal_before_deadline',
+      title: 'Antes do prazo',
+      description: 'Conclua uma meta antes da data alvo.',
+      unlocked: completedBeforeDeadlineCount >= 1 || hasAchievementEvent(events, 'goal_before_deadline'),
+      progress: clamp(completedBeforeDeadlineCount, 0, 1),
+      target: 1,
+      rewardXp: 100,
     },
   ];
-
-  const achievementXp = achievements
-    .filter((achievement) => achievement.unlocked)
-    .reduce((acc, achievement) => acc + achievement.rewardXp, 0);
-
-  const totalXp = recordCount * XP_PER_RECORD + settledCount * XP_PER_SETTLED + achievementXp;
-  const level = Math.floor(totalXp / LEVEL_XP) + 1;
-  const xpInLevel = totalXp % LEVEL_XP;
-  const xpToNextLevel = LEVEL_XP - xpInLevel;
-  const levelProgressPct = Math.round((xpInLevel / LEVEL_XP) * 100);
 
   const badges: GamificationBadge[] = [
     {
@@ -122,34 +154,35 @@ export const buildGamificationSummary = (records: FinancialRecordDto[]): Gamific
       unlocked: settledCount >= 5,
     },
     {
-      id: 'badge_guardian',
-      title: 'Guardião financeiro',
-      description: '10 registros concluídos.',
+      id: 'badge_goal_builder',
+      title: 'Construtor de metas',
+      description: 'Primeira meta criada.',
       icon: 'shield',
-      unlocked: settledCount >= 10,
+      unlocked: goalCount >= 1 || hasAchievementEvent(events, 'first_goal_created'),
     },
     {
       id: 'badge_master',
       title: 'Mestre da dívida zero',
-      description: 'Nível 10 alcançado.',
+      description: 'Alcance o nível 10.',
       icon: 'crown',
-      unlocked: level >= 10,
+      unlocked: summary.level >= 10,
     },
   ];
 
   return {
-    totalXp,
-    level,
-    xpInLevel,
-    xpToNextLevel,
-    levelProgressPct,
+    totalXp: summary.total_xp,
+    level: summary.level,
+    xpInLevel: summary.xp_in_level,
+    xpToNextLevel: summary.xp_to_next_level,
+    levelProgressPct: summary.level_progress_pct,
     achievements,
     badges,
     unlockedCount: achievements.filter((achievement) => achievement.unlocked).length,
     settledCount,
     recordCount,
+    goalCount,
+    completedGoalCount,
   };
 };
 
 export const formatAchievementProgress = (progress: number, target: number) => `${Math.min(progress, target)}/${target}`;
-

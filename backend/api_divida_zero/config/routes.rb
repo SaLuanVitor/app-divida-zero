@@ -19,6 +19,7 @@
           patch :pay
         end
       end
+      resources :financial_goals, only: [:index, :create, :destroy]
     end
   end
 end
