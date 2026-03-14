@@ -4,6 +4,7 @@ import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/b
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Home from '../screens/app/Home';
 import Metas from '../screens/app/Metas';
+import MetaForm from '../screens/app/MetaForm';
 import Relatorios from '../screens/app/Relatorios';
 import Profile from '../screens/app/Profile';
 import Lancamentos from '../screens/app/Lancamentos';
@@ -137,6 +138,7 @@ export const AppNavigator = () => {
         <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
             <Tab.Screen name="Inicio" component={Home} />
             <Tab.Screen name="Metas" component={Metas} />
+            <Tab.Screen name="MetaForm" component={MetaForm} options={{ tabBarButton: () => null }} />
             <Tab.Screen name="Relatorios" component={Relatorios} />
             <Tab.Screen name="Perfil" component={Profile} />
             <Tab.Screen name="Lancamentos" component={Lancamentos} options={{ tabBarButton: () => null }} />
@@ -255,4 +257,3 @@ const styles = StyleSheet.create({
         color: '#94a3b8',
     },
 });
-
