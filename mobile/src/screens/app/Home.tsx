@@ -455,14 +455,14 @@ const Home = () => {
                     </View>
 
                     <View className="flex-row gap-3">
-                        <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200 items-center">
+                        <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
                             <View className="flex-row items-center mb-1">
                                 <Bolt size={14} color="#f48c25" />
                                 <Text className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Registros no mês</Text>
                             </View>
                             <Text className="text-2xl font-bold text-slate-900 dark:text-slate-100">{entries.length}</Text>
                         </View>
-                        <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200 items-center">
+                        <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
                             <View className="flex-row items-center mb-1">
                                 <CheckCircle2 size={14} color="#14b8a6" />
                                 <Text className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Concluídos no mês</Text>

@@ -155,7 +155,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                             }}
                             className="p-2 -ml-2 mr-1"
                         >
-                            <ArrowLeft size={22} color="#0f172a" />
+                            <ArrowLeft size={22} color="#f8f7f5" />
                         </TouchableOpacity>
                         <View>
                             <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">Histórico de XP</Text>
