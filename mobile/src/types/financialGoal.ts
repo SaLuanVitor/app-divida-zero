@@ -25,6 +25,8 @@ export interface CreateFinancialGoalPayload {
   goal_type: FinancialGoalType;
 }
 
+export interface UpdateFinancialGoalPayload extends CreateFinancialGoalPayload {}
+
 export interface CreateFinancialGoalResponse {
   message: string;
   goal: FinancialGoalDto;

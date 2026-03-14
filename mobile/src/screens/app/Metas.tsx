@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -9,6 +9,7 @@ import {
     Landmark,
     Sparkles,
     Trash2,
+    Pencil,
     X,
     Trophy,
     Shield,
@@ -19,7 +20,7 @@ import {
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
-import { createFinancialGoal, deleteFinancialGoal, listFinancialGoals } from '../../services/financialGoals';
+import { createFinancialGoal, deleteFinancialGoal, listFinancialGoals, updateFinancialGoal } from '../../services/financialGoals';
 import { CreateFinancialGoalPayload, FinancialGoalDto, FinancialGoalType } from '../../types/financialGoal';
 import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamification';
 
@@ -69,6 +70,12 @@ const chipClass = (active: boolean) =>
 const chipTextClass = (active: boolean) =>
     `text-xs font-bold ${active ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`;
 
+type FeedbackState = {
+    kind: 'success' | 'error';
+    title: string;
+    message: string;
+};
+
 const Metas = () => {
     const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
     const [loading, setLoading] = useState(false);
@@ -76,6 +83,9 @@ const Metas = () => {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
+    const [editingGoal, setEditingGoal] = useState<FinancialGoalDto | null>(null);
+    const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+    const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -84,6 +94,27 @@ const Metas = () => {
     const [goalType, setGoalType] = useState<FinancialGoalType>('save');
     const [pickerMonth, setPickerMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 
+    const pushFeedback = useCallback((kind: FeedbackState['kind'], title: string, message: string) => {
+        setFeedback({ kind, title, message });
+
+        if (feedbackTimer.current) {
+            clearTimeout(feedbackTimer.current);
+        }
+
+        feedbackTimer.current = setTimeout(() => {
+            setFeedback(null);
+            feedbackTimer.current = null;
+        }, 2600);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (feedbackTimer.current) {
+                clearTimeout(feedbackTimer.current);
+            }
+        };
+    }, []);
+
     const loadGoals = useCallback(async () => {
         setLoading(true);
         try {
@@ -91,11 +122,11 @@ const Metas = () => {
             setGoals(result.goals);
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível carregar as metas.';
-            Alert.alert('Erro ao carregar', message);
+            pushFeedback('error', 'Erro ao carregar', message);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [pushFeedback]);
 
     useFocusEffect(
         useCallback(() => {
@@ -142,6 +173,7 @@ const Metas = () => {
         setTargetDate(null);
         setGoalType('save');
         setPickerMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+        setEditingGoal(null);
     };
 
     const canSubmit = title.trim().length >= 2 && Number(targetAmountDigits || '0') > 0;
@@ -151,9 +183,30 @@ const Metas = () => {
         setShowDatePicker(true);
     };
 
-    const handleCreateGoal = async () => {
+    const openCreateModal = () => {
+        resetForm();
+        setShowCreateModal(true);
+    };
+
+    const closeCreateModal = () => {
+        resetForm();
+        setShowCreateModal(false);
+    };
+
+    const openEditModal = (goal: FinancialGoalDto) => {
+        setEditingGoal(goal);
+        setTitle(goal.title);
+        setDescription(goal.description || '');
+        setTargetAmountDigits(String(Math.round(Number(goal.target_amount || '0') * 100)));
+        setTargetDate(goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : null);
+        setGoalType(goal.goal_type);
+        setPickerMonth(new Date((goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : new Date()).getFullYear(), (goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : new Date()).getMonth(), 1));
+        setShowCreateModal(true);
+    };
+
+    const handleSubmitGoal = async () => {
         if (!canSubmit) {
-            Alert.alert('Dados inválidos', 'Preencha o título e o valor da meta para continuar.');
+            pushFeedback('error', 'Dados inválidos', 'Preencha o título e o valor da meta para continuar.');
             return;
         }
 
@@ -167,6 +220,15 @@ const Metas = () => {
 
         setSubmitting(true);
         try {
+            if (editingGoal) {
+                const result = await updateFinancialGoal(editingGoal.id, payload);
+                resetForm();
+                setShowCreateModal(false);
+                await loadGoals();
+                pushFeedback('success', 'Meta atualizada', result.message);
+                return;
+            }
+
             const result = await createFinancialGoal(payload);
             resetForm();
             setShowCreateModal(false);
@@ -178,11 +240,11 @@ const Metas = () => {
                     summary: normalizeGamificationSummary(result.xp_feedback.summary),
                 });
             } else {
-                Alert.alert('Meta criada', result.message);
+                pushFeedback('success', 'Meta criada', result.message);
             }
         } catch (error: any) {
-            const message = error?.response?.data?.error ?? 'Não foi possível criar a meta.';
-            Alert.alert('Erro ao criar', message);
+            const message = error?.response?.data?.error ?? `Não foi possível ${editingGoal ? 'atualizar' : 'criar'} a meta.`;
+            pushFeedback('error', editingGoal ? 'Erro ao atualizar' : 'Erro ao criar', message);
         } finally {
             setSubmitting(false);
         }
@@ -198,9 +260,10 @@ const Metas = () => {
                     try {
                         await deleteFinancialGoal(goal.id);
                         await loadGoals();
+                        pushFeedback('success', 'Meta removida', 'A meta foi removida com sucesso.');
                     } catch (error: any) {
                         const message = error?.response?.data?.error ?? 'Não foi possível remover a meta.';
-                        Alert.alert('Erro ao remover', message);
+                        pushFeedback('error', 'Erro ao remover', message);
                     }
                 },
             },
@@ -212,7 +275,7 @@ const Metas = () => {
             <Layout scrollable contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black pb-28">
                 <View className="flex-row items-center justify-between mb-1">
                     <Text className="text-slate-900 dark:text-slate-100 text-2xl font-bold">Metas</Text>
-                    <TouchableOpacity className="bg-primary rounded-full px-4 py-2 flex-row items-center gap-2" onPress={() => setShowCreateModal(true)}>
+                    <TouchableOpacity className="bg-primary rounded-full px-4 py-2 flex-row items-center gap-2" onPress={openCreateModal}>
                         <PlusCircle size={16} color="#fff" />
                         <Text className="text-white font-bold text-sm">Nova meta</Text>
                     </TouchableOpacity>
@@ -266,7 +329,7 @@ const Metas = () => {
                             <Text className="text-slate-500 dark:text-slate-300 text-sm mb-4">
                                 Crie sua primeira meta para acompanhar o progresso com base nos seus lançamentos.
                             </Text>
-                            <Button title="Criar primeira meta" onPress={() => setShowCreateModal(true)} className="h-11" />
+                            <Button title="Criar primeira meta" onPress={openCreateModal} className="h-11" />
                         </View>
                     </Card>
                 ) : null}
@@ -286,14 +349,19 @@ const Metas = () => {
                                         <View className="flex-1">
                                             <Text className="text-slate-900 dark:text-slate-100 font-bold text-base">{goal.title}</Text>
                                             <Text className="text-slate-500 dark:text-slate-300 text-xs">
-                                                {typeOption?.label || 'Meta'} • {goal.status === 'completed' ? 'Concluída' : 'Em andamento'}
+                                                {typeOption?.label || 'Meta'} - {goal.status === 'completed' ? 'Concluída' : 'Em andamento'}
                                             </Text>
                                         </View>
                                     </View>
 
-                                    <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => handleDeleteGoal(goal)}>
-                                        <Trash2 size={14} color="#ef4444" />
-                                    </TouchableOpacity>
+                                    <View className="flex-row items-center gap-2">
+                                        <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => openEditModal(goal)}>
+                                            <Pencil size={14} color="#475569" />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => handleDeleteGoal(goal)}>
+                                            <Trash2 size={14} color="#ef4444" />
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
 
                                 {goal.description ? (
@@ -339,11 +407,13 @@ const Metas = () => {
 
             {showCreateModal ? (
                 <View className="absolute inset-0 z-50">
-                    <Pressable className="absolute inset-0 bg-black/35" onPress={() => !submitting && setShowCreateModal(false)} />
+                    <Pressable className="absolute inset-0 bg-black/35" onPress={() => !submitting && closeCreateModal()} />
                     <View className="absolute left-4 right-4 top-[10%] bg-white dark:bg-[#121212] rounded-3xl border border-slate-200 dark:border-slate-700 p-4">
                         <View className="flex-row items-center justify-between mb-4">
-                            <Text className="text-slate-900 dark:text-slate-100 text-lg font-bold">Nova meta</Text>
-                            <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => !submitting && setShowCreateModal(false)}>
+                            <Text className="text-slate-900 dark:text-slate-100 text-lg font-bold">
+                                {editingGoal ? 'Editar meta' : 'Nova meta'}
+                            </Text>
+                            <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => !submitting && closeCreateModal()}>
                                 <X size={16} color="#94a3b8" />
                             </TouchableOpacity>
                         </View>
@@ -399,8 +469,8 @@ const Metas = () => {
                         />
 
                         <Button
-                            title={submitting ? 'Salvando...' : 'Salvar meta'}
-                            onPress={handleCreateGoal}
+                            title={submitting ? 'Salvando...' : editingGoal ? 'Salvar alterações' : 'Salvar meta'}
+                            onPress={handleSubmitGoal}
                             disabled={submitting || !canSubmit}
                             className="h-12 mb-2"
                         />
@@ -408,7 +478,7 @@ const Metas = () => {
                             title="Cancelar"
                             variant="outline"
                             disabled={submitting}
-                            onPress={() => setShowCreateModal(false)}
+                            onPress={closeCreateModal}
                             className="h-11"
                         />
                     </View>
@@ -466,6 +536,37 @@ const Metas = () => {
                 </Pressable>
             ) : null}
 
+            {feedback ? (
+                <View pointerEvents="box-none" className="absolute left-4 right-4 bottom-6 z-[70]">
+                    <View
+                        className={`rounded-xl border px-4 py-3 ${
+                            feedback.kind === 'success'
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                        }`}
+                    >
+                        <Text
+                            className={`font-bold text-sm ${
+                                feedback.kind === 'success'
+                                    ? 'text-emerald-800 dark:text-emerald-300'
+                                    : 'text-red-800 dark:text-red-300'
+                            }`}
+                        >
+                            {feedback.title}
+                        </Text>
+                        <Text
+                            className={`text-xs mt-1 ${
+                                feedback.kind === 'success'
+                                    ? 'text-emerald-700 dark:text-emerald-300'
+                                    : 'text-red-700 dark:text-red-300'
+                            }`}
+                        >
+                            {feedback.message}
+                        </Text>
+                    </View>
+                </View>
+            ) : null}
+
             {xpPopup ? (
                 <View className="absolute inset-0 z-[60]">
                     <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
@@ -492,7 +593,7 @@ const Metas = () => {
                                     {xpPopup.points > 0 ? `+${xpPopup.points}` : xpPopup.points} XP
                                 </Text>
                                 <Text className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
-                                    Nível {xpPopup.summary.level} • {xpPopup.summary.level_title}
+                                    Nível {xpPopup.summary.level} - {xpPopup.summary.level_title}
                                 </Text>
                                 <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                     <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup.summary.level_progress_pct}%` }} />
@@ -509,3 +610,4 @@ const Metas = () => {
 };
 
 export default Metas;
+

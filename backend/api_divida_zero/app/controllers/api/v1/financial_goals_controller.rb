@@ -14,7 +14,7 @@ module Api
       end
 
       def create
-        goal = @current_user.financial_goals.create!(create_params)
+        goal = @current_user.financial_goals.create!(goal_params)
 
         xp_feedback = GamificationService.award!(
           user: @current_user,
@@ -38,16 +38,29 @@ module Api
         }, status: :created
       end
 
+      def update
+        goal = @current_user.financial_goals.find(params[:id])
+        goal.update!(goal_params)
+        FinancialGoalsProgressService.recalculate_goal!(goal)
+
+        render json: {
+          message: "Meta atualizada com sucesso.",
+          goal: goal.reload.serialize
+        }, status: :ok
+      end
+
       def destroy
         goal = @current_user.financial_goals.find(params[:id])
+        FinancialGoalsProgressService.remove_goal_tracking!(goal)
         goal.destroy!
+        FinancialGoalsProgressService.recalculate_for_user!(@current_user)
 
         render json: { message: "Meta removida com sucesso." }, status: :ok
       end
 
       private
 
-      def create_params
+      def goal_params
         params.fetch(:financial_goal, params).permit(:title, :description, :target_amount, :target_date, :goal_type)
       end
 
