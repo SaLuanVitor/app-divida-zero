@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import {
     User as UserIcon,
@@ -41,6 +41,8 @@ const Profile = () => {
     const [summary, setSummary] = useState<GamificationSummaryDto>(DEFAULT_GAMIFICATION_SUMMARY);
     const [historySectionY, setHistorySectionY] = useState(0);
     const [highlightHistoryCta, setHighlightHistoryCta] = useState(false);
+    const [achievementsExpanded, setAchievementsExpanded] = useState(false);
+    const [badgesExpanded, setBadgesExpanded] = useState(false);
 
     const scrollRef = useRef<ScrollView>(null);
 
@@ -168,50 +170,99 @@ const Profile = () => {
                     <View className="px-6 pt-6">
                         <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Conquistas</Text>
                         <Card className="mb-6" noPadding>
-                            <View className="p-4 border-b border-slate-100 dark:border-slate-800">
-                                <Text className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
-                                    {gamification.unlockedCount}/{gamification.achievements.length} desbloqueadas - Total XP {summary.total_xp}
-                                </Text>
-                            </View>
-                            {gamification.achievements.map((achievement, index) => (
-                                <View key={achievement.id} className={`p-4 ${index !== gamification.achievements.length - 1 ? 'border-b border-slate-50' : ''}`}>
-                                    <View className="flex-row items-center justify-between mb-1">
-                                        <Text className={`font-bold ${achievement.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'}`}>
-                                            {achievement.title}
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={() => setAchievementsExpanded((current) => !current)}
+                                className="p-4"
+                            >
+                                <View className="flex-row items-center justify-between">
+                                    <View className="flex-1 pr-3">
+                                        <Text className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
+                                            {gamification.unlockedCount}/{gamification.achievements.length} desbloqueadas - Total XP {summary.total_xp}
                                         </Text>
-                                        <Text className={`text-xs font-bold ${achievement.unlocked ? 'text-emerald-600' : 'text-slate-400 dark:text-slate-300'}`}>
-                                            {achievement.unlocked ? `+${achievement.rewardXp} XP` : formatAchievementProgress(achievement.progress, achievement.target)}
+                                        <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                            {achievementsExpanded ? 'Toque para recolher a lista.' : 'Toque para expandir a lista de conquistas.'}
                                         </Text>
                                     </View>
-                                    <Text className="text-slate-500 dark:text-slate-300 text-xs mb-2">{achievement.description}</Text>
-                                    <View className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                        <View
-                                            className={`h-full rounded-full ${achievement.unlocked ? 'bg-emerald-500' : 'bg-primary'}`}
-                                            style={{ width: `${Math.round((Math.min(achievement.progress, achievement.target) / achievement.target) * 100)}%` }}
-                                        />
-                                    </View>
+                                    <ChevronRight
+                                        size={18}
+                                        color="#94a3b8"
+                                        style={{ transform: [{ rotate: achievementsExpanded ? '90deg' : '0deg' }] }}
+                                    />
                                 </View>
-                            ))}
+                            </TouchableOpacity>
+                            {achievementsExpanded ? (
+                                <>
+                                    <View className="border-t border-slate-100 dark:border-slate-800" />
+                                    {gamification.achievements.map((achievement, index) => (
+                                        <View key={achievement.id} className={`p-4 ${index !== gamification.achievements.length - 1 ? 'border-b border-slate-50 dark:border-slate-800' : ''}`}>
+                                            <View className="flex-row items-center justify-between mb-1">
+                                                <Text className={`font-bold ${achievement.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'}`}>
+                                                    {achievement.title}
+                                                </Text>
+                                                <Text className={`text-xs font-bold ${achievement.unlocked ? 'text-emerald-600' : 'text-slate-400 dark:text-slate-300'}`}>
+                                                    {achievement.unlocked ? `+${achievement.rewardXp} XP` : formatAchievementProgress(achievement.progress, achievement.target)}
+                                                </Text>
+                                            </View>
+                                            <Text className="text-slate-500 dark:text-slate-300 text-xs mb-2">{achievement.description}</Text>
+                                            <View className="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                <View
+                                                    className={`h-full rounded-full ${achievement.unlocked ? 'bg-emerald-500' : 'bg-primary'}`}
+                                                    style={{ width: `${Math.round((Math.min(achievement.progress, achievement.target) / achievement.target) * 100)}%` }}
+                                                />
+                                            </View>
+                                        </View>
+                                    ))}
+                                </>
+                            ) : null}
                         </Card>
                     </View>
 
                     <View className="px-6">
                         <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Badges</Text>
-                        <Card className="mb-6 p-4">
-                            <View className="flex-row flex-wrap justify-between">
-                                {gamification.badges.map((badge) => {
-                                    const Icon = badgeIconMap[badge.icon] || Trophy;
-                                    return (
-                                        <View key={badge.id} className="w-[48%] mb-3 rounded-xl border border-slate-100 dark:border-slate-800 p-3 bg-white dark:bg-[#121212]">
-                                            <View className={`w-9 h-9 rounded-full items-center justify-center mb-2 ${badge.unlocked ? 'bg-primary/15' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                                                <Icon size={18} color={badge.unlocked ? '#f48c25' : '#94a3b8'} />
-                                            </View>
-                                            <Text className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-300'}`}>{badge.title}</Text>
-                                            <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">{badge.description}</Text>
+                        <Card className="mb-6" noPadding>
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={() => setBadgesExpanded((current) => !current)}
+                                className="p-4"
+                            >
+                                <View className="flex-row items-center justify-between">
+                                    <View className="flex-1 pr-3">
+                                        <Text className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
+                                            {gamification.badges.filter((badge) => badge.unlocked).length}/{gamification.badges.length} badges conquistadas
+                                        </Text>
+                                        <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                            {badgesExpanded ? 'Toque para recolher a lista.' : 'Toque para expandir a lista de badges.'}
+                                        </Text>
+                                    </View>
+                                    <ChevronRight
+                                        size={18}
+                                        color="#94a3b8"
+                                        style={{ transform: [{ rotate: badgesExpanded ? '90deg' : '0deg' }] }}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                            {badgesExpanded ? (
+                                <>
+                                    <View className="border-t border-slate-100 dark:border-slate-800" />
+                                    <View className="p-4">
+                                        <View className="flex-row flex-wrap justify-between">
+                                            {gamification.badges.map((badge) => {
+                                                const Icon = badgeIconMap[badge.icon] || Trophy;
+                                                return (
+                                                    <View key={badge.id} className="w-[48%] mb-3 rounded-xl border border-slate-100 dark:border-slate-800 p-3 bg-white dark:bg-[#121212]">
+                                                        <View className={`w-9 h-9 rounded-full items-center justify-center mb-2 ${badge.unlocked ? 'bg-primary/15' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                                                            <Icon size={18} color={badge.unlocked ? '#f48c25' : '#94a3b8'} />
+                                                        </View>
+                                                        <Text className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-300'}`}>{badge.title}</Text>
+                                                        <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">{badge.description}</Text>
+                                                    </View>
+                                                );
+                                            })}
                                         </View>
-                                    );
-                                })}
-                            </View>
+                                    </View>
+                                </>
+                            ) : null}
                         </Card>
                     </View>
 
@@ -305,3 +356,5 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
