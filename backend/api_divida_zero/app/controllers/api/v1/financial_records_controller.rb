@@ -27,6 +27,7 @@
           source: generated.first,
           metadata: { created_count: generated.size, mode: payload[:mode].presence || "launch" }
         )
+        FinancialGoalsProgressService.recalculate_for_user!(@current_user)
 
         render json: {
           message: "Registro criado com sucesso.",
@@ -58,6 +59,7 @@
           source: record,
           metadata: { flow_type: record.flow_type, record_type: record.record_type }
         )
+        FinancialGoalsProgressService.recalculate_for_user!(@current_user)
 
         render json: {
           message: message,
@@ -76,6 +78,7 @@
           @current_user.financial_records.where(group_code: record.group_code).delete_all
 
           xp_feedback = revert_xp_for_deletion!(deleted_count: deleted_count, settled_count: settled_count, source: record)
+          FinancialGoalsProgressService.recalculate_for_user!(@current_user)
           return render json: {
             message: "Registros do grupo excluídos com sucesso.",
             deleted_count: deleted_count,
@@ -86,6 +89,7 @@
         settled_count = record.status == "pending" ? 0 : 1
         record.destroy!
         xp_feedback = revert_xp_for_deletion!(deleted_count: 1, settled_count: settled_count, source: record)
+        FinancialGoalsProgressService.recalculate_for_user!(@current_user)
 
         render json: {
           message: "Registro excluído com sucesso.",

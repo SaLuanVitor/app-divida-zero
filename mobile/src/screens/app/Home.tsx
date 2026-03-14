@@ -26,12 +26,16 @@ import { deleteFinancialRecord, listFinancialRecords, payFinancialRecord } from 
 import { FinancialRecordDto } from '../../types/financialRecord';
 import {
     DEFAULT_GAMIFICATION_SUMMARY,
+    GamificationEventDto,
     GamificationSummaryDto,
     normalizeGamificationSummary,
     XpFeedbackDto
 } from '../../types/gamification';
-import { getGamificationSummary } from '../../services/gamification';
+import { getGamificationSummary, listGamificationEvents } from '../../services/gamification';
 import { useThemeMode } from '../../context/ThemeContext';
+import { listFinancialGoals } from '../../services/financialGoals';
+import { FinancialGoalDto } from '../../types/financialGoal';
+import { buildGamificationSummary } from '../../utils/gamification';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
 
@@ -168,6 +172,8 @@ const Home = () => {
     });
     const [selectedDateKey, setSelectedDateKey] = useState<string>('');
     const [records, setRecords] = useState<FinancialRecordDto[]>([]);
+    const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
+    const [events, setEvents] = useState<GamificationEventDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
@@ -179,6 +185,7 @@ const Home = () => {
     const [pickerYear, setPickerYear] = useState(currentMonth.getFullYear());
     const [monthListFilter, setMonthListFilter] = useState<MonthListFilter>('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedBadgeId, setSelectedBadgeId] = useState<string | null>(null);
 
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -186,6 +193,17 @@ const Home = () => {
     const showConfirm = !!confirmState;
     const showPeriodSelector = showPeriodPicker;
     const showXpPopup = !!xpPopup;
+    const gamification = useMemo(
+        () =>
+            buildGamificationSummary({
+                records,
+                goals,
+                events,
+                summary: gamificationSummary,
+            }),
+        [events, gamificationSummary, goals, records]
+    );
+    const unlockedBadges = useMemo(() => gamification.badges.filter((badge) => badge.unlocked), [gamification.badges]);
 
     const pushFeedback = (kind: FeedbackState['kind'], title: string, message: string) => {
         setFeedback({ kind, title, message });
@@ -210,11 +228,15 @@ const Home = () => {
     const loadRecords = useCallback(async () => {
         setLoading(true);
         try {
-            const [monthResult, summaryResult] = await Promise.all([
+            const [monthResult, goalsResult, eventsResult, summaryResult] = await Promise.all([
                 listFinancialRecords(currentMonth.getFullYear(), currentMonth.getMonth() + 1),
+                listFinancialGoals(),
+                listGamificationEvents(),
                 getGamificationSummary(),
             ]);
             setRecords(Array.isArray(monthResult.records) ? monthResult.records : []);
+            setGoals(Array.isArray(goalsResult.goals) ? goalsResult.goals : []);
+            setEvents(Array.isArray(eventsResult.events) ? eventsResult.events : []);
             setGamificationSummary(normalizeGamificationSummary(summaryResult.summary));
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível carregar os registros do mês.';
@@ -430,6 +452,7 @@ const Home = () => {
 
     return (
         <>
+            <Pressable className="flex-1" onPress={() => selectedBadgeId && setSelectedBadgeId(null)}>
             <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black" scrollable>
                 <View className="bg-white dark:bg-[#121212] px-4 pt-5 pb-4 border-b border-[#f0ebe7]">
                     <View className="flex-row items-center justify-between mb-4">
@@ -469,6 +492,51 @@ const Home = () => {
                             </View>
                             <Text className="text-2xl font-bold text-slate-900 dark:text-slate-100">{entries.filter((item) => item.status !== 'pending').length}</Text>
                         </View>
+                    </View>
+
+                    <View className="mt-4 bg-[#f8f7f5] dark:bg-black rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
+                        <View className="flex-row items-center justify-between mb-3">
+                            <View>
+                                <Text className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Brasões da jornada</Text>
+                            </View>
+                           
+                        </View>
+
+                        {unlockedBadges.length === 0 ? (
+                            <Text className="text-slate-500 dark:text-slate-300 text-xs">Nenhum brasão conquistado ainda.</Text>
+                        ) : (
+                        <View className="flex-row flex-wrap">
+                            {unlockedBadges.map((badge) => {
+                                const Icon = levelIconMap[badge.icon] || Trophy;
+                                const selected = selectedBadgeId === badge.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={badge.id}
+                                        className="mr-3 mb-3 items-center relative"
+                                        activeOpacity={0.85}
+                                        onPress={(event) => {
+                                            event.stopPropagation();
+                                            setSelectedBadgeId(badge.id);
+                                        }}
+                                    >
+                                        {selected ? (
+                                            <View className="absolute -top-12 items-center z-10">
+                                                <View className="px-3 py-1.5 rounded-2xl bg-white dark:bg-[#121212] border border-primary/20 shadow-sm min-w-[96px] max-w-[180px]">
+                                                    <Text className="text-primary text-[10px] font-bold text-center" numberOfLines={1} ellipsizeMode="tail">
+                                                        {badge.title}
+                                                    </Text>
+                                                </View>
+                                                <View className="w-3 h-3 bg-white dark:bg-[#121212] border-r border-b border-primary/20 rotate-45 -mt-1" />
+                                            </View>
+                                        ) : null}
+                                        <View className="w-14 h-14 rounded-2xl bg-white dark:bg-[#121212] border border-primary/20 items-center justify-center">
+                                            <Icon size={24} color="#f48c25" />
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                        )}
                     </View>
                 </View>
 
@@ -639,6 +707,7 @@ const Home = () => {
                     ))}
                 </View>
             </Layout>
+            </Pressable>
 
             {showDayDetails ? (
                 <View className="absolute inset-0 z-40">

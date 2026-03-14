@@ -2,6 +2,7 @@
   has_secure_password
 
   has_many :financial_records, dependent: :destroy
+  has_many :financial_goals, dependent: :destroy
   has_many :gamification_events, dependent: :destroy
 
   before_validation :normalize_email

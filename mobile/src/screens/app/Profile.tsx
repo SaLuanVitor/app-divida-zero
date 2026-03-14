@@ -21,9 +21,11 @@ import { useAuth } from '../../context/AuthContext';
 import { listFinancialRecords } from '../../services/financialRecords';
 import { FinancialRecordDto } from '../../types/financialRecord';
 import { buildGamificationSummary, formatAchievementProgress } from '../../utils/gamification';
-import { getGamificationSummary } from '../../services/gamification';
-import { DEFAULT_GAMIFICATION_SUMMARY, GamificationSummaryDto, normalizeGamificationSummary } from '../../types/gamification';
+import { getGamificationSummary, listGamificationEvents } from '../../services/gamification';
+import { DEFAULT_GAMIFICATION_SUMMARY, GamificationEventDto, GamificationSummaryDto, normalizeGamificationSummary } from '../../types/gamification';
 import { runWhenIdle } from '../../utils/idle';
+import { listFinancialGoals } from '../../services/financialGoals';
+import { FinancialGoalDto } from '../../types/financialGoal';
 
 const Profile = () => {
     const { user, signOut } = useAuth();
@@ -33,6 +35,8 @@ const Profile = () => {
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [logoutLoading, setLogoutLoading] = useState(false);
     const [records, setRecords] = useState<FinancialRecordDto[]>([]);
+    const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
+    const [events, setEvents] = useState<GamificationEventDto[]>([]);
     const [loadingGamification, setLoadingGamification] = useState(false);
     const [summary, setSummary] = useState<GamificationSummaryDto>(DEFAULT_GAMIFICATION_SUMMARY);
     const [historySectionY, setHistorySectionY] = useState(0);
@@ -48,7 +52,17 @@ const Profile = () => {
         { label: 'Ajuda e suporte', icon: HelpCircle, color: '#8b5cf6', route: 'Ajuda e Suporte' },
     ];
 
-    const gamification = useMemo(() => buildGamificationSummary(records), [records]);
+    const gamification = useMemo(
+        () =>
+            buildGamificationSummary({
+                records,
+                goals,
+                events,
+                summary,
+            }),
+        [events, goals, records, summary]
+    );
+
     const badgeIconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
         sprout: Trophy,
         target: Target,
@@ -60,11 +74,16 @@ const Profile = () => {
         const loadGamification = async () => {
             setLoadingGamification(true);
             try {
-                const [recordsResult, summaryResult] = await Promise.all([
+                const [recordsResult, goalsResult, eventsResult, summaryResult] = await Promise.all([
                     listFinancialRecords(),
+                    listFinancialGoals(),
+                    listGamificationEvents(),
                     getGamificationSummary(),
                 ]);
+
                 setRecords(recordsResult.records);
+                setGoals(goalsResult.goals);
+                setEvents(eventsResult.events);
                 setSummary(normalizeGamificationSummary(summaryResult.summary));
             } finally {
                 setLoadingGamification(false);
@@ -154,7 +173,9 @@ const Profile = () => {
                             {gamification.achievements.map((achievement, index) => (
                                 <View key={achievement.id} className={`p-4 ${index !== gamification.achievements.length - 1 ? 'border-b border-slate-50' : ''}`}>
                                     <View className="flex-row items-center justify-between mb-1">
-                                        <Text className={`font-bold ${achievement.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'}`}>{achievement.title}</Text>
+                                        <Text className={`font-bold ${achievement.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'}`}>
+                                            {achievement.title}
+                                        </Text>
                                         <Text className={`text-xs font-bold ${achievement.unlocked ? 'text-emerald-600' : 'text-slate-400 dark:text-slate-300'}`}>
                                             {achievement.unlocked ? `+${achievement.rewardXp} XP` : formatAchievementProgress(achievement.progress, achievement.target)}
                                         </Text>
