@@ -694,7 +694,7 @@ const Home = () => {
             {showConfirm ? (
                 <View className="absolute inset-0 z-[60]">
                     <Pressable className="absolute inset-0 bg-black/30" onPress={() => !actionLoading && setConfirmState(null)} />
-                    <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+                    <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
                         <Text className="text-slate-900 dark:text-slate-100 text-base font-bold">{confirmState?.title}</Text>
                         <Text className="text-slate-600 dark:text-slate-300 text-sm mt-2 mb-4">{confirmState?.message}</Text>
 
@@ -720,7 +720,7 @@ const Home = () => {
             {showXpPopup ? (
                 <View className="absolute inset-0 z-[62]">
                     <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
-                    <View className="absolute left-5 right-5 top-[24%] bg-white dark:bg-[#121212] rounded-3xl border border-orange-100 p-5">
+                    <View className="absolute left-5 right-5 top-[24%] bg-white dark:bg-[#121212] rounded-3xl border border-orange-100 dark:border-slate-700 p-5">
                         <View className="items-center">
                             <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border border-primary/20 mb-3">
                                 {(() => {
@@ -731,7 +731,7 @@ const Home = () => {
                             <Text className="text-slate-900 dark:text-slate-100 text-2xl font-extrabold text-center">{xpPopup?.title}</Text>
                             <Text className="text-slate-500 dark:text-slate-300 text-sm text-center mt-1">{xpPopup?.message}</Text>
 
-                            <View className="w-full mt-4 bg-[#fff7ed] rounded-2xl border border-orange-100 p-4">
+                            <View className="w-full mt-4 bg-[#fff7ed] dark:bg-[#1a1a1a] rounded-2xl border border-orange-100 dark:border-slate-700 p-4">
                                 <Text className="text-primary text-xs font-bold uppercase text-center">Recompensa</Text>
                                 <Text className="text-slate-900 dark:text-slate-100 text-3xl font-black text-center mt-1">
                                     {(xpPopup?.points ?? 0) > 0 ? `+${xpPopup?.points}` : xpPopup?.points} XP
@@ -739,7 +739,7 @@ const Home = () => {
                                 <Text className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
                                     Nível {xpPopup?.level} • {xpPopup?.levelTitle}
                                 </Text>
-                                <View className="h-2 bg-slate-200 rounded-full overflow-hidden mt-3">
+                                <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                     <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup?.levelProgressPct ?? 0}%` }} />
                                 </View>
                             </View>
@@ -824,11 +824,11 @@ const Home = () => {
 
             {feedback ? (
                 <View className="absolute top-16 left-4 right-4 z-[70]">
-                    <View className={`rounded-xl border px-4 py-3 ${feedback.kind === 'success' ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-                        <Text className={`font-bold text-sm ${feedback.kind === 'success' ? 'text-emerald-800' : 'text-red-800'}`}>
+                    <View className={`rounded-xl border px-4 py-3 ${feedback.kind === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
+                        <Text className={`font-bold text-sm ${feedback.kind === 'success' ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>
                             {feedback.title}
                         </Text>
-                        <Text className={`text-xs mt-1 ${feedback.kind === 'success' ? 'text-emerald-700' : 'text-red-700'}`}>
+                        <Text className={`text-xs mt-1 ${feedback.kind === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
                             {feedback.message}
                         </Text>
                     </View>

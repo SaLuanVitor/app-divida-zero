@@ -541,7 +541,7 @@ const Lancamentos = () => {
             {xpPopup ? (
                 <View className="absolute inset-0 z-50">
                     <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
-                    <View className="absolute left-5 right-5 top-[22%] bg-white dark:bg-[#121212] rounded-3xl border border-orange-100 p-5">
+                    <View className="absolute left-5 right-5 top-[22%] bg-white dark:bg-[#121212] rounded-3xl border border-orange-100 dark:border-slate-700 p-5">
                         <View className="items-center">
                             <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border border-primary/20 mb-3">
                                 {(() => {
@@ -558,7 +558,7 @@ const Lancamentos = () => {
                                     : 'Você ganhou pontos por manter o controle financeiro.'}
                             </Text>
 
-                            <View className="w-full mt-4 bg-[#fff7ed] rounded-2xl border border-orange-100 p-4">
+                            <View className="w-full mt-4 bg-[#fff7ed] dark:bg-[#1a1a1a] rounded-2xl border border-orange-100 dark:border-slate-700 p-4">
                                 <Text className="text-primary text-xs font-bold uppercase text-center">Recompensa</Text>
                                 <Text className="text-slate-900 dark:text-slate-100 text-3xl font-black text-center mt-1">
                                     {xpPopup.points > 0 ? `+${xpPopup.points}` : xpPopup.points} XP
@@ -566,7 +566,7 @@ const Lancamentos = () => {
                                 <Text className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
                                     Nível {xpPopup.summary.level} • {xpPopup.summary.level_title}
                                 </Text>
-                                <View className="h-2 bg-slate-200 rounded-full overflow-hidden mt-3">
+                                <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                     <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup.summary.level_progress_pct}%` }} />
                                 </View>
                             </View>
