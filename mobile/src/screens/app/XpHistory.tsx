@@ -47,6 +47,8 @@ const metadataLabelMap: Record<string, string> = {
     mode: 'Tipo',
     flow_type: 'Fluxo',
     record_type: 'Registro',
+    record_title: 'Título do lançamento',
+    category: 'Categoria',
     deleted_count: 'Registros excluídos',
     settled_count: 'Registros concluídos',
     goal_id: 'Meta',
@@ -104,6 +106,53 @@ const toPtBrTitleFallback = (rawType: string) =>
         .map((word) => keywordMap[word] || word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 
+const resolveEventTitle = (event: GamificationEventDto) => {
+    if (event.event_type === 'goal_progress_milestone') {
+        const milestone = Number(event.metadata?.milestone || 0);
+        return milestone > 0 ? `Marco de progresso ${milestone}%` : 'Marco de progresso';
+    }
+
+    return eventTitleMap[event.event_type] || toPtBrTitleFallback(event.event_type);
+};
+
+const resolveSubject = (event: GamificationEventDto) => {
+    const goalTitle = String(event.metadata?.goal_title || '').trim();
+    if (goalTitle) return goalTitle;
+
+    const recordTitle = String(event.metadata?.record_title || '').trim();
+    if (recordTitle) return recordTitle;
+
+    const achievementLabel = String(event.metadata?.achievement_label || '').trim();
+    if (achievementLabel) return achievementLabel;
+
+    return '';
+};
+
+const resolveSubtitle = (event: GamificationEventDto) => {
+    switch (event.event_type) {
+        case 'income_received':
+            return 'Ganho recebido';
+        case 'expense_paid':
+            return 'Dívida/despesa quitada';
+        case 'record_created':
+            return 'Lançamento criado';
+        case 'record_deleted':
+            return 'Lançamento excluído';
+        case 'goal_created':
+            return 'Meta criada';
+        case 'goal_progress_milestone': {
+            const milestone = Number(event.metadata?.milestone || 0);
+            return milestone > 0 ? `Meta atingiu ${milestone}%` : 'Progresso da meta';
+        }
+        case 'goal_completed':
+            return 'Meta concluída';
+        case 'achievement_unlocked':
+            return 'Conquista desbloqueada';
+        default:
+            return eventDescriptionMap[event.event_type] || 'Evento de XP';
+    }
+};
+
 const normalizeMetadata = (metadata?: Record<string, unknown>) => {
     if (!metadata) return [] as Array<{ label: string; value: string }>;
 
@@ -156,7 +205,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
         if (!q) return base;
 
         return base.filter((event) => {
-            const title = eventTitleMap[event.event_type] || toPtBrTitleFallback(event.event_type);
+            const title = resolveEventTitle(event);
             const description = eventDescriptionMap[event.event_type] || 'Evento de XP';
             const reason = eventReasonMap[event.event_type] || '';
             const details = normalizeMetadata(event.metadata)
@@ -241,11 +290,15 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                     ) : null}
 
                     {filteredEvents.map((event) => {
-                        const title = eventTitleMap[event.event_type] || toPtBrTitleFallback(event.event_type);
+                        const title = resolveEventTitle(event);
                         const description = eventDescriptionMap[event.event_type] || 'Evento de XP';
                         const reason = eventReasonMap[event.event_type] || 'Detalhe não informado.';
                         const metadata = normalizeMetadata(event.metadata);
                         const isGain = event.points >= 0;
+                        const subject = resolveSubject(event);
+                        const subtitle = resolveSubtitle(event);
+                        const displayTitle = subject || title;
+                        const displaySubtitle = subject ? subtitle : description;
 
                         return (
                             <Card key={event.id} className="mb-3" noPadding>
@@ -256,8 +309,8 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                                                 <Sparkles size={18} color={isGain ? '#059669' : '#dc2626'} />
                                             </View>
                                             <View className="ml-3">
-                                                <Text className="text-slate-900 dark:text-slate-100 font-bold capitalize">{title}</Text>
-                                                <Text className="text-slate-500 dark:text-slate-300 text-xs">{description}</Text>
+                                                <Text className="text-slate-900 dark:text-slate-100 font-bold capitalize">{displayTitle}</Text>
+                                                <Text className="text-slate-500 dark:text-slate-300 text-xs">{displaySubtitle}</Text>
                                             </View>
                                         </View>
                                         <Text className={`text-sm font-bold ${isGain ? 'text-emerald-600' : 'text-red-600'}`}>

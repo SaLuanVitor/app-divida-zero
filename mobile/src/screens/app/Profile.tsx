@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import {
     User as UserIcon,
@@ -13,7 +13,7 @@ import {
     Trophy,
     Crown,
 } from 'lucide-react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
@@ -70,31 +70,34 @@ const Profile = () => {
         crown: Crown,
     };
 
-    useEffect(() => {
-        const loadGamification = async () => {
-            setLoadingGamification(true);
-            try {
-                const [recordsResult, goalsResult, eventsResult, summaryResult] = await Promise.all([
-                    listFinancialRecords(),
-                    listFinancialGoals(),
-                    listGamificationEvents(),
-                    getGamificationSummary(),
-                ]);
+    const loadGamification = useCallback(async () => {
+        setLoadingGamification(true);
+        try {
+            const [recordsResult, goalsResult, eventsResult, summaryResult] = await Promise.all([
+                listFinancialRecords(),
+                listFinancialGoals(),
+                listGamificationEvents(),
+                getGamificationSummary(),
+            ]);
 
-                setRecords(recordsResult.records);
-                setGoals(goalsResult.goals);
-                setEvents(eventsResult.events);
-                setSummary(normalizeGamificationSummary(summaryResult.summary));
-            } finally {
-                setLoadingGamification(false);
-            }
-        };
-
-        const cancel = runWhenIdle(() => {
-            loadGamification();
-        });
-        return cancel;
+            setRecords(recordsResult.records);
+            setGoals(goalsResult.goals);
+            setEvents(eventsResult.events);
+            setSummary(normalizeGamificationSummary(summaryResult.summary));
+        } finally {
+            setLoadingGamification(false);
+        }
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            const cancel = runWhenIdle(() => {
+                loadGamification();
+            });
+
+            return cancel;
+        }, [loadGamification])
+    );
 
     useEffect(() => {
         const shouldFocusHistory = Boolean(route.params?.focusHistory);

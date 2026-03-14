@@ -25,7 +25,12 @@
           event_type: "record_created",
           points: generated.size * 50,
           source: generated.first,
-          metadata: { created_count: generated.size, mode: payload[:mode].presence || "launch" }
+          metadata: {
+            created_count: generated.size,
+            mode: payload[:mode].presence || "launch",
+            record_title: generated.first.title,
+            category: generated.first.category
+          }
         )
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
 
@@ -57,7 +62,12 @@
           event_type: record.flow_type == "income" ? "income_received" : "expense_paid",
           points: 20,
           source: record,
-          metadata: { flow_type: record.flow_type, record_type: record.record_type }
+          metadata: {
+            flow_type: record.flow_type,
+            record_type: record.record_type,
+            record_title: record.title,
+            category: record.category
+          }
         )
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
 
@@ -355,7 +365,9 @@
           source: source,
           metadata: {
             deleted_count: deleted_count,
-            settled_count: settled_count
+            settled_count: settled_count,
+            record_title: source.title,
+            category: source.category
           }
         )
       end

@@ -1,4 +1,4 @@
-import { FinancialGoalDto } from '../types/financialGoal';
+﻿import { FinancialGoalDto } from '../types/financialGoal';
 import { FinancialRecordDto } from '../types/financialRecord';
 import { GamificationEventDto, GamificationSummaryDto } from '../types/gamification';
 
@@ -186,3 +186,5 @@ export const buildGamificationSummary = ({
 };
 
 export const formatAchievementProgress = (progress: number, target: number) => `${Math.min(progress, target)}/${target}`;
+
+

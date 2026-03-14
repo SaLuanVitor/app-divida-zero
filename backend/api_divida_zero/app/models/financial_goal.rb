@@ -1,4 +1,4 @@
-class FinancialGoal < ApplicationRecord
+﻿class FinancialGoal < ApplicationRecord
   GOAL_TYPES = %w[save debt specific].freeze
   STATUSES = %w[active completed].freeze
 
@@ -46,3 +46,4 @@ class FinancialGoal < ApplicationRecord
     remaining.positive? ? remaining : 0.to_d
   end
 end
+
