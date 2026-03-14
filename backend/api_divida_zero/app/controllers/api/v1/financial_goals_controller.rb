@@ -61,7 +61,7 @@ module Api
       private
 
       def goal_params
-        params.fetch(:financial_goal, params).permit(:title, :description, :target_amount, :target_date, :goal_type)
+        params.fetch(:financial_goal, params).permit(:title, :description, :target_amount, :start_date, :target_date, :goal_type)
       end
 
       def unlock_first_goal_created!(goal)

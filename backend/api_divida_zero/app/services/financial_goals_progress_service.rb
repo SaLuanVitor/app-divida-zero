@@ -60,9 +60,31 @@
     end
 
     def remove_goal_tracking!(goal)
-      goal.user.gamification_events
-          .where(source_type: goal.class.name, source_id: goal.id, event_type: %w[goal_progress_milestone goal_completed])
-          .destroy_all
+      related_events = goal.user.gamification_events
+                           .where(source_type: goal.class.name, source_id: goal.id, event_type: %w[goal_created goal_progress_milestone goal_completed])
+                           .order(:created_at)
+
+      reverted_points = related_events.sum(:points)
+      removed_milestones = related_events
+                             .where(event_type: %w[goal_progress_milestone goal_completed])
+                             .map { |event| event.metadata["milestone"].to_i }
+                             .uniq
+                             .sort
+
+      if reverted_points.positive?
+        GamificationService.award!(
+          user: goal.user,
+          event_type: "goal_deleted",
+          points: -reverted_points,
+          source: goal,
+          metadata: {
+            goal_id: goal.id,
+            goal_title: goal.title,
+            goal_type: goal.goal_type,
+            removed_milestones: removed_milestones
+          }
+        )
+      end
 
       sync_goal_achievements!(goal.user)
     end
@@ -148,7 +170,7 @@
     end
 
     def relevant_amount_for(goal)
-      scope = goal.user.financial_records
+      scope = goal.user.financial_records.where("due_date >= ?", goal.start_date)
 
       total = case goal.goal_type
               when "debt"

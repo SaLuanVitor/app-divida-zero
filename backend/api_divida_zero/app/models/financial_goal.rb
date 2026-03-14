@@ -17,6 +17,9 @@
             presence: { message: "Valor da meta é obrigatório." },
             numericality: { greater_than: 0, message: "Valor da meta deve ser maior que zero." }
 
+  validates :start_date,
+            presence: { message: "Data de início é obrigatória." }
+
   validates :goal_type,
             presence: { message: "Tipo da meta é obrigatório." },
             inclusion: { in: GOAL_TYPES, message: "Tipo da meta inválido." }
@@ -36,6 +39,7 @@
       progress_pct: progress_pct,
       goal_type: goal_type,
       status: status,
+      start_date: start_date,
       target_date: target_date,
       completed_at: completed_at
     }

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_14_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_14_000200) do
   create_table "financial_goals", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -19,6 +19,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_14_000100) do
     t.string "goal_type", null: false
     t.integer "last_awarded_milestone", default: 0, null: false
     t.integer "progress_pct", default: 0, null: false
+    t.date "start_date", null: false
     t.string "status", default: "active", null: false
     t.decimal "target_amount", precision: 12, scale: 2, null: false
     t.date "target_date"
@@ -26,6 +27,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_14_000100) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id", "goal_type"], name: "index_financial_goals_on_user_id_and_goal_type"
+    t.index ["user_id", "start_date"], name: "index_financial_goals_on_user_id_and_start_date"
     t.index ["user_id", "status"], name: "index_financial_goals_on_user_id_and_status"
     t.index ["user_id", "target_date"], name: "index_financial_goals_on_user_id_and_target_date"
     t.index ["user_id"], name: "index_financial_goals_on_user_id"
