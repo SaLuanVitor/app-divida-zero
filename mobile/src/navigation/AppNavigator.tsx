@@ -17,6 +17,7 @@ import HelpSupport from '../screens/app/HelpSupport';
 import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, Landmark } from 'lucide-react-native';
 import { useOverlay } from '../context/OverlayContext';
 import { useThemeMode } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -134,6 +135,12 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 };
 
 export const AppNavigator = () => {
+    const { signed } = useAuth();
+
+    if (!signed) {
+        return null;
+    }
+
     return (
         <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
             <Tab.Screen name="Inicio" component={Home} />

@@ -1,10 +1,15 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, AuthResponse } from '../types/auth';
-import api, { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '../services/api';
+import api, { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, setUnauthorizedHandler } from '../services/api';
 
 const USER_KEY = '@DividaZero:user';
-const START_ALWAYS_AT_LOGIN = true;
+const LEGACY_USER_KEY = '@DívidaZero:user';
+const LEGACY_ACCESS_KEY = '@DívidaZero:accessToken';
+const LEGACY_REFRESH_KEY = '@DívidaZero:refreshToken';
+const LEGACY_MOJIBAKE_USER_KEY = '@DÃ­vidaZero:user';
+const LEGACY_MOJIBAKE_ACCESS_KEY = '@DÃ­vidaZero:accessToken';
+const LEGACY_MOJIBAKE_REFRESH_KEY = '@DÃ­vidaZero:refreshToken';
 
 interface AuthContextData {
     signed: boolean;
@@ -16,39 +21,70 @@ interface AuthContextData {
     requestPasswordReset(email: string): Promise<string | null>;
     resetPassword(email: string, token: string, newPassword: string): Promise<void>;
     signOut(): Promise<void>;
+    invalidateSession(): Promise<void>;
     refreshToken(): Promise<void>;
     updateUser(user: User): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
+const CLEAR_SESSION_KEYS = [
+    USER_KEY,
+    ACCESS_TOKEN_KEY,
+    REFRESH_TOKEN_KEY,
+    LEGACY_USER_KEY,
+    LEGACY_ACCESS_KEY,
+    LEGACY_REFRESH_KEY,
+    LEGACY_MOJIBAKE_USER_KEY,
+    LEGACY_MOJIBAKE_ACCESS_KEY,
+    LEGACY_MOJIBAKE_REFRESH_KEY,
+];
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [authLoading, setAuthLoading] = useState(false);
 
+    const invalidateSession = useCallback(async () => {
+        await AsyncStorage.multiRemove(CLEAR_SESSION_KEYS);
+        setUser(null);
+        delete api.defaults.headers.common.Authorization;
+    }, []);
+
     useEffect(() => {
         async function bootstrap() {
-            if (START_ALWAYS_AT_LOGIN) {
-                await AsyncStorage.multiRemove([USER_KEY, ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
+            try {
+                const [rawUser, accessToken, refreshToken] = await AsyncStorage.multiGet([
+                    USER_KEY,
+                    ACCESS_TOKEN_KEY,
+                    REFRESH_TOKEN_KEY,
+                ]);
+
+                const savedUser = rawUser[1];
+                const savedAccessToken = accessToken[1];
+                const savedRefreshToken = refreshToken[1];
+
+                if (savedUser && savedAccessToken && savedRefreshToken) {
+                    setUser(JSON.parse(savedUser));
+                    api.defaults.headers.common.Authorization = `Bearer ${savedAccessToken}`;
+                    return;
+                }
+
+                await invalidateSession();
+            } finally {
                 setLoading(false);
-                return;
             }
-
-            const [rawUser, accessToken] = await AsyncStorage.multiGet([USER_KEY, ACCESS_TOKEN_KEY]);
-            const savedUser = rawUser[1];
-            const savedToken = accessToken[1];
-
-            if (savedUser && savedToken) {
-                setUser(JSON.parse(savedUser));
-                api.defaults.headers.common.Authorization = `Bearer ${savedToken}`;
-            }
-
-            setLoading(false);
         }
 
         bootstrap();
-    }, []);
+    }, [invalidateSession]);
+
+    useEffect(() => {
+        setUnauthorizedHandler(invalidateSession);
+        return () => {
+            setUnauthorizedHandler(null);
+        };
+    }, [invalidateSession]);
 
     async function signIn(email: string, pass: string) {
         setAuthLoading(true);
@@ -92,17 +128,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     async function signOut() {
-        await AsyncStorage.multiRemove([
-            USER_KEY,
-            ACCESS_TOKEN_KEY,
-            REFRESH_TOKEN_KEY,
-            '@DívidaZero:user',
-            '@DívidaZero:accessToken',
-            '@DívidaZero:refreshToken',
-        ]);
-
-        setUser(null);
-        delete api.defaults.headers.common.Authorization;
+        await invalidateSession();
     }
 
     async function refreshToken() {
@@ -112,6 +138,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { data } = await api.post('/auth/refresh', { refresh_token: refresh });
         await AsyncStorage.setItem(ACCESS_TOKEN_KEY, data.access_token);
         await AsyncStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token);
+        api.defaults.headers.common.Authorization = `Bearer ${data.access_token}`;
     }
 
     async function updateUser(nextUser: User) {
@@ -131,6 +158,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 requestPasswordReset,
                 resetPassword,
                 signOut,
+                invalidateSession,
                 refreshToken,
                 updateUser,
             }}
@@ -149,4 +177,3 @@ export function useAuth() {
 
     return context;
 }
-
