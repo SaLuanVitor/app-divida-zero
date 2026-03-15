@@ -4,6 +4,7 @@ import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, Chevron
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Button from '../../components/Button';
+import { useThemeMode } from '../../context/ThemeContext';
 import { createFinancialRecord } from '../../services/financialRecords';
 import { CreateFinancialRecordPayload, FinancialRecurrenceType } from '../../types/financialRecord';
 import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamification';
@@ -81,6 +82,7 @@ const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: 
 const Lancamentos = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const { darkMode } = useThemeMode();
 
     const [activeTab, setActiveTab] = useState<RegisterTab>('income');
 
@@ -105,6 +107,7 @@ const Lancamentos = () => {
 
     const [loading, setLoading] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
+    const iconColor = darkMode ? '#e2e8f0' : '#334155';
 
     useEffect(() => {
         const incomingMode = route.params?.mode as string | undefined;
@@ -278,7 +281,7 @@ const Lancamentos = () => {
                 <ScrollView className="flex-1" contentContainerClassName="px-4 pb-28" showsVerticalScrollIndicator={false}>
                     <View className="flex-row items-center mt-4 mb-4">
                         <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-1">
-                            <ArrowLeft size={22} color="#f8f7f5" />
+                            <ArrowLeft size={22} color={iconColor} />
                         </TouchableOpacity>
                         <View>
                             <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">{formTitle}</Text>
@@ -498,11 +501,11 @@ const Lancamentos = () => {
                     <View className="absolute bottom-24 left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3">
                         <View className="flex-row items-center justify-between mb-3">
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
-                                <ChevronLeft size={16} color="#1f2937" />
+                                <ChevronLeft size={16} color={iconColor} />
                             </TouchableOpacity>
                             <Text className="text-slate-900 dark:text-slate-100 font-bold">{toMonthLabel(pickerMonth)}</Text>
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 1))}>
-                                <ChevronRight size={16} color="#1f2937" />
+                                <ChevronRight size={16} color={iconColor} />
                             </TouchableOpacity>
                         </View>
 

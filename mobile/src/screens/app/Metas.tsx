@@ -248,7 +248,13 @@ const Metas = () => {
                                     </View>
 
                                     <View className="absolute right-4 top-4 z-10">
-                                        <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => requestDeleteGoal(goal)}>
+                                        <TouchableOpacity
+                                            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800"
+                                            onPress={(event) => {
+                                                event.stopPropagation();
+                                                requestDeleteGoal(goal);
+                                            }}
+                                        >
                                             <Trash2 size={14} color="#ef4444" />
                                         </TouchableOpacity>
                                     </View>
