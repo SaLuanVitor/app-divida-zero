@@ -3,6 +3,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    ScrollViewProps,
     View,
     useWindowDimensions
 } from 'react-native';
@@ -13,6 +14,7 @@ interface LayoutProps {
     scrollable?: boolean;
     className?: string;
     contentContainerClassName?: string;
+    scrollViewProps?: ScrollViewProps;
 }
 
 const cn = (...classes: Array<string | undefined | null | false>) =>
@@ -22,7 +24,8 @@ const Layout: React.FC<LayoutProps> = ({
     children,
     scrollable = false,
     className,
-    contentContainerClassName
+    contentContainerClassName,
+    scrollViewProps,
 }) => {
     const { width } = useWindowDimensions();
     const shouldConstrain = width >= 768;
@@ -50,6 +53,7 @@ const Layout: React.FC<LayoutProps> = ({
                         contentContainerStyle={{ flexGrow: 1 }}
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
+                        {...scrollViewProps}
                     >
                         <View style={contentWrapperStyle}>{children}</View>
                     </ScrollView>

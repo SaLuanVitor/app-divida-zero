@@ -1,5 +1,5 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Pressable, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, ActivityIndicator, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import {
     Bell,
     Bolt,
@@ -36,6 +36,7 @@ import { useThemeMode } from '../../context/ThemeContext';
 import { listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto } from '../../types/financialGoal';
 import { buildGamificationSummary } from '../../utils/gamification';
+import { runWhenIdle } from '../../utils/idle';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
 
@@ -80,6 +81,7 @@ type XpPopupState = {
 type MonthListFilter = 'all' | 'pending' | 'completed';
 
 const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+const CARD_PAGE_SIZE = 10;
 
 const formatDateKey = (date: Date) => {
     const y = date.getFullYear();
@@ -186,8 +188,10 @@ const Home = () => {
     const [monthListFilter, setMonthListFilter] = useState<MonthListFilter>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedBadgeId, setSelectedBadgeId] = useState<string | null>(null);
+    const [visibleMonthItemsCount, setVisibleMonthItemsCount] = useState(CARD_PAGE_SIZE);
 
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastMonthLoadAtRef = useRef(0);
 
     const showDayDetails = isOverlayOpen('dayDetails');
     const showConfirm = !!confirmState;
@@ -225,14 +229,15 @@ const Home = () => {
         };
     }, []);
 
-    const loadRecords = useCallback(async () => {
+    const loadRecords = useCallback(async (options: { force?: boolean } = {}) => {
+        const { force = false } = options;
         setLoading(true);
         try {
             const [monthResult, goalsResult, eventsResult, summaryResult] = await Promise.all([
-                listFinancialRecords(currentMonth.getFullYear(), currentMonth.getMonth() + 1),
-                listFinancialGoals(),
-                listGamificationEvents(),
-                getGamificationSummary(),
+                listFinancialRecords(currentMonth.getFullYear(), currentMonth.getMonth() + 1, { force }),
+                listFinancialGoals({ force }),
+                listGamificationEvents({ force }),
+                getGamificationSummary({ force }),
             ]);
             setRecords(Array.isArray(monthResult.records) ? monthResult.records : []);
             setGoals(Array.isArray(goalsResult.goals) ? goalsResult.goals : []);
@@ -248,7 +253,11 @@ const Home = () => {
 
     useFocusEffect(
         useCallback(() => {
-            loadRecords();
+            const cancel = runWhenIdle(() => {
+                loadRecords();
+            });
+
+            return cancel;
         }, [loadRecords])
     );
 
@@ -324,7 +333,34 @@ const Home = () => {
     const filteredMonthItems = useMemo(() => {
         return [...visibleEntries].sort((a, b) => a.date.localeCompare(b.date));
     }, [visibleEntries]);
+    const monthItemsToRender = useMemo(
+        () => filteredMonthItems.slice(0, visibleMonthItemsCount),
+        [filteredMonthItems, visibleMonthItemsCount]
+    );
+    const hasMoreMonthItems = visibleMonthItemsCount < filteredMonthItems.length;
     const todayKey = useMemo(() => formatDateKey(new Date()), []);
+
+    useEffect(() => {
+        setVisibleMonthItemsCount(CARD_PAGE_SIZE);
+        lastMonthLoadAtRef.current = 0;
+    }, [currentMonth, monthListFilter, searchQuery]);
+
+    const handleMonthListScroll = useCallback(
+        (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+            if (!hasMoreMonthItems) return;
+
+            const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+            const reachedBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 160;
+            if (!reachedBottom) return;
+
+            const now = Date.now();
+            if (now - lastMonthLoadAtRef.current < 250) return;
+            lastMonthLoadAtRef.current = now;
+
+            setVisibleMonthItemsCount((prev) => Math.min(prev + CARD_PAGE_SIZE, filteredMonthItems.length));
+        },
+        [filteredMonthItems.length, hasMoreMonthItems]
+    );
 
     const openDayDetails = (dateKey: string) => {
         setSelectedDateKey(dateKey);
@@ -392,22 +428,14 @@ const Home = () => {
 
     const executePay = async (entry: CalendarEntry) => {
         const result = await payFinancialRecord(entry.id);
-        setRecords((prev) => prev.map((item) => (item.id === entry.id ? result.record : item)));
-        await loadRecords();
+        await loadRecords({ force: true });
         pushFeedback('success', 'Status atualizado', result.message);
         openXpFeedback(result.xp_feedback, 'Ação concluída');
     };
 
     const executeDelete = async (entry: CalendarEntry, scope: 'single' | 'group') => {
         const result = await deleteFinancialRecord(entry.id, scope);
-
-        if (scope === 'single') {
-            setRecords((prev) => prev.filter((item) => item.id !== entry.id));
-        } else if (entry.groupCode) {
-            setRecords((prev) => prev.filter((item) => item.group_code !== entry.groupCode));
-        }
-
-        await loadRecords();
+        await loadRecords({ force: true });
         pushFeedback('success', 'Registro excluído', `${result.message} (${result.deleted_count} registro(s)).`);
         openXpFeedback(result.xp_feedback, 'XP ajustado');
     };
@@ -453,7 +481,14 @@ const Home = () => {
     return (
         <>
             <Pressable className="flex-1" onPress={() => selectedBadgeId && setSelectedBadgeId(null)}>
-            <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black" scrollable>
+            <Layout
+                contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black"
+                scrollable
+                scrollViewProps={{
+                    onScroll: handleMonthListScroll,
+                    scrollEventThrottle: 16,
+                }}
+            >
                 <View className="bg-white dark:bg-[#121212] px-4 pt-5 pb-4 border-b border-[#f0ebe7]">
                     <View className="flex-row items-center justify-between mb-4">
                         <View className="flex-row items-center gap-3">
@@ -662,7 +697,7 @@ const Home = () => {
                         </Card>
                     ) : null}
 
-                    {filteredMonthItems.map((item, index) => (
+                    {monthItemsToRender.map((item, index) => (
                         <Card key={String(item.id) + index} className="mb-3" noPadding>
                             <View className="p-4">
                                 <View className="flex-row items-start justify-between">
@@ -705,6 +740,15 @@ const Home = () => {
                             </View>
                         </Card>
                     ))}
+
+                    {!loading && hasMoreMonthItems ? (
+                        <View className="items-center pb-2">
+                            <ActivityIndicator color="#f48c25" />
+                            <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                Carregando mais lançamentos...
+                            </Text>
+                        </View>
+                    ) : null}
                 </View>
             </Layout>
             </Pressable>
