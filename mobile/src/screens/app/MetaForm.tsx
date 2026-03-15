@@ -4,6 +4,7 @@ import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Landmark, PiggyBank
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Button from '../../components/Button';
+import { useThemeMode } from '../../context/ThemeContext';
 import { createFinancialGoal, updateFinancialGoal } from '../../services/financialGoals';
 import { CreateFinancialGoalPayload, FinancialGoalDto, FinancialGoalType } from '../../types/financialGoal';
 import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamification';
@@ -65,6 +66,7 @@ const chipTextClass = (active: boolean) =>
 const MetaForm = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const { darkMode } = useThemeMode();
     const goal = route.params?.goal as FinancialGoalDto | undefined;
 
     const [title, setTitle] = useState(goal?.title || '');
@@ -82,6 +84,15 @@ const MetaForm = () => {
     const [submitting, setSubmitting] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
+    const iconColor = darkMode ? '#e2e8f0' : '#334155';
+
+    const goBackToGoals = () => {
+        if (navigation?.canGoBack?.()) {
+            navigation.goBack();
+            return;
+        }
+        navigation.navigate('Metas');
+    };
 
     const canSubmit = title.trim().length >= 2 && Number(targetAmountDigits || '0') > 0;
 
@@ -163,8 +174,8 @@ const MetaForm = () => {
             <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
                 <View className="bg-[#f8f7f5] dark:bg-black px-4 pt-4 pb-2">
                     <View className="flex-row items-center gap-4">
-                        <TouchableOpacity className="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors" onPress={() => navigation.navigate('Metas')}>
-                            <ArrowLeft size={22} color="#f8f7f5" />
+                        <TouchableOpacity className="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors" onPress={goBackToGoals}>
+                            <ArrowLeft size={22} color={iconColor} />
                         </TouchableOpacity>
                         <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold tracking-tight">
                             {goal ? 'Editar meta' : 'Nova meta'}
@@ -241,7 +252,7 @@ const MetaForm = () => {
                         disabled={submitting || !canSubmit}
                         className="h-12 mb-2"
                     />
-                    <Button title="Cancelar" variant="outline" disabled={submitting} onPress={() => navigation.navigate('Metas')} className="h-11" />
+                    <Button title="Cancelar" variant="outline" disabled={submitting} onPress={goBackToGoals} className="h-11" />
                 </ScrollView>
             </Layout>
 
@@ -250,11 +261,11 @@ const MetaForm = () => {
                     <View className="absolute bottom-24 left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3">
                         <View className="flex-row items-center justify-between mb-3">
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
-                                <ChevronLeft size={16} color="#1f2937" />
+                                <ChevronLeft size={16} color={iconColor} />
                             </TouchableOpacity>
                             <Text className="text-slate-900 dark:text-slate-100 font-bold">{toMonthLabel(pickerMonth)}</Text>
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 1))}>
-                                <ChevronRight size={16} color="#1f2937" />
+                                <ChevronRight size={16} color={iconColor} />
                             </TouchableOpacity>
                         </View>
 
@@ -401,5 +412,3 @@ const MetaForm = () => {
 };
 
 export default MetaForm;
-
-

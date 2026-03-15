@@ -174,6 +174,7 @@ const Home = () => {
     });
     const [selectedDateKey, setSelectedDateKey] = useState<string>('');
     const [records, setRecords] = useState<FinancialRecordDto[]>([]);
+    const [globalRecords, setGlobalRecords] = useState<FinancialRecordDto[]>([]);
     const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
     const [events, setEvents] = useState<GamificationEventDto[]>([]);
     const [loading, setLoading] = useState(false);
@@ -200,12 +201,12 @@ const Home = () => {
     const gamification = useMemo(
         () =>
             buildGamificationSummary({
-                records,
+                records: globalRecords,
                 goals,
                 events,
                 summary: gamificationSummary,
             }),
-        [events, gamificationSummary, goals, records]
+        [events, gamificationSummary, globalRecords, goals]
     );
     const unlockedBadges = useMemo(() => gamification.badges.filter((badge) => badge.unlocked), [gamification.badges]);
 
@@ -229,20 +230,14 @@ const Home = () => {
         };
     }, []);
 
-    const loadRecords = useCallback(async (options: { force?: boolean } = {}) => {
+    const loadMonthlyRecords = useCallback(async (options: { force?: boolean } = {}) => {
         const { force = false } = options;
         setLoading(true);
         try {
-            const [monthResult, goalsResult, eventsResult, summaryResult] = await Promise.all([
+            const [monthResult] = await Promise.all([
                 listFinancialRecords(currentMonth.getFullYear(), currentMonth.getMonth() + 1, { force }),
-                listFinancialGoals({ force }),
-                listGamificationEvents({ force }),
-                getGamificationSummary({ force }),
             ]);
             setRecords(Array.isArray(monthResult.records) ? monthResult.records : []);
-            setGoals(Array.isArray(goalsResult.goals) ? goalsResult.goals : []);
-            setEvents(Array.isArray(eventsResult.events) ? eventsResult.events : []);
-            setGamificationSummary(normalizeGamificationSummary(summaryResult.summary));
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível carregar os registros do mês.';
             pushFeedback('error', 'Falha ao carregar', message);
@@ -251,14 +246,43 @@ const Home = () => {
         }
     }, [currentMonth]);
 
+    const loadGlobalGamification = useCallback(async (options: { force?: boolean } = {}) => {
+        const { force = false } = options;
+        try {
+            const [globalRecordsResult, goalsResult, eventsResult, summaryResult] = await Promise.all([
+                listFinancialRecords(undefined, undefined, { force }),
+                listFinancialGoals({ force }),
+                listGamificationEvents({ force }),
+                getGamificationSummary({ force }),
+            ]);
+            setGlobalRecords(Array.isArray(globalRecordsResult.records) ? globalRecordsResult.records : []);
+            setGoals(Array.isArray(goalsResult.goals) ? goalsResult.goals : []);
+            setEvents(Array.isArray(eventsResult.events) ? eventsResult.events : []);
+            setGamificationSummary(normalizeGamificationSummary(summaryResult.summary));
+        } catch (error: any) {
+            const message = error?.response?.data?.error ?? 'Não foi possível carregar a gamificação global.';
+            pushFeedback('error', 'Falha ao carregar', message);
+        }
+    }, []);
+
     useFocusEffect(
         useCallback(() => {
             const cancel = runWhenIdle(() => {
-                loadRecords();
+                loadMonthlyRecords();
             });
 
             return cancel;
-        }, [loadRecords])
+        }, [loadMonthlyRecords])
+    );
+
+    useFocusEffect(
+        useCallback(() => {
+            const cancel = runWhenIdle(() => {
+                loadGlobalGamification();
+            });
+
+            return cancel;
+        }, [loadGlobalGamification])
     );
 
     const entries = useMemo(() => records.map(toCalendarEntry), [records]);
@@ -428,14 +452,14 @@ const Home = () => {
 
     const executePay = async (entry: CalendarEntry) => {
         const result = await payFinancialRecord(entry.id);
-        await loadRecords({ force: true });
+        await Promise.all([loadMonthlyRecords({ force: true }), loadGlobalGamification({ force: true })]);
         pushFeedback('success', 'Status atualizado', result.message);
         openXpFeedback(result.xp_feedback, 'Ação concluída');
     };
 
     const executeDelete = async (entry: CalendarEntry, scope: 'single' | 'group') => {
         const result = await deleteFinancialRecord(entry.id, scope);
-        await loadRecords({ force: true });
+        await Promise.all([loadMonthlyRecords({ force: true }), loadGlobalGamification({ force: true })]);
         pushFeedback('success', 'Registro excluído', `${result.message} (${result.deleted_count} registro(s)).`);
         openXpFeedback(result.xp_feedback, 'XP ajustado');
     };

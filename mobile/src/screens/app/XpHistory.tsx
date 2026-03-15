@@ -1,6 +1,7 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { ArrowLeft, Clock3, Filter, Search, Sparkles } from 'lucide-react-native';
+import { useThemeMode } from '../../context/ThemeContext';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import { listGamificationEvents } from '../../services/gamification';
@@ -178,12 +179,14 @@ type XpHistoryProps = {
 };
 
 const XpHistory = ({ navigation }: XpHistoryProps) => {
+    const { darkMode } = useThemeMode();
     const [events, setEvents] = useState<GamificationEventDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [query, setQuery] = useState('');
     const [filter, setFilter] = useState<EventFilter>('all');
     const [visibleEventsCount, setVisibleEventsCount] = useState(CARD_PAGE_SIZE);
     const lastLoadTimestampRef = useRef(0);
+    const iconColor = darkMode ? '#e2e8f0' : '#334155';
 
     useEffect(() => {
         const load = async () => {
@@ -273,7 +276,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                             }}
                             className="p-2 -ml-2 mr-1"
                         >
-                            <ArrowLeft size={22} color="#f8f7f5" />
+                            <ArrowLeft size={22} color={iconColor} />
                         </TouchableOpacity>
                         <View>
                             <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">Histórico de XP</Text>
@@ -294,19 +297,19 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
 
                     <View className="flex-row gap-2 mt-3">
                         <TouchableOpacity
-                            className={`px-3 py-2 rounded-full border ${filter === 'all' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200'}`}
+                            className={`px-3 py-2 rounded-full border ${filter === 'all' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setFilter('all')}
                         >
                             <Text className={`text-xs font-bold ${filter === 'all' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Todos</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            className={`px-3 py-2 rounded-full border ${filter === 'gain' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200'}`}
+                            className={`px-3 py-2 rounded-full border ${filter === 'gain' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setFilter('gain')}
                         >
                             <Text className={`text-xs font-bold ${filter === 'gain' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Ganhos</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            className={`px-3 py-2 rounded-full border ${filter === 'loss' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200'}`}
+                            className={`px-3 py-2 rounded-full border ${filter === 'loss' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setFilter('loss')}
                         >
                             <Text className={`text-xs font-bold ${filter === 'loss' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Perdas</Text>

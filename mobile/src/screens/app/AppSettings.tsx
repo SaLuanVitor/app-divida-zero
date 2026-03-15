@@ -99,12 +99,12 @@ const AppSettings = () => {
             onChange={handleThemeToggle}
           />
 
-          <Item
+          {/* <Item
             title="Texto maior"
             subtitle="Aumenta a leitura de títulos e conteúdos."
             value={prefs.large_text}
             onChange={(value) => updatePreference('large_text', value)}
-          />
+          /> */}
         </Card>
 
         {message ? (
