@@ -16,5 +16,10 @@
     "**/*.tsx",
     "nativewind-env.d.ts"
   ],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "jest.setup.ts"
+  ],
   "extends": "expo/tsconfig.base"
 }
