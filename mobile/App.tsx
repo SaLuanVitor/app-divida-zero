@@ -21,10 +21,50 @@ import { OverlayProvider } from './src/context/OverlayContext';
 import { ThemeProvider, useThemeMode } from './src/context/ThemeContext';
 import { RootNavigator } from './src/navigation';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { AppState, View } from 'react-native';
+import { initializeNotificationLayer, syncScheduledLocalNotifications } from './src/services/notifications';
+import { useAuth } from './src/context/AuthContext';
+import { getAppPreferences } from './src/services/preferences';
+import { listFinancialRecords } from './src/services/financialRecords';
 
 function AppContent() {
   const { darkMode, loadingTheme } = useThemeMode();
+  const { signed } = useAuth();
+
+  React.useEffect(() => {
+    initializeNotificationLayer();
+  }, []);
+
+  React.useEffect(() => {
+    if (!signed) return;
+
+    const syncNotifications = async () => {
+      const [prefs, recordsResult] = await Promise.all([
+        getAppPreferences(),
+        listFinancialRecords(undefined, undefined, { force: true }),
+      ]);
+
+      await syncScheduledLocalNotifications({
+        prefs,
+        records: recordsResult.records,
+      });
+    };
+
+    const initial = setTimeout(() => {
+      syncNotifications();
+    }, 300);
+
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        syncNotifications();
+      }
+    });
+
+    return () => {
+      clearTimeout(initial);
+      subscription.remove();
+    };
+  }, [signed]);
 
   if (loadingTheme) {
     return <View style={{ flex: 1, backgroundColor: '#f8f7f5' }} />;
