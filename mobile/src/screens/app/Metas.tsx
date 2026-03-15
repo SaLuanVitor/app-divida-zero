@@ -1,5 +1,5 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2, ChevronRight } from 'lucide-react-native';
 import Layout from '../../components/Layout';
@@ -32,6 +32,8 @@ const formatDateBR = (iso?: string | null) => {
     return `${d}/${m}/${y}`;
 };
 
+const CARD_PAGE_SIZE = 10;
+
 const Metas = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
@@ -41,7 +43,9 @@ const Metas = () => {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [goalPendingDelete, setGoalPendingDelete] = useState<FinancialGoalDto | null>(null);
+    const [visibleGoalsCount, setVisibleGoalsCount] = useState(CARD_PAGE_SIZE);
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastGoalsLoadAtRef = useRef(0);
 
     const pushFeedback = useCallback((kind: FeedbackState['kind'], title: string, message: string) => {
         setFeedback({ kind, title, message });
@@ -77,6 +81,8 @@ const Metas = () => {
         try {
             const result = await listFinancialGoals();
             setGoals(result.goals);
+            setVisibleGoalsCount(CARD_PAGE_SIZE);
+            lastGoalsLoadAtRef.current = 0;
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível carregar as metas.';
             pushFeedback('error', 'Erro ao carregar', message);
@@ -99,6 +105,26 @@ const Metas = () => {
 
         return { active, completed, avgProgress };
     }, [goals]);
+
+    const goalsToRender = useMemo(() => goals.slice(0, visibleGoalsCount), [goals, visibleGoalsCount]);
+    const hasMoreGoals = visibleGoalsCount < goals.length;
+
+    const handleGoalsScroll = useCallback(
+        (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+            if (!hasMoreGoals) return;
+
+            const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+            const reachedBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 160;
+            if (!reachedBottom) return;
+
+            const now = Date.now();
+            if (now - lastGoalsLoadAtRef.current < 250) return;
+            lastGoalsLoadAtRef.current = now;
+
+            setVisibleGoalsCount((prev) => Math.min(prev + CARD_PAGE_SIZE, goals.length));
+        },
+        [goals.length, hasMoreGoals]
+    );
 
     const openCreateScreen = () => {
         navigation.navigate('MetaForm');
@@ -131,7 +157,14 @@ const Metas = () => {
 
     return (
         <>
-            <Layout scrollable contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black pb-28">
+            <Layout
+                scrollable
+                contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black pb-28"
+                scrollViewProps={{
+                    onScroll: handleGoalsScroll,
+                    scrollEventThrottle: 16,
+                }}
+            >
                 <View className="flex-row items-center justify-between mb-1">
                     <Text className="text-slate-900 dark:text-slate-100 text-2xl font-bold">Metas</Text>
                     <TouchableOpacity className="bg-primary rounded-full px-4 py-2 flex-row items-center gap-2" onPress={openCreateScreen}>
@@ -193,7 +226,7 @@ const Metas = () => {
                     </Card>
                 ) : null}
 
-                {goals.map((goal) => {
+                {goalsToRender.map((goal) => {
                     const typeOption = goalTypeOptions.find((item) => item.value === goal.goal_type);
                     const Icon = typeOption?.icon || Target;
 
@@ -264,6 +297,15 @@ const Metas = () => {
                         </Card>
                     );
                 })}
+
+                {!loading && hasMoreGoals ? (
+                    <View className="items-center pb-2">
+                        <ActivityIndicator color="#f48c25" />
+                        <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                            Carregando mais metas...
+                        </Text>
+                    </View>
+                ) : null}
             </Layout>
 
             {feedback ? (

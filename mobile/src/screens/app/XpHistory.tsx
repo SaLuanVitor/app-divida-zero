@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, TextInput } from 'react-native';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { ArrowLeft, Clock3, Filter, Search, Sparkles } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
@@ -8,6 +8,7 @@ import { GamificationEventDto } from '../../types/gamification';
 import { runWhenIdle } from '../../utils/idle';
 
 type EventFilter = 'all' | 'gain' | 'loss';
+const CARD_PAGE_SIZE = 10;
 
 const eventTitleMap: Record<string, string> = {
     record_created: 'Registro criado',
@@ -181,6 +182,8 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
     const [loading, setLoading] = useState(false);
     const [query, setQuery] = useState('');
     const [filter, setFilter] = useState<EventFilter>('all');
+    const [visibleEventsCount, setVisibleEventsCount] = useState(CARD_PAGE_SIZE);
+    const lastLoadTimestampRef = useRef(0);
 
     useEffect(() => {
         const load = async () => {
@@ -225,9 +228,39 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
         });
     }, [events, filter, query]);
 
+    useEffect(() => {
+        setVisibleEventsCount(CARD_PAGE_SIZE);
+        lastLoadTimestampRef.current = 0;
+    }, [events, filter, query]);
+
+    const visibleEvents = useMemo(() => filteredEvents.slice(0, visibleEventsCount), [filteredEvents, visibleEventsCount]);
+    const hasMoreEvents = visibleEventsCount < filteredEvents.length;
+
+    const handleEventsScroll = useCallback(
+        (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+            if (!hasMoreEvents) return;
+
+            const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+            const reachedBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 160;
+            if (!reachedBottom) return;
+
+            const now = Date.now();
+            if (now - lastLoadTimestampRef.current < 250) return;
+            lastLoadTimestampRef.current = now;
+
+            setVisibleEventsCount((prev) => Math.min(prev + CARD_PAGE_SIZE, filteredEvents.length));
+        },
+        [filteredEvents.length, hasMoreEvents]
+    );
+
     return (
         <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-24">
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerClassName="pb-24"
+                onScroll={handleEventsScroll}
+                scrollEventThrottle={16}
+            >
                 <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                     <View className="flex-row items-center mb-3">
                         <TouchableOpacity
@@ -297,7 +330,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                         </Card>
                     ) : null}
 
-                    {filteredEvents.map((event) => {
+                    {visibleEvents.map((event) => {
                         const title = resolveEventTitle(event);
                         const description = eventDescriptionMap[event.event_type] || 'Evento de XP';
                         const reason = eventReasonMap[event.event_type] || 'Detalhe não informado.';
@@ -358,6 +391,13 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                             </Card>
                         );
                     })}
+
+                    {!loading && hasMoreEvents ? (
+                        <View className="items-center py-3">
+                            <ActivityIndicator color="#f48c25" />
+                            <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">Carregando mais eventos...</Text>
+                        </View>
+                    ) : null}
                 </View>
             </ScrollView>
         </Layout>
@@ -365,6 +405,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
 };
 
 export default XpHistory;
+
 
 
 

@@ -1,6 +1,28 @@
 import api from './api';
 import { CreateFinancialRecordPayload, FinancialRecordDto } from '../types/financialRecord';
 import { XpFeedbackDto } from '../types/gamification';
+import { invalidateFinancialGoalsCache } from './financialGoals';
+import { invalidateGamificationCache } from './gamification';
+
+const DEFAULT_TTL_MS = 12000;
+
+type CacheOptions = {
+  force?: boolean;
+  ttlMs?: number;
+};
+
+type RecordsResult = { records: FinancialRecordDto[] };
+
+const recordsCache = new Map<string, { expiresAt: number; value: RecordsResult }>();
+const recordsInFlight = new Map<string, Promise<RecordsResult>>();
+
+const isValid = (expiresAt: number) => Date.now() < expiresAt;
+const keyFor = (year?: number, month?: number) => `${year ?? 'all'}:${month ?? 'all'}`;
+
+export const invalidateFinancialRecordsCache = () => {
+  recordsCache.clear();
+  recordsInFlight.clear();
+};
 
 export const createFinancialRecord = async (payload: CreateFinancialRecordPayload) => {
   const { data } = await api.post('/financial_records', payload);
@@ -10,6 +32,9 @@ export const createFinancialRecord = async (payload: CreateFinancialRecordPayloa
     records?: FinancialRecordDto[] | null;
     xp_feedback?: XpFeedbackDto | null;
   };
+  invalidateFinancialRecordsCache();
+  invalidateFinancialGoalsCache();
+  invalidateGamificationCache();
 
   return {
     message: payloadData?.message ?? 'Registro criado com sucesso.',
@@ -19,21 +44,49 @@ export const createFinancialRecord = async (payload: CreateFinancialRecordPayloa
   };
 };
 
-export const listFinancialRecords = async (year?: number, month?: number) => {
-  const { data } = await api.get('/financial_records', {
-    params: {
-      year,
-      month,
-    },
+export const listFinancialRecords = async (year?: number, month?: number, options: CacheOptions = {}) => {
+  const { force = false, ttlMs = DEFAULT_TTL_MS } = options;
+  const key = keyFor(year, month);
+
+  if (!force) {
+    const cached = recordsCache.get(key);
+    if (cached && isValid(cached.expiresAt)) {
+      return cached.value;
+    }
+    const inFlight = recordsInFlight.get(key);
+    if (inFlight) {
+      return inFlight;
+    }
+  }
+
+  const request = (async () => {
+    const { data } = await api.get('/financial_records', {
+      params: {
+        year,
+        month,
+      },
+    });
+
+    const payload = data as {
+      records?: FinancialRecordDto[] | null;
+    };
+
+    const result = {
+      records: Array.isArray(payload?.records) ? payload.records : [],
+    };
+
+    recordsCache.set(key, {
+      expiresAt: Date.now() + ttlMs,
+      value: result,
+    });
+
+    return result;
+  })().finally(() => {
+    recordsInFlight.delete(key);
   });
 
-  const payload = data as {
-    records?: FinancialRecordDto[] | null;
-  };
-
-  return {
-    records: Array.isArray(payload?.records) ? payload.records : [],
-  };
+  recordsInFlight.set(key, request);
+  return request;
 };
 
 export const payFinancialRecord = async (id: number) => {
@@ -43,6 +96,9 @@ export const payFinancialRecord = async (id: number) => {
     record?: FinancialRecordDto;
     xp_feedback?: XpFeedbackDto | null;
   };
+  invalidateFinancialRecordsCache();
+  invalidateFinancialGoalsCache();
+  invalidateGamificationCache();
 
   return {
     message: payload?.message ?? 'Registro atualizado com sucesso.',
@@ -62,6 +118,9 @@ export const deleteFinancialRecord = async (id: number, scope: 'single' | 'group
     deleted_count?: number;
     xp_feedback?: XpFeedbackDto | null;
   };
+  invalidateFinancialRecordsCache();
+  invalidateFinancialGoalsCache();
+  invalidateGamificationCache();
 
   return {
     message: payload?.message ?? 'Registro removido com sucesso.',
