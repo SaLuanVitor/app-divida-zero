@@ -36,7 +36,7 @@ export const initializeNotificationLayer = () => {
     });
     handlerConfigured = true;
   } catch {
-    cachedNotificationsModule = null;
+    // Ignore handler setup failures: notification APIs may still be usable.
   }
 };
 
@@ -47,11 +47,12 @@ export const getDeviceNotificationPermissionStatus = async (): Promise<Notificat
 
   try {
     const permissions = await Notifications.getPermissionsAsync();
+    if (permissions?.granted === true) return 'granted';
     const status = permissions?.status;
     if (status === 'granted' || status === 'denied' || status === 'undetermined') return status;
+    if (permissions?.canAskAgain === false) return 'denied';
     return 'undetermined';
   } catch {
-    cachedNotificationsModule = null;
     return 'unavailable';
   }
 };
@@ -68,11 +69,10 @@ export const requestDeviceNotificationPermission = async (): Promise<boolean> =>
 
   try {
     const current = await Notifications.getPermissionsAsync();
-    if (current?.status === 'granted') return true;
+    if (current?.status === 'granted' || current?.granted === true) return true;
     const requested = await Notifications.requestPermissionsAsync();
-    return requested?.status === 'granted';
+    return requested?.status === 'granted' || requested?.granted === true;
   } catch {
-    cachedNotificationsModule = null;
     return false;
   }
 };
@@ -98,7 +98,6 @@ export const sendLocalTestNotification = async () => {
     });
     return { sent: true as const };
   } catch {
-    cachedNotificationsModule = null;
     return { sent: false, reason: 'unavailable' as const };
   }
 };
@@ -149,9 +148,7 @@ const clearScheduledAppNotifications = async (Notifications: any) => {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     const ours = scheduled.filter((item: any) => item?.content?.data?.source === APP_NOTIFICATION_SOURCE);
     await Promise.all(ours.map((item: any) => Notifications.cancelScheduledNotificationAsync(item.identifier)));
-  } catch {
-    cachedNotificationsModule = null;
-  }
+  } catch {}
 };
 
 export const syncScheduledLocalNotifications = async ({
@@ -227,7 +224,6 @@ export const syncScheduledLocalNotifications = async ({
       });
     }
   } catch {
-    cachedNotificationsModule = null;
     return { synced: false as const, reason: 'unavailable' as const };
   }
 

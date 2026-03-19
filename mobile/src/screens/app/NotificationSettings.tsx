@@ -41,7 +41,7 @@ const NotificationSettings = () => {
         ]);
 
         const nextPrefs = { ...storedPrefs };
-        if (status !== 'granted' && nextPrefs.device_push_enabled) {
+        if ((status === 'denied' || status === 'unavailable') && nextPrefs.device_push_enabled) {
           nextPrefs.device_push_enabled = false;
           await saveAppPreferences(nextPrefs);
         }
@@ -108,14 +108,15 @@ const NotificationSettings = () => {
 
         const granted = await requestDeviceNotificationPermission();
         const refreshedStatus = await getDeviceNotificationPermissionStatus();
-        setPermissionStatus(refreshedStatus);
+        const effectiveStatus = granted ? 'granted' : refreshedStatus;
+        setPermissionStatus(effectiveStatus);
 
-        if (!granted) {
+        if (!granted && effectiveStatus !== 'granted') {
           next.device_push_enabled = false;
           await persist(
             next,
             'error',
-            refreshedStatus === 'unavailable'
+            effectiveStatus === 'unavailable'
               ? 'Notificação no celular indisponível neste ambiente.'
               : 'Permissão negada no dispositivo. As notificações continuarão somente dentro do aplicativo.'
           );
