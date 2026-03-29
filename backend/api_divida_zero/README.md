@@ -1,24 +1,45 @@
-# README
+# API Divida Zero
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Stack local (Docker hibrido)
 
-Things you may want to cover:
+Este projeto usa:
 
-* Ruby version
+- `api` Rails em container
+- `db` PostgreSQL em container
+- app Android rodando fora do Docker (Expo no host)
 
-* System dependencies
+Suba a stack na raiz do repositorio:
 
-* Configuration
+```bash
+docker compose up --build
+```
 
-* Database creation
+Endpoints principais:
 
-* Database initialization
+- Healthcheck Rails: `GET http://localhost:3000/up`
+- API base: `http://localhost:3000/api/v1`
 
-* How to run the test suite
+## Variaveis de ambiente (backend)
 
-* Services (job queues, cache servers, search engines, etc.)
+As variaveis usadas para banco em `development/test`:
 
-* Deployment instructions
+- `POSTGRES_HOST`
+- `POSTGRES_PORT`
+- `POSTGRES_DB`
+- `POSTGRES_TEST_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
 
-* ...
+## Android (Expo)
+
+No emulador Android, use:
+
+```env
+EXPO_PUBLIC_API_URL=http://10.0.2.2:3000/api/v1
+```
+
+Em device fisico (mesma rede LAN), use o IP da sua maquina:
+
+```env
+EXPO_PUBLIC_API_URL=http://SEU_IP_LAN:3000/api/v1
+```
