@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Guardrails TCC Android"
+  short_description: "Regras de seguranca e padrao Android para o TCC"
+  default_prompt: "Use $tcc-android-guardrails para aplicar dados ficticios e padrao Android no app."
