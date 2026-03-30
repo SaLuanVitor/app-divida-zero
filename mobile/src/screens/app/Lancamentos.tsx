@@ -74,6 +74,17 @@ const chipClass = (active: boolean) =>
 
 const chipTextClass = (active: boolean) =>
     `text-xs font-bold ${active ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`;
+const MAX_AMOUNT_CENTS = 999_999_999;
+
+const getDefaultCategory = (tab: RegisterTab) => (tab === 'debt' ? debtCategories[0] : launchIncomeCategories[0]);
+
+const buildSuggestedTitle = (tab: RegisterTab, category: string) => {
+    if (!category || category === 'Outro') {
+        return tab === 'debt' ? 'Nova dívida' : 'Novo ganho';
+    }
+
+    return tab === 'debt' ? `Dívida • ${category}` : `Ganho • ${category}`;
+};
 
 const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
     sprout: Trophy,
@@ -90,6 +101,7 @@ const Lancamentos = () => {
     const [activeTab, setActiveTab] = useState<RegisterTab>('income');
 
     const [title, setTitle] = useState('');
+    const [titleTouched, setTitleTouched] = useState(false);
     const [amountDigits, setAmountDigits] = useState('');
     const [startDate, setStartDate] = useState(new Date());
     const [description, setDescription] = useState('');
@@ -104,6 +116,7 @@ const Lancamentos = () => {
 
     const [installmentsTotal, setInstallmentsTotal] = useState('1');
     const [dayOfMonth, setDayOfMonth] = useState('');
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [pickerMonth, setPickerMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -125,8 +138,19 @@ const Lancamentos = () => {
     }, [route.params?.mode]);
 
     useEffect(() => {
-        setCategory('');
+        const today = new Date();
+        const defaultCategory = getDefaultCategory(activeTab);
+
+        setCategory(defaultCategory);
         setCustomCategory('');
+        setPriority('normal');
+        setRecurring(false);
+        setRecurrenceType('monthly');
+        setRecurrenceCount('6');
+        setInstallmentsTotal('1');
+        setDayOfMonth(String(clamp(today.getDate(), 1, 28)));
+        setShowAdvanced(false);
+        setTitleTouched(false);
     }, [activeTab]);
 
     const formTitle = useMemo(() => (activeTab === 'debt' ? 'Nova dívida' : 'Novo ganho'), [activeTab]);
@@ -137,9 +161,17 @@ const Lancamentos = () => {
         if (activeTab === 'debt') return debtCategories;
         return launchIncomeCategories;
     }, [activeTab]);
+    const suggestedTitle = useMemo(() => buildSuggestedTitle(activeTab, selectedCategory), [activeTab, selectedCategory]);
 
     const amountValue = useMemo(() => Number(amountDigits || '0') / 100, [amountDigits]);
+    const quickAmountOptions = useMemo(() => [10, 100, 1000], []);
     const recurrenceMax = recurrenceType === 'daily' ? 365 : 36;
+
+    useEffect(() => {
+        if (!titleTouched) {
+            setTitle(suggestedTitle);
+        }
+    }, [suggestedTitle, titleTouched]);
 
     const canSubmit = useMemo(() => {
         if (!selectedCategory) return false;
@@ -198,6 +230,17 @@ const Lancamentos = () => {
         setAmountDigits(digits);
     };
 
+    const handleQuickAmount = (value: number) => {
+        const currentCents = Number(amountDigits || '0');
+        const addCents = Math.round(value * 100);
+        const nextCents = Math.min(currentCents + addCents, MAX_AMOUNT_CENTS);
+        setAmountDigits(String(nextCents));
+    };
+
+    const handleClearAmount = () => {
+        setAmountDigits('');
+    };
+
     const handleInstallmentsChange = (value: string) => {
         const num = Number(onlyDigits(value) || '1');
         setInstallmentsTotal(String(clamp(num, 1, 120)));
@@ -220,11 +263,15 @@ const Lancamentos = () => {
     };
 
     const resetForm = () => {
-        setTitle('');
+        const today = new Date();
+        const defaultCategory = getDefaultCategory(activeTab);
+
+        setTitle(buildSuggestedTitle(activeTab, defaultCategory));
+        setTitleTouched(false);
         setAmountDigits('');
-        setStartDate(new Date());
+        setStartDate(today);
         setDescription('');
-        setCategory('');
+        setCategory(defaultCategory);
         setCustomCategory('');
         setPriority('normal');
         setNotes('');
@@ -232,7 +279,8 @@ const Lancamentos = () => {
         setRecurrenceType('monthly');
         setRecurrenceCount('6');
         setInstallmentsTotal('1');
-        setDayOfMonth('');
+        setDayOfMonth(String(clamp(today.getDate(), 1, 28)));
+        setShowAdvanced(false);
     };
 
     const onSubmit = async () => {
@@ -243,7 +291,7 @@ const Lancamentos = () => {
 
         const payload: CreateFinancialRecordPayload = {
             mode: activeTab === 'debt' ? 'debt' : 'launch',
-            title: title.trim() || (activeTab === 'debt' ? 'Nova dívida' : 'Novo ganho'),
+            title: title.trim() || suggestedTitle,
             amount: amountValue,
             start_date: formatDateISO(startDate),
             flow_type: activeTab === 'debt' ? 'expense' : 'income',
@@ -350,8 +398,16 @@ const Lancamentos = () => {
                             placeholder={activeTab === 'debt' ? 'Ex: Cartão Nubank' : 'Ex: Salário'}
                             placeholderTextColor="#94a3b8"
                             value={title}
-                            onChangeText={setTitle}
+                            onChangeText={(value) => {
+                                setTitleTouched(true);
+                                setTitle(value);
+                            }}
                         />
+                        {!titleTouched ? (
+                            <Text className="text-[11px] text-slate-500 dark:text-slate-300 mb-3">
+                                Título automático ativo. Edite apenas se quiser personalizar.
+                            </Text>
+                        ) : null}
 
                         <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Valor (R$)</Text>
                         <TextInput
@@ -362,6 +418,24 @@ const Lancamentos = () => {
                             value={formatCurrencyFromDigits(amountDigits)}
                             onChangeText={handleAmountChange}
                         />
+                        <View className="flex-row flex-wrap gap-2 mb-3">
+                            {quickAmountOptions.map((option) => {
+                                return (
+                                    <TouchableOpacity key={option} className={chipClass(false)} onPress={() => handleQuickAmount(option)}>
+                                        <Text className={chipTextClass(false)}>+ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(option)}</Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                            <TouchableOpacity
+                                className="px-3 py-2 rounded-full border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
+                                onPress={handleClearAmount}
+                            >
+                                <Text className="text-xs font-bold text-red-600 dark:text-red-300">Limpar</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <Text className="text-[11px] text-slate-500 dark:text-slate-300 mb-3 -mt-1">
+                            Atalhos cumulativos: +10, +100, +1000 e Limpar.
+                        </Text>
 
                         <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data inicial</Text>
                         <TouchableOpacity
@@ -397,115 +471,142 @@ const Lancamentos = () => {
                             </>
                         ) : null}
 
-                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Prioridade</Text>
-                        <View className="flex-row gap-2 mb-3">
-                            {priorityOptions.map((option) => {
-                                const active = priority === option.value;
-                                return (
-                                    <TouchableOpacity key={option.value} className={chipClass(active)} onPress={() => setPriority(option.value)}>
-                                        <Text className={chipTextClass(active)}>{option.label}</Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
-
-                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Descrição (opcional)</Text>
-                        <TextInput
-                            className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 mb-3 text-slate-900 dark:text-slate-100"
-                            placeholder="Detalhes úteis para esse registro"
-                            placeholderTextColor="#94a3b8"
-                            multiline
-                            value={description}
-                            onChangeText={setDescription}
-                        />
-
-                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Observações extras (opcional)</Text>
-                        <TextInput
-                            className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
-                            placeholder="Ex: débito automático, lembrete, conta compartilhada..."
-                            placeholderTextColor="#94a3b8"
-                            multiline
-                            value={notes}
-                            onChangeText={setNotes}
-                        />
-                    </View>
-
-                    <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
-                        <View className="flex-row items-center justify-between mb-3">
-                            <View className="flex-row items-center gap-2">
-                                <Repeat size={16} color="#334155" />
-                                <Text className="text-slate-800 dark:text-slate-100 font-bold">Recorrência</Text>
-                            </View>
-                            <TouchableOpacity onPress={() => setRecurring((prev) => !prev)} className={chipClass(recurring)}>
-                                <Text className={chipTextClass(recurring)}>{recurring ? 'Recorrente' : 'Único'}</Text>
+                        <View className="flex-row items-center justify-between mt-1">
+                            <Text className="text-[11px] text-slate-500 dark:text-slate-300">Modo rápido: só valor, data e categoria.</Text>
+                            <TouchableOpacity onPress={() => setShowAdvanced((prev) => !prev)} className={chipClass(showAdvanced)}>
+                                <Text className={chipTextClass(showAdvanced)}>{showAdvanced ? 'Ocultar extras' : 'Mais opções'}</Text>
                             </TouchableOpacity>
                         </View>
 
-                        {recurring ? (
-                            <>
-                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Frequência</Text>
-                                <View className="flex-row gap-2 mb-3 flex-wrap">
-                                    {recurrenceOptions.map((option) => {
-                                        const active = recurrenceType === option.value;
+                        {showAdvanced ? (
+                            <View className="mt-3">
+                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Prioridade</Text>
+                                <View className="flex-row gap-2 mb-3">
+                                    {priorityOptions.map((option) => {
+                                        const active = priority === option.value;
                                         return (
-                                            <TouchableOpacity key={option.value} className={chipClass(active)} onPress={() => setRecurrenceType(option.value)}>
+                                            <TouchableOpacity key={option.value} className={chipClass(active)} onPress={() => setPriority(option.value)}>
                                                 <Text className={chipTextClass(active)}>{option.label}</Text>
                                             </TouchableOpacity>
                                         );
                                     })}
                                 </View>
 
-                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">
-                                    {recurrenceType === 'daily'
-                                        ? 'Quantidade de dias (máx. 365)'
-                                        : 'Quantidade de ocorrências (máx. 36)'}
-                                </Text>
+                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Descrição (opcional)</Text>
                                 <TextInput
-                                    className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
-                                    keyboardType="number-pad"
-                                    placeholder={recurrenceType === 'daily' ? '30' : '6'}
+                                    className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 mb-3 text-slate-900 dark:text-slate-100"
+                                    placeholder="Detalhes úteis para esse registro"
                                     placeholderTextColor="#94a3b8"
-                                    value={recurrenceCount}
-                                    onChangeText={handleRecurrenceCountChange}
+                                    multiline
+                                    value={description}
+                                    onChangeText={setDescription}
                                 />
-                            </>
-                        ) : (
-                            <Text className="text-slate-500 dark:text-slate-300 text-xs">Registro único: será criado apenas um lançamento.</Text>
-                        )}
+
+                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Observações extras (opcional)</Text>
+                                <TextInput
+                                    className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
+                                    placeholder="Ex: débito automático, lembrete, conta compartilhada..."
+                                    placeholderTextColor="#94a3b8"
+                                    multiline
+                                    value={notes}
+                                    onChangeText={setNotes}
+                                />
+                            </View>
+                        ) : null}
                     </View>
 
-                    {activeTab === 'debt' && !recurring ? (
+                    {showAdvanced ? (
+                        <>
+                            <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
+                                <View className="flex-row items-center justify-between mb-3">
+                                    <View className="flex-row items-center gap-2">
+                                        <Repeat size={16} color="#334155" />
+                                        <Text className="text-slate-800 dark:text-slate-100 font-bold">Recorrência</Text>
+                                    </View>
+                                    <TouchableOpacity onPress={() => setRecurring((prev) => !prev)} className={chipClass(recurring)}>
+                                        <Text className={chipTextClass(recurring)}>{recurring ? 'Recorrente' : 'Único'}</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {recurring ? (
+                                    <>
+                                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Frequência</Text>
+                                        <View className="flex-row gap-2 mb-3 flex-wrap">
+                                            {recurrenceOptions.map((option) => {
+                                                const active = recurrenceType === option.value;
+                                                return (
+                                                    <TouchableOpacity key={option.value} className={chipClass(active)} onPress={() => setRecurrenceType(option.value)}>
+                                                        <Text className={chipTextClass(active)}>{option.label}</Text>
+                                                    </TouchableOpacity>
+                                                );
+                                            })}
+                                        </View>
+
+                                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">
+                                            {recurrenceType === 'daily'
+                                                ? 'Quantidade de dias (máx. 365)'
+                                                : 'Quantidade de ocorrências (máx. 36)'}
+                                        </Text>
+                                        <TextInput
+                                            className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
+                                            keyboardType="number-pad"
+                                            placeholder={recurrenceType === 'daily' ? '30' : '6'}
+                                            placeholderTextColor="#94a3b8"
+                                            value={recurrenceCount}
+                                            onChangeText={handleRecurrenceCountChange}
+                                        />
+                                    </>
+                                ) : (
+                                    <Text className="text-slate-500 dark:text-slate-300 text-xs">Registro único: será criado apenas um lançamento.</Text>
+                                )}
+                            </View>
+
+                            {activeTab === 'debt' && !recurring ? (
+                                <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
+                                    <Text className="text-slate-800 dark:text-slate-100 font-bold mb-3">Parcelamento</Text>
+
+                                    <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Número de parcelas</Text>
+                                    <TextInput
+                                        className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
+                                        keyboardType="number-pad"
+                                        placeholder="1"
+                                        placeholderTextColor="#94a3b8"
+                                        value={installmentsTotal}
+                                        onChangeText={handleInstallmentsChange}
+                                    />
+
+                                    <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Dia preferencial de pagamento (1 a 28)</Text>
+                                    <TextInput
+                                        className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
+                                        keyboardType="number-pad"
+                                        placeholder="Opcional"
+                                        placeholderTextColor="#94a3b8"
+                                        value={dayOfMonth}
+                                        onChangeText={handleDayOfMonthChange}
+                                    />
+                                </View>
+                            ) : null}
+                        </>
+                    ) : (
                         <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
-                            <Text className="text-slate-800 dark:text-slate-100 font-bold mb-3">Parcelamento</Text>
-
-                            <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Número de parcelas</Text>
-                            <TextInput
-                                className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
-                                keyboardType="number-pad"
-                                placeholder="1"
-                                placeholderTextColor="#94a3b8"
-                                value={installmentsTotal}
-                                onChangeText={handleInstallmentsChange}
-                            />
-
-                            <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Dia preferencial de pagamento (1 a 28)</Text>
-                            <TextInput
-                                className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
-                                keyboardType="number-pad"
-                                placeholder="Opcional"
-                                placeholderTextColor="#94a3b8"
-                                value={dayOfMonth}
-                                onChangeText={handleDayOfMonthChange}
-                            />
+                            <Text className="text-slate-700 dark:text-slate-200 text-sm font-semibold">Resumo do modo rápido</Text>
+                            <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                Registro único, prioridade normal e campos extras ocultos para reduzir cliques.
+                            </Text>
                         </View>
-                    ) : null}
+                    )}
 
                     <Button
-                        title={loading ? 'Salvando...' : 'Salvar registro'}
+                        title={loading ? 'Salvando...' : showAdvanced ? 'Salvar registro' : 'Salvar rápido'}
                         onPress={onSubmit}
-                        disabled={loading}
+                        disabled={loading || !canSubmit}
                         className="h-14 mb-4"
                     />
+                    {!canSubmit ? (
+                        <Text className="text-center text-xs text-slate-500 dark:text-slate-300 -mt-1 mb-4">
+                            Informe o valor para habilitar o salvamento.
+                        </Text>
+                    ) : null}
 
                     {loading ? (
                         <View className="items-center pb-4">
