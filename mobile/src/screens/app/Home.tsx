@@ -572,15 +572,17 @@ const Home = () => {
                 <View className="bg-white dark:bg-[#121212] px-4 pt-5 pb-4 border-b border-[#f0ebe7]">
                     <View className="flex-row items-center justify-between mb-4">
                         <View className="flex-row items-center gap-3">
-                            <View className="relative">
+                            <View className="items-center">
                                 <ProfileAvatar
                                     iconKey={user?.profile_icon_key}
                                     frameKey={user?.profile_frame_key}
                                     size={48}
                                     iconSize={22}
                                 />
-                                <View className="absolute -bottom-1 -right-1 bg-primary px-1.5 py-0.5 rounded-full border border-white">
-                                    <AppText className="text-white text-[9px] font-bold">Nível {gamificationSummary.level}</AppText>
+                                <View className="mt-1 bg-primary px-1.5 py-0.5 rounded-full border border-white">
+                                    <AppText disableUserFontScale className="text-white text-[9px] font-bold">
+                                        Nível {gamificationSummary.level}
+                                    </AppText>
                                 </View>
                             </View>
                             <View>
@@ -1011,8 +1013,6 @@ const Home = () => {
 };
 
 export default Home;
-
-
 
 
 

@@ -41,7 +41,13 @@ const NavItem = ({
 }) => (
     <TouchableOpacity onPress={onPress} style={[styles.navItem, largerTouchTargets && styles.navItemLarge]}>
         {icon}
-        <AppText style={[styles.navText, darkMode && styles.navTextDark, active && styles.navTextActive]}>{label}</AppText>
+        <AppText
+            numberOfLines={1}
+            maxUserFontScale={1.15}
+            style={[styles.navText, darkMode && styles.navTextDark, active && styles.navTextActive]}
+        >
+            {label}
+        </AppText>
     </TouchableOpacity>
 );
 
@@ -121,7 +127,15 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                         >
                             {showActions ? <CirclePlus size={22} color="#fff" /> : <Plus size={24} color="#fff" />}
                         </TouchableOpacity>
-                        <AppText style={[styles.centerButtonText, darkMode && styles.centerButtonTextDark]}>Lançamentos</AppText>
+                        <AppText
+                            numberOfLines={1}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.9}
+                            maxUserFontScale={1.1}
+                            style={[styles.centerButtonText, darkMode && styles.centerButtonTextDark]}
+                        >
+                            Lançamentos
+                        </AppText>
                     </View>
 
                     <NavItem
@@ -260,6 +274,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         marginTop: -28,
+        minWidth: 88,
     },
     centerButton: {
         width: 56,
@@ -284,6 +299,9 @@ const styles = StyleSheet.create({
         marginTop: 4,
         fontWeight: '700',
         color: '#8a7560',
+        textAlign: 'center',
+        width: 88,
+        lineHeight: 12,
     },
     centerButtonTextDark: {
         color: '#94a3b8',
