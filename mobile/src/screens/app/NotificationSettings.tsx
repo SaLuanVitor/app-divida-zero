@@ -263,7 +263,7 @@ const NotificationSettings = () => {
           />
           <Item
             title="XP e badges"
-            subtitle="Alertas de conquistas, nível e pontuação."
+            subtitle="Alertas de conquistas e pontuação. Subida de nível aparece só no app."
             value={prefs.notify_xp_and_badges}
             onChange={(value) => update('notify_xp_and_badges', value)}
             disabled={!prefs.notifications_enabled}
