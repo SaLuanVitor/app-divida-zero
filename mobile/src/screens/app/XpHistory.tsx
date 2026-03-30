@@ -24,6 +24,7 @@ const eventTitleMap: Record<string, string> = {
     goal_progress_milestone: 'Marco de progresso',
     goal_completed: 'Meta concluída',
     goal_deleted: 'Meta excluída',
+    daily_achievement_completed: 'Conquista diária concluída',
 };
 
 const eventDescriptionMap: Record<string, string> = {
@@ -36,6 +37,7 @@ const eventDescriptionMap: Record<string, string> = {
     goal_progress_milestone: 'Sua meta alcançou um novo marco de progresso.',
     goal_completed: 'Uma meta foi concluída com sucesso.',
     goal_deleted: 'Uma meta foi excluída e o XP correspondente foi ajustado.',
+    daily_achievement_completed: 'Uma conquista diária foi concluída automaticamente.',
 };
 
 const eventReasonMap: Record<string, string> = {
@@ -48,6 +50,7 @@ const eventReasonMap: Record<string, string> = {
     goal_progress_milestone: 'Pontuação por alcançar marcos de progresso na meta.',
     goal_completed: 'Bônus por concluir uma meta financeira.',
     goal_deleted: 'Estorno de XP por exclusão de meta e dos marcos já alcançados.',
+    daily_achievement_completed: 'Bônus por completar tarefas diárias.',
 };
 
 const metadataLabelMap: Record<string, string> = {
@@ -66,6 +69,11 @@ const metadataLabelMap: Record<string, string> = {
     removed_milestones: 'Marcos revertidos',
     achievement_key: 'Conquista',
     achievement_label: 'Conquista desbloqueada',
+    daily_key: 'Conquista diária',
+    daily_title: 'Tarefa diária',
+    date_key: 'Data da diária',
+    task_group: 'Grupo',
+    local_date: 'Data local',
 };
 
 const metadataValueMap: Record<string, Record<string, string>> = {
@@ -87,6 +95,10 @@ const metadataValueMap: Record<string, Record<string, string>> = {
         specific: 'Objetivo específico',
     },
     achievement_key: {
+        first_record: 'Primeiro passo',
+        first_settlement: 'Conta resolvida',
+        ten_records: 'Organização ativa',
+        five_settled: 'Ritmo constante',
         first_goal_created: 'Primeira meta criada',
         first_goal_completed: 'Primeira meta concluída',
         goal_before_deadline: 'Meta concluída antes do prazo',
@@ -116,6 +128,11 @@ const toPtBrTitleFallback = (rawType: string) =>
         .join(' ');
 
 const resolveEventTitle = (event: GamificationEventDto) => {
+    if (event.event_type === 'daily_achievement_completed') {
+        const dailyTitle = String(event.metadata?.daily_title || '').trim();
+        return dailyTitle || eventTitleMap[event.event_type];
+    }
+
     if (event.event_type === 'goal_progress_milestone') {
         const milestone = Number(event.metadata?.milestone || 0);
         return milestone > 0 ? `Marco de progresso ${milestone}%` : 'Marco de progresso';
@@ -159,6 +176,8 @@ const resolveSubtitle = (event: GamificationEventDto) => {
             return 'Meta excluída';
         case 'achievement_unlocked':
             return 'Conquista desbloqueada';
+        case 'daily_achievement_completed':
+            return 'Tarefa diária concluída';
         default:
             return eventDescriptionMap[event.event_type] || 'Evento de XP';
     }
@@ -416,7 +435,6 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
 };
 
 export default XpHistory;
-
 
 
 

@@ -2,10 +2,11 @@ import React from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Linking } from 'react-native';
 import { ArrowLeft, CircleHelp, Mail, MessageCircle } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import { useAccessibility } from '../../context/AccessibilityContext';
+import { useThemeMode } from '../../context/ThemeContext';
+import useBackToProfile from '../../hooks/useBackToProfile';
 
 const faqs = [
   {
@@ -23,7 +24,8 @@ const faqs = [
 ];
 
 const HelpSupport = () => {
-  const navigation = useNavigation<any>();
+  const { darkMode } = useThemeMode();
+  const goBackToProfile = useBackToProfile();
   const { fontScale, largerTouchTargets } = useAccessibility();
   const rowHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
 
@@ -35,49 +37,52 @@ const HelpSupport = () => {
   };
 
   return (
-    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
-      <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100">
+    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0 pb-28">
+      <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
-            <ArrowLeft size={22} color="#0f172a" />
+          <TouchableOpacity onPress={goBackToProfile} className="p-2 -ml-2 mr-2">
+            <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
-          <View>
-            <AppText className="text-slate-900 text-xl font-bold">Ajuda e suporte</AppText>
+          <View className="flex-1 pr-1">
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Ajuda e suporte</AppText>
             <AppText className="text-slate-500 dark:text-slate-300 text-xs">Dúvidas comuns e contato com o suporte.</AppText>
           </View>
         </View>
       </View>
 
-      <View className="p-4">
+      <View className="p-4 pb-6">
         <Card className="p-4 mb-4">
           <View className="flex-row items-center mb-2">
             <CircleHelp size={16} color="#64748b" />
-            <AppText className="text-slate-700 font-bold ml-2">Perguntas frequentes</AppText>
+            <AppText className="text-slate-700 dark:text-slate-200 font-bold ml-2">Perguntas frequentes</AppText>
           </View>
 
           {faqs.map((faq, index) => (
-            <View key={faq.question} className={`${index !== faqs.length - 1 ? 'border-b border-slate-100' : ''} py-3`}>
-              <AppText className="text-slate-900 font-semibold">{faq.question}</AppText>
+            <View key={faq.question} className={`${index !== faqs.length - 1 ? 'border-b border-slate-100 dark:border-slate-800' : ''} py-3`}>
+              <AppText className="text-slate-900 dark:text-slate-100 font-semibold">{faq.question}</AppText>
               <AppText className="text-slate-500 dark:text-slate-300 text-sm mt-1">{faq.answer}</AppText>
             </View>
           ))}
         </Card>
 
         <Card className="p-4">
-          <AppText className="text-slate-700 font-bold mb-3">Canais de suporte</AppText>
+          <AppText className="text-slate-700 dark:text-slate-200 font-bold mb-3">Canais de suporte</AppText>
 
           <TouchableOpacity
-            className="rounded-xl bg-slate-100 px-3 flex-row items-center mb-2"
+            className="rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 px-3 flex-row items-center mb-2"
             style={{ minHeight: rowHeight, height: rowHeight }}
             onPress={openMail}
           >
-            <Mail size={16} color="#0f172a" />
-            <AppText className="text-slate-800 font-semibold ml-2">Enviar e-mail</AppText>
+            <Mail size={16} color={darkMode ? '#e2e8f0' : '#0f172a'} />
+            <AppText className="text-slate-800 dark:text-slate-100 font-semibold ml-2">Enviar e-mail</AppText>
           </TouchableOpacity>
 
-          <View className="rounded-xl bg-slate-100 px-3 flex-row items-center" style={{ minHeight: rowHeight, height: rowHeight }}>
-            <MessageCircle size={16} color="#0f172a" />
-            <AppText className="text-slate-800 font-semibold ml-2">Chat no app (em breve)</AppText>
+          <View
+            className="rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 px-3 flex-row items-center"
+            style={{ minHeight: rowHeight, height: rowHeight }}
+          >
+            <MessageCircle size={16} color={darkMode ? '#e2e8f0' : '#0f172a'} />
+            <AppText className="text-slate-800 dark:text-slate-100 font-semibold ml-2">Chat no app (em breve)</AppText>
           </View>
         </Card>
       </View>
@@ -86,4 +91,3 @@ const HelpSupport = () => {
 };
 
 export default HelpSupport;
-

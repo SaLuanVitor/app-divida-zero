@@ -12,6 +12,7 @@ import {
     ChevronRight,
     Lock,
     Trophy,
+    CheckCircle2,
     Crown,
     X,
 } from 'lucide-react-native';
@@ -27,7 +28,13 @@ import { listFinancialRecords } from '../../services/financialRecords';
 import { FinancialRecordDto } from '../../types/financialRecord';
 import { buildGamificationSummary, formatAchievementProgress } from '../../utils/gamification';
 import { getGamificationSummary, listGamificationEvents } from '../../services/gamification';
-import { DEFAULT_GAMIFICATION_SUMMARY, GamificationEventDto, GamificationSummaryDto, normalizeGamificationSummary } from '../../types/gamification';
+import {
+    DailyAchievementDto,
+    DEFAULT_GAMIFICATION_SUMMARY,
+    GamificationEventDto,
+    GamificationSummaryDto,
+    normalizeGamificationSummary
+} from '../../types/gamification';
 import { runWhenIdle } from '../../utils/idle';
 import { listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto } from '../../types/financialGoal';
@@ -62,6 +69,7 @@ const Profile = () => {
     const [events, setEvents] = useState<GamificationEventDto[]>([]);
     const [loadingGamification, setLoadingGamification] = useState(false);
     const [summary, setSummary] = useState<GamificationSummaryDto>(DEFAULT_GAMIFICATION_SUMMARY);
+    const [dailyAchievements, setDailyAchievements] = useState<DailyAchievementDto[]>([]);
     const [historySectionY, setHistorySectionY] = useState(0);
     const [highlightHistoryCta, setHighlightHistoryCta] = useState(false);
     const [achievementsExpanded, setAchievementsExpanded] = useState(false);
@@ -131,10 +139,19 @@ const Profile = () => {
             setGoals(goalsResult.goals);
             setEvents(eventsResult.events);
             setSummary(normalizeGamificationSummary(summaryResult.summary));
+            setDailyAchievements(Array.isArray(summaryResult.daily_achievements) ? summaryResult.daily_achievements : []);
         } finally {
             setLoadingGamification(false);
         }
     }, []);
+
+    const dailyDateLabel = useMemo(() => {
+        const firstDate = dailyAchievements[0]?.date_key;
+        if (!firstDate) return '';
+        const parsed = new Date(`${firstDate}T00:00:00`);
+        if (Number.isNaN(parsed.getTime())) return '';
+        return parsed.toLocaleDateString('pt-BR');
+    }, [dailyAchievements]);
 
     useFocusEffect(
         useCallback(() => {
@@ -329,6 +346,69 @@ const Profile = () => {
                     </View>
 
                     <View className="px-6">
+                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Conquistas diárias</AppText>
+                        <Card className="mb-6" noPadding>
+                            {dailyAchievements.length === 0 ? (
+                                <View className="p-4">
+                                    <AppText className="text-slate-500 dark:text-slate-300 text-sm">
+                                        As conquistas diárias aparecerão aqui assim que forem carregadas.
+                                    </AppText>
+                                </View>
+                            ) : (
+                                <>
+                                    <View className="px-4 pt-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+                                        <AppText className="text-slate-600 dark:text-slate-300 text-xs font-semibold">
+                                            {dailyDateLabel ? `Progresso de hoje (${dailyDateLabel})` : 'Progresso de hoje'}
+                                        </AppText>
+                                    </View>
+                                    {dailyAchievements.map((daily, index) => {
+                                        const completed = daily.completed;
+                                        const progressText = `${Math.min(daily.progress, daily.target)}/${daily.target}`;
+
+                                        return (
+                                            <View
+                                                key={daily.key}
+                                                className={`p-4 ${index !== dailyAchievements.length - 1 ? 'border-b border-slate-50 dark:border-slate-800' : ''}`}
+                                            >
+                                                <View className="flex-row items-start justify-between mb-2">
+                                                    <View className="flex-1 pr-3">
+                                                        <AppText className={`font-bold ${completed ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-900 dark:text-slate-100'}`}>
+                                                            {daily.title}
+                                                        </AppText>
+                                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                                            {daily.description}
+                                                        </AppText>
+                                                    </View>
+                                                    <View className="items-end">
+                                                        <AppText className="text-primary text-xs font-bold">+{daily.reward_xp} XP</AppText>
+                                                        <AppText className={`text-[11px] font-semibold mt-1 ${completed ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-300'}`}>
+                                                            {completed ? 'Concluída' : progressText}
+                                                        </AppText>
+                                                    </View>
+                                                </View>
+                                                <View className="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <View
+                                                        className={`h-full rounded-full ${completed ? 'bg-emerald-500' : 'bg-primary'}`}
+                                                        style={{ width: `${Math.round((Math.min(daily.progress, daily.target) / daily.target) * 100)}%` }}
+                                                    />
+                                                </View>
+                                                {completed ? (
+                                                    <View className="flex-row items-center mt-2">
+                                                        <CheckCircle2 size={13} color="#10b981" />
+                                                        <AppText className="text-emerald-600 dark:text-emerald-300 text-[11px] font-semibold ml-1">
+                                                            XP diário aplicado automaticamente
+                                                        </AppText>
+                                                    </View>
+                                                ) : null}
+                                            </View>
+                                        );
+                                    })}
+                                </>
+                            )}
+                        </Card>
+                    </View>
+
+                    <View className="px-6">
                         <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Medalhas</AppText>
                         <Card className="mb-6" noPadding>
                             <TouchableOpacity
@@ -396,7 +476,9 @@ const Profile = () => {
                             {menuItems.map((item, i) => (
                                 <TouchableOpacity
                                     key={item.label}
-                                    className={`flex-row items-center justify-between p-4 bg-white dark:bg-[#121212] ${i !== menuItems.length - 1 ? 'border-b border-slate-50' : ''}`}
+                                    className={`flex-row items-center justify-between p-4 bg-white dark:bg-[#121212] ${
+                                        i !== menuItems.length - 1 ? 'border-b border-slate-100 dark:border-slate-800' : ''
+                                    }`}
                                     activeOpacity={0.7}
                                     onPress={() => navigation.navigate(item.route)}
                                 >
@@ -404,7 +486,7 @@ const Profile = () => {
                                         <item.icon size={20} color={item.color} />
                                         <AppText className="text-slate-700 dark:text-slate-200 font-medium ml-3">{item.label}</AppText>
                                     </View>
-                                    <ChevronRight size={18} color="#cbd5e1" />
+                                    <ChevronRight size={18} color="#94a3b8" />
                                 </TouchableOpacity>
                             ))}
                         </Card>
@@ -619,4 +701,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

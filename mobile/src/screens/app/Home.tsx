@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal } from 'react-native';
 import {
     Bell,
     CheckCircle2,
@@ -18,6 +18,7 @@ import {
     Crown,
 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
@@ -41,6 +42,12 @@ import { runWhenIdle } from '../../utils/idle';
 import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEvent } from '../../services/analytics';
+import {
+    getUnreadNotificationCount,
+    listNotificationHistory,
+    markNotificationHistorySeen,
+} from '../../services/notificationCenter';
+import { NotificationHistoryItem } from '../../types/notificationCenter';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
 
@@ -139,6 +146,22 @@ const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: 
     crown: Crown,
 };
 
+const notificationKindIconMap: Record<NotificationHistoryItem['kind'], React.ComponentType<{ size?: number; color?: string }>> = {
+    achievement: Trophy,
+    goal: Target,
+    record: Wallet,
+    reminder: Bell,
+    system: Bell,
+};
+
+const notificationKindColorMap: Record<NotificationHistoryItem['kind'], string> = {
+    achievement: '#f48c25',
+    goal: '#0ea5e9',
+    record: '#16a34a',
+    reminder: '#ef4444',
+    system: '#64748b',
+};
+
 const toCalendarEntry = (record: FinancialRecordDto): CalendarEntry => {
     const isDebt = record.record_type === 'debt';
     const isIncome = record.flow_type === 'income';
@@ -180,6 +203,8 @@ const Home = () => {
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
     const { darkMode } = useThemeMode();
     const { fontScale, largerTouchTargets } = useAccessibility();
+    const insets = useSafeAreaInsets();
+    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
     const [currentMonth, setCurrentMonth] = useState(() => {
         const now = new Date();
@@ -201,6 +226,10 @@ const Home = () => {
     const [monthListFilter, setMonthListFilter] = useState<MonthListFilter>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [visibleMonthItemsCount, setVisibleMonthItemsCount] = useState(CARD_PAGE_SIZE);
+    const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
+    const [showNotificationsPopup, setShowNotificationsPopup] = useState(false);
+    const [notificationsPopupLoading, setNotificationsPopupLoading] = useState(false);
+    const [notificationItems, setNotificationItems] = useState<NotificationHistoryItem[]>([]);
     const compactPillHeight = Math.max(Math.round(36 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 36);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
 
@@ -211,6 +240,7 @@ const Home = () => {
     const showConfirm = !!confirmState;
     const showPeriodSelector = showPeriodPicker;
     const showXpPopup = !!xpPopup;
+    const showNotifications = showNotificationsPopup;
 
     const pushFeedback = (kind: FeedbackState['kind'], title: string, message: string) => {
         setFeedback({ kind, title, message });
@@ -273,6 +303,39 @@ const Home = () => {
         }
     }, []);
 
+    const loadNotificationBadge = useCallback(async (options: { force?: boolean } = {}) => {
+        const { force = false } = options;
+        try {
+            const unreadCount = await getUnreadNotificationCount({ force });
+            setNotificationUnreadCount(unreadCount);
+        } catch {
+            // Keep Home stable if notification center fails temporarily.
+        }
+    }, []);
+
+    const closeNotificationsPopup = useCallback(() => {
+        setShowNotificationsPopup(false);
+    }, []);
+
+    const openNotificationsPopup = useCallback(async () => {
+        setShowNotificationsPopup(true);
+        setNotificationsPopupLoading(true);
+
+        try {
+            const history = await listNotificationHistory({ force: true });
+            const safeItems = Array.isArray(history) ? history : [];
+            setNotificationItems(safeItems);
+            await markNotificationHistorySeen();
+            setNotificationItems((current) => current.map((item) => ({ ...item, read: true })));
+            setNotificationUnreadCount(0);
+        } catch {
+            setNotificationItems([]);
+            pushFeedback('error', 'Falha ao carregar', 'Nao foi possivel abrir as notificacoes agora.');
+        } finally {
+            setNotificationsPopupLoading(false);
+        }
+    }, [pushFeedback]);
+
     useFocusEffect(
         useCallback(() => {
             const cancel = runWhenIdle(() => {
@@ -303,7 +366,22 @@ const Home = () => {
         }, [loadTotalBalanceRecords])
     );
 
+    useFocusEffect(
+        useCallback(() => {
+            const cancel = runWhenIdle(() => {
+                loadNotificationBadge();
+            });
+
+            return cancel;
+        }, [loadNotificationBadge])
+    );
+
     const entries = useMemo(() => records.map(toCalendarEntry), [records]);
+    const notificationModalWidth = useMemo(() => Math.min(windowWidth - 24, 420), [windowWidth]);
+    const notificationModalMaxHeight = useMemo(
+        () => Math.min(windowHeight - insets.top - insets.bottom - 32, 620),
+        [insets.bottom, insets.top, windowHeight]
+    );
     const pendingEntriesCount = useMemo(() => entries.filter((item) => item.status === 'pending').length, [entries]);
     const monthlyBalanceValue = useMemo(() => calculateSettledBalance(records), [records]);
     const totalBalanceValue = useMemo(() => calculateSettledBalance(allRecords), [allRecords]);
@@ -612,8 +690,18 @@ const Home = () => {
                                 </AppText>
                             </View>
                         </View>
-                        <TouchableOpacity className="bg-[#f8f7f5] dark:bg-black p-2 rounded-full">
+                        <TouchableOpacity
+                            className="bg-[#f8f7f5] dark:bg-black p-2 rounded-full relative"
+                            onPress={openNotificationsPopup}
+                        >
                             <Bell size={20} color={darkMode ? '#cbd5e1' : '#8a7560'} />
+                            {notificationUnreadCount > 0 ? (
+                                <View className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 items-center justify-center px-1 border border-white dark:border-black">
+                                    <AppText disableUserFontScale className="text-white text-[9px] font-bold">
+                                        {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+                                    </AppText>
+                                </View>
+                            ) : null}
                         </TouchableOpacity>
                     </View>
 
@@ -829,6 +917,108 @@ const Home = () => {
                     ) : null}
                 </View>
             </Layout>
+
+            <Modal
+                visible={showNotifications}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+                onRequestClose={closeNotificationsPopup}
+            >
+                <View className="flex-1 items-center justify-center px-3">
+                    <Pressable className="absolute inset-0 bg-black/30" onPress={closeNotificationsPopup} />
+                    <View
+                        className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 relative overflow-hidden"
+                        style={{
+                            width: notificationModalWidth,
+                            height: notificationModalMaxHeight,
+                        }}
+                    >
+                        <TouchableOpacity
+                            onPress={closeNotificationsPopup}
+                            className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 items-center justify-center"
+                        >
+                            <X size={16} color="#64748b" />
+                        </TouchableOpacity>
+
+                        <View className="px-4 pt-4 pb-3 pr-10 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#121212]">
+                            <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Notificacoes</AppText>
+                        </View>
+
+                        <View className="flex-1 bg-white dark:bg-[#121212] px-4 pt-3">
+                            {notificationsPopupLoading ? (
+                                <View className="items-center py-6">
+                                    <ActivityIndicator color="#f48c25" />
+                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">
+                                        Carregando notificacoes...
+                                    </AppText>
+                                </View>
+                            ) : notificationItems.length === 0 ? (
+                                <View className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] p-3">
+                                    <AppText className="text-slate-600 dark:text-slate-300 text-sm">
+                                        Nao existem notificacoes.
+                                    </AppText>
+                                </View>
+                            ) : (
+                                <ScrollView
+                                    className="flex-1"
+                                    showsVerticalScrollIndicator={false}
+                                    contentContainerStyle={{ paddingBottom: 8 }}
+                                >
+                                    {notificationItems.map((item) => {
+                                        const Icon = notificationKindIconMap[item.kind] || Bell;
+                                        const iconColor = notificationKindColorMap[item.kind] || '#64748b';
+
+                                        return (
+                                            <View
+                                                key={item.id}
+                                                className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] p-3 mb-2 border border-slate-100 dark:border-slate-800"
+                                            >
+                                                <View className="flex-row items-start">
+                                                    <View className="w-8 h-8 rounded-lg items-center justify-center bg-white dark:bg-[#121212] border border-slate-200 dark:border-slate-700">
+                                                        <Icon size={14} color={iconColor} />
+                                                    </View>
+                                                    <View className="ml-2 flex-1">
+                                                        <View className="flex-row items-start justify-between">
+                                                            <AppText className="text-slate-900 dark:text-slate-100 text-xs font-bold flex-1 pr-2">
+                                                                {item.title}
+                                                            </AppText>
+                                                            {!item.read ? <View className="w-2 h-2 rounded-full bg-primary mt-1" /> : null}
+                                                        </View>
+                                                        <AppText className="text-slate-600 dark:text-slate-300 text-[11px] mt-1">
+                                                            {item.message}
+                                                        </AppText>
+                                                        <AppText className="text-slate-400 dark:text-slate-300 text-[10px] mt-1">
+                                                            {new Date(item.created_at).toLocaleString('pt-BR')}
+                                                        </AppText>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        );
+                                    })}
+                                </ScrollView>
+                            )}
+                        </View>
+
+                        <View className="flex-row gap-2 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#121212]">
+                            <Button
+                                title="Fechar"
+                                variant="outline"
+                                onPress={closeNotificationsPopup}
+                                className="flex-1"
+                            />
+                            <Button
+                                title="Ver historico"
+                                onPress={() => {
+                                    closeNotificationsPopup();
+                                    navigation.navigate('Historico Notificacoes');
+                                }}
+                                className="flex-1"
+                            />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
 
             {showDayDetails ? (
                 <View className="absolute inset-0 z-40">

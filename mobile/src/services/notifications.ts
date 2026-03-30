@@ -7,6 +7,7 @@ type NotificationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'una
 let cachedNotificationsModule: any | null | undefined;
 let handlerConfigured = false;
 const APP_NOTIFICATION_SOURCE = 'divida_zero_mobile';
+const DEVICE_XP_NOTIFICATIONS_ENABLED = false;
 
 const getNotificationsModule = () => {
   if (cachedNotificationsModule !== undefined) return cachedNotificationsModule;
@@ -254,6 +255,10 @@ export const sendXpAndBadgeNotification = async ({
   title: string;
   body: string;
 }) => {
+  if (!DEVICE_XP_NOTIFICATIONS_ENABLED) {
+    return { sent: false as const, reason: 'disabled' as const };
+  }
+
   if (!enabled) return { sent: false as const, reason: 'disabled' as const };
 
   const Notifications = getNotificationsModule();

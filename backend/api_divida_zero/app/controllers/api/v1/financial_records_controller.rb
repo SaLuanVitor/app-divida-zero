@@ -33,6 +33,9 @@
           }
         )
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
+        GamificationService.sync_record_achievements!(@current_user, source: generated.first)
+        DailyAchievementsService.sync_for_user!(@current_user)
+        xp_feedback = refresh_feedback_summary(xp_feedback)
 
         render json: {
           message: "Registro criado com sucesso.",
@@ -70,6 +73,9 @@
           }
         )
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
+        GamificationService.sync_record_achievements!(@current_user, source: record)
+        DailyAchievementsService.sync_for_user!(@current_user)
+        xp_feedback = refresh_feedback_summary(xp_feedback)
 
         render json: {
           message: message,
@@ -89,6 +95,8 @@
 
           xp_feedback = revert_xp_for_deletion!(deleted_count: deleted_count, settled_count: settled_count, source: record)
           FinancialGoalsProgressService.recalculate_for_user!(@current_user)
+          DailyAchievementsService.sync_for_user!(@current_user)
+          xp_feedback = refresh_feedback_summary(xp_feedback)
           return render json: {
             message: "Registros do grupo excluídos com sucesso.",
             deleted_count: deleted_count,
@@ -100,6 +108,8 @@
         record.destroy!
         xp_feedback = revert_xp_for_deletion!(deleted_count: 1, settled_count: settled_count, source: record)
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
+        DailyAchievementsService.sync_for_user!(@current_user)
+        xp_feedback = refresh_feedback_summary(xp_feedback)
 
         render json: {
           message: "Registro excluído com sucesso.",
@@ -378,6 +388,16 @@
         @current_user = User.find(payload["sub"])
       rescue JWT::DecodeError, ActiveRecord::RecordNotFound
         render json: { error: "Não autorizado." }, status: :unauthorized
+      end
+
+      def refresh_feedback_summary(xp_feedback)
+        return xp_feedback if xp_feedback.nil?
+
+        original_level = xp_feedback.dig(:summary, :level).to_i
+        current_summary = GamificationService.summary_for(@current_user)
+        xp_feedback[:summary] = current_summary
+        xp_feedback[:leveled_up] = true if current_summary[:level].to_i > original_level
+        xp_feedback
       end
     end
   end

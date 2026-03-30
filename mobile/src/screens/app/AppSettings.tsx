@@ -9,7 +9,9 @@ import AppText from '../../components/AppText';
 import { AppPreferences } from '../../types/settings';
 import { defaultAppPreferences, getAppPreferences, saveAppPreferences, updateAppPreferences } from '../../services/preferences';
 import { useThemeMode } from '../../context/ThemeContext';
+import { useAccessibility } from '../../context/AccessibilityContext';
 import { trackAnalyticsEvent } from '../../services/analytics';
+import useBackToProfile from '../../hooks/useBackToProfile';
 
 const TEXT_SIZE_OPTIONS: Array<{ label: string; value: AppPreferences['font_scale'] }> = [
   { label: 'Pequeno', value: 0.9 },
@@ -21,10 +23,13 @@ const TEXT_SIZE_OPTIONS: Array<{ label: string; value: AppPreferences['font_scal
 const AppSettings = () => {
   const navigation = useNavigation<any>();
   const { darkMode, setDarkMode } = useThemeMode();
+  const { fontScale, largerTouchTargets } = useAccessibility();
+  const goBackToProfile = useBackToProfile();
 
   const [prefs, setPrefs] = useState<AppPreferences>(defaultAppPreferences);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const rowHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
 
   useEffect(() => {
     const load = async () => {
@@ -113,7 +118,7 @@ const AppSettings = () => {
     value: boolean;
     onChange: (value: boolean) => void;
   }) => (
-    <View className="py-3 border-b border-slate-100 dark:border-slate-800">
+    <View className="py-3 border-b border-slate-100 dark:border-slate-800" style={{ minHeight: rowHeight + 10, justifyContent: 'center' }}>
       <View className="flex-row items-center justify-between">
         <View className="flex-1 pr-3">
           <AppText className="text-slate-900 dark:text-slate-100 font-semibold">{title}</AppText>
@@ -125,13 +130,13 @@ const AppSettings = () => {
   );
 
   return (
-    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
-      <View className="bg-white dark:bg-black px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0 pb-28">
+      <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
+          <TouchableOpacity onPress={goBackToProfile} className="p-2 -ml-2 mr-2">
             <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
-          <View>
+          <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Configurações do app</AppText>
             <AppText className="text-slate-500 dark:text-slate-300 text-xs">
               Ajuste visual, tutorial e leitura do aplicativo.
@@ -140,7 +145,7 @@ const AppSettings = () => {
         </View>
       </View>
 
-      <View className="p-4">
+      <View className="p-4 pb-6">
         <Card className="p-4">
           <View className="flex-row items-center mb-2">
             <Settings2 size={16} color="#64748b" />
@@ -182,6 +187,7 @@ const AppSettings = () => {
                         : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'
                     }`}
                     onPress={() => setFontScale(option.value)}
+                    style={{ minHeight: rowHeight }}
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
                     accessibilityLabel={`Tamanho do texto ${option.label}`}

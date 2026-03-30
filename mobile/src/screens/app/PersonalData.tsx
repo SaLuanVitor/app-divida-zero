@@ -2,19 +2,21 @@ import React, { useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity } from 'react-native';
 import { ArrowLeft, Mail, User } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
+import { useThemeMode } from '../../context/ThemeContext';
 import { updateProfile } from '../../services/account';
+import useBackToProfile from '../../hooks/useBackToProfile';
 
 type FeedbackState = { kind: 'success' | 'error'; message: string } | null;
 
 const PersonalData = () => {
-  const navigation = useNavigation<any>();
+  const { darkMode } = useThemeMode();
   const { user, updateUser } = useAuth();
+  const goBackToProfile = useBackToProfile();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -53,20 +55,20 @@ const PersonalData = () => {
   };
 
   return (
-    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
-      <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100">
+    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0 pb-28">
+      <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
-            <ArrowLeft size={22} color="#0f172a" />
+          <TouchableOpacity onPress={goBackToProfile} className="p-2 -ml-2 mr-2">
+            <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
-          <View>
+          <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Dados do usuário</AppText>
             <AppText className="text-slate-500 dark:text-slate-300 text-xs">Atualize os identificadores visuais da conta.</AppText>
           </View>
         </View>
       </View>
 
-      <View className="p-4">
+      <View className="p-4 pb-6">
         <Card className="p-4">
           <Input label="Nome do usuário" value={name} onChangeText={setName} autoCapitalize="words" icon={User} />
           <Input
@@ -80,9 +82,15 @@ const PersonalData = () => {
 
           {feedback ? (
             <View
-              className={`rounded-xl px-3 py-2 mb-3 ${feedback.kind === 'success' ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}
+              className={`rounded-xl px-3 py-2 mb-3 ${
+                feedback.kind === 'success'
+                  ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
+                  : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+              }`}
             >
-              <AppText className={`text-sm ${feedback.kind === 'success' ? 'text-emerald-700' : 'text-red-700'}`}>{feedback.message}</AppText>
+              <AppText className={`text-sm ${feedback.kind === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+                {feedback.message}
+              </AppText>
             </View>
           ) : null}
 
@@ -94,4 +102,3 @@ const PersonalData = () => {
 };
 
 export default PersonalData;
-

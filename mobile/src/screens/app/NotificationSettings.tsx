@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Switch } from 'react-native';
 import { ArrowLeft, Bell } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import { AppPreferences } from '../../types/settings';
@@ -16,6 +15,7 @@ import {
 import { useThemeMode } from '../../context/ThemeContext';
 import { listFinancialRecords } from '../../services/financialRecords';
 import { useAccessibility } from '../../context/AccessibilityContext';
+import useBackToProfile from '../../hooks/useBackToProfile';
 
 type SaveMessageKind = 'success' | 'error' | '';
 type NotificationPreferenceKey =
@@ -27,9 +27,9 @@ type NotificationPreferenceKey =
   | 'notify_xp_and_badges';
 
 const NotificationSettings = () => {
-  const navigation = useNavigation<any>();
   const { darkMode } = useThemeMode();
   const { fontScale, largerTouchTargets } = useAccessibility();
+  const goBackToProfile = useBackToProfile();
 
   const [prefs, setPrefs] = useState<AppPreferences>(defaultAppPreferences);
   const [message, setMessage] = useState('');
@@ -185,7 +185,10 @@ const NotificationSettings = () => {
     onChange: (value: boolean) => void;
     disabled?: boolean;
   }) => (
-    <View className={`py-3 border-b border-slate-100 dark:border-slate-800 ${disabled ? 'opacity-50' : ''}`}>
+    <View
+      className={`py-3 border-b border-slate-100 dark:border-slate-800 ${disabled ? 'opacity-50' : ''}`}
+      style={{ minHeight: rowHeight + 10, justifyContent: 'center' }}
+    >
       <View className="flex-row items-center justify-between">
         <View className="flex-1 pr-3">
           <AppText className="text-slate-900 dark:text-slate-100 font-semibold">{title}</AppText>
@@ -197,13 +200,13 @@ const NotificationSettings = () => {
   );
 
   return (
-    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
+    <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0 pb-28">
       <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
+          <TouchableOpacity onPress={goBackToProfile} className="p-2 -ml-2 mr-2">
             <ArrowLeft size={22} color={iconColor} />
           </TouchableOpacity>
-          <View>
+          <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Notificações</AppText>
             <AppText className="text-slate-500 dark:text-slate-300 text-xs">
               Somente no aplicativo. No celular apenas com sua permissão.
@@ -212,7 +215,7 @@ const NotificationSettings = () => {
         </View>
       </View>
 
-      <View className="p-4">
+      <View className="p-4 pb-6">
         <Card className="p-4">
           <View className="flex-row items-center mb-2">
             <Bell size={16} color="#64748b" />
@@ -263,10 +266,10 @@ const NotificationSettings = () => {
           />
           <Item
             title="XP e badges"
-            subtitle="Alertas de conquistas e pontuação. Subida de nível aparece só no app."
-            value={prefs.notify_xp_and_badges}
-            onChange={(value) => update('notify_xp_and_badges', value)}
-            disabled={!prefs.notifications_enabled}
+            subtitle="XP e medalhas aparecem só dentro do app (sem push no celular)."
+            value={false}
+            onChange={() => {}}
+            disabled
           />
 
           <TouchableOpacity
