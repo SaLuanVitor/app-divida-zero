@@ -39,15 +39,19 @@ function AppContent() {
     if (!signed) return;
 
     const syncNotifications = async () => {
-      const [prefs, recordsResult] = await Promise.all([
-        getAppPreferences(),
-        listFinancialRecords(undefined, undefined, { force: true }),
-      ]);
+      try {
+        const [prefs, recordsResult] = await Promise.all([
+          getAppPreferences(),
+          listFinancialRecords(undefined, undefined, { force: true }),
+        ]);
 
-      await syncScheduledLocalNotifications({
-        prefs,
-        records: recordsResult.records,
-      });
+        await syncScheduledLocalNotifications({
+          prefs,
+          records: recordsResult.records,
+        });
+      } catch {
+        // Keep app flow stable if API/network or native notification layer fails.
+      }
     };
 
     const initial = setTimeout(() => {
