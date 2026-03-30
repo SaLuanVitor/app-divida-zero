@@ -5,19 +5,34 @@ import { useAccessibility } from '../context/AccessibilityContext';
 
 const DEFAULT_FONT_SIZE = 14;
 
-type AppTextProps = TextProps & { className?: string };
+type AppTextProps = TextProps & {
+  className?: string;
+  disableUserFontScale?: boolean;
+  maxUserFontScale?: number;
+};
 
-const AppTextBase: React.FC<AppTextProps> = ({ style, children, ...rest }) => {
+const AppTextBase: React.FC<AppTextProps> = ({
+  style,
+  children,
+  disableUserFontScale = false,
+  maxUserFontScale,
+  ...rest
+}) => {
   const { fontScale } = useAccessibility();
+  const effectiveScale = disableUserFontScale
+    ? 1
+    : typeof maxUserFontScale === 'number'
+      ? Math.min(fontScale, Math.max(1, maxUserFontScale))
+      : fontScale;
   const flattened = StyleSheet.flatten(style) as TextStyle | undefined;
   const baseFontSize = typeof flattened?.fontSize === 'number' ? flattened.fontSize : DEFAULT_FONT_SIZE;
   const baseLineHeight = typeof flattened?.lineHeight === 'number' ? flattened.lineHeight : undefined;
 
   const scaledStyle: TextStyle | undefined =
-    fontScale !== 1
+    effectiveScale !== 1
       ? {
-          fontSize: Math.round(baseFontSize * fontScale * 100) / 100,
-          ...(baseLineHeight ? { lineHeight: Math.round(baseLineHeight * fontScale * 100) / 100 } : {}),
+          fontSize: Math.round(baseFontSize * effectiveScale * 100) / 100,
+          ...(baseLineHeight ? { lineHeight: Math.round(baseLineHeight * effectiveScale * 100) / 100 } : {}),
         }
       : undefined;
 
