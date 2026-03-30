@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import AppText from '../../components/AppText';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import { Mail, ArrowLeft, KeyRound } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Input from '../../components/Input';
@@ -56,24 +57,24 @@ const ForgotPassword = () => {
                 >
                     <ArrowLeft size={24} color="#0f172a" />
                 </TouchableOpacity>
-                <Text className="text-slate-900 dark:text-slate-100 text-lg font-bold ml-2">Recuperar Senha</Text>
+                <AppText className="text-slate-900 dark:text-slate-100 text-lg font-bold ml-2">Recuperar Senha</AppText>
             </View>
 
             <View className="items-center pt-4 pb-5">
                 <View className="mb-6 h-24 w-24 rounded-full bg-primary/10 items-center justify-center">
                     <KeyRound size={46} color="#f48c25" />
                 </View>
-                <Text className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 text-center mb-3">
+                <AppText className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 text-center mb-3">
                     Esqueceu sua senha?
-                </Text>
-                <Text className="text-base text-slate-600 dark:text-slate-300 text-center px-2">
+                </AppText>
+                <AppText className="text-base text-slate-600 dark:text-slate-300 text-center px-2">
                     Informe seu usuário e siga as instruções para redefinir seu acesso.
-                </Text>
+                </AppText>
             </View>
 
             {infoMessage ? (
                 <View className="mb-4 rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
-                    <Text className="text-amber-800 dark:text-amber-300 text-sm font-medium">{infoMessage}</Text>
+                    <AppText className="text-amber-800 dark:text-amber-300 text-sm font-medium">{infoMessage}</AppText>
                 </View>
             ) : null}
 
@@ -102,13 +103,13 @@ const ForgotPassword = () => {
 
             <View className="mt-6 items-center gap-3">
                 <TouchableOpacity onPress={() => navigation.navigate('ResetPassword', { email: email.trim() })}>
-                    <Text className="text-primary font-bold">Já tenho token de recuperação</Text>
+                    <AppText className="text-primary font-bold">Já tenho token de recuperação</AppText>
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Text className="text-slate-500 dark:text-slate-300 font-medium">
-                        Lembrou sua senha? <Text className="text-primary font-bold">Voltar ao login</Text>
-                    </Text>
+                    <AppText className="text-slate-500 dark:text-slate-300 font-medium">
+                        Lembrou sua senha? <AppText className="text-primary font-bold">Voltar ao login</AppText>
+                    </AppText>
                 </TouchableOpacity>
             </View>
 
@@ -118,6 +119,7 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
+
 
 
 

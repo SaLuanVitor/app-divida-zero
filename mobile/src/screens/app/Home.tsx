@@ -1,5 +1,7 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Pressable, ActivityIndicator, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import AppTextInput from '../../components/AppTextInput';
+import AppText from '../../components/AppText';
+import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import {
     Bell,
     CheckCircle2,
@@ -574,14 +576,14 @@ const Home = () => {
                                     iconSize={22}
                                 />
                                 <View className="absolute -bottom-1 -right-1 bg-primary px-1.5 py-0.5 rounded-full border border-white">
-                                    <Text className="text-white text-[9px] font-bold">Nível {gamificationSummary.level}</Text>
+                                    <AppText className="text-white text-[9px] font-bold">Nível {gamificationSummary.level}</AppText>
                                 </View>
                             </View>
                             <View>
-                                <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">Olá, {user?.name || 'Usuário'}</Text>
-                                <Text className="text-slate-500 dark:text-slate-300 text-xs font-medium">
+                                <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Olá, {user?.name || 'Usuário'}</AppText>
+                                <AppText className="text-slate-500 dark:text-slate-300 text-xs font-medium">
                                     {gamificationSummary.level_title} • XP {gamificationSummary.xp_in_level}/{gamificationSummary.xp_in_level + gamificationSummary.xp_to_next_level}
-                                </Text>
+                                </AppText>
                             </View>
                         </View>
                         <TouchableOpacity className="bg-[#f8f7f5] dark:bg-black p-2 rounded-full">
@@ -593,25 +595,25 @@ const Home = () => {
                         <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
                             <View className="flex-row items-center mb-1">
                                 <CircleDollarSign size={14} color="#16a34a" />
-                                <Text className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Recebido no mês</Text>
+                                <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Recebido no mês</AppText>
                             </View>
-                            <Text className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyReceivedValue)}</Text>
+                            <AppText className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyReceivedValue)}</AppText>
                         </View>
                         <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
                             <View className="flex-row items-center mb-1">
                                 <Landmark size={14} color="#f59e0b" />
-                                <Text className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Pago no mês</Text>
+                                <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Pago no mês</AppText>
                             </View>
-                            <Text className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyPaidValue)}</Text>
+                            <AppText className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyPaidValue)}</AppText>
                         </View>
                     </View>
 
                     <View className="mt-4 bg-[#f8f7f5] dark:bg-black rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
-                        <Text className="text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase mb-1">Próxima melhor ação</Text>
-                        <Text className="text-slate-900 dark:text-slate-100 font-bold">{nextBestAction.title}</Text>
-                        <Text className="text-slate-600 dark:text-slate-300 text-xs mt-1">{nextBestAction.description}</Text>
+                        <AppText className="text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase mb-1">Próxima melhor ação</AppText>
+                        <AppText className="text-slate-900 dark:text-slate-100 font-bold">{nextBestAction.title}</AppText>
+                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-1">{nextBestAction.description}</AppText>
                         <TouchableOpacity className="mt-3 h-9 px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center self-start" onPress={nextBestAction.onPress}>
-                            <Text className="text-primary text-xs font-bold">{nextBestAction.cta}</Text>
+                            <AppText className="text-primary text-xs font-bold">{nextBestAction.cta}</AppText>
                         </TouchableOpacity>
                     </View>
 
@@ -625,11 +627,11 @@ const Home = () => {
                                     <ChevronLeft size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} />
                                 </TouchableOpacity>
                                 <TouchableOpacity className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" onPress={openPeriodPicker}>
-                                    <Text className="text-slate-900 dark:text-slate-100 text-sm font-bold">{toMonthLabel(currentMonth)}</Text>
+                                    <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{toMonthLabel(currentMonth)}</AppText>
                                 </TouchableOpacity>
                                 <View className="flex-row items-center gap-2">
                                     <TouchableOpacity className="px-3 h-9 rounded-full bg-primary/10 border border-primary/20 items-center justify-center" onPress={focusToday}>
-                                        <Text className="text-primary text-xs font-bold">Hoje</Text>
+                                        <AppText className="text-primary text-xs font-bold">Hoje</AppText>
                                     </TouchableOpacity>
                                     <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(1)}>
                                         <ChevronRight size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} />
@@ -640,13 +642,13 @@ const Home = () => {
                             {loading ? (
                                 <View className="py-8 items-center">
                                     <ActivityIndicator color="#f48c25" />
-                                    <Text className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando registros...</Text>
+                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando registros...</AppText>
                                 </View>
                             ) : (
                                 <>
                                     <View className="flex-row justify-between mb-2 px-1">
                                         {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
-                                            <Text key={`${day}-${idx}`} className="w-8 text-center text-xs font-bold text-slate-500 dark:text-slate-300">{day}</Text>
+                                            <AppText key={`${day}-${idx}`} className="w-8 text-center text-xs font-bold text-slate-500 dark:text-slate-300">{day}</AppText>
                                         ))}
                                     </View>
 
@@ -665,9 +667,9 @@ const Home = () => {
                                                             className={`w-7 h-7 rounded-lg items-center justify-center ${isSelected ? 'bg-primary' : isToday ? 'bg-primary/10 border border-primary/40' : ''}`}
                                                             onPress={() => openDayDetails(cell.dateKey!)}
                                                         >
-                                                            <Text className={`text-sm font-medium ${isSelected ? 'text-white font-bold' : isToday ? 'text-primary font-bold' : 'text-slate-700 dark:text-slate-200'}`}>
+                                                            <AppText className={`text-sm font-medium ${isSelected ? 'text-white font-bold' : isToday ? 'text-primary font-bold' : 'text-slate-700 dark:text-slate-200'}`}>
                                                                 {cell.day}
-                                                            </Text>
+                                                            </AppText>
                                                         </TouchableOpacity>
                                                     ) : null}
 
@@ -687,19 +689,19 @@ const Home = () => {
                             <View className="flex-row items-center justify-center gap-6 mt-2 pt-3 border-t border-stone-100">
                                 <View className="flex-row items-center gap-2">
                                     <View className="h-2 w-2 rounded-full bg-primary" />
-                                    <Text className="text-xs text-slate-500 dark:text-slate-300 font-medium">Pendente</Text>
+                                    <AppText className="text-xs text-slate-500 dark:text-slate-300 font-medium">Pendente</AppText>
                                 </View>
                                 <View className="flex-row items-center gap-2">
                                     <View className="h-2 w-2 rounded-full bg-teal-400" />
-                                    <Text className="text-xs text-slate-500 dark:text-slate-300 font-medium">Concluído</Text>
+                                    <AppText className="text-xs text-slate-500 dark:text-slate-300 font-medium">Concluído</AppText>
                                 </View>
                             </View>
                         </View>
                     </Card>
 
                     <View className="flex-row items-center justify-between mb-3">
-                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-xl">Lançamentos do mês</Text>
-                        <Text className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full">{filteredMonthItems.length} registros</Text>
+                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-xl">Lançamentos do mês</AppText>
+                        <AppText className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full">{filteredMonthItems.length} registros</AppText>
                     </View>
 
                     <View className="flex-row gap-2 mb-4">
@@ -707,23 +709,23 @@ const Home = () => {
                             className={`px-3 py-2 rounded-full border ${monthListFilter === 'all' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setMonthListFilter('all')}
                         >
-                            <Text className={`text-xs font-bold ${monthListFilter === 'all' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Todos</Text>
+                            <AppText className={`text-xs font-bold ${monthListFilter === 'all' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Todos</AppText>
                         </TouchableOpacity>
                         <TouchableOpacity
                             className={`px-3 py-2 rounded-full border ${monthListFilter === 'pending' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setMonthListFilter('pending')}
                         >
-                            <Text className={`text-xs font-bold ${monthListFilter === 'pending' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Pendentes</Text>
+                            <AppText className={`text-xs font-bold ${monthListFilter === 'pending' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Pendentes</AppText>
                         </TouchableOpacity>
                         <TouchableOpacity
                             className={`px-3 py-2 rounded-full border ${monthListFilter === 'completed' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setMonthListFilter('completed')}
                         >
-                            <Text className={`text-xs font-bold ${monthListFilter === 'completed' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Concluídos</Text>
+                            <AppText className={`text-xs font-bold ${monthListFilter === 'completed' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Concluídos</AppText>
                         </TouchableOpacity>
                     </View>
 
-                    <TextInput
+                    <AppTextInput
                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 mb-4 text-slate-900 dark:text-slate-100"
                         placeholder="Buscar por título, categoria, valor, data ou status"
                         placeholderTextColor="#94a3b8"
@@ -734,7 +736,7 @@ const Home = () => {
                     {!loading && filteredMonthItems.length === 0 ? (
                         <Card className="mb-3" noPadding>
                             <View className="p-4">
-                                <Text className="text-slate-600 dark:text-slate-300 text-sm">Sem lançamentos para os filtros e busca informados neste mês.</Text>
+                                <AppText className="text-slate-600 dark:text-slate-300 text-sm">Sem lançamentos para os filtros e busca informados neste mês.</AppText>
                             </View>
                         </Card>
                     ) : null}
@@ -748,34 +750,34 @@ const Home = () => {
                                             <item.icon size={18} color={item.color} />
                                         </View>
                                         <View className="ml-3">
-                                            <Text className="text-slate-900 dark:text-slate-100 font-bold">{item.title}</Text>
-                                            <Text className="text-slate-500 dark:text-slate-300 text-xs">{item.subtitle} • {formatDateBRFromISO(item.date)}</Text>
+                                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.title}</AppText>
+                                            <AppText className="text-slate-500 dark:text-slate-300 text-xs">{item.subtitle} • {formatDateBRFromISO(item.date)}</AppText>
                                         </View>
                                     </View>
                                     <View className="items-end">
-                                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-base">{item.value}</Text>
-                                        <Text className={`text-[10px] font-bold uppercase ${statusColorClass(item.status)}`}>
+                                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">{item.value}</AppText>
+                                        <AppText className={`text-[10px] font-bold uppercase ${statusColorClass(item.status)}`}>
                                             {statusLabel(item.status)}
-                                        </Text>
+                                        </AppText>
                                     </View>
                                 </View>
 
                                 <View className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex-row items-center justify-between">
-                                    <Text className="text-xs text-slate-500 dark:text-slate-300">{item.reminder}</Text>
+                                    <AppText className="text-xs text-slate-500 dark:text-slate-300">{item.reminder}</AppText>
                                     <View className="flex-row items-center gap-2">
                                         <TouchableOpacity onPress={() => requestDeleteSingle(item)} className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 flex-row items-center">
                                             <Trash2 size={14} color="#475569" />
-                                            <Text className="text-slate-700 dark:text-slate-200 font-bold text-xs ml-1">Excluir</Text>
+                                            <AppText className="text-slate-700 dark:text-slate-200 font-bold text-xs ml-1">Excluir</AppText>
                                         </TouchableOpacity>
                                         {item.status === 'pending' ? (
                                             <TouchableOpacity onPress={() => requestPay(item)} className="bg-primary px-4 py-2 rounded-lg flex-row items-center">
                                                 <CheckCircle2 size={16} color="#fff" />
-                                                <Text className="text-white font-bold text-sm ml-2">
+                                                <AppText className="text-white font-bold text-sm ml-2">
                                                     {item.icon === CircleDollarSign ? 'Receber' : 'Pagar'}
-                                                </Text>
+                                                </AppText>
                                             </TouchableOpacity>
                                         ) : (
-                                            <Text className="text-teal-600 text-xs font-bold">Concluído</Text>
+                                            <AppText className="text-teal-600 text-xs font-bold">Concluído</AppText>
                                         )}
                                     </View>
                                 </View>
@@ -786,9 +788,9 @@ const Home = () => {
                     {!loading && hasMoreMonthItems ? (
                         <View className="items-center pb-2">
                             <ActivityIndicator color="#f48c25" />
-                            <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
                                 Carregando mais lançamentos...
-                            </Text>
+                            </AppText>
                         </View>
                     ) : null}
                 </View>
@@ -799,42 +801,42 @@ const Home = () => {
                     <Pressable className="absolute inset-0 bg-black/20" onPress={closeOverlay} />
                     <View className="absolute bottom-24 left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3 max-h-[70%]">
                         <View className="flex-row items-center justify-between mb-2 px-1">
-                            <Text className="text-slate-900 dark:text-slate-100 font-bold text-base">Detalhes do dia</Text>
+                            <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">Detalhes do dia</AppText>
                             <TouchableOpacity onPress={closeOverlay} className="p-1">
                                 <X size={18} color="#64748b" />
                             </TouchableOpacity>
                         </View>
 
-                        <Text className="text-slate-500 dark:text-slate-300 text-xs mb-3 px-1">{selectedDateKey.split('-').reverse().join('/')}</Text>
+                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mb-3 px-1">{selectedDateKey.split('-').reverse().join('/')}</AppText>
 
                         {selectedEntries.length === 0 ? (
                             <View className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] p-3">
-                                <Text className="text-slate-600 dark:text-slate-300 text-sm">Sem lançamentos para esta data.</Text>
+                                <AppText className="text-slate-600 dark:text-slate-300 text-sm">Sem lançamentos para esta data.</AppText>
                             </View>
                         ) : (
                             selectedEntries.map((item) => (
                                 <View key={item.id} className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] p-3 mb-2">
                                     <View className="flex-row items-center justify-between">
-                                        <Text className="text-slate-900 dark:text-slate-100 font-bold">{item.title}</Text>
-                                        <Text className={`text-[10px] font-bold uppercase ${statusColorClass(item.status)}`}>
+                                        <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.title}</AppText>
+                                        <AppText className={`text-[10px] font-bold uppercase ${statusColorClass(item.status)}`}>
                                             {statusLabel(item.status)}
-                                        </Text>
+                                        </AppText>
                                     </View>
-                                    <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">{item.subtitle}</Text>
+                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">{item.subtitle}</AppText>
                                     <View className="flex-row items-center justify-between mt-2">
-                                        <Text className="text-slate-500 dark:text-slate-300 text-xs">{item.reminder}</Text>
-                                        <Text className="text-slate-900 dark:text-slate-100 font-bold">{item.value}</Text>
+                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs">{item.reminder}</AppText>
+                                        <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.value}</AppText>
                                     </View>
 
                                     <View className="flex-row items-center justify-end gap-2 mt-3">
                                         <TouchableOpacity onPress={() => requestDeleteSingle(item)} className="px-3 py-2 rounded-lg bg-slate-200 dark:bg-slate-700">
-                                            <Text className="text-slate-700 dark:text-white text-xs font-bold">Excluir</Text>
+                                            <AppText className="text-slate-700 dark:text-white text-xs font-bold">Excluir</AppText>
                                         </TouchableOpacity>
                                         {item.status === 'pending' ? (
                                             <TouchableOpacity onPress={() => requestPay(item)} className="px-3 py-2 rounded-lg bg-primary">
-                                                <Text className="text-white text-xs font-bold">
+                                                <AppText className="text-white text-xs font-bold">
                                                     {item.icon === CircleDollarSign ? 'Marcar como recebido' : 'Marcar como pago'}
-                                                </Text>
+                                                </AppText>
                                             </TouchableOpacity>
                                         ) : null}
                                     </View>
@@ -849,8 +851,8 @@ const Home = () => {
                 <View className="absolute inset-0 z-[60]">
                     <Pressable className="absolute inset-0 bg-black/30" onPress={() => !actionLoading && setConfirmState(null)} />
                     <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
-                        <Text className="text-slate-900 dark:text-slate-100 text-base font-bold">{confirmState?.title}</Text>
-                        <Text className="text-slate-600 dark:text-slate-300 text-sm mt-2 mb-4">{confirmState?.message}</Text>
+                        <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">{confirmState?.title}</AppText>
+                        <AppText className="text-slate-600 dark:text-slate-300 text-sm mt-2 mb-4">{confirmState?.message}</AppText>
 
                         <Button
                             title={confirmState?.confirmLabel || 'Confirmar'}
@@ -882,17 +884,17 @@ const Home = () => {
                                     return <Icon size={40} color="#f48c25" />;
                                 })()}
                             </View>
-                            <Text className="text-slate-900 dark:text-slate-100 text-2xl font-extrabold text-center">{xpPopup?.title}</Text>
-                            <Text className="text-slate-500 dark:text-slate-300 text-sm text-center mt-1">{xpPopup?.message}</Text>
+                            <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-extrabold text-center">{xpPopup?.title}</AppText>
+                            <AppText className="text-slate-500 dark:text-slate-300 text-sm text-center mt-1">{xpPopup?.message}</AppText>
 
                             <View className="w-full mt-4 bg-[#fff7ed] dark:bg-[#1a1a1a] rounded-2xl border border-orange-100 dark:border-slate-700 p-4">
-                                <Text className="text-primary text-xs font-bold uppercase text-center">Recompensa</Text>
-                                <Text className="text-slate-900 dark:text-slate-100 text-3xl font-black text-center mt-1">
+                                <AppText className="text-primary text-xs font-bold uppercase text-center">Recompensa</AppText>
+                                <AppText className="text-slate-900 dark:text-slate-100 text-3xl font-black text-center mt-1">
                                     {(xpPopup?.points ?? 0) > 0 ? `+${xpPopup?.points}` : xpPopup?.points} XP
-                                </Text>
-                                <Text className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
+                                </AppText>
+                                <AppText className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
                                     Nível {xpPopup?.level} • {xpPopup?.levelTitle}
-                                </Text>
+                                </AppText>
                                 <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                     <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup?.levelProgressPct ?? 0}%` }} />
                                 </View>
@@ -909,7 +911,7 @@ const Home = () => {
                     <Pressable className="absolute inset-0 bg-black/30" onPress={closePeriodPicker} />
                     <View className="absolute left-4 right-4 top-[24%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                         <View className="flex-row items-center justify-between mb-3">
-                            <Text className="text-slate-900 dark:text-slate-100 text-base font-bold">Navegar por período</Text>
+                            <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Navegar por período</AppText>
                             <TouchableOpacity className="p-1" onPress={closePeriodPicker}>
                                 <X size={18} color="#64748b" />
                             </TouchableOpacity>
@@ -920,13 +922,13 @@ const Home = () => {
                                 className={`flex-1 h-10 rounded-xl items-center justify-center border ${pickerMode === 'month' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                                 onPress={() => setPickerMode('month')}
                             >
-                                <Text className={`font-bold text-sm ${pickerMode === 'month' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Meses</Text>
+                                <AppText className={`font-bold text-sm ${pickerMode === 'month' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Meses</AppText>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 className={`flex-1 h-10 rounded-xl items-center justify-center border ${pickerMode === 'year' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                                 onPress={() => setPickerMode('year')}
                             >
-                                <Text className={`font-bold text-sm ${pickerMode === 'year' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Anos</Text>
+                                <AppText className={`font-bold text-sm ${pickerMode === 'year' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Anos</AppText>
                             </TouchableOpacity>
                         </View>
 
@@ -936,7 +938,7 @@ const Home = () => {
                                     <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerYear((prev) => prev - 1)}>
                                         <ChevronLeft size={14} color={darkMode ? '#e2e8f0' : '#334155'} />
                                     </TouchableOpacity>
-                                    <Text className="text-slate-900 dark:text-slate-100 font-bold">{pickerYear}</Text>
+                                    <AppText className="text-slate-900 dark:text-slate-100 font-bold">{pickerYear}</AppText>
                                     <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerYear((prev) => prev + 1)}>
                                         <ChevronRight size={14} color={darkMode ? '#e2e8f0' : '#334155'} />
                                     </TouchableOpacity>
@@ -950,7 +952,7 @@ const Home = () => {
                                                 className={`w-[31%] h-10 mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                                                 onPress={() => selectMonth(index)}
                                             >
-                                                <Text className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</Text>
+                                                <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</AppText>
                                             </TouchableOpacity>
                                         );
                                     })}
@@ -966,7 +968,7 @@ const Home = () => {
                                             className={`w-[31%] h-10 mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                                             onPress={() => selectYear(year)}
                                         >
-                                            <Text className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</Text>
+                                            <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText>
                                         </TouchableOpacity>
                                     );
                                 })}
@@ -979,12 +981,12 @@ const Home = () => {
             {feedback ? (
                 <View className="absolute top-16 left-4 right-4 z-[70]">
                     <View className={`rounded-xl border px-4 py-3 ${feedback.kind === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
-                        <Text className={`font-bold text-sm ${feedback.kind === 'success' ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>
+                        <AppText className={`font-bold text-sm ${feedback.kind === 'success' ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>
                             {feedback.title}
-                        </Text>
-                        <Text className={`text-xs mt-1 ${feedback.kind === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+                        </AppText>
+                        <AppText className={`text-xs mt-1 ${feedback.kind === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
                             {feedback.message}
-                        </Text>
+                        </AppText>
                     </View>
                 </View>
             ) : null}
@@ -993,6 +995,8 @@ const Home = () => {
 };
 
 export default Home;
+
+
 
 
 

@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Linking } from 'react-native';
+﻿import React from 'react';
+import AppText from '../../components/AppText';
+import { View, TouchableOpacity, Linking } from 'react-native';
 import { ArrowLeft, CircleHelp, Mail, MessageCircle } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -7,16 +8,16 @@ import Card from '../../components/Card';
 
 const faqs = [
   {
-    question: 'Como lançar uma nova dívida ou ganho?',
-    answer: 'Toque no botão "+" na barra inferior e escolha entre "Novo ganho" ou "Nova dívida".',
+    question: 'Como lanÃ§ar uma nova dÃ­vida ou ganho?',
+    answer: 'Toque no botÃ£o "+" na barra inferior e escolha entre "Novo ganho" ou "Nova dÃ­vida".',
   },
   {
     question: 'Como marcar como pago ou recebido?',
-    answer: 'Na lista do mês, use os botões "Pagar" ou "Receber" no card do lançamento.',
+    answer: 'Na lista do mÃªs, use os botÃµes "Pagar" ou "Receber" no card do lanÃ§amento.',
   },
   {
-    question: 'Por que meu XP mudou após exclusões?',
-    answer: 'Quando um registro é removido, o sistema recalcula e ajusta os pontos relacionados.',
+    question: 'Por que meu XP mudou apÃ³s exclusÃµes?',
+    answer: 'Quando um registro Ã© removido, o sistema recalcula e ajusta os pontos relacionados.',
   },
 ];
 
@@ -38,8 +39,8 @@ const HelpSupport = () => {
             <ArrowLeft size={22} color="#0f172a" />
           </TouchableOpacity>
           <View>
-            <Text className="text-slate-900 text-xl font-bold">Ajuda e suporte</Text>
-            <Text className="text-slate-500 dark:text-slate-300 text-xs">Dúvidas comuns e contato com o suporte.</Text>
+            <AppText className="text-slate-900 text-xl font-bold">Ajuda e suporte</AppText>
+            <AppText className="text-slate-500 dark:text-slate-300 text-xs">DÃºvidas comuns e contato com o suporte.</AppText>
           </View>
         </View>
       </View>
@@ -48,28 +49,28 @@ const HelpSupport = () => {
         <Card className="p-4 mb-4">
           <View className="flex-row items-center mb-2">
             <CircleHelp size={16} color="#64748b" />
-            <Text className="text-slate-700 font-bold ml-2">Perguntas frequentes</Text>
+            <AppText className="text-slate-700 font-bold ml-2">Perguntas frequentes</AppText>
           </View>
 
           {faqs.map((faq, index) => (
             <View key={faq.question} className={`${index !== faqs.length - 1 ? 'border-b border-slate-100' : ''} py-3`}>
-              <Text className="text-slate-900 font-semibold">{faq.question}</Text>
-              <Text className="text-slate-500 dark:text-slate-300 text-sm mt-1">{faq.answer}</Text>
+              <AppText className="text-slate-900 font-semibold">{faq.question}</AppText>
+              <AppText className="text-slate-500 dark:text-slate-300 text-sm mt-1">{faq.answer}</AppText>
             </View>
           ))}
         </Card>
 
         <Card className="p-4">
-          <Text className="text-slate-700 font-bold mb-3">Canais de suporte</Text>
+          <AppText className="text-slate-700 font-bold mb-3">Canais de suporte</AppText>
 
           <TouchableOpacity className="h-11 rounded-xl bg-slate-100 px-3 flex-row items-center mb-2" onPress={openMail}>
             <Mail size={16} color="#0f172a" />
-            <Text className="text-slate-800 font-semibold ml-2">Enviar e-mail</Text>
+            <AppText className="text-slate-800 font-semibold ml-2">Enviar e-mail</AppText>
           </TouchableOpacity>
 
           <View className="h-11 rounded-xl bg-slate-100 px-3 flex-row items-center">
             <MessageCircle size={16} color="#0f172a" />
-            <Text className="text-slate-800 font-semibold ml-2">Chat no app (em breve)</Text>
+            <AppText className="text-slate-800 font-semibold ml-2">Chat no app (em breve)</AppText>
           </View>
         </Card>
       </View>
@@ -78,3 +79,4 @@ const HelpSupport = () => {
 };
 
 export default HelpSupport;
+

@@ -1,5 +1,7 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import AppTextInput from '../../components/AppTextInput';
+import AppText from '../../components/AppText';
+import { View, TouchableOpacity, ActivityIndicator, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { ArrowLeft, Clock3, Filter, Search, Sparkles } from 'lucide-react-native';
 import { useThemeMode } from '../../context/ThemeContext';
 import Layout from '../../components/Layout';
@@ -279,14 +281,14 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                             <ArrowLeft size={22} color={iconColor} />
                         </TouchableOpacity>
                         <View>
-                            <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">Histórico de XP</Text>
-                            <Text className="text-slate-500 dark:text-slate-300 text-xs">Detalhes de cada ganho e perda de pontuação.</Text>
+                            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Histórico de XP</AppText>
+                            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Detalhes de cada ganho e perda de pontuação.</AppText>
                         </View>
                     </View>
 
                     <View className="h-11 rounded-xl border border-slate-200 bg-[#f8f7f5] dark:bg-black px-3 flex-row items-center">
                         <Search size={16} color="#64748b" />
-                        <TextInput
+                        <AppTextInput
                             className="flex-1 ml-2 text-slate-900 dark:text-slate-100"
                             placeholder="Buscar eventos, ações ou detalhes"
                             placeholderTextColor="#94a3b8"
@@ -300,19 +302,19 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                             className={`px-3 py-2 rounded-full border ${filter === 'all' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setFilter('all')}
                         >
-                            <Text className={`text-xs font-bold ${filter === 'all' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Todos</Text>
+                            <AppText className={`text-xs font-bold ${filter === 'all' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Todos</AppText>
                         </TouchableOpacity>
                         <TouchableOpacity
                             className={`px-3 py-2 rounded-full border ${filter === 'gain' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setFilter('gain')}
                         >
-                            <Text className={`text-xs font-bold ${filter === 'gain' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Ganhos</Text>
+                            <AppText className={`text-xs font-bold ${filter === 'gain' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Ganhos</AppText>
                         </TouchableOpacity>
                         <TouchableOpacity
                             className={`px-3 py-2 rounded-full border ${filter === 'loss' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setFilter('loss')}
                         >
-                            <Text className={`text-xs font-bold ${filter === 'loss' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Perdas</Text>
+                            <AppText className={`text-xs font-bold ${filter === 'loss' ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>Perdas</AppText>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -321,14 +323,14 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                     {loading ? (
                         <View className="items-center py-10">
                             <ActivityIndicator color="#f48c25" />
-                            <Text className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando histórico...</Text>
+                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando histórico...</AppText>
                         </View>
                     ) : null}
 
                     {!loading && filteredEvents.length === 0 ? (
                         <Card noPadding>
                             <View className="p-4">
-                                <Text className="text-slate-600 dark:text-slate-300 text-sm">Sem eventos para os filtros informados.</Text>
+                                <AppText className="text-slate-600 dark:text-slate-300 text-sm">Sem eventos para os filtros informados.</AppText>
                             </View>
                         </Card>
                     ) : null}
@@ -353,38 +355,38 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                                                 <Sparkles size={18} color={isGain ? '#059669' : '#dc2626'} />
                                             </View>
                                             <View className="ml-3">
-                                                <Text className="text-slate-900 dark:text-slate-100 font-bold capitalize">{displayTitle}</Text>
-                                                <Text className="text-slate-500 dark:text-slate-300 text-xs">{displaySubtitle}</Text>
+                                                <AppText className="text-slate-900 dark:text-slate-100 font-bold capitalize">{displayTitle}</AppText>
+                                                <AppText className="text-slate-500 dark:text-slate-300 text-xs">{displaySubtitle}</AppText>
                                             </View>
                                         </View>
-                                        <Text className={`text-sm font-bold ${isGain ? 'text-emerald-600' : 'text-red-600'}`}>
+                                        <AppText className={`text-sm font-bold ${isGain ? 'text-emerald-600' : 'text-red-600'}`}>
                                             {isGain ? `+${event.points}` : event.points} XP
-                                        </Text>
+                                        </AppText>
                                     </View>
 
                                     <View className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                                         <View className="flex-row items-center mb-2">
                                             <Clock3 size={13} color="#94a3b8" />
-                                            <Text className="text-slate-400 dark:text-slate-300 text-xs ml-1">
+                                            <AppText className="text-slate-400 dark:text-slate-300 text-xs ml-1">
                                                 {new Date(event.created_at).toLocaleString('pt-BR')}
-                                            </Text>
+                                            </AppText>
                                         </View>
 
                                         <View className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-3 border border-slate-100 dark:border-slate-800 mb-2">
-                                            <Text className="text-slate-600 dark:text-slate-300 text-xs font-bold uppercase mb-1">Motivo do XP</Text>
-                                            <Text className="text-slate-600 dark:text-slate-300 text-xs">{reason}</Text>
+                                            <AppText className="text-slate-600 dark:text-slate-300 text-xs font-bold uppercase mb-1">Motivo do XP</AppText>
+                                            <AppText className="text-slate-600 dark:text-slate-300 text-xs">{reason}</AppText>
                                         </View>
 
                                         {metadata.length > 0 ? (
                                             <View className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-3 border border-slate-100 dark:border-slate-800">
                                                 <View className="flex-row items-center mb-2">
                                                     <Filter size={12} color="#64748b" />
-                                                    <Text className="text-slate-600 dark:text-slate-300 text-xs font-bold ml-1 uppercase">Detalhes</Text>
+                                                    <AppText className="text-slate-600 dark:text-slate-300 text-xs font-bold ml-1 uppercase">Detalhes</AppText>
                                                 </View>
                                                 {metadata.map((item) => (
                                                     <View key={`${event.id}-${item.label}`} className="flex-row justify-between mb-1">
-                                                        <Text className="text-slate-500 dark:text-slate-300 text-xs capitalize">{item.label}</Text>
-                                                        <Text className="text-slate-700 dark:text-slate-200 text-xs font-semibold">{item.value}</Text>
+                                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs capitalize">{item.label}</AppText>
+                                                        <AppText className="text-slate-700 dark:text-slate-200 text-xs font-semibold">{item.value}</AppText>
                                                     </View>
                                                 ))}
                                             </View>
@@ -398,7 +400,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                     {!loading && hasMoreEvents ? (
                         <View className="items-center py-3">
                             <ActivityIndicator color="#f48c25" />
-                            <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">Carregando mais eventos...</Text>
+                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">Carregando mais eventos...</AppText>
                         </View>
                     ) : null}
                 </View>
@@ -408,6 +410,8 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
 };
 
 export default XpHistory;
+
+
 
 
 

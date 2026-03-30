@@ -1,5 +1,7 @@
 ﻿import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Pressable, ScrollView } from 'react-native';
+import AppTextInput from '../../components/AppTextInput';
+import AppText from '../../components/AppText';
+import { View, TouchableOpacity, Pressable, ScrollView } from 'react-native';
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Landmark, PiggyBank, Target, Trophy, Shield, Crown } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -195,18 +197,18 @@ const MetaForm = () => {
                         <TouchableOpacity className="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors" onPress={goBackToGoals}>
                             <ArrowLeft size={22} color={iconColor} />
                         </TouchableOpacity>
-                        <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold tracking-tight">
+                        <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold tracking-tight">
                             {goal ? 'Editar meta' : 'Nova meta'}
-                        </Text>
+                        </AppText>
                     </View>
-                    <Text className="mt-4 px-2 text-slate-600 dark:text-slate-300 text-sm font-medium">
+                    <AppText className="mt-4 px-2 text-slate-600 dark:text-slate-300 text-sm font-medium">
                         Defina a meta e o período considerado para o cálculo do progresso.
-                    </Text>
+                    </AppText>
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="px-4 py-4 pb-32">
-                    <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Título da meta</Text>
-                    <TextInput
+                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Título da meta</AppText>
+                    <AppTextInput
                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 mb-3 text-slate-900 dark:text-slate-100"
                         placeholder="Ex: Reserva de emergência"
                         placeholderTextColor="#94a3b8"
@@ -214,8 +216,8 @@ const MetaForm = () => {
                         onChangeText={setTitle}
                     />
 
-                    <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Valor total da meta</Text>
-                    <TextInput
+                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Valor total da meta</AppText>
+                    <AppTextInput
                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 mb-3 text-slate-900 dark:text-slate-100"
                         placeholder="R$ 0,00"
                         placeholderTextColor="#94a3b8"
@@ -224,38 +226,38 @@ const MetaForm = () => {
                         onChangeText={(value) => setTargetAmountDigits(onlyDigits(value).slice(0, 10))}
                     />
 
-                    <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data de início</Text>
+                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data de início</AppText>
                     <TouchableOpacity
                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
                         onPress={() => openDatePicker('start')}
                     >
-                        <Text className="text-slate-900 dark:text-slate-100">{formatDateBR(formatDateISO(startDate))}</Text>
+                        <AppText className="text-slate-900 dark:text-slate-100">{formatDateBR(formatDateISO(startDate))}</AppText>
                         <CalendarDays size={18} color="#64748b" />
                     </TouchableOpacity>
 
-                    <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data alvo (opcional)</Text>
+                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data alvo (opcional)</AppText>
                     <TouchableOpacity
                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
                         onPress={() => openDatePicker('target')}
                     >
-                        <Text className="text-slate-900 dark:text-slate-100">{targetDate ? formatDateBR(formatDateISO(targetDate)) : 'Selecionar data alvo'}</Text>
+                        <AppText className="text-slate-900 dark:text-slate-100">{targetDate ? formatDateBR(formatDateISO(targetDate)) : 'Selecionar data alvo'}</AppText>
                         <CalendarDays size={18} color="#64748b" />
                     </TouchableOpacity>
 
-                    <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Tipo da meta</Text>
+                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-2">Tipo da meta</AppText>
                     <View className="flex-row flex-wrap gap-2 mb-3">
                         {goalTypeOptions.map((option) => {
                             const active = goalType === option.value;
                             return (
                                 <TouchableOpacity key={option.value} className={chipClass(active)} onPress={() => setGoalType(option.value)}>
-                                    <Text className={chipTextClass(active)}>{option.label}</Text>
+                                    <AppText className={chipTextClass(active)}>{option.label}</AppText>
                                 </TouchableOpacity>
                             );
                         })}
                     </View>
 
-                    <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Descrição (opcional)</Text>
-                    <TextInput
+                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Descrição (opcional)</AppText>
+                    <AppTextInput
                         className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 mb-4 text-slate-900 dark:text-slate-100"
                         placeholder="Descreva o objetivo da meta"
                         placeholderTextColor="#94a3b8"
@@ -281,7 +283,7 @@ const MetaForm = () => {
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
                                 <ChevronLeft size={16} color={iconColor} />
                             </TouchableOpacity>
-                            <Text className="text-slate-900 dark:text-slate-100 font-bold">{toMonthLabel(pickerMonth)}</Text>
+                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">{toMonthLabel(pickerMonth)}</AppText>
                             <View className="flex-row items-center gap-2">
                                 <TouchableOpacity
                                     className="p-2 rounded-full bg-primary/10 border border-primary/20"
@@ -307,7 +309,7 @@ const MetaForm = () => {
 
                         <View className="flex-row justify-between mb-2 px-1">
                             {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
-                                <Text key={`${day}-${idx}`} className="w-8 text-center text-xs font-bold text-[#8a7560] dark:text-slate-300">{day}</Text>
+                                <AppText key={`${day}-${idx}`} className="w-8 text-center text-xs font-bold text-[#8a7560] dark:text-slate-300">{day}</AppText>
                             ))}
                         </View>
 
@@ -333,9 +335,9 @@ const MetaForm = () => {
                                                     setShowDatePicker(false);
                                                 }}
                                             >
-                                                <Text className={`${isSelected ? 'text-white font-bold' : 'text-slate-700 dark:text-slate-200'} text-sm`}>
+                                                <AppText className={`${isSelected ? 'text-white font-bold' : 'text-slate-700 dark:text-slate-200'} text-sm`}>
                                                     {cell.day}
-                                                </Text>
+                                                </AppText>
                                             </TouchableOpacity>
                                         ) : null}
                                     </View>
@@ -370,7 +372,7 @@ const MetaForm = () => {
                                 : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
                         }`}
                     >
-                        <Text
+                        <AppText
                             className={`font-bold text-sm ${
                                 feedback.kind === 'success'
                                     ? 'text-emerald-800 dark:text-emerald-300'
@@ -378,8 +380,8 @@ const MetaForm = () => {
                             }`}
                         >
                             {feedback.title}
-                        </Text>
-                        <Text
+                        </AppText>
+                        <AppText
                             className={`text-xs mt-1 ${
                                 feedback.kind === 'success'
                                     ? 'text-emerald-700 dark:text-emerald-300'
@@ -387,7 +389,7 @@ const MetaForm = () => {
                             }`}
                         >
                             {feedback.message}
-                        </Text>
+                        </AppText>
                     </View>
                 </View>
             ) : null}
@@ -403,23 +405,23 @@ const MetaForm = () => {
                                     return <Icon size={40} color="#f48c25" />;
                                 })()}
                             </View>
-                            <Text className="text-slate-900 dark:text-slate-100 text-2xl font-extrabold text-center">
+                            <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-extrabold text-center">
                                 {xpPopup.leveled_up ? 'Subiu de nível!' : 'Meta criada!'}
-                            </Text>
-                            <Text className="text-slate-500 dark:text-slate-300 text-sm text-center mt-1">
+                            </AppText>
+                            <AppText className="text-slate-500 dark:text-slate-300 text-sm text-center mt-1">
                                 {xpPopup.leveled_up
                                     ? `Agora você está no nível ${xpPopup.summary.level} (${xpPopup.summary.level_title}).`
                                     : 'Sua nova meta já começou a valer no seu progresso gamificado.'}
-                            </Text>
+                            </AppText>
 
                             <View className="w-full mt-4 bg-[#fff7ed] dark:bg-[#1a1a1a] rounded-2xl border border-orange-100 dark:border-slate-700 p-4">
-                                <Text className="text-primary text-xs font-bold uppercase text-center">Recompensa</Text>
-                                <Text className="text-slate-900 dark:text-slate-100 text-3xl font-black text-center mt-1">
+                                <AppText className="text-primary text-xs font-bold uppercase text-center">Recompensa</AppText>
+                                <AppText className="text-slate-900 dark:text-slate-100 text-3xl font-black text-center mt-1">
                                     {xpPopup.points > 0 ? `+${xpPopup.points}` : xpPopup.points} XP
-                                </Text>
-                                <Text className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
+                                </AppText>
+                                <AppText className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
                                     Nível {xpPopup.summary.level} - {xpPopup.summary.level_title}
-                                </Text>
+                                </AppText>
                                 <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                     <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup.summary.level_progress_pct}%` }} />
                                 </View>
@@ -444,3 +446,5 @@ const MetaForm = () => {
 };
 
 export default MetaForm;
+
+

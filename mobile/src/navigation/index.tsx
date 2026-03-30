@@ -6,11 +6,13 @@ import { useAuth } from '../context/AuthContext';
 import Splash from '../screens/Splash';
 import Onboarding from '../screens/app/Onboarding';
 import { getAppPreferences } from '../services/preferences';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 const Stack = createStackNavigator();
 
 export const RootNavigator = () => {
     const { signed, loading } = useAuth();
+    const { reduceMotion } = useAccessibility();
     const [showSplash, setShowSplash] = useState(true);
     const [onboardingChecked, setOnboardingChecked] = useState(false);
     const [onboardingSeen, setOnboardingSeen] = useState(false);
@@ -19,10 +21,10 @@ export const RootNavigator = () => {
         // Simular tempo de Splash
         const timer = setTimeout(() => {
             setShowSplash(false);
-        }, 2000);
+        }, reduceMotion ? 350 : 2000);
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [reduceMotion]);
 
     useEffect(() => {
         let mounted = true;

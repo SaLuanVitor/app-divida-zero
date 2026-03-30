@@ -1,19 +1,27 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, ActivityIndicator, Animated, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, Animated, StyleSheet } from 'react-native';
 import { ShieldCheck } from 'lucide-react-native';
+import AppText from '../components/AppText';
 import { useThemeMode } from '../context/ThemeContext';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 const Splash = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { darkMode } = useThemeMode();
+  const { reduceMotion } = useAccessibility();
 
   useEffect(() => {
+    if (reduceMotion) {
+      fadeAnim.setValue(1);
+      return;
+    }
+
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
       useNativeDriver: true,
     }).start();
-  }, [fadeAnim]);
+  }, [fadeAnim, reduceMotion]);
 
   return (
     <View style={[styles.container, { backgroundColor: darkMode ? '#000000' : '#ffffff' }]}>
@@ -21,12 +29,12 @@ const Splash = () => {
         <View style={styles.logoContainer}>
           <ShieldCheck size={64} color="#f48c25" />
         </View>
-        <Text style={[styles.title, { color: darkMode ? '#e2e8f0' : '#0f172a' }]}>
-          Dívida<Text style={styles.titleHighlight}>Zero</Text>
-        </Text>
-        <Text style={[styles.subtitle, { color: darkMode ? '#64748b' : '#94a3b8' }]}>
+        <AppText style={[styles.title, { color: darkMode ? '#e2e8f0' : '#0f172a' }]}>
+          Dívida<AppText style={styles.titleHighlight}>Zero</AppText>
+        </AppText>
+        <AppText style={[styles.subtitle, { color: darkMode ? '#64748b' : '#94a3b8' }]}>
           Assuma o Controle
-        </Text>
+        </AppText>
 
         <View style={styles.loader}>
           <ActivityIndicator color="#f48c25" size="small" />
@@ -72,3 +80,4 @@ const styles = StyleSheet.create({
 });
 
 export default Splash;
+

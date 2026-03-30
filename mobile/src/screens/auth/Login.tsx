@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, useWindowDimensions } from 'react-native';
+﻿import React, { useEffect, useMemo, useState } from 'react';
+import AppText from '../../components/AppText';
+import { View, Image, TouchableOpacity, Alert, useWindowDimensions } from 'react-native';
 import { Mail, Lock } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -47,7 +48,7 @@ const Login = () => {
     let valid = true;
 
     if (!email.trim()) {
-      setEmailError('Informe seu usuário.');
+      setEmailError('Informe seu usuÃ¡rio.');
       valid = false;
     } else {
       setEmailError('');
@@ -74,17 +75,17 @@ const Login = () => {
     try {
       await signIn(email.trim(), password);
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Falha na autenticação. Verifique suas credenciais e tente novamente.';
+      const message = error?.response?.data?.error ?? 'Falha na autenticaÃ§Ã£o. Verifique suas credenciais e tente novamente.';
       setAuthError(message);
       setPasswordError('Verifique sua senha e tente novamente.');
-      Alert.alert('Não foi possível entrar', message);
+      Alert.alert('NÃ£o foi possÃ­vel entrar', message);
     }
   };
 
   return (
     <Layout scrollable contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
       <View className="px-4 pt-4 pb-2 bg-[#f8f7f5] dark:bg-black">
-        <Text className="text-slate-900 dark:text-slate-100 text-center text-lg font-bold">Dívida Zero</Text>
+        <AppText className="text-slate-900 dark:text-slate-100 text-center text-lg font-bold">DÃ­vida Zero</AppText>
       </View>
 
       <View className="px-4 pb-2 bg-[#f8f7f5] dark:bg-black">
@@ -96,34 +97,34 @@ const Login = () => {
           />
           <View className="absolute inset-0 bg-black/40" />
           <View className="absolute bottom-6 left-6 right-6">
-            <Text className="text-white text-3xl font-bold">Assuma o controle</Text>
-            <Text className="text-white/90 text-sm mt-1">Gamifique suas finanças e zere suas dívidas.</Text>
+            <AppText className="text-white text-3xl font-bold">Assuma o controle</AppText>
+            <AppText className="text-white/90 text-sm mt-1">Gamifique suas finanÃ§as e zere suas dÃ­vidas.</AppText>
           </View>
         </View>
       </View>
 
       <View className="px-6 py-5 bg-[#f8f7f5] dark:bg-black">
-        <Text className="text-slate-900 dark:text-slate-100 text-3xl font-bold text-center">
+        <AppText className="text-slate-900 dark:text-slate-100 text-3xl font-bold text-center">
           Bem-vindo de volta!
-        </Text>
-        <Text className="text-slate-500 dark:text-slate-300 text-center mt-2 mb-5">
+        </AppText>
+        <AppText className="text-slate-500 dark:text-slate-300 text-center mt-2 mb-5">
           Digite suas credenciais para continuar sua jornada.
-        </Text>
+        </AppText>
 
         {infoMessage ? (
           <View className="mb-4 rounded-xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3">
-            <Text className="text-emerald-700 dark:text-emerald-300 text-sm font-medium">{infoMessage}</Text>
+            <AppText className="text-emerald-700 dark:text-emerald-300 text-sm font-medium">{infoMessage}</AppText>
           </View>
         ) : null}
 
         {authError ? (
           <View className="mb-4 rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-4 py-3">
-            <Text className="text-red-700 dark:text-red-300 text-sm font-medium">{authError}</Text>
+            <AppText className="text-red-700 dark:text-red-300 text-sm font-medium">{authError}</AppText>
           </View>
         ) : null}
 
         <Input
-          label="Usuário"
+          label="UsuÃ¡rio"
           placeholder="usuario"
           value={email}
           onChangeText={(value) => {
@@ -154,7 +155,7 @@ const Login = () => {
 
         <View className="items-end mb-6">
           <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-            <Text className="text-primary font-semibold">Esqueci minha senha</Text>
+            <AppText className="text-primary font-semibold">Esqueci minha senha</AppText>
           </TouchableOpacity>
         </View>
 
@@ -167,18 +168,18 @@ const Login = () => {
         />
 
         <View className="mt-10 items-center">
-          <Text className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest">
-            Motivação do dia
-          </Text>
-          <Text className="text-slate-600 dark:text-slate-300 italic text-center text-sm mt-2 px-4">
+          <AppText className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest">
+            MotivaÃ§Ã£o do dia
+          </AppText>
+          <AppText className="text-slate-600 dark:text-slate-300 italic text-center text-sm mt-2 px-4">
             "Pequenos passos todos os dias levam a grandes conquistas financeiras."
-          </Text>
+          </AppText>
         </View>
 
         <View className="mt-8 flex-row justify-center items-center pb-8">
-          <Text className="text-slate-500 dark:text-slate-300 text-sm">Não tem uma conta? </Text>
+          <AppText className="text-slate-500 dark:text-slate-300 text-sm">NÃ£o tem uma conta? </AppText>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text className="text-primary font-bold text-sm">Cadastre-se</Text>
+            <AppText className="text-primary font-bold text-sm">Cadastre-se</AppText>
           </TouchableOpacity>
         </View>
       </View>
@@ -189,3 +190,4 @@ const Login = () => {
 };
 
 export default Login;
+

@@ -1,5 +1,7 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, TextInput, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import AppTextInput from '../../components/AppTextInput';
+import AppText from '../../components/AppText';
+import { View, TouchableOpacity, Alert, ScrollView, ActivityIndicator, Pressable } from 'react-native';
 import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, ChevronRight, Trophy, Target, Shield, Crown } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -351,13 +353,13 @@ const Lancamentos = () => {
                             <ArrowLeft size={22} color={iconColor} />
                         </TouchableOpacity>
                         <View>
-                            <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">{formTitle}</Text>
-                            <Text className="text-slate-500 dark:text-slate-300 text-xs">Preencha os dados para registrar no sistema.</Text>
+                            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">{formTitle}</AppText>
+                            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Preencha os dados para registrar no sistema.</AppText>
                         </View>
                     </View>
 
                     <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
-                        <Text className="text-slate-800 dark:text-slate-100 font-bold mb-3">Tipo de cadastro</Text>
+                        <AppText className="text-slate-800 dark:text-slate-100 font-bold mb-3">Tipo de cadastro</AppText>
                         <View className="flex-row gap-2">
                             {tabOptions.map((option) => {
     const active = activeTab === option.value;
@@ -379,9 +381,9 @@ const Lancamentos = () => {
                     color={active ? "#fff" : "#475569"}
                 />
 
-                <Text className={`${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'} font-bold text-sm`}>
+                <AppText className={`${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'} font-bold text-sm`}>
                     {option.label}
-                </Text>
+                </AppText>
             </View>
         </TouchableOpacity>
     );
@@ -390,10 +392,10 @@ const Lancamentos = () => {
                     </View>
 
                     <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
-                        <Text className="text-slate-800 dark:text-slate-100 font-bold mb-3">Dados principais</Text>
+                        <AppText className="text-slate-800 dark:text-slate-100 font-bold mb-3">Dados principais</AppText>
 
-                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Título</Text>
-                        <TextInput
+                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Título</AppText>
+                        <AppTextInput
                             className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                             placeholder={activeTab === 'debt' ? 'Ex: Cartão Nubank' : 'Ex: Salário'}
                             placeholderTextColor="#94a3b8"
@@ -404,13 +406,13 @@ const Lancamentos = () => {
                             }}
                         />
                         {!titleTouched ? (
-                            <Text className="text-[11px] text-slate-500 dark:text-slate-300 mb-3">
+                            <AppText className="text-[11px] text-slate-500 dark:text-slate-300 mb-3">
                                 Título automático ativo. Edite apenas se quiser personalizar.
-                            </Text>
+                            </AppText>
                         ) : null}
 
-                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Valor (R$)</Text>
-                        <TextInput
+                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Valor (R$)</AppText>
+                        <AppTextInput
                             className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                             placeholder="R$ 0,00"
                             placeholderTextColor="#94a3b8"
@@ -422,7 +424,7 @@ const Lancamentos = () => {
                             {quickAmountOptions.map((option) => {
                                 return (
                                     <TouchableOpacity key={option} className={chipClass(false)} onPress={() => handleQuickAmount(option)}>
-                                        <Text className={chipTextClass(false)}>+ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(option)}</Text>
+                                        <AppText className={chipTextClass(false)}>+ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(option)}</AppText>
                                     </TouchableOpacity>
                                 );
                             })}
@@ -430,29 +432,29 @@ const Lancamentos = () => {
                                 className="px-3 py-2 rounded-full border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
                                 onPress={handleClearAmount}
                             >
-                                <Text className="text-xs font-bold text-red-600 dark:text-red-300">Limpar</Text>
+                                <AppText className="text-xs font-bold text-red-600 dark:text-red-300">Limpar</AppText>
                             </TouchableOpacity>
                         </View>
-                        <Text className="text-[11px] text-slate-500 dark:text-slate-300 mb-3 -mt-1">
+                        <AppText className="text-[11px] text-slate-500 dark:text-slate-300 mb-3 -mt-1">
                             Atalhos cumulativos: +10, +100, +1000 e Limpar.
-                        </Text>
+                        </AppText>
 
-                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data inicial</Text>
+                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data inicial</AppText>
                         <TouchableOpacity
                             className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
                             onPress={openDatePicker}
                         >
-                            <Text className="text-slate-900 dark:text-slate-100">{formatDateBR(startDate)}</Text>
+                            <AppText className="text-slate-900 dark:text-slate-100">{formatDateBR(startDate)}</AppText>
                             <CalendarDays size={18} color="#64748b" />
                         </TouchableOpacity>
 
-                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Categoria ({activeTab === 'debt' ? 'dívida' : 'ganho'})</Text>
+                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-2">Categoria ({activeTab === 'debt' ? 'dívida' : 'ganho'})</AppText>
                         <View className="flex-row flex-wrap gap-2 mb-3">
                             {categoryOptions.map((option) => {
                                 const active = category === option;
                                 return (
                                     <TouchableOpacity key={option} className={chipClass(active)} onPress={() => setCategory(option)}>
-                                        <Text className={chipTextClass(active)}>{option}</Text>
+                                        <AppText className={chipTextClass(active)}>{option}</AppText>
                                     </TouchableOpacity>
                                 );
                             })}
@@ -460,8 +462,8 @@ const Lancamentos = () => {
 
                         {category === 'Outro' ? (
                             <>
-                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Informe a categoria</Text>
-                                <TextInput
+                                <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Informe a categoria</AppText>
+                                <AppTextInput
                                     className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                                     placeholder="Ex: Assinaturas"
                                     placeholderTextColor="#94a3b8"
@@ -472,28 +474,28 @@ const Lancamentos = () => {
                         ) : null}
 
                         <View className="flex-row items-center justify-between mt-1">
-                            <Text className="text-[11px] text-slate-500 dark:text-slate-300">Modo rápido: só valor, data e categoria.</Text>
+                            <AppText className="text-[11px] text-slate-500 dark:text-slate-300">Modo rápido: só valor, data e categoria.</AppText>
                             <TouchableOpacity onPress={() => setShowAdvanced((prev) => !prev)} className={chipClass(showAdvanced)}>
-                                <Text className={chipTextClass(showAdvanced)}>{showAdvanced ? 'Ocultar extras' : 'Mais opções'}</Text>
+                                <AppText className={chipTextClass(showAdvanced)}>{showAdvanced ? 'Ocultar extras' : 'Mais opções'}</AppText>
                             </TouchableOpacity>
                         </View>
 
                         {showAdvanced ? (
                             <View className="mt-3">
-                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Prioridade</Text>
+                                <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-2">Prioridade</AppText>
                                 <View className="flex-row gap-2 mb-3">
                                     {priorityOptions.map((option) => {
                                         const active = priority === option.value;
                                         return (
                                             <TouchableOpacity key={option.value} className={chipClass(active)} onPress={() => setPriority(option.value)}>
-                                                <Text className={chipTextClass(active)}>{option.label}</Text>
+                                                <AppText className={chipTextClass(active)}>{option.label}</AppText>
                                             </TouchableOpacity>
                                         );
                                     })}
                                 </View>
 
-                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Descrição (opcional)</Text>
-                                <TextInput
+                                <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Descrição (opcional)</AppText>
+                                <AppTextInput
                                     className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 mb-3 text-slate-900 dark:text-slate-100"
                                     placeholder="Detalhes úteis para esse registro"
                                     placeholderTextColor="#94a3b8"
@@ -502,8 +504,8 @@ const Lancamentos = () => {
                                     onChangeText={setDescription}
                                 />
 
-                                <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Observações extras (opcional)</Text>
-                                <TextInput
+                                <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Observações extras (opcional)</AppText>
+                                <AppTextInput
                                     className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
                                     placeholder="Ex: débito automático, lembrete, conta compartilhada..."
                                     placeholderTextColor="#94a3b8"
@@ -521,33 +523,33 @@ const Lancamentos = () => {
                                 <View className="flex-row items-center justify-between mb-3">
                                     <View className="flex-row items-center gap-2">
                                         <Repeat size={16} color="#334155" />
-                                        <Text className="text-slate-800 dark:text-slate-100 font-bold">Recorrência</Text>
+                                        <AppText className="text-slate-800 dark:text-slate-100 font-bold">Recorrência</AppText>
                                     </View>
                                     <TouchableOpacity onPress={() => setRecurring((prev) => !prev)} className={chipClass(recurring)}>
-                                        <Text className={chipTextClass(recurring)}>{recurring ? 'Recorrente' : 'Único'}</Text>
+                                        <AppText className={chipTextClass(recurring)}>{recurring ? 'Recorrente' : 'Único'}</AppText>
                                     </TouchableOpacity>
                                 </View>
 
                                 {recurring ? (
                                     <>
-                                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Frequência</Text>
+                                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-2">Frequência</AppText>
                                         <View className="flex-row gap-2 mb-3 flex-wrap">
                                             {recurrenceOptions.map((option) => {
                                                 const active = recurrenceType === option.value;
                                                 return (
                                                     <TouchableOpacity key={option.value} className={chipClass(active)} onPress={() => setRecurrenceType(option.value)}>
-                                                        <Text className={chipTextClass(active)}>{option.label}</Text>
+                                                        <AppText className={chipTextClass(active)}>{option.label}</AppText>
                                                     </TouchableOpacity>
                                                 );
                                             })}
                                         </View>
 
-                                        <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">
+                                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">
                                             {recurrenceType === 'daily'
                                                 ? 'Quantidade de dias (máx. 365)'
                                                 : 'Quantidade de ocorrências (máx. 36)'}
-                                        </Text>
-                                        <TextInput
+                                        </AppText>
+                                        <AppTextInput
                                             className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
                                             keyboardType="number-pad"
                                             placeholder={recurrenceType === 'daily' ? '30' : '6'}
@@ -557,16 +559,16 @@ const Lancamentos = () => {
                                         />
                                     </>
                                 ) : (
-                                    <Text className="text-slate-500 dark:text-slate-300 text-xs">Registro único: será criado apenas um lançamento.</Text>
+                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs">Registro único: será criado apenas um lançamento.</AppText>
                                 )}
                             </View>
 
                             {activeTab === 'debt' && !recurring ? (
                                 <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
-                                    <Text className="text-slate-800 dark:text-slate-100 font-bold mb-3">Parcelamento</Text>
+                                    <AppText className="text-slate-800 dark:text-slate-100 font-bold mb-3">Parcelamento</AppText>
 
-                                    <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Número de parcelas</Text>
-                                    <TextInput
+                                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Número de parcelas</AppText>
+                                    <AppTextInput
                                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                                         keyboardType="number-pad"
                                         placeholder="1"
@@ -575,8 +577,8 @@ const Lancamentos = () => {
                                         onChangeText={handleInstallmentsChange}
                                     />
 
-                                    <Text className="text-slate-600 dark:text-slate-300 text-xs mb-1">Dia preferencial de pagamento (1 a 28)</Text>
-                                    <TextInput
+                                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Dia preferencial de pagamento (1 a 28)</AppText>
+                                    <AppTextInput
                                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
                                         keyboardType="number-pad"
                                         placeholder="Opcional"
@@ -589,10 +591,10 @@ const Lancamentos = () => {
                         </>
                     ) : (
                         <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
-                            <Text className="text-slate-700 dark:text-slate-200 text-sm font-semibold">Resumo do modo rápido</Text>
-                            <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                            <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold">Resumo do modo rápido</AppText>
+                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
                                 Registro único, prioridade normal e campos extras ocultos para reduzir cliques.
-                            </Text>
+                            </AppText>
                         </View>
                     )}
 
@@ -603,9 +605,9 @@ const Lancamentos = () => {
                         className="h-14 mb-4"
                     />
                     {!canSubmit ? (
-                        <Text className="text-center text-xs text-slate-500 dark:text-slate-300 -mt-1 mb-4">
+                        <AppText className="text-center text-xs text-slate-500 dark:text-slate-300 -mt-1 mb-4">
                             Informe o valor para habilitar o salvamento.
-                        </Text>
+                        </AppText>
                     ) : null}
 
                     {loading ? (
@@ -623,7 +625,7 @@ const Lancamentos = () => {
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
                                 <ChevronLeft size={16} color={iconColor} />
                             </TouchableOpacity>
-                            <Text className="text-slate-900 dark:text-slate-100 font-bold">{toMonthLabel(pickerMonth)}</Text>
+                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">{toMonthLabel(pickerMonth)}</AppText>
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 1))}>
                                 <ChevronRight size={16} color={iconColor} />
                             </TouchableOpacity>
@@ -631,7 +633,7 @@ const Lancamentos = () => {
 
                         <View className="flex-row justify-between mb-2 px-1">
                             {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
-                                <Text key={`${day}-${idx}`} className="w-8 text-center text-xs font-bold text-[#8a7560] dark:text-slate-300">{day}</Text>
+                                <AppText key={`${day}-${idx}`} className="w-8 text-center text-xs font-bold text-[#8a7560] dark:text-slate-300">{day}</AppText>
                             ))}
                         </View>
 
@@ -646,9 +648,9 @@ const Lancamentos = () => {
                                                 className={`w-7 h-7 rounded-lg items-center justify-center ${isSelected ? 'bg-primary' : ''}`}
                                                 onPress={() => selectDate(cell.date!)}
                                             >
-                                                <Text className={`${isSelected ? 'text-white font-bold' : 'text-slate-700 dark:text-slate-200'} text-sm`}>
+                                                <AppText className={`${isSelected ? 'text-white font-bold' : 'text-slate-700 dark:text-slate-200'} text-sm`}>
                                                     {cell.day}
-                                                </Text>
+                                                </AppText>
                                             </TouchableOpacity>
                                         ) : null}
                                     </View>
@@ -685,23 +687,23 @@ const Lancamentos = () => {
                                     return <Icon size={40} color="#f48c25" />;
                                 })()}
                             </View>
-                            <Text className="text-slate-900 dark:text-slate-100 text-2xl font-extrabold text-center">
+                            <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-extrabold text-center">
                                 {xpPopup.leveled_up ? 'Subiu de nível!' : 'Lançamento realizado!'}
-                            </Text>
-                            <Text className="text-slate-500 dark:text-slate-300 text-sm text-center mt-1">
+                            </AppText>
+                            <AppText className="text-slate-500 dark:text-slate-300 text-sm text-center mt-1">
                                 {xpPopup.leveled_up
                                     ? `Você chegou ao nível ${xpPopup.summary.level} (${xpPopup.summary.level_title}).`
                                     : 'Você ganhou pontos por manter o controle financeiro.'}
-                            </Text>
+                            </AppText>
 
                             <View className="w-full mt-4 bg-[#fff7ed] dark:bg-[#1a1a1a] rounded-2xl border border-orange-100 dark:border-slate-700 p-4">
-                                <Text className="text-primary text-xs font-bold uppercase text-center">Recompensa</Text>
-                                <Text className="text-slate-900 dark:text-slate-100 text-3xl font-black text-center mt-1">
+                                <AppText className="text-primary text-xs font-bold uppercase text-center">Recompensa</AppText>
+                                <AppText className="text-slate-900 dark:text-slate-100 text-3xl font-black text-center mt-1">
                                     {xpPopup.points > 0 ? `+${xpPopup.points}` : xpPopup.points} XP
-                                </Text>
-                                <Text className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
+                                </AppText>
+                                <AppText className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
                                     Nível {xpPopup.summary.level} • {xpPopup.summary.level_title}
-                                </Text>
+                                </AppText>
                                 <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                     <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup.summary.level_progress_pct}%` }} />
                                 </View>
@@ -717,6 +719,8 @@ const Lancamentos = () => {
 };
 
 export default Lancamentos;
+
+
 
 
 

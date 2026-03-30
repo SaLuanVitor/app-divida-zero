@@ -1,14 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Switch } from 'react-native';
+import { View, TouchableOpacity, Switch } from 'react-native';
 import { ArrowLeft, Settings2 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import AppText from '../../components/AppText';
 import { AppPreferences } from '../../types/settings';
 import { defaultAppPreferences, getAppPreferences, saveAppPreferences, updateAppPreferences } from '../../services/preferences';
 import { useThemeMode } from '../../context/ThemeContext';
 import { trackAnalyticsEvent } from '../../services/analytics';
+
+const TEXT_SIZE_OPTIONS: Array<{ label: string; value: AppPreferences['font_scale'] }> = [
+  { label: 'Pequeno', value: 0.9 },
+  { label: 'Normal', value: 1 },
+  { label: 'Grande', value: 1.15 },
+  { label: 'Extra grande', value: 1.3 },
+];
 
 const AppSettings = () => {
   const navigation = useNavigation<any>();
@@ -37,14 +45,10 @@ const AppSettings = () => {
     setMessage('');
     try {
       await saveAppPreferences(next);
-      setMessage('Escala de texto atualizada com sucesso.');
+      setMessage('Tamanho do texto atualizado com sucesso.');
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleLargeTextToggle = async (value: boolean) => {
-    await setFontScale(value ? 1.15 : 1);
   };
 
   const handleThemeToggle = async (value: boolean) => {
@@ -78,6 +82,26 @@ const AppSettings = () => {
     }
   };
 
+  const updateAccessibilityToggle = async (
+    key: 'reduce_motion' | 'larger_touch_targets',
+    value: boolean,
+    successMessage: string
+  ) => {
+    const next = {
+      ...prefs,
+      [key]: value,
+    };
+    setPrefs(next);
+    setSaving(true);
+    setMessage('');
+    try {
+      await saveAppPreferences(next);
+      setMessage(successMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const Item = ({
     title,
     subtitle,
@@ -92,8 +116,8 @@ const AppSettings = () => {
     <View className="py-3 border-b border-slate-100 dark:border-slate-800">
       <View className="flex-row items-center justify-between">
         <View className="flex-1 pr-3">
-          <Text className="text-slate-900 dark:text-slate-100 font-semibold">{title}</Text>
-          <Text className="text-slate-500 dark:text-slate-300 text-xs mt-0.5">{subtitle}</Text>
+          <AppText className="text-slate-900 dark:text-slate-100 font-semibold">{title}</AppText>
+          <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-0.5">{subtitle}</AppText>
         </View>
         <Switch value={value} onValueChange={onChange} trackColor={{ true: '#f48c25' }} />
       </View>
@@ -108,8 +132,10 @@ const AppSettings = () => {
             <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
           <View>
-            <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">Configurações do app</Text>
-            <Text className="text-slate-500 dark:text-slate-300 text-xs">Ajuste visual, tutorial e leitura do aplicativo.</Text>
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Configurações do app</AppText>
+            <AppText className="text-slate-500 dark:text-slate-300 text-xs">
+              Ajuste visual, tutorial e leitura do aplicativo.
+            </AppText>
           </View>
         </View>
       </View>
@@ -118,7 +144,7 @@ const AppSettings = () => {
         <Card className="p-4">
           <View className="flex-row items-center mb-2">
             <Settings2 size={16} color="#64748b" />
-            <Text className="text-slate-700 dark:text-slate-200 font-bold ml-2">Preferências gerais</Text>
+            <AppText className="text-slate-700 dark:text-slate-200 font-bold ml-2">Preferências gerais</AppText>
           </View>
 
           <Item
@@ -129,52 +155,65 @@ const AppSettings = () => {
           />
 
           <Item
-            title="Texto maior"
-            subtitle="Aumenta a leitura de títulos e conteúdos."
-            value={prefs.large_text}
-            onChange={handleLargeTextToggle}
+            title="Reduzir animações"
+            subtitle="Diminui movimentos para maior conforto visual."
+            value={prefs.reduce_motion}
+            onChange={(value) => updateAccessibilityToggle('reduce_motion', value, 'Preferência de animação atualizada.')}
+          />
+
+          <Item
+            title="Botões maiores"
+            subtitle="Aumenta áreas de toque para facilitar a navegação."
+            value={prefs.larger_touch_targets}
+            onChange={(value) => updateAccessibilityToggle('larger_touch_targets', value, 'Tamanho dos botões atualizado.')}
           />
 
           <View className="pt-3">
-            <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Escala tipográfica</Text>
-            <View className="flex-row gap-2">
-              {[1, 1.15, 1.3].map((option) => {
-                const selected = prefs.font_scale === option;
+            <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-2">Tamanho do texto</AppText>
+            <View className="flex-row flex-wrap gap-2">
+              {TEXT_SIZE_OPTIONS.map((option) => {
+                const selected = prefs.font_scale === option.value;
                 return (
                   <TouchableOpacity
-                    key={option}
+                    key={option.value}
                     className={`px-3 py-2 rounded-full border ${
                       selected
                         ? 'bg-primary border-primary'
                         : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'
                     }`}
-                    onPress={() => setFontScale(option as AppPreferences['font_scale'])}
+                    onPress={() => setFontScale(option.value)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`Tamanho do texto ${option.label}`}
                   >
-                    <Text className={`text-xs font-bold ${selected ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>
-                      {Math.round(option * 100)}%
-                    </Text>
+                    <AppText className={`text-xs font-bold ${selected ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>
+                      {option.label}
+                    </AppText>
                   </TouchableOpacity>
                 );
               })}
             </View>
+            <AppText className="text-[11px] text-slate-500 dark:text-slate-300 mt-2">
+              Pré-visualização: o app inteiro aplica este tamanho automaticamente.
+            </AppText>
           </View>
         </Card>
 
         <Card className="p-4 mt-4">
-          <Text className="text-slate-700 dark:text-slate-200 font-bold mb-1">Tutorial inicial</Text>
-          <Text className="text-slate-500 dark:text-slate-300 text-xs mb-3">
+          <AppText className="text-slate-700 dark:text-slate-200 font-bold mb-1">Tutorial inicial</AppText>
+          <AppText className="text-slate-500 dark:text-slate-300 text-xs mb-3">
             Reabra o tutorial para revisar orientações de uso quando quiser.
-          </Text>
+          </AppText>
           <Button title="Ver tutorial novamente" variant="outline" onPress={reopenTutorial} className="h-11" />
         </Card>
 
         {message ? (
           <View className="mt-3 rounded-xl px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700">
-            <Text className="text-emerald-700 dark:text-emerald-300 text-sm">{message}</Text>
+            <AppText className="text-emerald-700 dark:text-emerald-300 text-sm">{message}</AppText>
           </View>
         ) : null}
 
-        {saving ? <Text className="text-slate-500 dark:text-slate-300 text-xs mt-2">Salvando...</Text> : null}
+        {saving ? <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Salvando...</AppText> : null}
       </View>
     </Layout>
   );

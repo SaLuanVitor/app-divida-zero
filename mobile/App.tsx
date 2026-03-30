@@ -19,31 +19,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import { OverlayProvider } from './src/context/OverlayContext';
 import { ThemeProvider, useThemeMode } from './src/context/ThemeContext';
+import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import { RootNavigator } from './src/navigation';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, Text, TextInput, View } from 'react-native';
+import { AppState, View } from 'react-native';
 import { initializeNotificationLayer, syncScheduledLocalNotifications } from './src/services/notifications';
 import { useAuth } from './src/context/AuthContext';
-import { getAppPreferences, subscribePreferencesChanges } from './src/services/preferences';
+import { getAppPreferences } from './src/services/preferences';
 import { listFinancialRecords } from './src/services/financialRecords';
 import { trackAnalyticsEvent } from './src/services/analytics';
-
-const applyGlobalFontScale = (fontScale: number) => {
-  const NativeText = Text as unknown as { defaultProps?: Record<string, unknown> };
-  const NativeTextInput = TextInput as unknown as { defaultProps?: Record<string, unknown> };
-
-  NativeText.defaultProps = {
-    ...(NativeText.defaultProps || {}),
-    allowFontScaling: true,
-    maxFontSizeMultiplier: fontScale,
-  };
-
-  NativeTextInput.defaultProps = {
-    ...(NativeTextInput.defaultProps || {}),
-    allowFontScaling: true,
-    maxFontSizeMultiplier: fontScale,
-  };
-};
 
 function AppContent() {
   const { darkMode, loadingTheme } = useThemeMode();
@@ -93,26 +77,6 @@ function AppContent() {
     };
   }, [signed]);
 
-  React.useEffect(() => {
-    let mounted = true;
-
-    const load = async () => {
-      const prefs = await getAppPreferences();
-      if (!mounted) return;
-      applyGlobalFontScale(prefs.font_scale);
-    };
-
-    load();
-    const unsubscribe = subscribePreferencesChanges((prefs) => {
-      applyGlobalFontScale(prefs.font_scale);
-    });
-
-    return () => {
-      mounted = false;
-      unsubscribe();
-    };
-  }, []);
-
   if (loadingTheme) {
     return <View style={{ flex: 1, backgroundColor: '#f8f7f5' }} />;
   }
@@ -132,7 +96,9 @@ export default function App() {
     <SafeAreaProvider>
       <AuthProvider>
         <ThemeProvider>
-          <AppContent />
+          <AccessibilityProvider>
+            <AppContent />
+          </AccessibilityProvider>
         </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, ViewProps, Text } from 'react-native';
+import { View, ViewProps } from 'react-native';
+import AppText from './AppText';
 
 interface CardProps extends ViewProps {
     title?: string;
@@ -24,14 +25,14 @@ const Card: React.FC<CardProps> = ({
             {(title || subtitle) && (
                 <View className="p-4 border-b border-slate-50 dark:border-slate-800">
                     {title && (
-                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg leading-tight">
+                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg leading-tight">
                             {title}
-                        </Text>
+                        </AppText>
                     )}
                     {subtitle && (
-                        <Text className="text-slate-500 dark:text-slate-300 text-sm mt-1">
+                        <AppText className="text-slate-500 dark:text-slate-300 text-sm mt-1">
                             {subtitle}
-                        </Text>
+                        </AppText>
                     )}
                 </View>
             )}
