@@ -2,7 +2,6 @@
 import { View, Text, TouchableOpacity, Pressable, ActivityIndicator, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import {
     Bell,
-    Bolt,
     CheckCircle2,
     CircleDollarSign,
     Landmark,
@@ -16,7 +15,7 @@ import {
     Shield,
     Crown,
 } from 'lucide-react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
@@ -26,17 +25,18 @@ import { deleteFinancialRecord, listFinancialRecords, payFinancialRecord } from 
 import { FinancialRecordDto } from '../../types/financialRecord';
 import {
     DEFAULT_GAMIFICATION_SUMMARY,
-    GamificationEventDto,
     GamificationSummaryDto,
     normalizeGamificationSummary,
     XpFeedbackDto
 } from '../../types/gamification';
-import { getGamificationSummary, listGamificationEvents } from '../../services/gamification';
+import { getGamificationSummary } from '../../services/gamification';
 import { useThemeMode } from '../../context/ThemeContext';
 import { listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto } from '../../types/financialGoal';
-import { buildGamificationSummary } from '../../utils/gamification';
 import { runWhenIdle } from '../../utils/idle';
+import { getAppPreferences } from '../../services/preferences';
+import { sendXpAndBadgeNotification } from '../../services/notifications';
+import { trackAnalyticsEvent } from '../../services/analytics';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
 
@@ -165,6 +165,7 @@ const toCalendarEntry = (record: FinancialRecordDto): CalendarEntry => {
 
 const Home = () => {
     const { user } = useAuth();
+    const navigation = useNavigation<any>();
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
     const { darkMode } = useThemeMode();
 
@@ -174,9 +175,7 @@ const Home = () => {
     });
     const [selectedDateKey, setSelectedDateKey] = useState<string>('');
     const [records, setRecords] = useState<FinancialRecordDto[]>([]);
-    const [globalRecords, setGlobalRecords] = useState<FinancialRecordDto[]>([]);
     const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
-    const [events, setEvents] = useState<GamificationEventDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
@@ -188,7 +187,6 @@ const Home = () => {
     const [pickerYear, setPickerYear] = useState(currentMonth.getFullYear());
     const [monthListFilter, setMonthListFilter] = useState<MonthListFilter>('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedBadgeId, setSelectedBadgeId] = useState<string | null>(null);
     const [visibleMonthItemsCount, setVisibleMonthItemsCount] = useState(CARD_PAGE_SIZE);
 
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -198,17 +196,6 @@ const Home = () => {
     const showConfirm = !!confirmState;
     const showPeriodSelector = showPeriodPicker;
     const showXpPopup = !!xpPopup;
-    const gamification = useMemo(
-        () =>
-            buildGamificationSummary({
-                records: globalRecords,
-                goals,
-                events,
-                summary: gamificationSummary,
-            }),
-        [events, gamificationSummary, globalRecords, goals]
-    );
-    const unlockedBadges = useMemo(() => gamification.badges.filter((badge) => badge.unlocked), [gamification.badges]);
 
     const pushFeedback = (kind: FeedbackState['kind'], title: string, message: string) => {
         setFeedback({ kind, title, message });
@@ -249,15 +236,11 @@ const Home = () => {
     const loadGlobalGamification = useCallback(async (options: { force?: boolean } = {}) => {
         const { force = false } = options;
         try {
-            const [globalRecordsResult, goalsResult, eventsResult, summaryResult] = await Promise.all([
-                listFinancialRecords(undefined, undefined, { force }),
+            const [goalsResult, summaryResult] = await Promise.all([
                 listFinancialGoals({ force }),
-                listGamificationEvents({ force }),
                 getGamificationSummary({ force }),
             ]);
-            setGlobalRecords(Array.isArray(globalRecordsResult.records) ? globalRecordsResult.records : []);
             setGoals(Array.isArray(goalsResult.goals) ? goalsResult.goals : []);
-            setEvents(Array.isArray(eventsResult.events) ? eventsResult.events : []);
             setGamificationSummary(normalizeGamificationSummary(summaryResult.summary));
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível carregar a gamificação global.';
@@ -286,6 +269,51 @@ const Home = () => {
     );
 
     const entries = useMemo(() => records.map(toCalendarEntry), [records]);
+    const pendingEntriesCount = useMemo(() => entries.filter((item) => item.status === 'pending').length, [entries]);
+    const monthlyReceivedValue = useMemo(
+        () =>
+            records.reduce((sum, record) => {
+                const isSettled = record.status !== 'pending';
+                const isReceived = record.status === 'received' || (isSettled && record.flow_type === 'income');
+                return isReceived ? sum + Number(record.amount || 0) : sum;
+            }, 0),
+        [records]
+    );
+    const monthlyPaidValue = useMemo(
+        () =>
+            records.reduce((sum, record) => {
+                const isSettled = record.status !== 'pending';
+                const isPaid = record.status === 'paid' || (isSettled && record.flow_type !== 'income');
+                return isPaid ? sum + Number(record.amount || 0) : sum;
+            }, 0),
+        [records]
+    );
+    const nextBestAction = useMemo(() => {
+        if (pendingEntriesCount > 0) {
+            return {
+                title: 'Priorize os vencimentos pendentes',
+                description: `Você tem ${pendingEntriesCount} registro(s) pendente(s) neste mês.`,
+                cta: 'Ver pendentes',
+                onPress: () => setMonthListFilter('pending'),
+            };
+        }
+
+        if (goals.some((goal) => goal.status === 'active')) {
+            return {
+                title: 'Atualize o progresso da sua meta',
+                description: 'Marque pagamentos/recebimentos para avançar seus marcos de XP.',
+                cta: 'Registrar lançamento',
+                onPress: () => navigation.navigate('Lancamentos'),
+            };
+        }
+
+        return {
+            title: 'Crie sua próxima meta',
+            description: 'Defina um objetivo para manter seu ritmo de evolução.',
+            cta: 'Nova meta',
+            onPress: () => navigation.navigate('MetaForm'),
+        };
+    }, [goals, navigation, pendingEntriesCount]);
 
     const visibleEntries = useMemo(() => {
         let base = entries;
@@ -425,6 +453,18 @@ const Home = () => {
         });
     };
 
+    const maybeNotifyXp = async (xpFeedback: XpFeedbackDto | null | undefined, fallbackTitle: string) => {
+        if (!xpFeedback) return;
+        const prefs = await getAppPreferences();
+        await sendXpAndBadgeNotification({
+            enabled: prefs.notifications_enabled && prefs.device_push_enabled && prefs.notify_xp_and_badges,
+            title: xpFeedback.leveled_up ? 'Subiu de nível!' : fallbackTitle,
+            body: xpFeedback.leveled_up
+                ? `Você chegou ao nível ${xpFeedback.summary.level}.`
+                : `XP atualizado: ${xpFeedback.points >= 0 ? '+' : ''}${xpFeedback.points} pontos.`,
+        });
+    };
+
     const openPeriodPicker = () => {
         setPickerYear(currentMonth.getFullYear());
         setPickerMode('month');
@@ -454,6 +494,15 @@ const Home = () => {
         const result = await payFinancialRecord(entry.id);
         await Promise.all([loadMonthlyRecords({ force: true }), loadGlobalGamification({ force: true })]);
         pushFeedback('success', 'Status atualizado', result.message);
+        await maybeNotifyXp(result.xp_feedback, 'XP atualizado');
+        await trackAnalyticsEvent({
+            event_name: 'record_paid_or_received',
+            screen: 'Home',
+            metadata: {
+                status: entry.status,
+                flow: entry.icon === CircleDollarSign ? 'income' : 'expense',
+            },
+        });
         openXpFeedback(result.xp_feedback, 'Ação concluída');
     };
 
@@ -461,6 +510,7 @@ const Home = () => {
         const result = await deleteFinancialRecord(entry.id, scope);
         await Promise.all([loadMonthlyRecords({ force: true }), loadGlobalGamification({ force: true })]);
         pushFeedback('success', 'Registro excluído', `${result.message} (${result.deleted_count} registro(s)).`);
+        await maybeNotifyXp(result.xp_feedback, 'XP ajustado');
         openXpFeedback(result.xp_feedback, 'XP ajustado');
     };
 
@@ -504,7 +554,6 @@ const Home = () => {
 
     return (
         <>
-            <Pressable className="flex-1" onPress={() => selectedBadgeId && setSelectedBadgeId(null)}>
             <Layout
                 contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black"
                 scrollable
@@ -539,64 +588,29 @@ const Home = () => {
                     <View className="flex-row gap-3">
                         <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
                             <View className="flex-row items-center mb-1">
-                                <Bolt size={14} color="#f48c25" />
-                                <Text className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Registros no mês</Text>
+                                <CircleDollarSign size={14} color="#16a34a" />
+                                <Text className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Recebido no mês</Text>
                             </View>
-                            <Text className="text-2xl font-bold text-slate-900 dark:text-slate-100">{entries.length}</Text>
+                            <Text className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyReceivedValue)}</Text>
                         </View>
                         <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
                             <View className="flex-row items-center mb-1">
-                                <CheckCircle2 size={14} color="#14b8a6" />
-                                <Text className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Concluídos no mês</Text>
+                                <Landmark size={14} color="#f59e0b" />
+                                <Text className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Pago no mês</Text>
                             </View>
-                            <Text className="text-2xl font-bold text-slate-900 dark:text-slate-100">{entries.filter((item) => item.status !== 'pending').length}</Text>
+                            <Text className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyPaidValue)}</Text>
                         </View>
                     </View>
 
                     <View className="mt-4 bg-[#f8f7f5] dark:bg-black rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
-                        <View className="flex-row items-center justify-between mb-3">
-                            <View>
-                                <Text className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Brasões da jornada</Text>
-                            </View>
-                           
-                        </View>
-
-                        {unlockedBadges.length === 0 ? (
-                            <Text className="text-slate-500 dark:text-slate-300 text-xs">Nenhum brasão conquistado ainda.</Text>
-                        ) : (
-                        <View className="flex-row flex-wrap">
-                            {unlockedBadges.map((badge) => {
-                                const Icon = levelIconMap[badge.icon] || Trophy;
-                                const selected = selectedBadgeId === badge.id;
-                                return (
-                                    <TouchableOpacity
-                                        key={badge.id}
-                                        className="mr-3 mb-3 items-center relative"
-                                        activeOpacity={0.85}
-                                        onPress={(event) => {
-                                            event.stopPropagation();
-                                            setSelectedBadgeId(badge.id);
-                                        }}
-                                    >
-                                        {selected ? (
-                                            <View className="absolute -top-12 items-center z-10">
-                                                <View className="px-3 py-1.5 rounded-2xl bg-white dark:bg-[#121212] border border-primary/20 shadow-sm min-w-[96px] max-w-[180px]">
-                                                    <Text className="text-primary text-[10px] font-bold text-center" numberOfLines={1} ellipsizeMode="tail">
-                                                        {badge.title}
-                                                    </Text>
-                                                </View>
-                                                <View className="w-3 h-3 bg-white dark:bg-[#121212] border-r border-b border-primary/20 rotate-45 -mt-1" />
-                                            </View>
-                                        ) : null}
-                                        <View className="w-14 h-14 rounded-2xl bg-white dark:bg-[#121212] border border-primary/20 items-center justify-center">
-                                            <Icon size={24} color="#f48c25" />
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
-                        )}
+                        <Text className="text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase mb-1">Próxima melhor ação</Text>
+                        <Text className="text-slate-900 dark:text-slate-100 font-bold">{nextBestAction.title}</Text>
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs mt-1">{nextBestAction.description}</Text>
+                        <TouchableOpacity className="mt-3 h-9 px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center self-start" onPress={nextBestAction.onPress}>
+                            <Text className="text-primary text-xs font-bold">{nextBestAction.cta}</Text>
+                        </TouchableOpacity>
                     </View>
+
                 </View>
 
                 <View className="pt-4 pb-28">
@@ -775,7 +789,6 @@ const Home = () => {
                     ) : null}
                 </View>
             </Layout>
-            </Pressable>
 
             {showDayDetails ? (
                 <View className="absolute inset-0 z-40">

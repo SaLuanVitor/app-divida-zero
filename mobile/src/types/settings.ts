@@ -7,5 +7,9 @@ export interface AppPreferences {
   notify_xp_and_badges: boolean;
   dark_mode: boolean;
   large_text: boolean;
+  font_scale: 1 | 1.15 | 1.3;
+  onboarding_seen: boolean;
+  onboarding_mode: 'beginner' | 'advanced' | null;
+  tutorial_reopen_enabled: boolean;
 }
 

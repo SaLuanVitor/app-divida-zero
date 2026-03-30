@@ -7,16 +7,16 @@ import Card from '../../components/Card';
 
 const faqs = [
   {
-    question: 'Como lancar uma nova divida ou ganho?',
-    answer: 'Toque no botao "+" na barra inferior e escolha entre "Novo ganho" ou "Nova divida".',
+    question: 'Como lançar uma nova dívida ou ganho?',
+    answer: 'Toque no botão "+" na barra inferior e escolha entre "Novo ganho" ou "Nova dívida".',
   },
   {
     question: 'Como marcar como pago ou recebido?',
-    answer: 'Na lista do mes, use os botoes "Pagar" ou "Receber" no card do lancamento.',
+    answer: 'Na lista do mês, use os botões "Pagar" ou "Receber" no card do lançamento.',
   },
   {
-    question: 'Por que meu XP mudou apos exclusoes?',
-    answer: 'Quando um registro e removido, o sistema recalcula e ajusta os pontos relacionados.',
+    question: 'Por que meu XP mudou após exclusões?',
+    answer: 'Quando um registro é removido, o sistema recalcula e ajusta os pontos relacionados.',
   },
 ];
 
@@ -39,7 +39,7 @@ const HelpSupport = () => {
           </TouchableOpacity>
           <View>
             <Text className="text-slate-900 text-xl font-bold">Ajuda e suporte</Text>
-            <Text className="text-slate-500 dark:text-slate-300 text-xs">Dividas comuns e contato com o suporte.</Text>
+            <Text className="text-slate-500 dark:text-slate-300 text-xs">Dúvidas comuns e contato com o suporte.</Text>
           </View>
         </View>
       </View>
@@ -78,7 +78,3 @@ const HelpSupport = () => {
 };
 
 export default HelpSupport;
-
-
-
-

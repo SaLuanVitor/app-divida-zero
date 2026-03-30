@@ -219,7 +219,7 @@ const Profile = () => {
                     </View>
 
                     <View className="px-6">
-                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Badges</Text>
+                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Medalhas</Text>
                         <Card className="mb-6" noPadding>
                             <TouchableOpacity
                                 activeOpacity={0.8}
@@ -229,10 +229,10 @@ const Profile = () => {
                                 <View className="flex-row items-center justify-between">
                                     <View className="flex-1 pr-3">
                                         <Text className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
-                                            {gamification.badges.filter((badge) => badge.unlocked).length}/{gamification.badges.length} badges conquistadas
+                                            {gamification.badges.filter((badge) => badge.unlocked).length}/{gamification.badges.length} medalhas conquistadas
                                         </Text>
                                         <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">
-                                            {badgesExpanded ? 'Toque para recolher a lista.' : 'Toque para expandir a lista de badges.'}
+                                            {badgesExpanded ? 'Toque para recolher a lista.' : 'Toque para expandir a lista de medalhas.'}
                                         </Text>
                                     </View>
                                     <ChevronRight

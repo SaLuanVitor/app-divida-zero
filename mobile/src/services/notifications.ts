@@ -101,8 +101,8 @@ export const sendLocalTestNotification = async () => {
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'DÃ­vida Zero',
-        body: 'NotificaÃ§Ãµes no celular ativadas com sucesso.',
+        title: 'Dívida Zero',
+        body: 'Notificações no celular ativadas com sucesso.',
         data: { source: APP_NOTIFICATION_SOURCE, kind: 'test' },
         ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
       },
@@ -197,7 +197,7 @@ export const syncScheduledLocalNotifications = async ({
         await Notifications.scheduleNotificationAsync({
           content: {
             title: 'Vencimentos de hoje',
-            body: `VocÃª tem ${dueTodayCount} lanÃ§amento(s) pendente(s) para hoje.`,
+            body: `Você tem ${dueTodayCount} lançamento(s) pendente(s) para hoje.`,
             data: { source: APP_NOTIFICATION_SOURCE, kind: 'due_today' },
             ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
           },
@@ -213,8 +213,8 @@ export const syncScheduledLocalNotifications = async ({
       if (dueTomorrowCount > 0) {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: 'Lembrete para amanhÃ£',
-            body: `VocÃª tem ${dueTomorrowCount} lanÃ§amento(s) pendente(s) para amanhÃ£.`,
+            title: 'Lembrete para amanhã',
+            body: `Você tem ${dueTomorrowCount} lançamento(s) pendente(s) para amanhã.`,
             data: { source: APP_NOTIFICATION_SOURCE, kind: 'due_tomorrow' },
             ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
           },
@@ -230,8 +230,8 @@ export const syncScheduledLocalNotifications = async ({
           title: 'Resumo semanal',
           body:
             pendingCount > 0
-              ? `Semana iniciando: vocÃª tem ${pendingCount} lanÃ§amento(s) pendente(s).`
-              : 'Semana iniciando: sem pendÃªncias no momento. Continue assim.',
+              ? `Semana iniciando: você tem ${pendingCount} lançamento(s) pendente(s).`
+              : 'Semana iniciando: sem pendências no momento. Continue assim.',
           data: { source: APP_NOTIFICATION_SOURCE, kind: 'weekly_summary' },
           ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
         },
@@ -243,5 +243,40 @@ export const syncScheduledLocalNotifications = async ({
   }
 
   return { synced: true as const };
+};
+
+export const sendXpAndBadgeNotification = async ({
+  enabled,
+  title,
+  body,
+}: {
+  enabled: boolean;
+  title: string;
+  body: string;
+}) => {
+  if (!enabled) return { sent: false as const, reason: 'disabled' as const };
+
+  const Notifications = getNotificationsModule();
+  if (!Notifications || typeof Notifications.scheduleNotificationAsync !== 'function') {
+    return { sent: false as const, reason: 'unavailable' as const };
+  }
+
+  const status = await getDeviceNotificationPermissionStatus();
+  if (status !== 'granted') return { sent: false as const, reason: 'permission_denied' as const };
+
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data: { source: APP_NOTIFICATION_SOURCE, kind: 'xp_badge' },
+        ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
+      },
+      trigger: null,
+    });
+    return { sent: true as const };
+  } catch {
+    return { sent: false as const, reason: 'unavailable' as const };
+  }
 };
 

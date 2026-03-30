@@ -17,6 +17,10 @@ const defaultApiBaseUrl =
 const api = axios.create({
     baseURL: process.env.EXPO_PUBLIC_API_URL ?? defaultApiBaseUrl,
     timeout: 10000,
+    headers: {
+        Accept: 'application/json; charset=utf-8',
+        'Content-Type': 'application/json; charset=utf-8',
+    },
 });
 
 api.interceptors.request.use(

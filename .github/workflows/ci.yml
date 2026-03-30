@@ -13,8 +13,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  charset:
+    name: Charset (UTF-8 / Mojibake)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check charset integrity
+        run: node scripts/check-mojibake.js
+
   backend:
     name: Backend (Rails)
+    needs: charset
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -38,6 +55,7 @@ jobs:
 
   mobile:
     name: Mobile (Jest + Typecheck)
+    needs: charset
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -62,4 +80,3 @@ jobs:
 
       - name: Run tests
         run: npm run test -- --runInBand
-

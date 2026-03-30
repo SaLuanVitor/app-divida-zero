@@ -8,6 +8,9 @@ import { useThemeMode } from '../../context/ThemeContext';
 import { createFinancialGoal, updateFinancialGoal } from '../../services/financialGoals';
 import { CreateFinancialGoalPayload, FinancialGoalDto, FinancialGoalType } from '../../types/financialGoal';
 import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamification';
+import { getAppPreferences } from '../../services/preferences';
+import { sendXpAndBadgeNotification } from '../../services/notifications';
+import { trackAnalyticsEvent } from '../../services/analytics';
 
 type GoalDateField = 'start' | 'target';
 type FeedbackState = {
@@ -148,7 +151,22 @@ const MetaForm = () => {
             }
 
             const result = await createFinancialGoal(payload);
+            await trackAnalyticsEvent({
+                event_name: 'goal_created',
+                screen: 'MetaForm',
+                metadata: {
+                    goal_type: payload.goal_type,
+                },
+            });
             if (result.xp_feedback) {
+                const prefs = await getAppPreferences();
+                await sendXpAndBadgeNotification({
+                    enabled: prefs.notifications_enabled && prefs.device_push_enabled && prefs.notify_xp_and_badges,
+                    title: result.xp_feedback.leveled_up ? 'Subiu de nível!' : 'Meta com XP',
+                    body: result.xp_feedback.leveled_up
+                        ? `Você chegou ao nível ${result.xp_feedback.summary.level}.`
+                        : `Você ganhou ${result.xp_feedback.points} XP ao criar a meta.`,
+                });
                 setXpPopup({
                     ...result.xp_feedback,
                     summary: normalizeGamificationSummary(result.xp_feedback.summary),
@@ -264,9 +282,27 @@ const MetaForm = () => {
                                 <ChevronLeft size={16} color={iconColor} />
                             </TouchableOpacity>
                             <Text className="text-slate-900 dark:text-slate-100 font-bold">{toMonthLabel(pickerMonth)}</Text>
-                            <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 1))}>
-                                <ChevronRight size={16} color={iconColor} />
-                            </TouchableOpacity>
+                            <View className="flex-row items-center gap-2">
+                                <TouchableOpacity
+                                    className="p-2 rounded-full bg-primary/10 border border-primary/20"
+                                    onPress={() => {
+                                        const today = new Date();
+                                        setPickerMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+                                        if (activeDateField === 'start') {
+                                            setStartDate(today);
+                                            if (targetDate && today > targetDate) setTargetDate(null);
+                                        } else {
+                                            setTargetDate(today);
+                                        }
+                                        setShowDatePicker(false);
+                                    }}
+                                >
+                                    <CalendarDays size={16} color="#f48c25" />
+                                </TouchableOpacity>
+                                <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 1))}>
+                                    <ChevronRight size={16} color={iconColor} />
+                                </TouchableOpacity>
+                            </View>
                         </View>
 
                         <View className="flex-row justify-between mb-2 px-1">
@@ -308,21 +344,17 @@ const MetaForm = () => {
                         </View>
 
                         <View className="flex-row gap-2">
-                            <Button
-                                title={activeDateField === 'start' ? 'Hoje' : 'Limpar data'}
-                                variant="outline"
-                                onPress={() => {
-                                    if (activeDateField === 'start') {
-                                        const today = new Date();
-                                        setStartDate(today);
-                                        if (targetDate && today > targetDate) setTargetDate(null);
-                                    } else {
+                            {activeDateField === 'target' ? (
+                                <Button
+                                    title="Limpar data"
+                                    variant="outline"
+                                    onPress={() => {
                                         setTargetDate(null);
-                                    }
-                                    setShowDatePicker(false);
-                                }}
-                                className="h-11 flex-1"
-                            />
+                                        setShowDatePicker(false);
+                                    }}
+                                    className="h-11 flex-1"
+                                />
+                            ) : null}
                             <Button title="Fechar" onPress={() => setShowDatePicker(false)} className="h-11 flex-1" />
                         </View>
                     </View>

@@ -58,6 +58,8 @@ const Button: React.FC<ButtonProps> = ({
         <TouchableOpacity
             activeOpacity={0.7}
             disabled={loading || disabled}
+            accessibilityRole="button"
+            accessibilityLabel={title}
             className={cn(
                 'flex-row items-center justify-center',
                 variants[variant],

@@ -10,7 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_14_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_30_000100) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_catalog.plpgsql"
+
+  create_table "analytics_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "event_name", null: false
+    t.json "metadata", default: {}, null: false
+    t.string "screen"
+    t.string "session_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["session_id"], name: "index_analytics_events_on_session_id"
+    t.index ["user_id", "created_at"], name: "index_analytics_events_on_user_id_and_created_at"
+    t.index ["user_id", "event_name"], name: "index_analytics_events_on_user_id_and_event_name"
+    t.index ["user_id"], name: "index_analytics_events_on_user_id"
+  end
+
   create_table "financial_goals", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -87,6 +104,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_14_000200) do
     t.index ["reset_password_token_digest"], name: "index_users_on_reset_password_token_digest"
   end
 
+  add_foreign_key "analytics_events", "users"
   add_foreign_key "financial_goals", "users"
   add_foreign_key "financial_records", "users"
   add_foreign_key "gamification_events", "users"

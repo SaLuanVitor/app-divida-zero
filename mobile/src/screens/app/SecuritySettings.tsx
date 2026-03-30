@@ -27,12 +27,12 @@ const SecuritySettings = () => {
     }
 
     if (newPassword.length < 8) {
-      setFeedback({ kind: 'error', message: 'A nova senha deve ter no minimo 8 caracteres.' });
+      setFeedback({ kind: 'error', message: 'A nova senha deve ter no mínimo 8 caracteres.' });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setFeedback({ kind: 'error', message: 'A confirmacao da nova senha nao confere.' });
+      setFeedback({ kind: 'error', message: 'A confirmação da nova senha não confere.' });
       return;
     }
 
@@ -63,7 +63,7 @@ const SecuritySettings = () => {
           </TouchableOpacity>
           <View>
             <Text className="text-slate-900 text-xl font-bold">Segurança</Text>
-            <Text className="text-slate-500 dark:text-slate-300 text-xs">Gerencie senha e protecao da conta.</Text>
+            <Text className="text-slate-500 dark:text-slate-300 text-xs">Gerencie senha e proteção da conta.</Text>
           </View>
         </View>
       </View>
@@ -113,7 +113,3 @@ const SecuritySettings = () => {
 };
 
 export default SecuritySettings;
-
-
-
-

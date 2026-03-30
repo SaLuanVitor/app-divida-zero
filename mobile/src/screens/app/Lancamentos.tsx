@@ -8,6 +8,9 @@ import { useThemeMode } from '../../context/ThemeContext';
 import { createFinancialRecord } from '../../services/financialRecords';
 import { CreateFinancialRecordPayload, FinancialRecurrenceType } from '../../types/financialRecord';
 import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamification';
+import { getAppPreferences } from '../../services/preferences';
+import { sendXpAndBadgeNotification } from '../../services/notifications';
+import { trackAnalyticsEvent } from '../../services/analytics';
 
 type RegisterTab = 'income' | 'debt';
 
@@ -258,8 +261,24 @@ const Lancamentos = () => {
         setLoading(true);
         try {
             const result = await createFinancialRecord(payload);
+            await trackAnalyticsEvent({
+                event_name: 'record_created',
+                screen: 'Lancamentos',
+                metadata: {
+                    mode: payload.mode,
+                    recurring: Boolean(payload.recurring),
+                },
+            });
             resetForm();
             if (result.xp_feedback) {
+                const prefs = await getAppPreferences();
+                await sendXpAndBadgeNotification({
+                    enabled: prefs.notifications_enabled && prefs.device_push_enabled && prefs.notify_xp_and_badges,
+                    title: result.xp_feedback.leveled_up ? 'Subiu de nível!' : 'XP atualizado',
+                    body: result.xp_feedback.leveled_up
+                        ? `Você chegou ao nível ${result.xp_feedback.summary.level}.`
+                        : `Você ganhou ${result.xp_feedback.points} XP com o lançamento.`,
+                });
                 setXpPopup({
                     ...result.xp_feedback,
                     summary: normalizeGamificationSummary(result.xp_feedback.summary),
@@ -536,7 +555,20 @@ const Lancamentos = () => {
                             })}
                         </View>
 
-                        <Button title="Fechar" variant="outline" onPress={closeDatePicker} className="h-11" />
+                        <View className="flex-row gap-2">
+                            <Button
+                                title="Hoje"
+                                variant="outline"
+                                onPress={() => {
+                                    const today = new Date();
+                                    setStartDate(today);
+                                    setPickerMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+                                    closeDatePicker();
+                                }}
+                                className="h-11 flex-1"
+                            />
+                            <Button title="Fechar" variant="outline" onPress={closeDatePicker} className="h-11 flex-1" />
+                        </View>
                     </View>
                 </Pressable>
             ) : null}

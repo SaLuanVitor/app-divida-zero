@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, ReactNode, useCa
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, AuthResponse } from '../types/auth';
 import api, { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, setUnauthorizedHandler } from '../services/api';
+import { trackAnalyticsEvent } from '../services/analytics';
 
 const USER_KEY = '@DividaZero:user';
 const LEGACY_USER_KEY = '@DívidaZero:user';
@@ -101,6 +102,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await AsyncStorage.setItem(USER_KEY, JSON.stringify(data.user));
             await AsyncStorage.setItem(ACCESS_TOKEN_KEY, data.access_token);
             await AsyncStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token);
+
+            await trackAnalyticsEvent({
+                event_name: 'login_success',
+                screen: 'Login',
+                metadata: {
+                    method: 'password',
+                },
+            });
         } finally {
             setAuthLoading(false);
         }
