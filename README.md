@@ -97,3 +97,15 @@ docker compose down
 docker compose down -v
 ```
 
+## 5) Regra obrigatoria de charset (UTF-8)
+
+Todo texto do projeto deve permanecer em UTF-8 (sem caracteres corrompidos, por exemplo sequencias como `Ã` e `�`).
+
+Validar manualmente:
+
+```powershell
+cd C:\Users\luanv\Projetos\app-divida-zero
+node .\scripts\check-mojibake.js
+```
+
+Esse check tambem roda no CI e bloqueia merge se detectar quebra de charset.

@@ -1,5 +1,6 @@
-﻿class ApplicationController < ActionController::API
+class ApplicationController < ActionController::API
   wrap_parameters false
+  before_action :enforce_utf8_response!
 
   rescue_from ActionController::ParameterMissing do |error|
     render json: { error: error.message }, status: :unprocessable_entity
@@ -22,5 +23,11 @@
     end
 
     render json: payload, status: :unprocessable_entity
+  end
+
+  private
+
+  def enforce_utf8_response!
+    response.set_header("Content-Type", "application/json; charset=utf-8")
   end
 end

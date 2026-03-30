@@ -4,9 +4,11 @@ import { ArrowLeft, Settings2 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
+import Button from '../../components/Button';
 import { AppPreferences } from '../../types/settings';
-import { defaultAppPreferences, getAppPreferences, saveAppPreferences } from '../../services/preferences';
+import { defaultAppPreferences, getAppPreferences, saveAppPreferences, updateAppPreferences } from '../../services/preferences';
 import { useThemeMode } from '../../context/ThemeContext';
+import { trackAnalyticsEvent } from '../../services/analytics';
 
 const AppSettings = () => {
   const navigation = useNavigation<any>();
@@ -24,17 +26,25 @@ const AppSettings = () => {
     load();
   }, []);
 
-  const updatePreference = async (key: Exclude<keyof AppPreferences, 'dark_mode'>, value: boolean) => {
-    const next = { ...prefs, [key]: value };
+  const setFontScale = async (fontScale: AppPreferences['font_scale']) => {
+    const next = {
+      ...prefs,
+      font_scale: fontScale,
+      large_text: fontScale > 1,
+    };
     setPrefs(next);
     setSaving(true);
     setMessage('');
     try {
       await saveAppPreferences(next);
-      setMessage('Configuracoes salvas com sucesso.');
+      setMessage('Escala de texto atualizada com sucesso.');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleLargeTextToggle = async (value: boolean) => {
+    await setFontScale(value ? 1.15 : 1);
   };
 
   const handleThemeToggle = async (value: boolean) => {
@@ -44,6 +54,25 @@ const AppSettings = () => {
       await setDarkMode(value);
       setPrefs((prev) => ({ ...prev, dark_mode: value }));
       setMessage('Tema atualizado com sucesso.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const reopenTutorial = async () => {
+    setSaving(true);
+    setMessage('');
+    try {
+      await updateAppPreferences({
+        onboarding_seen: false,
+        tutorial_reopen_enabled: true,
+      });
+      await trackAnalyticsEvent({
+        event_name: 'tutorial_reopened',
+        screen: 'AppSettings',
+      });
+      setMessage('Tutorial reaberto. Você pode revisar as instruções.');
+      navigation.navigate('Tutorial');
     } finally {
       setSaving(false);
     }
@@ -80,7 +109,7 @@ const AppSettings = () => {
           </TouchableOpacity>
           <View>
             <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold">Configurações do app</Text>
-            <Text className="text-slate-500 dark:text-slate-300 text-xs">Ajuste visual e comportamento do aplicativo.</Text>
+            <Text className="text-slate-500 dark:text-slate-300 text-xs">Ajuste visual, tutorial e leitura do aplicativo.</Text>
           </View>
         </View>
       </View>
@@ -89,7 +118,7 @@ const AppSettings = () => {
         <Card className="p-4">
           <View className="flex-row items-center mb-2">
             <Settings2 size={16} color="#64748b" />
-            <Text className="text-slate-700 dark:text-slate-200 font-bold ml-2">Preferencias gerais</Text>
+            <Text className="text-slate-700 dark:text-slate-200 font-bold ml-2">Preferências gerais</Text>
           </View>
 
           <Item
@@ -99,12 +128,44 @@ const AppSettings = () => {
             onChange={handleThemeToggle}
           />
 
-          {/* <Item
+          <Item
             title="Texto maior"
             subtitle="Aumenta a leitura de títulos e conteúdos."
             value={prefs.large_text}
-            onChange={(value) => updatePreference('large_text', value)}
-          /> */}
+            onChange={handleLargeTextToggle}
+          />
+
+          <View className="pt-3">
+            <Text className="text-slate-600 dark:text-slate-300 text-xs mb-2">Escala tipográfica</Text>
+            <View className="flex-row gap-2">
+              {[1, 1.15, 1.3].map((option) => {
+                const selected = prefs.font_scale === option;
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    className={`px-3 py-2 rounded-full border ${
+                      selected
+                        ? 'bg-primary border-primary'
+                        : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'
+                    }`}
+                    onPress={() => setFontScale(option as AppPreferences['font_scale'])}
+                  >
+                    <Text className={`text-xs font-bold ${selected ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>
+                      {Math.round(option * 100)}%
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </Card>
+
+        <Card className="p-4 mt-4">
+          <Text className="text-slate-700 dark:text-slate-200 font-bold mb-1">Tutorial inicial</Text>
+          <Text className="text-slate-500 dark:text-slate-300 text-xs mb-3">
+            Reabra o tutorial para revisar orientações de uso quando quiser.
+          </Text>
+          <Button title="Ver tutorial novamente" variant="outline" onPress={reopenTutorial} className="h-11" />
         </Card>
 
         {message ? (
@@ -120,6 +181,3 @@ const AppSettings = () => {
 };
 
 export default AppSettings;
-
-
-

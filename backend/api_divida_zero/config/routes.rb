@@ -13,6 +13,8 @@
       patch "auth/change_password", to: "auth#change_password"
       get "gamification/summary", to: "gamification#summary"
       get "gamification/events", to: "gamification#events"
+      get "reports/summary", to: "reports#summary"
+      post "analytics/events", to: "analytics#create"
 
       resources :financial_records, only: [:index, :create, :destroy] do
         member do

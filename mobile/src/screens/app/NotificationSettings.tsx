@@ -16,6 +16,13 @@ import { useThemeMode } from '../../context/ThemeContext';
 import { listFinancialRecords } from '../../services/financialRecords';
 
 type SaveMessageKind = 'success' | 'error' | '';
+type NotificationPreferenceKey =
+  | 'notifications_enabled'
+  | 'device_push_enabled'
+  | 'notify_due_today'
+  | 'notify_due_tomorrow'
+  | 'notify_weekly_summary'
+  | 'notify_xp_and_badges';
 
 const NotificationSettings = () => {
   const navigation = useNavigation<any>();
@@ -55,7 +62,7 @@ const NotificationSettings = () => {
         });
       } catch {
         setMessageKind('error');
-        setMessage('Nao foi possivel carregar as configuracoes de notificacao agora.');
+        setMessage('Não foi possível carregar as configurações de notificação agora.');
       } finally {
         setLoading(false);
       }
@@ -88,7 +95,7 @@ const NotificationSettings = () => {
     setMessage(text);
   };
 
-  const update = async (key: keyof AppPreferences, value: boolean) => {
+  const update = async (key: NotificationPreferenceKey, value: boolean) => {
     try {
       const next = { ...prefs, [key]: value };
 
