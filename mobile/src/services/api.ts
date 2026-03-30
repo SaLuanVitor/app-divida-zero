@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const ACCESS_TOKEN_KEY = '@DividaZero:accessToken';
 const REFRESH_TOKEN_KEY = '@DividaZero:refreshToken';
@@ -8,8 +9,13 @@ const USER_KEY = '@DividaZero:user';
 let onUnauthorized: (() => void | Promise<void>) | null = null;
 let refreshPromise: Promise<{ access_token: string; refresh_token: string }> | null = null;
 
+const defaultApiBaseUrl =
+    Platform.OS === 'android'
+        ? 'http://10.0.2.2:3000/api/v1'
+        : 'http://localhost:3000/api/v1';
+
 const api = axios.create({
-    baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1',
+    baseURL: process.env.EXPO_PUBLIC_API_URL ?? defaultApiBaseUrl,
     timeout: 10000,
 });
 

@@ -1,5 +1,6 @@
-import { AppPreferences } from '../types/settings';
+﻿import { AppPreferences } from '../types/settings';
 import { FinancialRecordDto } from '../types/financialRecord';
+import { Platform } from 'react-native';
 
 type NotificationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable';
 
@@ -24,6 +25,16 @@ const getNotificationsModule = () => {
 export const initializeNotificationLayer = () => {
   const Notifications = getNotificationsModule();
   if (!Notifications || handlerConfigured) return;
+
+  if (Platform.OS === 'android' && typeof Notifications.setNotificationChannelAsync === 'function') {
+    Notifications.setNotificationChannelAsync('default', {
+      name: 'Notificacoes',
+      importance: Notifications.AndroidImportance?.DEFAULT ?? 3,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#f48c25',
+    }).catch(() => {});
+  }
+
   if (typeof Notifications.setNotificationHandler !== 'function') return;
 
   try {
@@ -90,9 +101,10 @@ export const sendLocalTestNotification = async () => {
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Dívida Zero',
-        body: 'Notificações no celular ativadas com sucesso.',
+        title: 'DÃ­vida Zero',
+        body: 'NotificaÃ§Ãµes no celular ativadas com sucesso.',
         data: { source: APP_NOTIFICATION_SOURCE, kind: 'test' },
+        ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
       },
       trigger: null,
     });
@@ -185,8 +197,9 @@ export const syncScheduledLocalNotifications = async ({
         await Notifications.scheduleNotificationAsync({
           content: {
             title: 'Vencimentos de hoje',
-            body: `Você tem ${dueTodayCount} lançamento(s) pendente(s) para hoje.`,
+            body: `VocÃª tem ${dueTodayCount} lanÃ§amento(s) pendente(s) para hoje.`,
             data: { source: APP_NOTIFICATION_SOURCE, kind: 'due_today' },
+            ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
           },
           trigger: safeFutureDate(atNineAM(now)),
         });
@@ -200,9 +213,10 @@ export const syncScheduledLocalNotifications = async ({
       if (dueTomorrowCount > 0) {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: 'Lembrete para amanhã',
-            body: `Você tem ${dueTomorrowCount} lançamento(s) pendente(s) para amanhã.`,
+            title: 'Lembrete para amanhÃ£',
+            body: `VocÃª tem ${dueTomorrowCount} lanÃ§amento(s) pendente(s) para amanhÃ£.`,
             data: { source: APP_NOTIFICATION_SOURCE, kind: 'due_tomorrow' },
+            ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
           },
           trigger: atNineAM(tomorrow),
         });
@@ -216,9 +230,10 @@ export const syncScheduledLocalNotifications = async ({
           title: 'Resumo semanal',
           body:
             pendingCount > 0
-              ? `Semana iniciando: você tem ${pendingCount} lançamento(s) pendente(s).`
-              : 'Semana iniciando: sem pendências no momento. Continue assim.',
+              ? `Semana iniciando: vocÃª tem ${pendingCount} lanÃ§amento(s) pendente(s).`
+              : 'Semana iniciando: sem pendÃªncias no momento. Continue assim.',
           data: { source: APP_NOTIFICATION_SOURCE, kind: 'weekly_summary' },
+          ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
         },
         trigger: nextMondayAtNine(),
       });
@@ -229,3 +244,4 @@ export const syncScheduledLocalNotifications = async ({
 
   return { synced: true as const };
 };
+

@@ -53,6 +53,9 @@ const NotificationSettings = () => {
           prefs: nextPrefs,
           records: allRecords.records,
         });
+      } catch {
+        setMessageKind('error');
+        setMessage('Nao foi possivel carregar as configuracoes de notificacao agora.');
       } finally {
         setLoading(false);
       }

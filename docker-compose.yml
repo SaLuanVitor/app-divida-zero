@@ -40,7 +40,8 @@ services:
       - ./backend/api_divida_zero:/rails
       - bundle_cache:/usr/local/bundle
     command: >
-      bash -lc "bundle exec rails db:prepare &&
+      bash -lc "rm -f /rails/tmp/pids/server.pid &&
+      bundle exec rails db:prepare &&
       bundle exec rails server -b 0.0.0.0 -p 3000"
 
 volumes:
