@@ -8,9 +8,9 @@ const USER_KEY = '@DividaZero:user';
 const LEGACY_USER_KEY = '@DívidaZero:user';
 const LEGACY_ACCESS_KEY = '@DívidaZero:accessToken';
 const LEGACY_REFRESH_KEY = '@DívidaZero:refreshToken';
-const LEGACY_MOJIBAKE_USER_KEY = '@DÃ­vidaZero:user';
-const LEGACY_MOJIBAKE_ACCESS_KEY = '@DÃ­vidaZero:accessToken';
-const LEGACY_MOJIBAKE_REFRESH_KEY = '@DÃ­vidaZero:refreshToken';
+const LEGACY_MOJIBAKE_USER_KEY = '@D?vidaZero:user';
+const LEGACY_MOJIBAKE_ACCESS_KEY = '@D?vidaZero:accessToken';
+const LEGACY_MOJIBAKE_REFRESH_KEY = '@D?vidaZero:refreshToken';
 
 interface AuthContextData {
     signed: boolean;

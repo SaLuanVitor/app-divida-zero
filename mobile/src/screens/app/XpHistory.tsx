@@ -9,6 +9,7 @@ import Card from '../../components/Card';
 import { listGamificationEvents } from '../../services/gamification';
 import { GamificationEventDto } from '../../types/gamification';
 import { runWhenIdle } from '../../utils/idle';
+import { useAccessibility } from '../../context/AccessibilityContext';
 
 type EventFilter = 'all' | 'gain' | 'loss';
 const CARD_PAGE_SIZE = 10;
@@ -182,6 +183,7 @@ type XpHistoryProps = {
 
 const XpHistory = ({ navigation }: XpHistoryProps) => {
     const { darkMode } = useThemeMode();
+    const { fontScale, largerTouchTargets } = useAccessibility();
     const [events, setEvents] = useState<GamificationEventDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [query, setQuery] = useState('');
@@ -189,6 +191,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
     const [visibleEventsCount, setVisibleEventsCount] = useState(CARD_PAGE_SIZE);
     const lastLoadTimestampRef = useRef(0);
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
+    const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
 
     useEffect(() => {
         const load = async () => {
@@ -286,7 +289,10 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                         </View>
                     </View>
 
-                    <View className="h-11 rounded-xl border border-slate-200 bg-[#f8f7f5] dark:bg-black px-3 flex-row items-center">
+                    <View
+                        className="rounded-xl border border-slate-200 bg-[#f8f7f5] dark:bg-black px-3 flex-row items-center"
+                        style={{ minHeight: fieldControlHeight, height: fieldControlHeight }}
+                    >
                         <Search size={16} color="#64748b" />
                         <AppTextInput
                             className="flex-1 ml-2 text-slate-900 dark:text-slate-100"
@@ -297,7 +303,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                         />
                     </View>
 
-                    <View className="flex-row gap-2 mt-3">
+                    <View className="flex-row flex-wrap gap-2 mt-3">
                         <TouchableOpacity
                             className={`px-3 py-2 rounded-full border ${filter === 'all' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setFilter('all')}
@@ -410,7 +416,6 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
 };
 
 export default XpHistory;
-
 
 
 

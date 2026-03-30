@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Alert, ScrollView, ActivityIndicator, Pressable } from 'react-native';
@@ -13,6 +13,7 @@ import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamific
 import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEvent } from '../../services/analytics';
+import { useAccessibility } from '../../context/AccessibilityContext';
 
 type RegisterTab = 'income' | 'debt';
 
@@ -99,6 +100,7 @@ const Lancamentos = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { darkMode } = useThemeMode();
+    const { fontScale, largerTouchTargets } = useAccessibility();
 
     const [activeTab, setActiveTab] = useState<RegisterTab>('income');
 
@@ -126,6 +128,7 @@ const Lancamentos = () => {
     const [loading, setLoading] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
+    const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
 
     useEffect(() => {
         const incomingMode = route.params?.mode as string | undefined;
@@ -441,7 +444,8 @@ const Lancamentos = () => {
 
                         <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data inicial</AppText>
                         <TouchableOpacity
-                            className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
+                            className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
+                            style={{ minHeight: fieldControlHeight, height: fieldControlHeight }}
                             onPress={openDatePicker}
                         >
                             <AppText className="text-slate-900 dark:text-slate-100">{formatDateBR(startDate)}</AppText>
@@ -473,8 +477,8 @@ const Lancamentos = () => {
                             </>
                         ) : null}
 
-                        <View className="flex-row items-center justify-between mt-1">
-                            <AppText className="text-[11px] text-slate-500 dark:text-slate-300">Modo rápido: só valor, data e categoria.</AppText>
+                        <View className="flex-row flex-wrap items-center justify-between gap-2 mt-1">
+                            <AppText className="text-[11px] text-slate-500 dark:text-slate-300 flex-1">Modo rápido: só valor, data e categoria.</AppText>
                             <TouchableOpacity onPress={() => setShowAdvanced((prev) => !prev)} className={chipClass(showAdvanced)}>
                                 <AppText className={chipTextClass(showAdvanced)}>{showAdvanced ? 'Ocultar extras' : 'Mais opções'}</AppText>
                             </TouchableOpacity>
@@ -526,7 +530,7 @@ const Lancamentos = () => {
                                         <AppText className="text-slate-800 dark:text-slate-100 font-bold">Recorrência</AppText>
                                     </View>
                                     <TouchableOpacity onPress={() => setRecurring((prev) => !prev)} className={chipClass(recurring)}>
-                                        <AppText className={chipTextClass(recurring)}>{recurring ? 'Recorrente' : 'Único'}</AppText>
+                                        <AppText className={chipTextClass(recurring)}>{recurring ? 'Recorrente' : '?nico'}</AppText>
                                     </TouchableOpacity>
                                 </View>
 
@@ -719,8 +723,6 @@ const Lancamentos = () => {
 };
 
 export default Lancamentos;
-
-
 
 
 

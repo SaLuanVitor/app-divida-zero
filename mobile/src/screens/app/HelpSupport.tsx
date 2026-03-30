@@ -1,28 +1,31 @@
-﻿import React from 'react';
+import React from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Linking } from 'react-native';
 import { ArrowLeft, CircleHelp, Mail, MessageCircle } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
+import { useAccessibility } from '../../context/AccessibilityContext';
 
 const faqs = [
   {
-    question: 'Como lanÃ§ar uma nova dÃ­vida ou ganho?',
-    answer: 'Toque no botÃ£o "+" na barra inferior e escolha entre "Novo ganho" ou "Nova dÃ­vida".',
+    question: 'Como lançar uma nova dívida ou ganho?',
+    answer: 'Toque no botão "+" na barra inferior e escolha entre "Novo ganho" ou "Nova dívida".',
   },
   {
     question: 'Como marcar como pago ou recebido?',
-    answer: 'Na lista do mÃªs, use os botÃµes "Pagar" ou "Receber" no card do lanÃ§amento.',
+    answer: 'Na lista do mês, use os botões "Pagar" ou "Receber" no card do lançamento.',
   },
   {
-    question: 'Por que meu XP mudou apÃ³s exclusÃµes?',
-    answer: 'Quando um registro Ã© removido, o sistema recalcula e ajusta os pontos relacionados.',
+    question: 'Por que meu XP mudou após exclusões?',
+    answer: 'Quando um registro é removido, o sistema recalcula e ajusta os pontos relacionados.',
   },
 ];
 
 const HelpSupport = () => {
   const navigation = useNavigation<any>();
+  const { fontScale, largerTouchTargets } = useAccessibility();
+  const rowHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
 
   const openMail = async () => {
     const url = 'mailto:suporte.dividazero@gmail.com?subject=Suporte%20-%20D%C3%ADvida%20Zero';
@@ -40,7 +43,7 @@ const HelpSupport = () => {
           </TouchableOpacity>
           <View>
             <AppText className="text-slate-900 text-xl font-bold">Ajuda e suporte</AppText>
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs">DÃºvidas comuns e contato com o suporte.</AppText>
+            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Dúvidas comuns e contato com o suporte.</AppText>
           </View>
         </View>
       </View>
@@ -63,12 +66,16 @@ const HelpSupport = () => {
         <Card className="p-4">
           <AppText className="text-slate-700 font-bold mb-3">Canais de suporte</AppText>
 
-          <TouchableOpacity className="h-11 rounded-xl bg-slate-100 px-3 flex-row items-center mb-2" onPress={openMail}>
+          <TouchableOpacity
+            className="rounded-xl bg-slate-100 px-3 flex-row items-center mb-2"
+            style={{ minHeight: rowHeight, height: rowHeight }}
+            onPress={openMail}
+          >
             <Mail size={16} color="#0f172a" />
             <AppText className="text-slate-800 font-semibold ml-2">Enviar e-mail</AppText>
           </TouchableOpacity>
 
-          <View className="h-11 rounded-xl bg-slate-100 px-3 flex-row items-center">
+          <View className="rounded-xl bg-slate-100 px-3 flex-row items-center" style={{ minHeight: rowHeight, height: rowHeight }}>
             <MessageCircle size={16} color="#0f172a" />
             <AppText className="text-slate-800 font-semibold ml-2">Chat no app (em breve)</AppText>
           </View>

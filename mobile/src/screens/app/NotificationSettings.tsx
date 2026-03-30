@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Switch } from 'react-native';
 import { ArrowLeft, Bell } from 'lucide-react-native';
@@ -15,6 +15,7 @@ import {
 } from '../../services/notifications';
 import { useThemeMode } from '../../context/ThemeContext';
 import { listFinancialRecords } from '../../services/financialRecords';
+import { useAccessibility } from '../../context/AccessibilityContext';
 
 type SaveMessageKind = 'success' | 'error' | '';
 type NotificationPreferenceKey =
@@ -28,6 +29,7 @@ type NotificationPreferenceKey =
 const NotificationSettings = () => {
   const navigation = useNavigation<any>();
   const { darkMode } = useThemeMode();
+  const { fontScale, largerTouchTargets } = useAccessibility();
 
   const [prefs, setPrefs] = useState<AppPreferences>(defaultAppPreferences);
   const [message, setMessage] = useState('');
@@ -36,6 +38,7 @@ const NotificationSettings = () => {
     'undetermined'
   );
   const [loading, setLoading] = useState(false);
+  const rowHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
 
   const iconColor = darkMode ? '#e2e8f0' : '#0f172a';
 
@@ -63,7 +66,7 @@ const NotificationSettings = () => {
         });
       } catch {
         setMessageKind('error');
-        setMessage('NÃ£o foi possÃ­vel carregar as configuraÃ§Ãµes de notificaÃ§Ã£o agora.');
+        setMessage('Não foi possível carregar as configurações de notificação agora.');
       } finally {
         setLoading(false);
       }
@@ -72,10 +75,10 @@ const NotificationSettings = () => {
   }, []);
 
   const permissionLabel = useMemo(() => {
-    if (permissionStatus === 'granted') return 'PermissÃ£o no dispositivo: permitida';
-    if (permissionStatus === 'denied') return 'PermissÃ£o no dispositivo: negada';
-    if (permissionStatus === 'undetermined') return 'PermissÃ£o no dispositivo: nÃ£o definida';
-    return 'PermissÃ£o no dispositivo: indisponÃ­vel neste ambiente';
+    if (permissionStatus === 'granted') return 'Permissão no dispositivo: permitida';
+    if (permissionStatus === 'denied') return 'Permissão no dispositivo: negada';
+    if (permissionStatus === 'undetermined') return 'Permissão no dispositivo: não definida';
+    return 'Permissão no dispositivo: indisponível neste ambiente';
   }, [permissionStatus]);
 
   const persist = async (next: AppPreferences, kind: SaveMessageKind, text: string) => {
@@ -106,14 +109,14 @@ const NotificationSettings = () => {
         next.notify_due_tomorrow = false;
         next.notify_weekly_summary = false;
         next.notify_xp_and_badges = false;
-        await persist(next, 'success', 'NotificaÃ§Ãµes desativadas.');
+        await persist(next, 'success', 'Notificações desativadas.');
         return;
       }
 
       if (key === 'device_push_enabled') {
         if (!value) {
           next.device_push_enabled = false;
-          await persist(next, 'success', 'NotificaÃ§Ã£o no celular desativada.');
+          await persist(next, 'success', 'Notificação no celular desativada.');
           return;
         }
 
@@ -128,15 +131,15 @@ const NotificationSettings = () => {
             next,
             'error',
             effectiveStatus === 'unavailable'
-              ? 'NotificaÃ§Ã£o no celular indisponÃ­vel neste ambiente.'
-              : 'PermissÃ£o negada no dispositivo. As notificaÃ§Ãµes continuarÃ£o somente dentro do aplicativo.'
+              ? 'Notificação no celular indisponível neste ambiente.'
+              : 'Permissão negada no dispositivo. As notificações continuarão somente dentro do aplicativo.'
           );
           return;
         }
 
         next.notifications_enabled = true;
         next.device_push_enabled = true;
-        await persist(next, 'success', 'NotificaÃ§Ã£o no celular ativada.');
+        await persist(next, 'success', 'Notificação no celular ativada.');
         return;
       }
 
@@ -144,10 +147,10 @@ const NotificationSettings = () => {
         next.notifications_enabled = true;
       }
 
-      await persist(next, 'success', 'PreferÃªncias de notificaÃ§Ã£o salvas.');
+      await persist(next, 'success', 'Preferências de notificação salvas.');
     } catch {
       setMessageKind('error');
-      setMessage('NÃ£o foi possÃ­vel salvar a preferÃªncia agora. Tente novamente.');
+      setMessage('Não foi possível salvar a preferência agora. Tente novamente.');
     }
   };
 
@@ -155,18 +158,18 @@ const NotificationSettings = () => {
     const result = await sendLocalTestNotification();
     if (result.sent) {
       setMessageKind('success');
-      setMessage('NotificaÃ§Ã£o de teste enviada para o celular.');
+      setMessage('Notificação de teste enviada para o celular.');
       return;
     }
 
     if (result.reason === 'permission_denied') {
       setMessageKind('error');
-      setMessage('NÃ£o foi possÃ­vel enviar teste: permita notificaÃ§Ãµes no dispositivo.');
+      setMessage('Não foi possível enviar teste: permita notificações no dispositivo.');
       return;
     }
 
     setMessageKind('error');
-    setMessage('NotificaÃ§Ã£o local indisponÃ­vel neste ambiente de execuÃ§Ã£o.');
+    setMessage('Notificação local indisponível neste ambiente de execução.');
   };
 
   const Item = ({
@@ -201,9 +204,9 @@ const NotificationSettings = () => {
             <ArrowLeft size={22} color={iconColor} />
           </TouchableOpacity>
           <View>
-            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">NotificaÃ§Ãµes</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Notificações</AppText>
             <AppText className="text-slate-500 dark:text-slate-300 text-xs">
-              Somente no aplicativo. No celular apenas com sua permissÃ£o.
+              Somente no aplicativo. No celular apenas com sua permissão.
             </AppText>
           </View>
         </View>
@@ -213,40 +216,40 @@ const NotificationSettings = () => {
         <Card className="p-4">
           <View className="flex-row items-center mb-2">
             <Bell size={16} color="#64748b" />
-            <AppText className="text-slate-700 dark:text-slate-200 font-bold ml-2">Canal de notificaÃ§Ã£o</AppText>
+            <AppText className="text-slate-700 dark:text-slate-200 font-bold ml-2">Canal de notificação</AppText>
           </View>
 
           <View className="mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a1a1a] p-3">
-            <AppText className="text-slate-900 dark:text-slate-100 font-semibold text-sm">Canal Ãºnico: aplicativo</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 font-semibold text-sm">Canal único: aplicativo</AppText>
             <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
-              Este app nÃ£o envia e-mail nem SMS. O alerta aparece no app e, opcionalmente, no celular.
+              Este app não envia e-mail nem SMS. O alerta aparece no app e, opcionalmente, no celular.
             </AppText>
             <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">{permissionLabel}</AppText>
           </View>
 
           <Item
-            title="Ativar notificaÃ§Ãµes"
-            subtitle="Liga ou desliga todas as notificaÃ§Ãµes do aplicativo."
+            title="Ativar notificações"
+            subtitle="Liga ou desliga todas as notificações do aplicativo."
             value={prefs.notifications_enabled}
             onChange={(value) => update('notifications_enabled', value)}
           />
           <Item
             title="Notificar no celular"
-            subtitle="Mostra alerta local no dispositivo, somente se vocÃª permitir."
+            subtitle="Mostra alerta local no dispositivo, somente se você permitir."
             value={prefs.device_push_enabled}
             onChange={(value) => update('device_push_enabled', value)}
             disabled={!prefs.notifications_enabled}
           />
           <Item
             title="Vencimentos de hoje"
-            subtitle="Aviso no dia de vencimento de dÃ­vidas e lanÃ§amentos."
+            subtitle="Aviso no dia de vencimento de dívidas e lançamentos."
             value={prefs.notify_due_today}
             onChange={(value) => update('notify_due_today', value)}
             disabled={!prefs.notifications_enabled}
           />
           <Item
             title="Lembrete do dia seguinte"
-            subtitle="Aviso antecipado para vocÃª se preparar."
+            subtitle="Aviso antecipado para você se preparar."
             value={prefs.notify_due_tomorrow}
             onChange={(value) => update('notify_due_tomorrow', value)}
             disabled={!prefs.notifications_enabled}
@@ -260,25 +263,26 @@ const NotificationSettings = () => {
           />
           <Item
             title="XP e badges"
-            subtitle="Alertas de conquistas, nÃ­vel e pontuaÃ§Ã£o."
+            subtitle="Alertas de conquistas, nível e pontuação."
             value={prefs.notify_xp_and_badges}
             onChange={(value) => update('notify_xp_and_badges', value)}
             disabled={!prefs.notifications_enabled}
           />
 
           <TouchableOpacity
-            className="mt-3 h-11 rounded-xl border border-primary/30 bg-primary/10 items-center justify-center"
+            className="mt-3 rounded-xl border border-primary/30 bg-primary/10 items-center justify-center"
+            style={{ minHeight: rowHeight, height: rowHeight }}
             onPress={sendTest}
             disabled={!prefs.notifications_enabled || !prefs.device_push_enabled}
           >
             <AppText className="text-primary font-bold">
-              Enviar notificaÃ§Ã£o de teste
+              Enviar notificação de teste
             </AppText>
           </TouchableOpacity>
         </Card>
 
         {loading ? (
-          <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando preferÃªncias...</AppText>
+          <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando preferências...</AppText>
         ) : null}
 
         {message ? (
@@ -304,4 +308,3 @@ const NotificationSettings = () => {
 };
 
 export default NotificationSettings;
-
