@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from './api';
 import { listFinancialRecords } from './financialRecords';
 import { listGamificationEvents } from './gamification';
-import { getAppPreferences } from './preferences';
+import { defaultAppPreferences, getAppPreferences } from './preferences';
 import { AppPreferences } from '../types/settings';
 import { FinancialRecordDto } from '../types/financialRecord';
 import { GamificationEventDto } from '../types/gamification';
@@ -10,17 +11,6 @@ import { NotificationHistoryItem } from '../types/notificationCenter';
 const LAST_SEEN_AT_KEY = '@DividaZero:notificationCenter:lastSeenAt';
 const MAX_HISTORY_ITEMS = 120;
 
-const NOTIFIABLE_EVENT_TYPES = new Set([
-  'achievement_unlocked',
-  'goal_completed',
-  'goal_progress_milestone',
-  'daily_achievement_completed',
-  'income_received',
-  'expense_paid',
-  'record_deleted',
-  'goal_deleted',
-]);
-
 const toDateKey = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -28,21 +18,37 @@ const toDateKey = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+const toTimestamp = (value: string | Date | undefined | null) => {
+  if (!value) return 0;
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+};
+
+type BackendNotificationAlert = {
+  id: number;
+  alert_type: string;
+  title: string;
+  message: string;
+  due_count?: number;
+  window_key?: string;
+  metadata?: Record<string, unknown>;
+  read?: boolean;
+  created_at: string;
+};
+
 const withReadState = (items: NotificationHistoryItem[], lastSeenAtIso: string | null) => {
   const lastSeenMs = lastSeenAtIso ? new Date(lastSeenAtIso).getTime() : 0;
   if (!lastSeenMs) {
-    return items.map((item) => ({ ...item, read: false }));
+    return items.map((item) => ({ ...item, read: Boolean(item.read) }));
   }
 
   return items.map((item) => ({
     ...item,
-    read: new Date(item.created_at).getTime() <= lastSeenMs,
+    read: Boolean(item.read) || new Date(item.created_at).getTime() <= lastSeenMs,
   }));
 };
 
 const mapGamificationEventToNotification = (event: GamificationEventDto): NotificationHistoryItem | null => {
-  if (!NOTIFIABLE_EVENT_TYPES.has(event.event_type)) return null;
-
   const metadata = (event.metadata || {}) as Record<string, unknown>;
   const pointsValue = Number(event.points || 0);
   const pointsText = pointsValue > 0 ? `+${pointsValue} XP` : `${pointsValue} XP`;
@@ -90,11 +96,25 @@ const mapGamificationEventToNotification = (event: GamificationEventDto): Notifi
       message = `Voce recebeu ${pointsText} ao marcar o ganho como recebido.`;
       break;
     }
+    case 'record_created': {
+      kind = 'record';
+      const recordTitle = String(metadata.record_title || '').trim();
+      title = recordTitle ? `Lancamento criado: ${recordTitle}` : 'Lancamento criado';
+      message = `Novo registro salvo com recompensa de ${pointsText}.`;
+      break;
+    }
     case 'expense_paid': {
       kind = 'record';
       const recordTitle = String(metadata.record_title || '').trim();
       title = recordTitle ? `Pagamento confirmado: ${recordTitle}` : 'Pagamento confirmado';
       message = `Voce recebeu ${pointsText} ao marcar a quitacao.`;
+      break;
+    }
+    case 'goal_created': {
+      kind = 'goal';
+      const goalTitle = String(metadata.goal_title || '').trim();
+      title = goalTitle ? `Meta criada: ${goalTitle}` : 'Meta criada';
+      message = `Voce recebeu ${pointsText} por iniciar esta meta.`;
       break;
     }
     case 'record_deleted': {
@@ -110,8 +130,16 @@ const mapGamificationEventToNotification = (event: GamificationEventDto): Notifi
       message = `Ajuste automatico aplicado no XP (${pointsText}).`;
       break;
     }
-    default:
-      return null;
+    default: {
+      const fallbackTitle = event.event_type
+        .split('_')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+      title = fallbackTitle || 'Atualizacao';
+      message = `Evento registrado na sua jornada (${pointsText}).`;
+      kind = 'system';
+      break;
+    }
   }
 
   return {
@@ -119,13 +147,23 @@ const mapGamificationEventToNotification = (event: GamificationEventDto): Notifi
     kind,
     title,
     message,
-    created_at: event.created_at,
+    created_at: event.created_at || new Date().toISOString(),
     points: pointsValue,
     event_type: event.event_type,
     metadata,
     read: false,
   };
 };
+
+const mapBackendAlertToNotification = (alert: BackendNotificationAlert): NotificationHistoryItem => ({
+  id: `backend-alert-${alert.id}`,
+  kind: 'reminder',
+  title: String(alert.title || 'Alerta'),
+  message: String(alert.message || 'Voce possui um alerta pendente.'),
+  created_at: alert.created_at || new Date().toISOString(),
+  read: Boolean(alert.read),
+  metadata: alert.metadata || {},
+});
 
 const buildReminderNotifications = (
   records: FinancialRecordDto[],
@@ -203,21 +241,45 @@ const buildReminderNotifications = (
 };
 
 export const listNotificationHistory = async ({ force = false }: { force?: boolean } = {}) => {
-  const [eventsResult, recordsResult, prefs, lastSeenAtIso] = await Promise.all([
+  const [eventsResult, recordsResult, prefsResult, lastSeenAtResult, backendAlertsResult] = await Promise.allSettled([
     listGamificationEvents({ force }),
     listFinancialRecords(undefined, undefined, { force }),
     getAppPreferences(),
     AsyncStorage.getItem(LAST_SEEN_AT_KEY),
+    api.get('/notifications/history'),
   ]);
 
-  const eventItems = (eventsResult.events || [])
+  const events =
+    eventsResult.status === 'fulfilled' && Array.isArray(eventsResult.value?.events)
+      ? eventsResult.value.events
+      : [];
+  const records =
+    recordsResult.status === 'fulfilled' && Array.isArray(recordsResult.value?.records)
+      ? recordsResult.value.records
+      : [];
+  const prefs =
+    prefsResult.status === 'fulfilled'
+      ? prefsResult.value
+      : defaultAppPreferences;
+  const lastSeenAtIso =
+    lastSeenAtResult.status === 'fulfilled'
+      ? lastSeenAtResult.value
+      : null;
+  const backendAlerts =
+    backendAlertsResult.status === 'fulfilled' &&
+    Array.isArray((backendAlertsResult.value?.data as { notifications?: BackendNotificationAlert[] } | undefined)?.notifications)
+      ? ((backendAlertsResult.value?.data as { notifications?: BackendNotificationAlert[] }).notifications || [])
+      : [];
+
+  const eventItems = events
     .map(mapGamificationEventToNotification)
     .filter((item): item is NotificationHistoryItem => !!item);
 
-  const reminderItems = buildReminderNotifications(recordsResult.records || [], prefs);
+  const reminderItems = buildReminderNotifications(records, prefs);
+  const backendAlertItems = backendAlerts.map(mapBackendAlertToNotification);
 
-  const sorted = [...reminderItems, ...eventItems]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  const sorted = [...backendAlertItems, ...reminderItems, ...eventItems]
+    .sort((a, b) => toTimestamp(b.created_at) - toTimestamp(a.created_at))
     .slice(0, MAX_HISTORY_ITEMS);
 
   return withReadState(sorted, lastSeenAtIso);
@@ -225,6 +287,12 @@ export const listNotificationHistory = async ({ force = false }: { force?: boole
 
 export const markNotificationHistorySeen = async (seenAt: Date = new Date()) => {
   await AsyncStorage.setItem(LAST_SEEN_AT_KEY, seenAt.toISOString());
+
+  try {
+    await api.patch('/notifications/read_all');
+  } catch {
+    // Keep local flow stable even if backend read sync fails.
+  }
 };
 
 export const getUnreadNotificationCount = async (options: { force?: boolean } = {}) => {
