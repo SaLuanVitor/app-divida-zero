@@ -9,6 +9,7 @@ import Relatorios from '../screens/app/Relatorios';
 import Profile from '../screens/app/Profile';
 import Lancamentos from '../screens/app/Lancamentos';
 import XpHistory from '../screens/app/XpHistory';
+import NotificationHistory from '../screens/app/NotificationHistory';
 import PersonalData from '../screens/app/PersonalData';
 import AppSettings from '../screens/app/AppSettings';
 import NotificationSettings from '../screens/app/NotificationSettings';
@@ -177,6 +178,7 @@ export const AppNavigator = () => {
             <Tab.Screen name="Perfil" component={Profile} />
             <Tab.Screen name="Lancamentos" component={Lancamentos} options={{ tabBarButton: () => null }} />
             <Tab.Screen name="Historico XP" component={XpHistory} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Historico Notificacoes" component={NotificationHistory} options={{ tabBarButton: () => null }} />
             <Tab.Screen name="Dados Pessoais" component={PersonalData} options={{ tabBarButton: () => null }} />
             <Tab.Screen name="Configuracoes App" component={AppSettings} options={{ tabBarButton: () => null }} />
             <Tab.Screen name="Notificacoes" component={NotificationSettings} options={{ tabBarButton: () => null }} />

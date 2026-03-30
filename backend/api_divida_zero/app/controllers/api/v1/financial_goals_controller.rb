@@ -1,4 +1,4 @@
-module Api
+﻿module Api
   module V1
     class FinancialGoalsController < ApplicationController
       before_action :authenticate_access_token!
@@ -30,6 +30,8 @@ module Api
 
         unlock_first_goal_created!(goal)
         FinancialGoalsProgressService.recalculate_goal!(goal)
+        DailyAchievementsService.sync_for_user!(@current_user)
+        xp_feedback = refresh_feedback_summary(xp_feedback)
 
         render json: {
           message: "Meta criada com sucesso.",
@@ -42,6 +44,7 @@ module Api
         goal = @current_user.financial_goals.find(params[:id])
         goal.update!(goal_params)
         FinancialGoalsProgressService.recalculate_goal!(goal)
+        DailyAchievementsService.sync_for_user!(@current_user)
 
         render json: {
           message: "Meta atualizada com sucesso.",
@@ -70,7 +73,7 @@ module Api
         GamificationService.award!(
           user: @current_user,
           event_type: "achievement_unlocked",
-          points: 60,
+          points: GamificationService.achievement_points(:first_goal_created),
           source: goal,
           metadata: {
             achievement_key: "first_goal_created",
@@ -85,6 +88,16 @@ module Api
         @current_user = User.find(payload["sub"])
       rescue JWT::DecodeError, ActiveRecord::RecordNotFound
         render json: { error: "Não autorizado." }, status: :unauthorized
+      end
+
+      def refresh_feedback_summary(xp_feedback)
+        return xp_feedback if xp_feedback.nil?
+
+        original_level = xp_feedback.dig(:summary, :level).to_i
+        current_summary = GamificationService.summary_for(@current_user)
+        xp_feedback[:summary] = current_summary
+        xp_feedback[:leveled_up] = true if current_summary[:level].to_i > original_level
+        xp_feedback
       end
     end
   end

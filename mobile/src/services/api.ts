@@ -9,6 +9,14 @@ const USER_KEY = '@DividaZero:user';
 let onUnauthorized: (() => void | Promise<void>) | null = null;
 let refreshPromise: Promise<{ access_token: string; refresh_token: string }> | null = null;
 
+const getLocalDateHeader = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 const defaultApiBaseUrl =
     Platform.OS === 'android'
         ? 'http://10.0.2.2:3000/api/v1'
@@ -29,6 +37,7 @@ api.interceptors.request.use(
 
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
+            config.headers['X-User-Local-Date'] = getLocalDateHeader();
         }
 
         return config;

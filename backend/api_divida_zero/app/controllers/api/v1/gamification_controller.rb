@@ -5,11 +5,18 @@
 
       def summary
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
-        render json: { summary: GamificationService.summary_for(@current_user) }, status: :ok
+        GamificationService.sync_record_achievements!(@current_user)
+        DailyAchievementsService.sync_for_user!(@current_user)
+        render json: {
+          summary: GamificationService.summary_for(@current_user),
+          daily_achievements: DailyAchievementsService.summary_for_user(@current_user)
+        }, status: :ok
       end
 
       def events
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
+        GamificationService.sync_record_achievements!(@current_user)
+        DailyAchievementsService.sync_for_user!(@current_user)
         render json: { events: GamificationService.events_for(@current_user, limit: 80) }, status: :ok
       end
 

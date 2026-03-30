@@ -1,7 +1,9 @@
 import api from './api';
 import {
+  DailyAchievementDto,
   GamificationEventDto,
   GamificationSummaryDto,
+  normalizeDailyAchievements,
   normalizeGamificationSummary
 } from '../types/gamification';
 
@@ -12,9 +14,9 @@ type CacheOptions = {
   ttlMs?: number;
 };
 
-let summaryCache: { expiresAt: number; value: { summary: GamificationSummaryDto } } | null = null;
+let summaryCache: { expiresAt: number; value: { summary: GamificationSummaryDto; daily_achievements: DailyAchievementDto[] } } | null = null;
 let eventsCache: { expiresAt: number; value: { events: GamificationEventDto[] } } | null = null;
-let summaryInFlight: Promise<{ summary: GamificationSummaryDto }> | null = null;
+let summaryInFlight: Promise<{ summary: GamificationSummaryDto; daily_achievements: DailyAchievementDto[] }> | null = null;
 let eventsInFlight: Promise<{ events: GamificationEventDto[] }> | null = null;
 
 const isValid = (expiresAt: number) => Date.now() < expiresAt;
@@ -41,10 +43,12 @@ export const getGamificationSummary = async (options: CacheOptions = {}) => {
     const { data } = await api.get('/gamification/summary');
     const payload = data as {
       summary?: GamificationSummaryDto | null;
+      daily_achievements?: DailyAchievementDto[] | null;
     };
 
     const result = {
       summary: normalizeGamificationSummary(payload?.summary),
+      daily_achievements: normalizeDailyAchievements(payload?.daily_achievements),
     };
 
     summaryCache = {

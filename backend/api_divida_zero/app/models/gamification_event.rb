@@ -11,6 +11,7 @@
     goal_progress_milestone
     goal_completed
     goal_deleted
+    daily_achievement_completed
   ].freeze
 
   validates :event_type, inclusion: { in: EVENT_TYPES, message: "Evento de gamificacao invalido." }

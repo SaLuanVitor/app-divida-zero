@@ -37,7 +37,7 @@
           user: goal.user,
           achievement_key: "first_goal_completed",
           achievement_label: "Primeira meta concluída",
-          points: 80,
+          points: GamificationService.achievement_points(:first_goal_completed),
           source: goal
         ) do
           goal.user.gamification_events.where(event_type: "goal_completed").where.not(source_id: goal.id).exists?
@@ -48,7 +48,7 @@
             user: goal.user,
             achievement_key: "goal_before_deadline",
             achievement_label: "Meta concluída antes do prazo",
-            points: 100,
+            points: GamificationService.achievement_points(:goal_before_deadline),
             source: goal
           )
         end
@@ -237,7 +237,7 @@
         user: user,
         achievement_key: "first_goal_completed",
         achievement_label: "Primeira meta concluída",
-        points: 80,
+        points: GamificationService.achievement_points(:first_goal_completed),
         unlocked: completed_goals.any?,
         source: completed_goals.first
       )
@@ -250,7 +250,7 @@
         user: user,
         achievement_key: "goal_before_deadline",
         achievement_label: "Meta concluída antes do prazo",
-        points: 100,
+        points: GamificationService.achievement_points(:goal_before_deadline),
         unlocked: before_deadline_goal.present?,
         source: before_deadline_goal
       )
