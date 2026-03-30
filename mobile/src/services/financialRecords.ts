@@ -3,6 +3,7 @@ import { CreateFinancialRecordPayload, FinancialRecordDto } from '../types/finan
 import { XpFeedbackDto } from '../types/gamification';
 import { invalidateFinancialGoalsCache } from './financialGoals';
 import { invalidateGamificationCache } from './gamification';
+import { invalidateReportsCache } from './reports';
 
 const DEFAULT_TTL_MS = 12000;
 
@@ -35,6 +36,7 @@ export const createFinancialRecord = async (payload: CreateFinancialRecordPayloa
   invalidateFinancialRecordsCache();
   invalidateFinancialGoalsCache();
   invalidateGamificationCache();
+  invalidateReportsCache();
 
   return {
     message: payloadData?.message ?? 'Registro criado com sucesso.',
@@ -99,6 +101,7 @@ export const payFinancialRecord = async (id: number) => {
   invalidateFinancialRecordsCache();
   invalidateFinancialGoalsCache();
   invalidateGamificationCache();
+  invalidateReportsCache();
 
   return {
     message: payload?.message ?? 'Registro atualizado com sucesso.',
@@ -121,6 +124,7 @@ export const deleteFinancialRecord = async (id: number, scope: 'single' | 'group
   invalidateFinancialRecordsCache();
   invalidateFinancialGoalsCache();
   invalidateGamificationCache();
+  invalidateReportsCache();
 
   return {
     message: payload?.message ?? 'Registro removido com sucesso.',
