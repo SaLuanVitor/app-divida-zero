@@ -34,7 +34,7 @@ const Input: React.FC<InputProps> = ({
 }) => {
     const [isFocused, setIsFocused] = useState(false);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-    const { largerTouchTargets } = useAccessibility();
+    const { largerTouchTargets, fontScale } = useAccessibility();
 
     const togglePasswordVisibility = () => {
         setIsPasswordVisible(!isPasswordVisible);
@@ -42,6 +42,8 @@ const Input: React.FC<InputProps> = ({
 
     const isPassword = secureTextEntry;
     const actualSecureTextEntry = isPassword && !isPasswordVisible;
+    const inputHeight = Math.max(Math.round(56 * Math.max(fontScale, 1)), largerTouchTargets ? 60 : 0);
+    const iconSize = Math.max(20, Math.round(20 * Math.min(fontScale, 1.2)));
 
     return (
         <View className={cn('w-full mb-4', containerClassName)}>
@@ -53,15 +55,15 @@ const Input: React.FC<InputProps> = ({
 
             <View
                 className={cn(
-                    'flex-row items-center w-full h-14 px-4 rounded-xl border bg-white dark:bg-[#1a1a1a]',
+                    'flex-row items-center w-full px-4 rounded-xl border bg-white dark:bg-[#1a1a1a]',
                     isFocused ? 'border-primary' : 'border-slate-200',
                     error ? 'border-red-500' : ''
                 )}
-                style={largerTouchTargets ? { minHeight: 60 } : undefined}
+                style={{ minHeight: inputHeight, height: inputHeight }}
             >
                 {Icon && (
                     <Icon
-                        size={20}
+                        size={iconSize}
                         color={isFocused ? '#f48c25' : '#94a3b8'}
                         className="mr-3"
                     />
@@ -84,9 +86,9 @@ const Input: React.FC<InputProps> = ({
                         className="p-2"
                     >
                         {isPasswordVisible ? (
-                            <EyeOff size={20} color="#94a3b8" />
+                            <EyeOff size={iconSize} color="#94a3b8" />
                         ) : (
-                            <Eye size={20} color="#94a3b8" />
+                            <Eye size={iconSize} color="#94a3b8" />
                         )}
                     </TouchableOpacity>
                 ) : RightIcon ? (
@@ -96,7 +98,7 @@ const Input: React.FC<InputProps> = ({
                         className="p-2"
                         disabled={!onRightIconPress}
                     >
-                        <RightIcon size={20} color="#94a3b8" />
+                        <RightIcon size={iconSize} color="#94a3b8" />
                     </TouchableOpacity>
                 ) : null}
             </View>

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, Image, TouchableOpacity, Alert, useWindowDimensions } from 'react-native';
 import { Mail, Lock } from 'lucide-react-native';
@@ -48,7 +48,7 @@ const Login = () => {
     let valid = true;
 
     if (!email.trim()) {
-      setEmailError('Informe seu usuÃ¡rio.');
+      setEmailError('Informe seu usuário.');
       valid = false;
     } else {
       setEmailError('');
@@ -75,17 +75,17 @@ const Login = () => {
     try {
       await signIn(email.trim(), password);
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Falha na autenticaÃ§Ã£o. Verifique suas credenciais e tente novamente.';
+      const message = error?.response?.data?.error ?? 'Falha na autenticação. Verifique suas credenciais e tente novamente.';
       setAuthError(message);
       setPasswordError('Verifique sua senha e tente novamente.');
-      Alert.alert('NÃ£o foi possÃ­vel entrar', message);
+      Alert.alert('Não foi possível entrar', message);
     }
   };
 
   return (
     <Layout scrollable contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
       <View className="px-4 pt-4 pb-2 bg-[#f8f7f5] dark:bg-black">
-        <AppText className="text-slate-900 dark:text-slate-100 text-center text-lg font-bold">DÃ­vida Zero</AppText>
+        <AppText className="text-slate-900 dark:text-slate-100 text-center text-lg font-bold">Dívida Zero</AppText>
       </View>
 
       <View className="px-4 pb-2 bg-[#f8f7f5] dark:bg-black">
@@ -98,7 +98,7 @@ const Login = () => {
           <View className="absolute inset-0 bg-black/40" />
           <View className="absolute bottom-6 left-6 right-6">
             <AppText className="text-white text-3xl font-bold">Assuma o controle</AppText>
-            <AppText className="text-white/90 text-sm mt-1">Gamifique suas finanÃ§as e zere suas dÃ­vidas.</AppText>
+            <AppText className="text-white/90 text-sm mt-1">Gamifique suas finanças e zere suas dívidas.</AppText>
           </View>
         </View>
       </View>
@@ -124,7 +124,7 @@ const Login = () => {
         ) : null}
 
         <Input
-          label="UsuÃ¡rio"
+          label="Usuário"
           placeholder="usuario"
           value={email}
           onChangeText={(value) => {
@@ -169,7 +169,7 @@ const Login = () => {
 
         <View className="mt-10 items-center">
           <AppText className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest">
-            MotivaÃ§Ã£o do dia
+            Motivação do dia
           </AppText>
           <AppText className="text-slate-600 dark:text-slate-300 italic text-center text-sm mt-2 px-4">
             "Pequenos passos todos os dias levam a grandes conquistas financeiras."
@@ -177,7 +177,7 @@ const Login = () => {
         </View>
 
         <View className="mt-8 flex-row justify-center items-center pb-8">
-          <AppText className="text-slate-500 dark:text-slate-300 text-sm">NÃ£o tem uma conta? </AppText>
+          <AppText className="text-slate-500 dark:text-slate-300 text-sm">Não tem uma conta? </AppText>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
             <AppText className="text-primary font-bold text-sm">Cadastre-se</AppText>
           </TouchableOpacity>

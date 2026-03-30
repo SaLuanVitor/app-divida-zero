@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Pressable, ScrollView } from 'react-native';
@@ -13,6 +13,7 @@ import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamific
 import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEvent } from '../../services/analytics';
+import { useAccessibility } from '../../context/AccessibilityContext';
 
 type GoalDateField = 'start' | 'target';
 type FeedbackState = {
@@ -72,6 +73,7 @@ const MetaForm = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { darkMode } = useThemeMode();
+    const { fontScale, largerTouchTargets } = useAccessibility();
     const goal = route.params?.goal as FinancialGoalDto | undefined;
 
     const [title, setTitle] = useState(goal?.title || '');
@@ -90,6 +92,7 @@ const MetaForm = () => {
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
+    const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
 
     const goBackToGoals = () => {
         if (navigation?.canGoBack?.()) {
@@ -228,7 +231,8 @@ const MetaForm = () => {
 
                     <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data de início</AppText>
                     <TouchableOpacity
-                        className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
+                        className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
+                        style={{ minHeight: fieldControlHeight, height: fieldControlHeight }}
                         onPress={() => openDatePicker('start')}
                     >
                         <AppText className="text-slate-900 dark:text-slate-100">{formatDateBR(formatDateISO(startDate))}</AppText>
@@ -237,7 +241,8 @@ const MetaForm = () => {
 
                     <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data alvo (opcional)</AppText>
                     <TouchableOpacity
-                        className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
+                        className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
+                        style={{ minHeight: fieldControlHeight, height: fieldControlHeight }}
                         onPress={() => openDatePicker('target')}
                     >
                         <AppText className="text-slate-900 dark:text-slate-100">{targetDate ? formatDateBR(formatDateISO(targetDate)) : 'Selecionar data alvo'}</AppText>
@@ -446,5 +451,4 @@ const MetaForm = () => {
 };
 
 export default MetaForm;
-
 

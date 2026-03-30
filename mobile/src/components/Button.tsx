@@ -28,10 +28,11 @@ const Button: React.FC<ButtonProps> = ({
     icon,
     className,
     textClassName,
+    style,
     disabled,
     ...rest
 }) => {
-    const { largerTouchTargets } = useAccessibility();
+    const { largerTouchTargets, fontScale } = useAccessibility();
     const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
         primary: 'bg-primary shadow-md shadow-orange-200',
         secondary: 'bg-slate-800',
@@ -49,13 +50,19 @@ const Button: React.FC<ButtonProps> = ({
     };
 
     const sizes: Record<NonNullable<ButtonProps['size']>, string> = {
-        sm: 'h-10 px-4 rounded-lg',
-        md: 'h-12 px-6 rounded-xl',
-        lg: 'h-14 px-8 rounded-2xl',
+        sm: 'px-4 rounded-lg',
+        md: 'px-6 rounded-xl',
+        lg: 'px-8 rounded-2xl',
     };
 
     const isDark = variant === 'secondary' || variant === 'primary' || variant === 'danger';
-    const extraTouchTargetStyle = largerTouchTargets ? { minHeight: 56 } : undefined;
+    const baseHeightBySize: Record<NonNullable<ButtonProps['size']>, number> = {
+        sm: 40,
+        md: 48,
+        lg: 56,
+    };
+    const scaledHeight = Math.round(baseHeightBySize[size] * Math.max(fontScale, 1));
+    const computedHeight = Math.max(scaledHeight, largerTouchTargets ? 56 : 0);
 
     return (
         <TouchableOpacity
@@ -70,7 +77,7 @@ const Button: React.FC<ButtonProps> = ({
                 (loading || disabled) && 'opacity-60',
                 className
             )}
-            style={extraTouchTargetStyle}
+            style={[{ minHeight: computedHeight, height: computedHeight }, style]}
             {...rest}
         >
             {loading ? (

@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
@@ -34,6 +34,7 @@ import {
 } from '../../types/gamification';
 import { getGamificationSummary } from '../../services/gamification';
 import { useThemeMode } from '../../context/ThemeContext';
+import { useAccessibility } from '../../context/AccessibilityContext';
 import { listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto } from '../../types/financialGoal';
 import { runWhenIdle } from '../../utils/idle';
@@ -171,6 +172,7 @@ const Home = () => {
     const navigation = useNavigation<any>();
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
     const { darkMode } = useThemeMode();
+    const { fontScale, largerTouchTargets } = useAccessibility();
 
     const [currentMonth, setCurrentMonth] = useState(() => {
         const now = new Date();
@@ -191,6 +193,8 @@ const Home = () => {
     const [monthListFilter, setMonthListFilter] = useState<MonthListFilter>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [visibleMonthItemsCount, setVisibleMonthItemsCount] = useState(CARD_PAGE_SIZE);
+    const compactPillHeight = Math.max(Math.round(36 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 36);
+    const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
 
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastMonthLoadAtRef = useRef(0);
@@ -612,7 +616,11 @@ const Home = () => {
                         <AppText className="text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase mb-1">Próxima melhor ação</AppText>
                         <AppText className="text-slate-900 dark:text-slate-100 font-bold">{nextBestAction.title}</AppText>
                         <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-1">{nextBestAction.description}</AppText>
-                        <TouchableOpacity className="mt-3 h-9 px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center self-start" onPress={nextBestAction.onPress}>
+                        <TouchableOpacity
+                            className="mt-3 px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center self-start"
+                            style={{ minHeight: compactPillHeight, height: compactPillHeight }}
+                            onPress={nextBestAction.onPress}
+                        >
                             <AppText className="text-primary text-xs font-bold">{nextBestAction.cta}</AppText>
                         </TouchableOpacity>
                     </View>
@@ -630,7 +638,11 @@ const Home = () => {
                                     <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{toMonthLabel(currentMonth)}</AppText>
                                 </TouchableOpacity>
                                 <View className="flex-row items-center gap-2">
-                                    <TouchableOpacity className="px-3 h-9 rounded-full bg-primary/10 border border-primary/20 items-center justify-center" onPress={focusToday}>
+                                    <TouchableOpacity
+                                        className="px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center"
+                                        style={{ minHeight: compactPillHeight, height: compactPillHeight }}
+                                        onPress={focusToday}
+                                    >
                                         <AppText className="text-primary text-xs font-bold">Hoje</AppText>
                                     </TouchableOpacity>
                                     <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(1)}>
@@ -704,7 +716,7 @@ const Home = () => {
                         <AppText className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full">{filteredMonthItems.length} registros</AppText>
                     </View>
 
-                    <View className="flex-row gap-2 mb-4">
+                    <View className="flex-row flex-wrap gap-2 mb-4">
                         <TouchableOpacity
                             className={`px-3 py-2 rounded-full border ${monthListFilter === 'all' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                             onPress={() => setMonthListFilter('all')}
@@ -919,13 +931,15 @@ const Home = () => {
 
                         <View className="flex-row gap-2 mb-3">
                             <TouchableOpacity
-                                className={`flex-1 h-10 rounded-xl items-center justify-center border ${pickerMode === 'month' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                className={`flex-1 rounded-xl items-center justify-center border ${pickerMode === 'month' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
                                 onPress={() => setPickerMode('month')}
                             >
                                 <AppText className={`font-bold text-sm ${pickerMode === 'month' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Meses</AppText>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                className={`flex-1 h-10 rounded-xl items-center justify-center border ${pickerMode === 'year' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                className={`flex-1 rounded-xl items-center justify-center border ${pickerMode === 'year' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
                                 onPress={() => setPickerMode('year')}
                             >
                                 <AppText className={`font-bold text-sm ${pickerMode === 'year' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Anos</AppText>
@@ -949,7 +963,8 @@ const Home = () => {
                                         return (
                                             <TouchableOpacity
                                                 key={label}
-                                                className={`w-[31%] h-10 mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                                className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
                                                 onPress={() => selectMonth(index)}
                                             >
                                                 <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</AppText>
@@ -965,7 +980,8 @@ const Home = () => {
                                     return (
                                         <TouchableOpacity
                                             key={year}
-                                            className={`w-[31%] h-10 mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                            className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                            style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
                                             onPress={() => selectYear(year)}
                                         >
                                             <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText>
@@ -995,8 +1011,6 @@ const Home = () => {
 };
 
 export default Home;
-
-
 
 
 

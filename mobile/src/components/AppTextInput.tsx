@@ -8,10 +8,13 @@ const DEFAULT_INPUT_FONT_SIZE = 16;
 type AppTextInputProps = TextInputProps & { className?: string };
 
 const AppTextInputBase: React.FC<AppTextInputProps> = ({ style, ...rest }) => {
-  const { fontScale } = useAccessibility();
+  const { fontScale, largerTouchTargets } = useAccessibility();
   const flattened = StyleSheet.flatten(style) as TextStyle | undefined;
   const baseFontSize = typeof flattened?.fontSize === 'number' ? flattened.fontSize : DEFAULT_INPUT_FONT_SIZE;
   const baseLineHeight = typeof flattened?.lineHeight === 'number' ? flattened.lineHeight : undefined;
+  const baseHeight = typeof flattened?.height === 'number' ? flattened.height : 44;
+  const scaledHeight = Math.round(baseHeight * Math.max(fontScale, 1));
+  const targetHeight = Math.max(scaledHeight, largerTouchTargets ? 52 : 44);
 
   const scaledStyle: TextStyle | undefined =
     fontScale !== 1
@@ -21,12 +24,20 @@ const AppTextInputBase: React.FC<AppTextInputProps> = ({ style, ...rest }) => {
         }
       : undefined;
 
+  const scaledFieldStyle: TextStyle | undefined =
+    rest.multiline
+      ? undefined
+      : {
+          minHeight: targetHeight,
+          ...(typeof flattened?.height === 'number' ? { height: targetHeight } : {}),
+        };
+
   return (
     <TextInput
       {...rest}
       allowFontScaling={false}
       maxFontSizeMultiplier={1}
-      style={[style, scaledStyle]}
+      style={[style, scaledStyle, scaledFieldStyle]}
     />
   );
 };

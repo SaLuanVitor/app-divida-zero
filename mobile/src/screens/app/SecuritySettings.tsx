@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity } from 'react-native';
 import { ArrowLeft, LockKeyhole } from 'lucide-react-native';
@@ -28,12 +28,12 @@ const SecuritySettings = () => {
     }
 
     if (newPassword.length < 8) {
-      setFeedback({ kind: 'error', message: 'A nova senha deve ter no mÃ­nimo 8 caracteres.' });
+      setFeedback({ kind: 'error', message: 'A nova senha deve ter no mínimo 8 caracteres.' });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setFeedback({ kind: 'error', message: 'A confirmaÃ§Ã£o da nova senha nÃ£o confere.' });
+      setFeedback({ kind: 'error', message: 'A confirmação da nova senha não confere.' });
       return;
     }
 
@@ -48,7 +48,7 @@ const SecuritySettings = () => {
       setConfirmPassword('');
       setFeedback({ kind: 'success', message: result.message });
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'NÃ£o foi possÃ­vel alterar a senha.';
+      const message = error?.response?.data?.error ?? 'Não foi possível alterar a senha.';
       setFeedback({ kind: 'error', message });
     } finally {
       setLoading(false);
@@ -63,8 +63,8 @@ const SecuritySettings = () => {
             <ArrowLeft size={22} color="#0f172a" />
           </TouchableOpacity>
           <View>
-            <AppText className="text-slate-900 text-xl font-bold">SeguranÃ§a</AppText>
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Gerencie senha e proteÃ§Ã£o da conta.</AppText>
+            <AppText className="text-slate-900 text-xl font-bold">Segurança</AppText>
+            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Gerencie senha e proteção da conta.</AppText>
           </View>
         </View>
       </View>

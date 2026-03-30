@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
 import {
@@ -53,7 +53,7 @@ const Profile = () => {
     const route = useRoute<any>();
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const insets = useSafeAreaInsets();
-    const { reduceMotion } = useAccessibility();
+    const { reduceMotion, fontScale, largerTouchTargets } = useAccessibility();
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [logoutLoading, setLogoutLoading] = useState(false);
@@ -102,14 +102,18 @@ const Profile = () => {
         crown: Crown,
     };
     const isCompactDevice = windowWidth < 380 || windowHeight < 740;
-    const iconColumns = windowWidth < 360 ? 3 : 4;
-    const frameColumns = windowWidth < 380 ? 2 : 3;
+    const isLargeText = fontScale >= 1.15;
+    const iconColumns = windowWidth < 360 || isLargeText ? 3 : 4;
+    const frameColumns = windowWidth < 390 || isLargeText ? 2 : 3;
     const modalSideInset = windowWidth < 380 ? 12 : 16;
     const pickerTopInset = Math.max(insets.top + 8, isCompactDevice ? 10 : 16);
-    const pickerBottomInset = Math.max(insets.bottom + 84, isCompactDevice ? 92 : 104);
+    const pickerBottomInset = Math.max(insets.bottom + (isLargeText ? 108 : 84), isCompactDevice ? (isLargeText ? 108 : 92) : (isLargeText ? 120 : 104));
     const modalInnerWidth = Math.max(windowWidth - modalSideInset * 2 - 32, 240);
-    const iconItemWidth = Math.floor((modalInnerWidth - (iconColumns - 1) * 10) / iconColumns);
-    const frameItemWidth = Math.floor((modalInnerWidth - (frameColumns - 1) * 10) / frameColumns);
+    const itemGap = 10;
+    const iconItemWidth = Math.floor((modalInnerWidth - (iconColumns - 1) * itemGap) / iconColumns);
+    const frameItemWidth = Math.floor((modalInnerWidth - (frameColumns - 1) * itemGap) / frameColumns);
+    const pickerTabHeight = largerTouchTargets || isLargeText ? 44 : 40;
+    const pickerItemIconSize = isLargeText ? 20 : 18;
     const selectedIconOption = useMemo(() => getProfileIconOption(pendingIconKey), [pendingIconKey]);
     const selectedFrameOption = useMemo(() => getProfileFrameOption(pendingFrameKey), [pendingFrameKey]);
 
@@ -382,7 +386,6 @@ const Profile = () => {
                                 title="Ver histórico completo"
                                 variant={highlightHistoryCta ? 'primary' : 'outline'}
                                 onPress={() => navigation.navigate('Historico XP')}
-                                className="h-11"
                             />
                         </Card>
                     </View>
@@ -449,13 +452,15 @@ const Profile = () => {
 
                         <View className="flex-row gap-2 mb-3">
                             <TouchableOpacity
-                                className={`flex-1 h-10 rounded-xl items-center justify-center border ${avatarPickerTab === 'icons' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                className={`flex-1 rounded-xl items-center justify-center border ${avatarPickerTab === 'icons' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
                                 onPress={() => setAvatarPickerTab('icons')}
                             >
-                                <AppText className={`font-bold text-sm ${avatarPickerTab === 'icons' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Ícones</AppText>
+                                <AppText className={`font-bold text-sm ${avatarPickerTab === 'icons' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>ícones</AppText>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                className={`flex-1 h-10 rounded-xl items-center justify-center border ${avatarPickerTab === 'frames' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                className={`flex-1 rounded-xl items-center justify-center border ${avatarPickerTab === 'frames' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
                                 onPress={() => setAvatarPickerTab('frames')}
                             >
                                 <AppText className={`font-bold text-sm ${avatarPickerTab === 'frames' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Bordas</AppText>
@@ -487,15 +492,15 @@ const Profile = () => {
                                                 className={`rounded-xl border p-2 items-center ${selected ? 'border-primary bg-primary/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f0f0f]'} ${unlocked ? '' : 'opacity-50'}`}
                                             >
                                                 <View className="w-10 h-10 rounded-full items-center justify-center bg-slate-100 dark:bg-slate-800">
-                                                    <Icon size={18} color="#f48c25" />
+                                                    <Icon size={pickerItemIconSize} color="#f48c25" />
                                                 </View>
-                                                <AppText className="text-[10px] text-slate-700 dark:text-slate-200 font-semibold mt-1 text-center" numberOfLines={1}>
+                                                <AppText className="text-[11px] text-slate-700 dark:text-slate-200 font-semibold mt-1 text-center" numberOfLines={2}>
                                                     {option.label}
                                                 </AppText>
                                                 {!unlocked ? (
                                                     <View className="flex-row items-center mt-0.5">
                                                         <Lock size={10} color="#64748b" />
-                                                        <AppText className="text-[9px] text-slate-500 ml-1">Nível {requiredLevel}</AppText>
+                                                        <AppText className="text-[10px] text-slate-500 ml-1">Nível {requiredLevel}</AppText>
                                                     </View>
                                                 ) : null}
                                             </TouchableOpacity>
@@ -531,15 +536,15 @@ const Profile = () => {
                                                         justifyContent: 'center',
                                                     }}
                                                 >
-                                                    <Icon size={16} color="#f48c25" />
+                                                    <Icon size={pickerItemIconSize - 1} color="#f48c25" />
                                                 </View>
-                                                <AppText className="text-[10px] text-slate-700 dark:text-slate-200 font-semibold mt-1 text-center" numberOfLines={1}>
+                                                <AppText className="text-[11px] text-slate-700 dark:text-slate-200 font-semibold mt-1 text-center" numberOfLines={2}>
                                                     {option.label}
                                                 </AppText>
                                                 {!unlocked ? (
                                                     <View className="flex-row items-center mt-0.5">
                                                         <Lock size={10} color="#64748b" />
-                                                        <AppText className="text-[9px] text-slate-500 ml-1">Nível {requiredLevel}</AppText>
+                                                        <AppText className="text-[10px] text-slate-500 ml-1">Nível {requiredLevel}</AppText>
                                                     </View>
                                                 ) : null}
                                             </TouchableOpacity>
@@ -561,14 +566,14 @@ const Profile = () => {
                                 variant="outline"
                                 disabled={savingAppearance}
                                 onPress={() => setShowAvatarPicker(false)}
-                                className="h-11 flex-1"
+                                className="flex-1"
                             />
                             <Button
                                 title={savingAppearance ? 'Salvando...' : 'Salvar ícone'}
                                 disabled={savingAppearance}
                                 loading={savingAppearance}
                                 onPress={saveProfileAppearance}
-                                className="h-11 flex-1"
+                                className="flex-1"
                             />
                         </View>
                     </View>
@@ -605,7 +610,6 @@ const Profile = () => {
                             variant="outline"
                             disabled={logoutLoading}
                             onPress={() => setShowLogoutConfirm(false)}
-                            className="h-11"
                         />
                     </View>
                 </View>
@@ -615,6 +619,4 @@ const Profile = () => {
 };
 
 export default Profile;
-
-
 

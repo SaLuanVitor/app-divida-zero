@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, ActivityIndicator } from 'react-native';
 import { ChartColumnIncreasing, ArrowUpCircle, ArrowDownCircle, WalletCards } from 'lucide-react-native';
@@ -55,7 +55,7 @@ const Relatorios = () => {
         },
       });
     } catch (error: any) {
-      setErrorMessage(error?.response?.data?.error ?? 'NÃ£o foi possÃ­vel carregar os relatÃ³rios agora.');
+      setErrorMessage(error?.response?.data?.error ?? 'Não foi possível carregar os relatórios agora.');
     } finally {
       setLoading(false);
     }
@@ -71,13 +71,13 @@ const Relatorios = () => {
 
   return (
     <Layout scrollable contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black pb-28">
-      <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold mb-1">RelatÃ³rios</AppText>
-      <AppText className="text-slate-500 dark:text-slate-300 mb-5">Resumo real das entradas e saÃ­das de {period}.</AppText>
+      <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold mb-1">Relatórios</AppText>
+      <AppText className="text-slate-500 dark:text-slate-300 mb-5">Resumo real das entradas e saídas de {period}.</AppText>
 
       {loading ? (
         <View className="items-center py-10">
           <ActivityIndicator color="#f48c25" />
-          <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando relatÃ³rio...</AppText>
+          <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando relatório...</AppText>
         </View>
       ) : null}
 
@@ -100,7 +100,7 @@ const Relatorios = () => {
         <Card className="flex-1" noPadding>
           <View className="p-4">
             <ArrowDownCircle size={18} color="#ef4444" />
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">SaÃ­das</AppText>
+            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Saídas</AppText>
             <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(summary.expense_total)}</AppText>
           </View>
         </Card>
@@ -110,7 +110,7 @@ const Relatorios = () => {
         <View className="p-4">
           <View className="flex-row items-center gap-2 mb-3">
             <ChartColumnIncreasing size={18} color="#f48c25" />
-            <AppText className="text-slate-900 dark:text-slate-100 font-bold">Saldo do mÃªs</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 font-bold">Saldo do mês</AppText>
           </View>
           <AppText className="text-2xl text-slate-900 dark:text-slate-100 font-extrabold">{formatCurrency(summary.balance)}</AppText>
           <AppText className="text-xs text-slate-500 dark:text-slate-300 mt-1">Atualizado automaticamente pelo backend</AppText>
@@ -124,7 +124,7 @@ const Relatorios = () => {
             <AppText className="text-slate-900 dark:text-slate-100 font-bold">Principais categorias</AppText>
           </View>
           {summary.top_categories.length === 0 ? (
-            <AppText className="text-slate-500 dark:text-slate-300 text-sm">Sem categorias de saÃ­da no perÃ­odo atual.</AppText>
+            <AppText className="text-slate-500 dark:text-slate-300 text-sm">Sem categorias de saída no período atual.</AppText>
           ) : (
             summary.top_categories.map((item) => (
               <View key={item.category} className="flex-row items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
@@ -140,4 +140,3 @@ const Relatorios = () => {
 };
 
 export default Relatorios;
-

@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Alert } from 'react-native';
 import { Mail, Lock, User, ArrowLeft, Trophy } from 'lucide-react-native';
@@ -26,23 +26,23 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
 
   const passwordHint = useMemo(() => {
-    if (!password) return 'MÃ­nimo de 8 caracteres.';
+    if (!password) return 'Mínimo de 8 caracteres.';
     if (password.length < 8) return 'Senha ainda curta.';
-    return 'Senha com tamanho mÃ­nimo vÃ¡lido.';
+    return 'Senha com tamanho mínimo válido.';
   }, [password]);
 
   const validate = () => {
     let valid = true;
 
     if (!name.trim()) {
-      setNameError('Informe o nome do usuÃ¡rio.');
+      setNameError('Informe o nome do usuário.');
       valid = false;
     } else {
       setNameError('');
     }
 
     if (!email.trim()) {
-      setEmailError('Informe seu usuÃ¡rio.');
+      setEmailError('Informe seu usuário.');
       valid = false;
     } else {
       setEmailError('');
@@ -95,12 +95,12 @@ const Register = () => {
       if (passwordFieldError) setPasswordError(passwordFieldError);
 
       if (backendCode === 'email_taken') {
-        Alert.alert('UsuÃ¡rio jÃ¡ cadastrado', backendMessage || 'Use outro identificador, faÃ§a login ou recupere sua senha.');
+        Alert.alert('Usuário já cadastrado', backendMessage || 'Use outro identificador, faça login ou recupere sua senha.');
         return;
       }
 
       const message = backendMessage ?? 'Falha ao criar conta. Tente novamente em instantes.';
-      Alert.alert('NÃ£o foi possÃ­vel criar sua conta', message);
+      Alert.alert('Não foi possível criar sua conta', message);
     } finally {
       setLoading(false);
     }
@@ -137,8 +137,8 @@ const Register = () => {
       </View>
 
       <Input
-        label="Nome do usuÃ¡rio"
-        placeholder="Nome do usuÃ¡rio"
+        label="Nome do usuário"
+        placeholder="Nome do usuário"
         value={name}
         onChangeText={(value) => {
           setName(value);
@@ -149,7 +149,7 @@ const Register = () => {
       />
 
       <Input
-        label="UsuÃ¡rio"
+        label="Usuário"
         placeholder="usuario"
         value={email}
         onChangeText={(value) => {
@@ -165,7 +165,7 @@ const Register = () => {
 
       <Input
         label="Senha"
-        placeholder="MÃ­nimo 8 caracteres"
+        placeholder="Mínimo 8 caracteres"
         value={password}
         onChangeText={(value) => {
           setPassword(value);
@@ -190,9 +190,9 @@ const Register = () => {
 
       <View className="mt-8 items-center">
         <AppText className="text-slate-500 dark:text-slate-300 text-sm">
-          JÃ¡ tem uma conta?{' '}
+          Já tem uma conta?{' '}
           <AppText className="text-primary font-bold" onPress={() => navigation.goBack()}>
-            FaÃ§a login
+            Faça login
           </AppText>
         </AppText>
       </View>

@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity } from 'react-native';
 import { ArrowLeft, Mail, User } from 'lucide-react-native';
@@ -35,7 +35,7 @@ const PersonalData = () => {
     }
 
     if (!email.includes('@')) {
-      setFeedback({ kind: 'error', message: 'Informe um identificador de acesso vÃ¡lido.' });
+      setFeedback({ kind: 'error', message: 'Informe um identificador de acesso válido.' });
       return;
     }
 
@@ -45,7 +45,7 @@ const PersonalData = () => {
       await updateUser(result.user);
       setFeedback({ kind: 'success', message: result.message });
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'NÃ£o foi possÃ­vel atualizar os dados do usuÃ¡rio.';
+      const message = error?.response?.data?.error ?? 'Não foi possível atualizar os dados do usuário.';
       setFeedback({ kind: 'error', message });
     } finally {
       setLoading(false);
@@ -60,7 +60,7 @@ const PersonalData = () => {
             <ArrowLeft size={22} color="#0f172a" />
           </TouchableOpacity>
           <View>
-            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Dados do usuÃ¡rio</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Dados do usuário</AppText>
             <AppText className="text-slate-500 dark:text-slate-300 text-xs">Atualize os identificadores visuais da conta.</AppText>
           </View>
         </View>
@@ -68,9 +68,9 @@ const PersonalData = () => {
 
       <View className="p-4">
         <Card className="p-4">
-          <Input label="Nome do usuÃ¡rio" value={name} onChangeText={setName} autoCapitalize="words" icon={User} />
+          <Input label="Nome do usuário" value={name} onChangeText={setName} autoCapitalize="words" icon={User} />
           <Input
-            label="UsuÃ¡rio"
+            label="Usuário"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -86,7 +86,7 @@ const PersonalData = () => {
             </View>
           ) : null}
 
-          <Button title="Salvar alteraÃ§Ãµes" onPress={onSave} loading={loading} disabled={loading || !hasChanges} />
+          <Button title="Salvar alterações" onPress={onSave} loading={loading} disabled={loading || !hasChanges} />
         </Card>
       </View>
     </Layout>
