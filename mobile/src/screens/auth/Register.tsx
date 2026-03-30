@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+﻿import React, { useMemo, useState } from 'react';
+import AppText from '../../components/AppText';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import { Mail, Lock, User, ArrowLeft, Trophy } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Input from '../../components/Input';
@@ -25,23 +26,23 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
 
   const passwordHint = useMemo(() => {
-    if (!password) return 'Mínimo de 8 caracteres.';
+    if (!password) return 'MÃ­nimo de 8 caracteres.';
     if (password.length < 8) return 'Senha ainda curta.';
-    return 'Senha com tamanho mínimo válido.';
+    return 'Senha com tamanho mÃ­nimo vÃ¡lido.';
   }, [password]);
 
   const validate = () => {
     let valid = true;
 
     if (!name.trim()) {
-      setNameError('Informe o nome do usuário.');
+      setNameError('Informe o nome do usuÃ¡rio.');
       valid = false;
     } else {
       setNameError('');
     }
 
     if (!email.trim()) {
-      setEmailError('Informe seu usuário.');
+      setEmailError('Informe seu usuÃ¡rio.');
       valid = false;
     } else {
       setEmailError('');
@@ -94,12 +95,12 @@ const Register = () => {
       if (passwordFieldError) setPasswordError(passwordFieldError);
 
       if (backendCode === 'email_taken') {
-        Alert.alert('Usuário já cadastrado', backendMessage || 'Use outro identificador, faça login ou recupere sua senha.');
+        Alert.alert('UsuÃ¡rio jÃ¡ cadastrado', backendMessage || 'Use outro identificador, faÃ§a login ou recupere sua senha.');
         return;
       }
 
       const message = backendMessage ?? 'Falha ao criar conta. Tente novamente em instantes.';
-      Alert.alert('Não foi possível criar sua conta', message);
+      Alert.alert('NÃ£o foi possÃ­vel criar sua conta', message);
     } finally {
       setLoading(false);
     }
@@ -114,12 +115,12 @@ const Register = () => {
         >
           <ArrowLeft size={24} color="#0f172a" />
         </TouchableOpacity>
-        <Text className="text-slate-900 text-lg font-bold ml-2">Cadastro</Text>
+        <AppText className="text-slate-900 text-lg font-bold ml-2">Cadastro</AppText>
       </View>
 
-      <Text className="text-slate-900 text-[30px] font-extrabold leading-tight mb-7">
-        Crie sua conta e <Text className="text-primary">comece sua jornada</Text>
-      </Text>
+      <AppText className="text-slate-900 text-[30px] font-extrabold leading-tight mb-7">
+        Crie sua conta e <AppText className="text-primary">comece sua jornada</AppText>
+      </AppText>
 
       <View className="bg-white dark:bg-[#121212] border border-[#e6e0db] rounded-2xl p-5 mb-8">
         <View className="flex-row items-center gap-4">
@@ -127,17 +128,17 @@ const Register = () => {
             <Trophy size={30} color="#94a3b8" />
           </View>
           <View className="flex-1">
-            <Text className="text-slate-900 font-bold text-base mb-1">Sua primeira conquista</Text>
-            <Text className="text-slate-600 dark:text-slate-300 text-sm">
-              Complete o cadastro para desbloquear a medalha de <Text className="text-primary font-bold">Novato</Text>.
-            </Text>
+            <AppText className="text-slate-900 font-bold text-base mb-1">Sua primeira conquista</AppText>
+            <AppText className="text-slate-600 dark:text-slate-300 text-sm">
+              Complete o cadastro para desbloquear a medalha de <AppText className="text-primary font-bold">Novato</AppText>.
+            </AppText>
           </View>
         </View>
       </View>
 
       <Input
-        label="Nome do usuário"
-        placeholder="Nome do usuário"
+        label="Nome do usuÃ¡rio"
+        placeholder="Nome do usuÃ¡rio"
         value={name}
         onChangeText={(value) => {
           setName(value);
@@ -148,7 +149,7 @@ const Register = () => {
       />
 
       <Input
-        label="Usuário"
+        label="UsuÃ¡rio"
         placeholder="usuario"
         value={email}
         onChangeText={(value) => {
@@ -164,7 +165,7 @@ const Register = () => {
 
       <Input
         label="Senha"
-        placeholder="Mínimo 8 caracteres"
+        placeholder="MÃ­nimo 8 caracteres"
         value={password}
         onChangeText={(value) => {
           setPassword(value);
@@ -175,9 +176,9 @@ const Register = () => {
         error={passwordError}
       />
 
-      <Text className={`text-xs mb-4 ml-1 ${password.length >= 8 ? 'text-emerald-600' : 'text-slate-500 dark:text-slate-300'}`}>
+      <AppText className={`text-xs mb-4 ml-1 ${password.length >= 8 ? 'text-emerald-600' : 'text-slate-500 dark:text-slate-300'}`}>
         {passwordHint}
-      </Text>
+      </AppText>
 
       <Button
         title="Criar Conta"
@@ -188,15 +189,16 @@ const Register = () => {
       />
 
       <View className="mt-8 items-center">
-        <Text className="text-slate-500 dark:text-slate-300 text-sm">
-          Já tem uma conta?{' '}
-          <Text className="text-primary font-bold" onPress={() => navigation.goBack()}>
-            Faça login
-          </Text>
-        </Text>
+        <AppText className="text-slate-500 dark:text-slate-300 text-sm">
+          JÃ¡ tem uma conta?{' '}
+          <AppText className="text-primary font-bold" onPress={() => navigation.goBack()}>
+            FaÃ§a login
+          </AppText>
+        </AppText>
       </View>
     </Layout>
   );
 };
 
 export default Register;
+

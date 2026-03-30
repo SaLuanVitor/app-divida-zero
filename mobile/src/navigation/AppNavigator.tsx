@@ -1,5 +1,5 @@
 ﻿import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Home from '../screens/app/Home';
@@ -19,6 +19,8 @@ import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, L
 import { useOverlay } from '../context/OverlayContext';
 import { useThemeMode } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import AppText from '../components/AppText';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -28,16 +30,18 @@ const NavItem = ({
     onPress,
     icon,
     darkMode,
+    largerTouchTargets,
 }: {
     label: string;
     active: boolean;
     onPress: () => void;
     icon: React.ReactNode;
     darkMode: boolean;
+    largerTouchTargets: boolean;
 }) => (
-    <TouchableOpacity onPress={onPress} style={styles.navItem}>
+    <TouchableOpacity onPress={onPress} style={[styles.navItem, largerTouchTargets && styles.navItemLarge]}>
         {icon}
-        <Text style={[styles.navText, darkMode && styles.navTextDark, active && styles.navTextActive]}>{label}</Text>
+        <AppText style={[styles.navText, darkMode && styles.navTextDark, active && styles.navTextActive]}>{label}</AppText>
     </TouchableOpacity>
 );
 
@@ -45,6 +49,7 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     const insets = useSafeAreaInsets();
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
     const { darkMode } = useThemeMode();
+    const { largerTouchTargets } = useAccessibility();
 
     const showActions = isOverlayOpen('actions');
     const inactiveIcon = darkMode ? '#94a3b8' : '#8a7560';
@@ -71,19 +76,19 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                 <Pressable style={styles.overlay} onPress={closeOverlay}>
                     <View style={[styles.actionsContainer, darkMode && styles.actionsContainerDark]}>
                         <TouchableOpacity
-                            style={[styles.actionButton, darkMode && styles.actionButtonDark]}
+                            style={[styles.actionButton, darkMode && styles.actionButtonDark, largerTouchTargets && styles.actionButtonLarge]}
                             onPress={() => goTo('Lancamentos', { mode: 'income' })}
                         >
                             <Wallet size={18} color="#f48c25" />
-                            <Text style={[styles.actionText, darkMode && styles.actionTextDark]}>Novo ganho</Text>
+                            <AppText style={[styles.actionText, darkMode && styles.actionTextDark]}>Novo ganho</AppText>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.actionButton, darkMode && styles.actionButtonDark]}
+                            style={[styles.actionButton, darkMode && styles.actionButtonDark, largerTouchTargets && styles.actionButtonLarge]}
                             onPress={() => goTo('Lancamentos', { mode: 'debt' })}
                         >
                             <Landmark size={18} color="#f48c25" />
-                            <Text style={[styles.actionText, darkMode && styles.actionTextDark]}>Nova dívida</Text>
+                            <AppText style={[styles.actionText, darkMode && styles.actionTextDark]}>Nova dívida</AppText>
                         </TouchableOpacity>
                     </View>
                 </Pressable>
@@ -97,6 +102,7 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                         active={activeRouteName === 'Inicio'}
                         onPress={() => goTo('Inicio')}
                         icon={<House size={20} color={activeRouteName === 'Inicio' ? '#f48c25' : inactiveIcon} />}
+                        largerTouchTargets={largerTouchTargets}
                     />
 
                     <NavItem
@@ -105,13 +111,17 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                         active={activeRouteName === 'Metas'}
                         onPress={() => goTo('Metas')}
                         icon={<Trophy size={20} color={activeRouteName === 'Metas' ? '#f48c25' : inactiveIcon} />}
+                        largerTouchTargets={largerTouchTargets}
                     />
 
                     <View style={styles.centerButtonContainer}>
-                        <TouchableOpacity onPress={toggleActions} style={[styles.centerButton, darkMode && styles.centerButtonDark]}>
+                        <TouchableOpacity
+                            onPress={toggleActions}
+                            style={[styles.centerButton, darkMode && styles.centerButtonDark, largerTouchTargets && styles.centerButtonLarge]}
+                        >
                             {showActions ? <CirclePlus size={22} color="#fff" /> : <Plus size={24} color="#fff" />}
                         </TouchableOpacity>
-                        <Text style={[styles.centerButtonText, darkMode && styles.centerButtonTextDark]}>Lançamentos</Text>
+                        <AppText style={[styles.centerButtonText, darkMode && styles.centerButtonTextDark]}>Lançamentos</AppText>
                     </View>
 
                     <NavItem
@@ -120,6 +130,7 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                         active={activeRouteName === 'Relatorios'}
                         onPress={() => goTo('Relatorios')}
                         icon={<ChartColumnIncreasing size={20} color={activeRouteName === 'Relatorios' ? '#f48c25' : inactiveIcon} />}
+                        largerTouchTargets={largerTouchTargets}
                     />
 
                     <NavItem
@@ -128,6 +139,7 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                         active={activeRouteName === 'Perfil'}
                         onPress={() => goTo('Perfil')}
                         icon={<User size={20} color={activeRouteName === 'Perfil' ? '#f48c25' : inactiveIcon} />}
+                        largerTouchTargets={largerTouchTargets}
                     />
                 </View>
             </View>
@@ -166,6 +178,9 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    navItemLarge: {
+        minHeight: 52,
     },
     navText: {
         fontSize: 10,
@@ -207,6 +222,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: '#f8fafc',
         marginBottom: 8,
+    },
+    actionButtonLarge: {
+        minHeight: 56,
     },
     actionButtonDark: {
         backgroundColor: '#1f2937',
@@ -252,6 +270,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderWidth: 4,
         borderColor: '#ffffff',
+    },
+    centerButtonLarge: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
     },
     centerButtonDark: {
         borderColor: '#000000',

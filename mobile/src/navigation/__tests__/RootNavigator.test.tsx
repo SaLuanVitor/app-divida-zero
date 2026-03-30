@@ -1,10 +1,15 @@
 import React from 'react';
 import { act, render, waitFor } from '@testing-library/react-native';
 import { useAuth } from '../../context/AuthContext';
+import { useAccessibility } from '../../context/AccessibilityContext';
 import { getAppPreferences } from '../../services/preferences';
 
 jest.mock('../../context/AuthContext', () => ({
   useAuth: jest.fn(),
+}));
+
+jest.mock('../../context/AccessibilityContext', () => ({
+  useAccessibility: jest.fn(),
 }));
 
 jest.mock('../../services/preferences', () => ({
@@ -51,6 +56,7 @@ describe('RootNavigator auth guard', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
+    (useAccessibility as jest.Mock).mockReturnValue({ reduceMotion: false });
     (getAppPreferences as jest.Mock).mockResolvedValue({ onboarding_seen: true });
   });
 

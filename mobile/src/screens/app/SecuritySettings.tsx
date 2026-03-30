@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+﻿import React, { useState } from 'react';
+import AppText from '../../components/AppText';
+import { View, TouchableOpacity } from 'react-native';
 import { ArrowLeft, LockKeyhole } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -27,12 +28,12 @@ const SecuritySettings = () => {
     }
 
     if (newPassword.length < 8) {
-      setFeedback({ kind: 'error', message: 'A nova senha deve ter no mínimo 8 caracteres.' });
+      setFeedback({ kind: 'error', message: 'A nova senha deve ter no mÃ­nimo 8 caracteres.' });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setFeedback({ kind: 'error', message: 'A confirmação da nova senha não confere.' });
+      setFeedback({ kind: 'error', message: 'A confirmaÃ§Ã£o da nova senha nÃ£o confere.' });
       return;
     }
 
@@ -47,7 +48,7 @@ const SecuritySettings = () => {
       setConfirmPassword('');
       setFeedback({ kind: 'success', message: result.message });
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Não foi possível alterar a senha.';
+      const message = error?.response?.data?.error ?? 'NÃ£o foi possÃ­vel alterar a senha.';
       setFeedback({ kind: 'error', message });
     } finally {
       setLoading(false);
@@ -62,8 +63,8 @@ const SecuritySettings = () => {
             <ArrowLeft size={22} color="#0f172a" />
           </TouchableOpacity>
           <View>
-            <Text className="text-slate-900 text-xl font-bold">Segurança</Text>
-            <Text className="text-slate-500 dark:text-slate-300 text-xs">Gerencie senha e proteção da conta.</Text>
+            <AppText className="text-slate-900 text-xl font-bold">SeguranÃ§a</AppText>
+            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Gerencie senha e proteÃ§Ã£o da conta.</AppText>
           </View>
         </View>
       </View>
@@ -72,7 +73,7 @@ const SecuritySettings = () => {
         <Card className="p-4">
           <View className="flex-row items-center mb-2">
             <LockKeyhole size={16} color="#64748b" />
-            <Text className="text-slate-700 font-bold ml-2">Alterar senha</Text>
+            <AppText className="text-slate-700 font-bold ml-2">Alterar senha</AppText>
           </View>
 
           <Input
@@ -101,7 +102,7 @@ const SecuritySettings = () => {
             <View
               className={`rounded-xl px-3 py-2 mb-3 ${feedback.kind === 'success' ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}
             >
-              <Text className={`text-sm ${feedback.kind === 'success' ? 'text-emerald-700' : 'text-red-700'}`}>{feedback.message}</Text>
+              <AppText className={`text-sm ${feedback.kind === 'success' ? 'text-emerald-700' : 'text-red-700'}`}>{feedback.message}</AppText>
             </View>
           ) : null}
 
@@ -113,3 +114,4 @@ const SecuritySettings = () => {
 };
 
 export default SecuritySettings;
+

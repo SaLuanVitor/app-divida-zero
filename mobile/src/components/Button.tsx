@@ -2,10 +2,11 @@ import React from 'react';
 import {
     TouchableOpacity,
     TouchableOpacityProps,
-    Text,
     ActivityIndicator,
     View
 } from 'react-native';
+import AppText from './AppText';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 interface ButtonProps extends TouchableOpacityProps {
     title: string;
@@ -30,6 +31,7 @@ const Button: React.FC<ButtonProps> = ({
     disabled,
     ...rest
 }) => {
+    const { largerTouchTargets } = useAccessibility();
     const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
         primary: 'bg-primary shadow-md shadow-orange-200',
         secondary: 'bg-slate-800',
@@ -53,6 +55,7 @@ const Button: React.FC<ButtonProps> = ({
     };
 
     const isDark = variant === 'secondary' || variant === 'primary' || variant === 'danger';
+    const extraTouchTargetStyle = largerTouchTargets ? { minHeight: 56 } : undefined;
 
     return (
         <TouchableOpacity
@@ -67,6 +70,7 @@ const Button: React.FC<ButtonProps> = ({
                 (loading || disabled) && 'opacity-60',
                 className
             )}
+            style={extraTouchTargetStyle}
             {...rest}
         >
             {loading ? (
@@ -74,11 +78,11 @@ const Button: React.FC<ButtonProps> = ({
             ) : (
                 <View className="flex-row items-center justify-center">
                     {icon && <View className="mr-2">{icon}</View>}
-                    <Text
+                    <AppText
                         className={cn('text-base font-bold tracking-tight', textVariants[variant], textClassName)}
                     >
                         {title}
-                    </Text>
+                    </AppText>
                 </View>
             )}
         </TouchableOpacity>

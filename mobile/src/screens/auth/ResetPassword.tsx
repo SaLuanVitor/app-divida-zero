@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import AppText from '../../components/AppText';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import { ArrowLeft, Mail, KeyRound, Lock } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Input from '../../components/Input';
@@ -90,15 +91,15 @@ const ResetPassword = () => {
                 <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 self-start">
                     <ArrowLeft size={24} color="#0f172a" />
                 </TouchableOpacity>
-                <Text className="text-slate-900 dark:text-slate-100 text-lg font-bold ml-2">Redefinir Senha</Text>
+                <AppText className="text-slate-900 dark:text-slate-100 text-lg font-bold ml-2">Redefinir Senha</AppText>
             </View>
 
             <View className="items-center pt-3 pb-4">
                 <View className="mb-5 h-20 w-20 rounded-full bg-primary/10 items-center justify-center">
                     <KeyRound size={38} color="#f48c25" />
                 </View>
-                <Text className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 text-center mb-2">Informe o token de recuperação</Text>
-                <Text className="text-sm text-slate-600 dark:text-slate-300 text-center">Use o token recebido para concluir a redefinição da senha.</Text>
+                <AppText className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 text-center mb-2">Informe o token de recuperação</AppText>
+                <AppText className="text-sm text-slate-600 dark:text-slate-300 text-center">Use o token recebido para concluir a redefinição da senha.</AppText>
             </View>
 
             <Input
@@ -154,6 +155,7 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
+
 
 
 

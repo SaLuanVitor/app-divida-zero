@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import {
     View,
-    Text,
-    TextInput,
     TextInputProps,
     TouchableOpacity
 } from 'react-native';
 import { Eye, EyeOff, LucideIcon } from 'lucide-react-native';
+import AppText from './AppText';
+import AppTextInput from './AppTextInput';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 interface InputProps extends TextInputProps {
     label?: string;
@@ -33,6 +34,7 @@ const Input: React.FC<InputProps> = ({
 }) => {
     const [isFocused, setIsFocused] = useState(false);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const { largerTouchTargets } = useAccessibility();
 
     const togglePasswordVisibility = () => {
         setIsPasswordVisible(!isPasswordVisible);
@@ -44,9 +46,9 @@ const Input: React.FC<InputProps> = ({
     return (
         <View className={cn('w-full mb-4', containerClassName)}>
             {label && (
-                <Text className="text-slate-900 dark:text-slate-100 font-medium text-base mb-2">
+                <AppText className="text-slate-900 dark:text-slate-100 font-medium text-base mb-2">
                     {label}
-                </Text>
+                </AppText>
             )}
 
             <View
@@ -55,6 +57,7 @@ const Input: React.FC<InputProps> = ({
                     isFocused ? 'border-primary' : 'border-slate-200',
                     error ? 'border-red-500' : ''
                 )}
+                style={largerTouchTargets ? { minHeight: 60 } : undefined}
             >
                 {Icon && (
                     <Icon
@@ -64,7 +67,7 @@ const Input: React.FC<InputProps> = ({
                     />
                 )}
 
-                <TextInput
+                <AppTextInput
                     className={cn('flex-1 h-full text-slate-900 dark:text-slate-100 text-base font-normal', className)}
                     placeholderTextColor="#94a3b8"
                     accessibilityLabel={label || rest.placeholder || 'Campo de texto'}
@@ -99,9 +102,9 @@ const Input: React.FC<InputProps> = ({
             </View>
 
             {error && (
-                <Text className="text-red-500 text-sm mt-1 ml-1">
+                <AppText className="text-red-500 text-sm mt-1 ml-1">
                     {error}
-                </Text>
+                </AppText>
             )}
         </View>
     );

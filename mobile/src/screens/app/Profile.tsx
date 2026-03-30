@@ -1,5 +1,6 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
+import AppText from '../../components/AppText';
+import { View, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
 import {
     User as UserIcon,
     Settings,
@@ -21,6 +22,7 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import ProfileAvatar from '../../components/ProfileAvatar';
 import { useAuth } from '../../context/AuthContext';
+import { useAccessibility } from '../../context/AccessibilityContext';
 import { listFinancialRecords } from '../../services/financialRecords';
 import { FinancialRecordDto } from '../../types/financialRecord';
 import { buildGamificationSummary, formatAchievementProgress } from '../../utils/gamification';
@@ -51,6 +53,7 @@ const Profile = () => {
     const route = useRoute<any>();
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const insets = useSafeAreaInsets();
+    const { reduceMotion } = useAccessibility();
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [logoutLoading, setLogoutLoading] = useState(false);
@@ -144,13 +147,13 @@ const Profile = () => {
         if (!shouldFocusHistory || !scrollRef.current) return;
 
         const timer = setTimeout(() => {
-            scrollRef.current?.scrollTo({ y: Math.max(historySectionY - 20, 0), animated: true });
+            scrollRef.current?.scrollTo({ y: Math.max(historySectionY - 20, 0), animated: !reduceMotion });
             setHighlightHistoryCta(true);
             navigation.setParams({ focusHistory: false });
         }, 120);
 
         return () => clearTimeout(timer);
-    }, [route.params?.focusHistory, historySectionY, navigation]);
+    }, [route.params?.focusHistory, historySectionY, navigation, reduceMotion]);
 
     useEffect(() => {
         if (!highlightHistoryCta) return;
@@ -236,15 +239,15 @@ const Profile = () => {
                             iconSize={44}
                         />
 
-                        <Text className="text-slate-900 dark:text-slate-100 text-2xl font-bold mt-4">{user?.name || 'Usuário'}</Text>
-                        <Text className="text-slate-500 dark:text-slate-300 text-sm">{user?.email || 'usuario'}</Text>
+                        <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold mt-4">{user?.name || 'Usuário'}</AppText>
+                        <AppText className="text-slate-500 dark:text-slate-300 text-sm">{user?.email || 'usuario'}</AppText>
 
                         <TouchableOpacity
                             className="mt-4 bg-[#f8f7f5] dark:bg-black px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700"
                             onPress={openAvatarPicker}
                             activeOpacity={0.8}
                         >
-                            <Text className="text-slate-700 dark:text-slate-200 text-xs font-bold">Personalizar ícone</Text>
+                            <AppText className="text-slate-700 dark:text-slate-200 text-xs font-bold">Personalizar ícone</AppText>
                         </TouchableOpacity>
                     </View>
 
@@ -256,10 +259,10 @@ const Profile = () => {
                                         <Trophy size={18} color="#f48c25" />
                                     </View>
                                     <View className="ml-3">
-                                        <Text className="text-slate-900 dark:text-slate-100 font-bold">Nível {summary.level} - {summary.level_title}</Text>
-                                        <Text className="text-slate-500 dark:text-slate-300 text-xs">
+                                        <AppText className="text-slate-900 dark:text-slate-100 font-bold">Nível {summary.level} - {summary.level_title}</AppText>
+                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs">
                                             {summary.xp_in_level}/{summary.xp_in_level + summary.xp_to_next_level} XP para o nível {summary.level + 1}
-                                        </Text>
+                                        </AppText>
                                     </View>
                                 </View>
                                 {loadingGamification ? <ActivityIndicator size="small" color="#f48c25" /> : <ChevronRight size={20} color="#94a3b8" />}
@@ -271,7 +274,7 @@ const Profile = () => {
                     </View>
 
                     <View className="px-6 pt-6">
-                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Conquistas</Text>
+                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Conquistas</AppText>
                         <Card className="mb-6" noPadding>
                             <TouchableOpacity
                                 activeOpacity={0.8}
@@ -280,12 +283,12 @@ const Profile = () => {
                             >
                                 <View className="flex-row items-center justify-between">
                                     <View className="flex-1 pr-3">
-                                        <Text className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
+                                        <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
                                             {gamification.unlockedCount}/{gamification.achievements.length} desbloqueadas - Total XP {summary.total_xp}
-                                        </Text>
-                                        <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                        </AppText>
+                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
                                             {achievementsExpanded ? 'Toque para recolher a lista.' : 'Toque para expandir a lista de conquistas.'}
-                                        </Text>
+                                        </AppText>
                                     </View>
                                     <ChevronRight
                                         size={18}
@@ -300,14 +303,14 @@ const Profile = () => {
                                     {gamification.achievements.map((achievement, index) => (
                                         <View key={achievement.id} className={`p-4 ${index !== gamification.achievements.length - 1 ? 'border-b border-slate-50 dark:border-slate-800' : ''}`}>
                                             <View className="flex-row items-center justify-between mb-1">
-                                                <Text className={`font-bold ${achievement.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'}`}>
+                                                <AppText className={`font-bold ${achievement.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'}`}>
                                                     {achievement.title}
-                                                </Text>
-                                                <Text className={`text-xs font-bold ${achievement.unlocked ? 'text-emerald-600' : 'text-slate-400 dark:text-slate-300'}`}>
+                                                </AppText>
+                                                <AppText className={`text-xs font-bold ${achievement.unlocked ? 'text-emerald-600' : 'text-slate-400 dark:text-slate-300'}`}>
                                                     {achievement.unlocked ? `+${achievement.rewardXp} XP` : formatAchievementProgress(achievement.progress, achievement.target)}
-                                                </Text>
+                                                </AppText>
                                             </View>
-                                            <Text className="text-slate-500 dark:text-slate-300 text-xs mb-2">{achievement.description}</Text>
+                                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mb-2">{achievement.description}</AppText>
                                             <View className="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                                                 <View
                                                     className={`h-full rounded-full ${achievement.unlocked ? 'bg-emerald-500' : 'bg-primary'}`}
@@ -322,7 +325,7 @@ const Profile = () => {
                     </View>
 
                     <View className="px-6">
-                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Medalhas</Text>
+                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Medalhas</AppText>
                         <Card className="mb-6" noPadding>
                             <TouchableOpacity
                                 activeOpacity={0.8}
@@ -331,12 +334,12 @@ const Profile = () => {
                             >
                                 <View className="flex-row items-center justify-between">
                                     <View className="flex-1 pr-3">
-                                        <Text className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
+                                        <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
                                             {gamification.badges.filter((badge) => badge.unlocked).length}/{gamification.badges.length} medalhas conquistadas
-                                        </Text>
-                                        <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                        </AppText>
+                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
                                             {badgesExpanded ? 'Toque para recolher a lista.' : 'Toque para expandir a lista de medalhas.'}
-                                        </Text>
+                                        </AppText>
                                     </View>
                                     <ChevronRight
                                         size={18}
@@ -357,8 +360,8 @@ const Profile = () => {
                                                         <View className={`w-9 h-9 rounded-full items-center justify-center mb-2 ${badge.unlocked ? 'bg-primary/15' : 'bg-slate-100 dark:bg-slate-800'}`}>
                                                             <Icon size={18} color={badge.unlocked ? '#f48c25' : '#94a3b8'} />
                                                         </View>
-                                                        <Text className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-300'}`}>{badge.title}</Text>
-                                                        <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">{badge.description}</Text>
+                                                        <AppText className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-300'}`}>{badge.title}</AppText>
+                                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">{badge.description}</AppText>
                                                     </View>
                                                 );
                                             })}
@@ -370,11 +373,11 @@ const Profile = () => {
                     </View>
 
                     <View className="px-6" onLayout={(event) => setHistorySectionY(event.nativeEvent.layout.y)}>
-                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Histórico de XP</Text>
+                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Histórico de XP</AppText>
                         <Card className="mb-6 p-4">
-                            <Text className="text-slate-600 dark:text-slate-300 text-sm mb-3">
+                            <AppText className="text-slate-600 dark:text-slate-300 text-sm mb-3">
                                 Acesse uma visão detalhada de todos os eventos de ganho e perda de XP.
-                            </Text>
+                            </AppText>
                             <Button
                                 title="Ver histórico completo"
                                 variant={highlightHistoryCta ? 'primary' : 'outline'}
@@ -385,7 +388,7 @@ const Profile = () => {
                     </View>
 
                     <View className="px-6">
-                        <Text className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-4">Conta</Text>
+                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-4">Conta</AppText>
                         <Card className="mb-6 overflow-hidden" noPadding>
                             {menuItems.map((item, i) => (
                                 <TouchableOpacity
@@ -396,7 +399,7 @@ const Profile = () => {
                                 >
                                     <View className="flex-row items-center">
                                         <item.icon size={20} color={item.color} />
-                                        <Text className="text-slate-700 dark:text-slate-200 font-medium ml-3">{item.label}</Text>
+                                        <AppText className="text-slate-700 dark:text-slate-200 font-medium ml-3">{item.label}</AppText>
                                     </View>
                                     <ChevronRight size={18} color="#cbd5e1" />
                                 </TouchableOpacity>
@@ -414,7 +417,7 @@ const Profile = () => {
                     </View>
 
                     <View className="items-center pb-10 pt-6">
-                        <Text className="text-slate-400 dark:text-slate-300 text-xs text-center">Dívida Zero App - v1.0.0</Text>
+                        <AppText className="text-slate-400 dark:text-slate-300 text-xs text-center">Dívida Zero App - v1.0.0</AppText>
                     </View>
                 </ScrollView>
             </Layout>
@@ -427,7 +430,7 @@ const Profile = () => {
                         style={{ left: modalSideInset, right: modalSideInset, top: pickerTopInset, bottom: pickerBottomInset }}
                     >
                         <View className="flex-row items-center justify-between mb-3">
-                            <Text className="text-slate-900 dark:text-slate-100 text-base font-bold">Personalizar ícone</Text>
+                            <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Personalizar ícone</AppText>
                             <TouchableOpacity disabled={savingAppearance} onPress={() => setShowAvatarPicker(false)} className="p-1">
                                 <X size={18} color="#64748b" />
                             </TouchableOpacity>
@@ -437,9 +440,9 @@ const Profile = () => {
                             <View className="flex-row items-center">
                                 <ProfileAvatar iconKey={pendingIconKey} frameKey={pendingFrameKey} size={68} iconSize={30} />
                                 <View className="ml-3 flex-1">
-                                    <Text className="text-slate-900 dark:text-slate-100 font-bold">{selectedIconOption.label} + {selectedFrameOption.label}</Text>
-                                    <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">Nível atual: {summary.level}</Text>
-                                    <Text className="text-slate-500 dark:text-slate-300 text-xs">Ícones liberados: {getUnlockedIconsCount(summary.level)} de 30 • Bordas liberadas: {getUnlockedFramesCount(summary.level)} de 10</Text>
+                                    <AppText className="text-slate-900 dark:text-slate-100 font-bold">{selectedIconOption.label} + {selectedFrameOption.label}</AppText>
+                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">Nível atual: {summary.level}</AppText>
+                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs">Ícones liberados: {getUnlockedIconsCount(summary.level)} de 30 • Bordas liberadas: {getUnlockedFramesCount(summary.level)} de 10</AppText>
                                 </View>
                             </View>
                         </View>
@@ -449,13 +452,13 @@ const Profile = () => {
                                 className={`flex-1 h-10 rounded-xl items-center justify-center border ${avatarPickerTab === 'icons' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                                 onPress={() => setAvatarPickerTab('icons')}
                             >
-                                <Text className={`font-bold text-sm ${avatarPickerTab === 'icons' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Ícones</Text>
+                                <AppText className={`font-bold text-sm ${avatarPickerTab === 'icons' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Ícones</AppText>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 className={`flex-1 h-10 rounded-xl items-center justify-center border ${avatarPickerTab === 'frames' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                                 onPress={() => setAvatarPickerTab('frames')}
                             >
-                                <Text className={`font-bold text-sm ${avatarPickerTab === 'frames' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Bordas</Text>
+                                <AppText className={`font-bold text-sm ${avatarPickerTab === 'frames' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Bordas</AppText>
                             </TouchableOpacity>
                         </View>
 
@@ -486,13 +489,13 @@ const Profile = () => {
                                                 <View className="w-10 h-10 rounded-full items-center justify-center bg-slate-100 dark:bg-slate-800">
                                                     <Icon size={18} color="#f48c25" />
                                                 </View>
-                                                <Text className="text-[10px] text-slate-700 dark:text-slate-200 font-semibold mt-1 text-center" numberOfLines={1}>
+                                                <AppText className="text-[10px] text-slate-700 dark:text-slate-200 font-semibold mt-1 text-center" numberOfLines={1}>
                                                     {option.label}
-                                                </Text>
+                                                </AppText>
                                                 {!unlocked ? (
                                                     <View className="flex-row items-center mt-0.5">
                                                         <Lock size={10} color="#64748b" />
-                                                        <Text className="text-[9px] text-slate-500 ml-1">Nível {requiredLevel}</Text>
+                                                        <AppText className="text-[9px] text-slate-500 ml-1">Nível {requiredLevel}</AppText>
                                                     </View>
                                                 ) : null}
                                             </TouchableOpacity>
@@ -530,13 +533,13 @@ const Profile = () => {
                                                 >
                                                     <Icon size={16} color="#f48c25" />
                                                 </View>
-                                                <Text className="text-[10px] text-slate-700 dark:text-slate-200 font-semibold mt-1 text-center" numberOfLines={1}>
+                                                <AppText className="text-[10px] text-slate-700 dark:text-slate-200 font-semibold mt-1 text-center" numberOfLines={1}>
                                                     {option.label}
-                                                </Text>
+                                                </AppText>
                                                 {!unlocked ? (
                                                     <View className="flex-row items-center mt-0.5">
                                                         <Lock size={10} color="#64748b" />
-                                                        <Text className="text-[9px] text-slate-500 ml-1">Nível {requiredLevel}</Text>
+                                                        <AppText className="text-[9px] text-slate-500 ml-1">Nível {requiredLevel}</AppText>
                                                     </View>
                                                 ) : null}
                                             </TouchableOpacity>
@@ -548,7 +551,7 @@ const Profile = () => {
 
                         {appearanceFeedback ? (
                             <View className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 px-3 py-2 mt-2 mb-1">
-                                <Text className="text-xs text-red-700 dark:text-red-300">{appearanceFeedback}</Text>
+                                <AppText className="text-xs text-red-700 dark:text-red-300">{appearanceFeedback}</AppText>
                             </View>
                         ) : null}
 
@@ -576,10 +579,10 @@ const Profile = () => {
                 <View className="absolute inset-0 z-50">
                     <Pressable className="absolute inset-0 bg-black/30" onPress={() => !logoutLoading && setShowLogoutConfirm(false)} />
                     <View className="absolute left-4 right-4 top-[38%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
-                        <Text className="text-slate-900 dark:text-slate-100 text-base font-bold">Sair da conta</Text>
-                        <Text className="text-slate-600 dark:text-slate-300 text-sm mt-2 mb-4">
+                        <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Sair da conta</AppText>
+                        <AppText className="text-slate-600 dark:text-slate-300 text-sm mt-2 mb-4">
                             Deseja realmente sair do aplicativo?
-                        </Text>
+                        </AppText>
 
                         <Button
                             title="Sair da conta"
@@ -612,5 +615,6 @@ const Profile = () => {
 };
 
 export default Profile;
+
 
 

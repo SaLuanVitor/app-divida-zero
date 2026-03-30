@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppPreferences } from '../types/settings';
 
 const APP_PREFERENCES_KEY = '@DividaZero:appPreferences';
-const FONT_SCALE_OPTIONS: Array<AppPreferences['font_scale']> = [1, 1.15, 1.3];
+const FONT_SCALE_OPTIONS: Array<AppPreferences['font_scale']> = [0.9, 1, 1.15, 1.3];
 type PreferencesListener = (prefs: AppPreferences) => void;
 
 const listeners = new Set<PreferencesListener>();
@@ -17,6 +17,8 @@ export const defaultAppPreferences: AppPreferences = {
   dark_mode: false,
   large_text: false,
   font_scale: 1,
+  reduce_motion: false,
+  larger_touch_targets: false,
   onboarding_seen: false,
   onboarding_mode: null,
   tutorial_reopen_enabled: true,
@@ -24,7 +26,9 @@ export const defaultAppPreferences: AppPreferences = {
 
 const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): AppPreferences => {
   const candidateScale = Number(raw?.font_scale);
-  const normalizedScale = FONT_SCALE_OPTIONS.find((value) => value === candidateScale) ?? 1;
+  const normalizedScale =
+    FONT_SCALE_OPTIONS.find((value) => value === candidateScale) ??
+    (raw?.large_text ? 1.15 : 1);
   const largeText = typeof raw?.large_text === 'boolean' ? raw.large_text : normalizedScale > 1;
 
   return {
@@ -32,6 +36,8 @@ const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): 
     ...raw,
     font_scale: normalizedScale,
     large_text: largeText,
+    reduce_motion: typeof raw?.reduce_motion === 'boolean' ? raw.reduce_motion : false,
+    larger_touch_targets: typeof raw?.larger_touch_targets === 'boolean' ? raw.larger_touch_targets : false,
     onboarding_mode:
       raw?.onboarding_mode === 'beginner' || raw?.onboarding_mode === 'advanced'
         ? raw.onboarding_mode
