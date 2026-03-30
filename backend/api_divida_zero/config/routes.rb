@@ -13,6 +13,8 @@
       patch "auth/change_password", to: "auth#change_password"
       get "gamification/summary", to: "gamification#summary"
       get "gamification/events", to: "gamification#events"
+      get "notifications/history", to: "notifications#history"
+      patch "notifications/read_all", to: "notifications#read_all"
       get "reports/summary", to: "reports#summary"
       post "analytics/events", to: "analytics#create"
 

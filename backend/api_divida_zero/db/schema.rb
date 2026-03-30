@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_30_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_30_000300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -92,6 +92,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_30_000200) do
     t.index ["user_id"], name: "index_gamification_events_on_user_id"
   end
 
+  create_table "notification_alerts", force: :cascade do |t|
+    t.string "alert_type", null: false
+    t.datetime "created_at", null: false
+    t.integer "due_count", default: 0, null: false
+    t.string "message", null: false
+    t.json "metadata", default: {}, null: false
+    t.datetime "read_at"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "window_key", null: false
+    t.index ["user_id", "alert_type", "window_key"], name: "idx_on_user_id_alert_type_window_key_6b1544e72a", unique: true
+    t.index ["user_id", "created_at"], name: "index_notification_alerts_on_user_id_and_created_at"
+    t.index ["user_id", "read_at"], name: "index_notification_alerts_on_user_id_and_read_at"
+    t.index ["user_id"], name: "index_notification_alerts_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -110,4 +127,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_30_000200) do
   add_foreign_key "financial_goals", "users"
   add_foreign_key "financial_records", "users"
   add_foreign_key "gamification_events", "users"
+  add_foreign_key "notification_alerts", "users"
 end
