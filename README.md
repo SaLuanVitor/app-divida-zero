@@ -97,7 +97,16 @@ docker compose down
 docker compose down -v
 ```
 
-## 5) Regra obrigatoria de charset (UTF-8)
+## 5) Rodar testes do backend via Docker
+
+Para evitar erros de conexao local com PostgreSQL, rode os testes dentro do container da API:
+
+```powershell
+cd C:\Users\luanv\Projetos\app-divida-zero
+docker compose exec api bash -lc "RAILS_ENV=test bundle exec rails db:prepare && bundle exec rails test test/controllers/api/v1/auth_controller_test.rb"
+```
+
+## 6) Regra obrigatoria de charset (UTF-8)
 
 Todo texto do projeto deve permanecer em UTF-8 (sem caracteres corrompidos, por exemplo sequencias como `Ã` e `�`).
 

@@ -1,5 +1,5 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
 import {
     User as UserIcon,
     Settings,
@@ -9,14 +9,17 @@ import {
     HelpCircle,
     LogOut,
     ChevronRight,
-    Camera,
+    Lock,
     Trophy,
     Crown,
+    X,
 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import ProfileAvatar from '../../components/ProfileAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { listFinancialRecords } from '../../services/financialRecords';
 import { FinancialRecordDto } from '../../types/financialRecord';
@@ -26,11 +29,28 @@ import { DEFAULT_GAMIFICATION_SUMMARY, GamificationEventDto, GamificationSummary
 import { runWhenIdle } from '../../utils/idle';
 import { listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto } from '../../types/financialGoal';
+import { updateProfile } from '../../services/account';
+import {
+    getFrameRequiredLevel,
+    getUnlockedFramesCount,
+    getUnlockedIconsCount,
+    getIconRequiredLevel,
+    getProfileFrameOption,
+    getProfileIconOption,
+    isFrameUnlocked,
+    isIconUnlocked,
+    normalizeProfileFrameKey,
+    normalizeProfileIconKey,
+    PROFILE_FRAME_OPTIONS,
+    PROFILE_ICON_OPTIONS,
+} from '../../utils/profileAppearance';
 
 const Profile = () => {
-    const { user, signOut } = useAuth();
+    const { user, signOut, updateUser } = useAuth();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [logoutLoading, setLogoutLoading] = useState(false);
@@ -43,6 +63,12 @@ const Profile = () => {
     const [highlightHistoryCta, setHighlightHistoryCta] = useState(false);
     const [achievementsExpanded, setAchievementsExpanded] = useState(false);
     const [badgesExpanded, setBadgesExpanded] = useState(false);
+    const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+    const [avatarPickerTab, setAvatarPickerTab] = useState<'icons' | 'frames'>('icons');
+    const [pendingIconKey, setPendingIconKey] = useState(normalizeProfileIconKey(user?.profile_icon_key));
+    const [pendingFrameKey, setPendingFrameKey] = useState(normalizeProfileFrameKey(user?.profile_frame_key));
+    const [savingAppearance, setSavingAppearance] = useState(false);
+    const [appearanceFeedback, setAppearanceFeedback] = useState<string | null>(null);
 
     const scrollRef = useRef<ScrollView>(null);
 
@@ -71,6 +97,16 @@ const Profile = () => {
         shield: Shield,
         crown: Crown,
     };
+    const isCompactDevice = windowWidth < 380 || windowHeight < 740;
+    const iconColumns = windowWidth < 360 ? 3 : 4;
+    const frameColumns = windowWidth < 380 ? 2 : 3;
+    const pickerTopInset = Math.max(insets.top + 8, isCompactDevice ? 8 : 16);
+    const pickerBottomInset = Math.max(insets.bottom + 8, isCompactDevice ? 8 : 16);
+    const modalInnerWidth = Math.max(windowWidth - 64, 240);
+    const iconItemWidth = Math.floor((modalInnerWidth - (iconColumns - 1) * 10) / iconColumns);
+    const frameItemWidth = Math.floor((modalInnerWidth - (frameColumns - 1) * 10) / frameColumns);
+    const selectedIconOption = useMemo(() => getProfileIconOption(pendingIconKey), [pendingIconKey]);
+    const selectedFrameOption = useMemo(() => getProfileFrameOption(pendingFrameKey), [pendingFrameKey]);
 
     const loadGamification = useCallback(async () => {
         setLoadingGamification(true);
@@ -120,29 +156,84 @@ const Profile = () => {
         return () => clearTimeout(timer);
     }, [highlightHistoryCta]);
 
+    useEffect(() => {
+        setPendingIconKey(normalizeProfileIconKey(user?.profile_icon_key));
+        setPendingFrameKey(normalizeProfileFrameKey(user?.profile_frame_key));
+    }, [user?.profile_frame_key, user?.profile_icon_key]);
+
+    const openAvatarPicker = () => {
+        setAppearanceFeedback(null);
+        setAvatarPickerTab('icons');
+        setPendingIconKey(normalizeProfileIconKey(user?.profile_icon_key));
+        setPendingFrameKey(normalizeProfileFrameKey(user?.profile_frame_key));
+        setShowAvatarPicker(true);
+    };
+
+    const saveProfileAppearance = async () => {
+        if (savingAppearance) return;
+
+        const currentIconKey = normalizeProfileIconKey(user?.profile_icon_key);
+        const currentFrameKey = normalizeProfileFrameKey(user?.profile_frame_key);
+        const payload: Parameters<typeof updateProfile>[0] = {};
+
+        if (pendingIconKey !== currentIconKey) {
+            payload.profile_icon_key = pendingIconKey;
+        }
+        if (pendingFrameKey !== currentFrameKey) {
+            payload.profile_frame_key = pendingFrameKey;
+        }
+
+        if (!Object.keys(payload).length) {
+            setShowAvatarPicker(false);
+            return;
+        }
+
+        if (payload.profile_icon_key && !isIconUnlocked(payload.profile_icon_key, summary.level)) {
+            setAppearanceFeedback(`Esse ícone exige nível ${getIconRequiredLevel(payload.profile_icon_key)}.`);
+            return;
+        }
+
+        if (payload.profile_frame_key && !isFrameUnlocked(payload.profile_frame_key, summary.level)) {
+            setAppearanceFeedback(`Essa borda exige nível ${getFrameRequiredLevel(payload.profile_frame_key)}.`);
+            return;
+        }
+
+        setSavingAppearance(true);
+        setAppearanceFeedback(null);
+        try {
+            const result = await updateProfile(payload);
+            await updateUser(result.user);
+            setShowAvatarPicker(false);
+        } catch (error: any) {
+            const message = error?.response?.data?.error ?? 'Não foi possível atualizar o ícone de perfil.';
+            setAppearanceFeedback(message);
+        } finally {
+            setSavingAppearance(false);
+        }
+    };
+
     return (
         <>
             <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
                 <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false}>
                     <View className="bg-white dark:bg-[#121212] px-6 pt-8 pb-8 items-center border-b border-slate-100 dark:border-slate-800">
-                        <View className="relative">
-                            <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border-2 border-primary/20">
-                                <UserIcon size={48} color="#f48c25" />
-                            </View>
-                            <TouchableOpacity
-                                className="absolute bottom-0 right-0 bg-primary p-2 rounded-full border-2 border-white"
-                                activeOpacity={0.8}
-                            >
-                                <Camera size={16} color="#fff" />
-                            </TouchableOpacity>
-                        </View>
+                        <ProfileAvatar
+                            iconKey={user?.profile_icon_key}
+                            frameKey={user?.profile_frame_key}
+                            size={96}
+                            iconSize={44}
+                        />
 
                         <Text className="text-slate-900 dark:text-slate-100 text-2xl font-bold mt-4">{user?.name || 'Usuário'}</Text>
                         <Text className="text-slate-500 dark:text-slate-300 text-sm">{user?.email || 'usuario'}</Text>
 
-                        <View className="mt-4 bg-[#f8f7f5] dark:bg-black px-4 py-2 rounded-full">
-                            <Text className="text-slate-700 dark:text-slate-200 text-xs font-bold">Editar dados do usuário</Text>
-                        </View>
+                        <TouchableOpacity
+                            className="mt-4 bg-[#f8f7f5] dark:bg-black px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700"
+                            onPress={openAvatarPicker}
+                            activeOpacity={0.8}
+                        >
+                            <Text className="text-slate-700 dark:text-slate-200 text-xs font-bold">Personalizar ícone</Text>
+                        </TouchableOpacity>
                     </View>
 
                     <View className="px-6 -mt-6">
@@ -315,6 +406,158 @@ const Profile = () => {
                     </View>
                 </ScrollView>
             </Layout>
+
+            {showAvatarPicker ? (
+                <View className="absolute inset-0 z-[58]">
+                    <Pressable className="absolute inset-0 bg-black/40" onPress={() => !savingAppearance && setShowAvatarPicker(false)} />
+                    <View
+                        className="absolute left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4"
+                        style={{ top: pickerTopInset, bottom: pickerBottomInset }}
+                    >
+                        <View className="flex-row items-center justify-between mb-3">
+                            <Text className="text-slate-900 dark:text-slate-100 text-base font-bold">Personalizar ícone</Text>
+                            <TouchableOpacity disabled={savingAppearance} onPress={() => setShowAvatarPicker(false)} className="p-1">
+                                <X size={18} color="#64748b" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View className="bg-[#f8f7f5] dark:bg-black rounded-xl border border-slate-200 dark:border-slate-700 p-3 mb-3">
+                            <View className="flex-row items-center">
+                                <ProfileAvatar iconKey={pendingIconKey} frameKey={pendingFrameKey} size={68} iconSize={30} />
+                                <View className="ml-3 flex-1">
+                                    <Text className="text-slate-900 dark:text-slate-100 font-bold">{selectedIconOption.label} + {selectedFrameOption.label}</Text>
+                                    <Text className="text-slate-500 dark:text-slate-300 text-xs mt-1">Nível atual: {summary.level}</Text>
+                                    <Text className="text-slate-500 dark:text-slate-300 text-xs">Ícones liberados: {getUnlockedIconsCount(summary.level)} de 30 • Bordas liberadas: {getUnlockedFramesCount(summary.level)} de 10</Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        <View className="flex-row gap-2 mb-3">
+                            <TouchableOpacity
+                                className={`flex-1 h-10 rounded-xl items-center justify-center border ${avatarPickerTab === 'icons' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                onPress={() => setAvatarPickerTab('icons')}
+                            >
+                                <Text className={`font-bold text-sm ${avatarPickerTab === 'icons' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Ícones</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className={`flex-1 h-10 rounded-xl items-center justify-center border ${avatarPickerTab === 'frames' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                onPress={() => setAvatarPickerTab('frames')}
+                            >
+                                <Text className={`font-bold text-sm ${avatarPickerTab === 'frames' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Bordas</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView
+                            showsVerticalScrollIndicator={false}
+                            keyboardShouldPersistTaps="handled"
+                            className="flex-1"
+                            contentContainerStyle={{ paddingBottom: 4 }}
+                        >
+                            {avatarPickerTab === 'icons' ? (
+                                <View className="flex-row flex-wrap justify-between">
+                                    {PROFILE_ICON_OPTIONS.map((option) => {
+                                        const unlocked = isIconUnlocked(option.key, summary.level);
+                                        const selected = pendingIconKey === option.key;
+                                        const requiredLevel = getIconRequiredLevel(option.key);
+                                        const Icon = option.icon;
+
+                                        return (
+                                            <TouchableOpacity
+                                                key={option.key}
+                                                activeOpacity={0.8}
+                                                disabled={!unlocked}
+                                                onPress={() => setPendingIconKey(option.key)}
+                                                style={{ width: iconItemWidth, marginBottom: 10 }}
+                                                className={`rounded-xl border p-2 items-center ${selected ? 'border-primary bg-primary/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f0f0f]'} ${unlocked ? '' : 'opacity-50'}`}
+                                            >
+                                                <View className="w-10 h-10 rounded-full items-center justify-center bg-slate-100 dark:bg-slate-800">
+                                                    <Icon size={18} color="#f48c25" />
+                                                </View>
+                                                <Text className="text-[10px] text-slate-700 dark:text-slate-200 font-semibold mt-1 text-center" numberOfLines={1}>
+                                                    {option.label}
+                                                </Text>
+                                                {!unlocked ? (
+                                                    <View className="flex-row items-center mt-0.5">
+                                                        <Lock size={10} color="#64748b" />
+                                                        <Text className="text-[9px] text-slate-500 ml-1">Nível {requiredLevel}</Text>
+                                                    </View>
+                                                ) : null}
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            ) : (
+                                <View className="flex-row flex-wrap justify-between">
+                                    {PROFILE_FRAME_OPTIONS.map((option) => {
+                                        const unlocked = isFrameUnlocked(option.key, summary.level);
+                                        const selected = pendingFrameKey === option.key;
+                                        const requiredLevel = getFrameRequiredLevel(option.key);
+                                        const Icon = selectedIconOption.icon;
+
+                                        return (
+                                            <TouchableOpacity
+                                                key={option.key}
+                                                activeOpacity={0.8}
+                                                disabled={!unlocked}
+                                                onPress={() => setPendingFrameKey(option.key)}
+                                                style={{ width: frameItemWidth, marginBottom: 10 }}
+                                                className={`rounded-xl border p-2 items-center ${selected ? 'border-primary bg-primary/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f0f0f]'} ${unlocked ? '' : 'opacity-50'}`}
+                                            >
+                                                <View
+                                                    style={{
+                                                        width: 44,
+                                                        height: 44,
+                                                        borderRadius: 22,
+                                                        borderWidth: option.borderWidth,
+                                                        borderColor: option.borderColor,
+                                                        backgroundColor: option.backgroundColor,
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                    }}
+                                                >
+                                                    <Icon size={16} color="#f48c25" />
+                                                </View>
+                                                <Text className="text-[10px] text-slate-700 dark:text-slate-200 font-semibold mt-1 text-center" numberOfLines={1}>
+                                                    {option.label}
+                                                </Text>
+                                                {!unlocked ? (
+                                                    <View className="flex-row items-center mt-0.5">
+                                                        <Lock size={10} color="#64748b" />
+                                                        <Text className="text-[9px] text-slate-500 ml-1">Nível {requiredLevel}</Text>
+                                                    </View>
+                                                ) : null}
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            )}
+                        </ScrollView>
+
+                        {appearanceFeedback ? (
+                            <View className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 px-3 py-2 mt-2 mb-1">
+                                <Text className="text-xs text-red-700 dark:text-red-300">{appearanceFeedback}</Text>
+                            </View>
+                        ) : null}
+
+                        <View className="flex-row gap-2 mt-3">
+                            <Button
+                                title="Cancelar"
+                                variant="outline"
+                                disabled={savingAppearance}
+                                onPress={() => setShowAvatarPicker(false)}
+                                className="h-11 flex-1"
+                            />
+                            <Button
+                                title={savingAppearance ? 'Salvando...' : 'Salvar ícone'}
+                                disabled={savingAppearance}
+                                loading={savingAppearance}
+                                onPress={saveProfileAppearance}
+                                className="h-11 flex-1"
+                            />
+                        </View>
+                    </View>
+                </View>
+            ) : null}
 
             {showLogoutConfirm ? (
                 <View className="absolute inset-0 z-50">

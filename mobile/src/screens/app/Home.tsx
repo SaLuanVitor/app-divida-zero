@@ -19,6 +19,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import ProfileAvatar from '../../components/ProfileAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { useOverlay } from '../../context/OverlayContext';
 import { deleteFinancialRecord, listFinancialRecords, payFinancialRecord } from '../../services/financialRecords';
@@ -566,9 +567,12 @@ const Home = () => {
                     <View className="flex-row items-center justify-between mb-4">
                         <View className="flex-row items-center gap-3">
                             <View className="relative">
-                                <View className="w-12 h-12 rounded-full bg-primary/15 border-2 border-primary items-center justify-center">
-                                    <Text className="text-primary font-extrabold">{(user?.name || 'U').charAt(0).toUpperCase()}</Text>
-                                </View>
+                                <ProfileAvatar
+                                    iconKey={user?.profile_icon_key}
+                                    frameKey={user?.profile_frame_key}
+                                    size={48}
+                                    iconSize={22}
+                                />
                                 <View className="absolute -bottom-1 -right-1 bg-primary px-1.5 py-0.5 rounded-full border border-white">
                                     <Text className="text-white text-[9px] font-bold">Nível {gamificationSummary.level}</Text>
                                 </View>
