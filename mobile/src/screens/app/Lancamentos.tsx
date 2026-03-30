@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Alert, ScrollView, ActivityIndicator, Pressable } from 'react-native';
-import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, ChevronRight, Trophy, Target, Shield, Crown } from 'lucide-react-native';
+import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, ChevronRight, Trophy, Target, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Button from '../../components/Button';
@@ -95,6 +95,7 @@ const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: 
     shield: Shield,
     crown: Crown,
 };
+const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 const Lancamentos = () => {
     const navigation = useNavigation<any>();
@@ -124,11 +125,15 @@ const Lancamentos = () => {
 
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [pickerMonth, setPickerMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+    const [showPeriodPicker, setShowPeriodPicker] = useState(false);
+    const [pickerMode, setPickerMode] = useState<'month' | 'year'>('month');
+    const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
 
     const [loading, setLoading] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
     const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
+    const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
 
     useEffect(() => {
         const incomingMode = route.params?.mode as string | undefined;
@@ -220,15 +225,42 @@ const Lancamentos = () => {
 
     const openDatePicker = () => {
         setPickerMonth(new Date(startDate.getFullYear(), startDate.getMonth(), 1));
+        setShowPeriodPicker(false);
         setShowDatePicker(true);
     };
 
-    const closeDatePicker = () => setShowDatePicker(false);
+    const closeDatePicker = () => {
+        setShowDatePicker(false);
+        setShowPeriodPicker(false);
+    };
+
+    const openPeriodPicker = () => {
+        setPickerYear(pickerMonth.getFullYear());
+        setPickerMode('month');
+        setShowPeriodPicker(true);
+    };
+
+    const closePeriodPicker = () => setShowPeriodPicker(false);
+
+    const selectMonth = (monthIndex: number) => {
+        setPickerMonth(new Date(pickerYear, monthIndex, 1));
+        closePeriodPicker();
+    };
+
+    const selectYear = (year: number) => {
+        setPickerYear(year);
+        setPickerMonth(new Date(year, pickerMonth.getMonth(), 1));
+        setPickerMode('month');
+    };
 
     const selectDate = (date: Date) => {
         setStartDate(date);
         closeDatePicker();
     };
+
+    const yearOptions = useMemo(() => {
+        return Array.from({ length: 16 }, (_, index) => pickerYear - 8 + index);
+    }, [pickerYear]);
 
     const handleAmountChange = (value: string) => {
         const digits = onlyDigits(value).slice(0, 9);
@@ -326,7 +358,11 @@ const Lancamentos = () => {
             if (result.xp_feedback) {
                 const prefs = await getAppPreferences();
                 await sendXpAndBadgeNotification({
-                    enabled: prefs.notifications_enabled && prefs.device_push_enabled && prefs.notify_xp_and_badges,
+                    enabled:
+                        prefs.notifications_enabled &&
+                        prefs.device_push_enabled &&
+                        prefs.notify_xp_and_badges &&
+                        !result.xp_feedback.leveled_up,
                     title: result.xp_feedback.leveled_up ? 'Subiu de nível!' : 'XP atualizado',
                     body: result.xp_feedback.leveled_up
                         ? `Você chegou ao nível ${result.xp_feedback.summary.level}.`
@@ -629,10 +665,24 @@ const Lancamentos = () => {
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
                                 <ChevronLeft size={16} color={iconColor} />
                             </TouchableOpacity>
-                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">{toMonthLabel(pickerMonth)}</AppText>
-                            <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 1))}>
-                                <ChevronRight size={16} color={iconColor} />
+                            <TouchableOpacity className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" onPress={openPeriodPicker}>
+                                <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{toMonthLabel(pickerMonth)}</AppText>
                             </TouchableOpacity>
+                            <View className="flex-row items-center gap-2">
+                                <TouchableOpacity
+                                    className="px-3 h-9 rounded-full bg-primary/10 border border-primary/20 items-center justify-center"
+                                    onPress={() => {
+                                        const today = new Date();
+                                        setStartDate(today);
+                                        setPickerMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+                                    }}
+                                >
+                                    <AppText className="text-primary text-xs font-bold">Hoje</AppText>
+                                </TouchableOpacity>
+                                <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 1))}>
+                                    <ChevronRight size={16} color={iconColor} />
+                                </TouchableOpacity>
+                            </View>
                         </View>
 
                         <View className="flex-row justify-between mb-2 px-1">
@@ -663,21 +713,86 @@ const Lancamentos = () => {
                         </View>
 
                         <View className="flex-row gap-2">
-                            <Button
-                                title="Hoje"
-                                variant="outline"
-                                onPress={() => {
-                                    const today = new Date();
-                                    setStartDate(today);
-                                    setPickerMonth(new Date(today.getFullYear(), today.getMonth(), 1));
-                                    closeDatePicker();
-                                }}
-                                className="h-11 flex-1"
-                            />
                             <Button title="Fechar" variant="outline" onPress={closeDatePicker} className="h-11 flex-1" />
                         </View>
                     </View>
                 </Pressable>
+            ) : null}
+
+            {showDatePicker && showPeriodPicker ? (
+                <View className="absolute inset-0 z-[60]">
+                    <Pressable className="absolute inset-0 bg-black/30" onPress={closePeriodPicker} />
+                    <View className="absolute left-4 right-4 top-[24%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+                        <View className="flex-row items-center justify-between mb-3">
+                            <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Selecionar período</AppText>
+                            <TouchableOpacity className="p-1" onPress={closePeriodPicker}>
+                                <X size={18} color="#64748b" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View className="flex-row gap-2 mb-3">
+                            <TouchableOpacity
+                                className={`flex-1 rounded-xl items-center justify-center border ${pickerMode === 'month' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
+                                onPress={() => setPickerMode('month')}
+                            >
+                                <AppText className={`font-bold text-sm ${pickerMode === 'month' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Meses</AppText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className={`flex-1 rounded-xl items-center justify-center border ${pickerMode === 'year' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
+                                onPress={() => setPickerMode('year')}
+                            >
+                                <AppText className={`font-bold text-sm ${pickerMode === 'year' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Anos</AppText>
+                            </TouchableOpacity>
+                        </View>
+
+                        {pickerMode === 'month' ? (
+                            <>
+                                <View className="flex-row items-center justify-between mb-3">
+                                    <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerYear((prev) => prev - 1)}>
+                                        <ChevronLeft size={14} color={iconColor} />
+                                    </TouchableOpacity>
+                                    <AppText className="text-slate-900 dark:text-slate-100 font-bold">{pickerYear}</AppText>
+                                    <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerYear((prev) => prev + 1)}>
+                                        <ChevronRight size={14} color={iconColor} />
+                                    </TouchableOpacity>
+                                </View>
+                                <View className="flex-row flex-wrap justify-between">
+                                    {monthNames.map((label, index) => {
+                                        const active = pickerMonth.getFullYear() === pickerYear && pickerMonth.getMonth() === index;
+                                        return (
+                                            <TouchableOpacity
+                                                key={label}
+                                                className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
+                                                onPress={() => selectMonth(index)}
+                                            >
+                                                <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</AppText>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </>
+                        ) : (
+                            <View className="flex-row flex-wrap justify-between">
+                                {yearOptions.map((year) => {
+                                    const active = pickerMonth.getFullYear() === year;
+                                    return (
+                                        <TouchableOpacity
+                                            key={year}
+                                            className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                            style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
+                                            onPress={() => selectYear(year)}
+                                        >
+                                            <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        )}
+                    </View>
+                </View>
             ) : null}
 
             {xpPopup ? (
@@ -723,8 +838,3 @@ const Lancamentos = () => {
 };
 
 export default Lancamentos;
-
-
-
-
-

@@ -167,6 +167,13 @@ const toCalendarEntry = (record: FinancialRecordDto): CalendarEntry => {
     };
 };
 
+const calculateSettledBalance = (items: FinancialRecordDto[]) =>
+    items.reduce((sum, record) => {
+        if (record.status === 'pending') return sum;
+        const amount = Number(record.amount || 0);
+        return record.flow_type === 'income' ? sum + amount : sum - amount;
+    }, 0);
+
 const Home = () => {
     const { user } = useAuth();
     const navigation = useNavigation<any>();
@@ -180,6 +187,7 @@ const Home = () => {
     });
     const [selectedDateKey, setSelectedDateKey] = useState<string>('');
     const [records, setRecords] = useState<FinancialRecordDto[]>([]);
+    const [allRecords, setAllRecords] = useState<FinancialRecordDto[]>([]);
     const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
@@ -255,6 +263,16 @@ const Home = () => {
         }
     }, []);
 
+    const loadTotalBalanceRecords = useCallback(async (options: { force?: boolean } = {}) => {
+        const { force = false } = options;
+        try {
+            const result = await listFinancialRecords(undefined, undefined, { force });
+            setAllRecords(Array.isArray(result.records) ? result.records : []);
+        } catch {
+            // Do not block the screen if total balance fails temporarily.
+        }
+    }, []);
+
     useFocusEffect(
         useCallback(() => {
             const cancel = runWhenIdle(() => {
@@ -275,26 +293,20 @@ const Home = () => {
         }, [loadGlobalGamification])
     );
 
+    useFocusEffect(
+        useCallback(() => {
+            const cancel = runWhenIdle(() => {
+                loadTotalBalanceRecords();
+            });
+
+            return cancel;
+        }, [loadTotalBalanceRecords])
+    );
+
     const entries = useMemo(() => records.map(toCalendarEntry), [records]);
     const pendingEntriesCount = useMemo(() => entries.filter((item) => item.status === 'pending').length, [entries]);
-    const monthlyReceivedValue = useMemo(
-        () =>
-            records.reduce((sum, record) => {
-                const isSettled = record.status !== 'pending';
-                const isReceived = record.status === 'received' || (isSettled && record.flow_type === 'income');
-                return isReceived ? sum + Number(record.amount || 0) : sum;
-            }, 0),
-        [records]
-    );
-    const monthlyPaidValue = useMemo(
-        () =>
-            records.reduce((sum, record) => {
-                const isSettled = record.status !== 'pending';
-                const isPaid = record.status === 'paid' || (isSettled && record.flow_type !== 'income');
-                return isPaid ? sum + Number(record.amount || 0) : sum;
-            }, 0),
-        [records]
-    );
+    const monthlyBalanceValue = useMemo(() => calculateSettledBalance(records), [records]);
+    const totalBalanceValue = useMemo(() => calculateSettledBalance(allRecords), [allRecords]);
     const nextBestAction = useMemo(() => {
         if (pendingEntriesCount > 0) {
             return {
@@ -464,7 +476,7 @@ const Home = () => {
         if (!xpFeedback) return;
         const prefs = await getAppPreferences();
         await sendXpAndBadgeNotification({
-            enabled: prefs.notifications_enabled && prefs.device_push_enabled && prefs.notify_xp_and_badges,
+            enabled: prefs.notifications_enabled && prefs.device_push_enabled && prefs.notify_xp_and_badges && !xpFeedback.leveled_up,
             title: xpFeedback.leveled_up ? 'Subiu de nível!' : fallbackTitle,
             body: xpFeedback.leveled_up
                 ? `Você chegou ao nível ${xpFeedback.summary.level}.`
@@ -499,7 +511,11 @@ const Home = () => {
 
     const executePay = async (entry: CalendarEntry) => {
         const result = await payFinancialRecord(entry.id);
-        await Promise.all([loadMonthlyRecords({ force: true }), loadGlobalGamification({ force: true })]);
+        await Promise.all([
+            loadMonthlyRecords({ force: true }),
+            loadGlobalGamification({ force: true }),
+            loadTotalBalanceRecords({ force: true }),
+        ]);
         pushFeedback('success', 'Status atualizado', result.message);
         await maybeNotifyXp(result.xp_feedback, 'XP atualizado');
         await trackAnalyticsEvent({
@@ -515,7 +531,11 @@ const Home = () => {
 
     const executeDelete = async (entry: CalendarEntry, scope: 'single' | 'group') => {
         const result = await deleteFinancialRecord(entry.id, scope);
-        await Promise.all([loadMonthlyRecords({ force: true }), loadGlobalGamification({ force: true })]);
+        await Promise.all([
+            loadMonthlyRecords({ force: true }),
+            loadGlobalGamification({ force: true }),
+            loadTotalBalanceRecords({ force: true }),
+        ]);
         pushFeedback('success', 'Registro excluído', `${result.message} (${result.deleted_count} registro(s)).`);
         await maybeNotifyXp(result.xp_feedback, 'XP ajustado');
         openXpFeedback(result.xp_feedback, 'XP ajustado');
@@ -601,16 +621,16 @@ const Home = () => {
                         <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
                             <View className="flex-row items-center mb-1">
                                 <CircleDollarSign size={14} color="#16a34a" />
-                                <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Recebido no mês</AppText>
+                                <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Saldo Total</AppText>
                             </View>
-                            <AppText className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyReceivedValue)}</AppText>
+                            <AppText className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(totalBalanceValue)}</AppText>
                         </View>
                         <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
                             <View className="flex-row items-center mb-1">
                                 <Landmark size={14} color="#f59e0b" />
-                                <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Pago no mês</AppText>
+                                <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-300 font-bold uppercase">Saldo Mensal</AppText>
                             </View>
-                            <AppText className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyPaidValue)}</AppText>
+                            <AppText className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyBalanceValue)}</AppText>
                         </View>
                     </View>
 
@@ -1013,7 +1033,3 @@ const Home = () => {
 };
 
 export default Home;
-
-
-
-

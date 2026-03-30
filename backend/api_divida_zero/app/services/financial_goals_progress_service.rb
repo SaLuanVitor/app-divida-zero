@@ -170,16 +170,33 @@
     end
 
     def relevant_amount_for(goal)
+      scope = scoped_records_for(goal)
+
+      case goal.goal_type
+      when "debt"
+        debt_paid_amount(scope)
+      else
+        net_settled_balance(scope)
+      end
+    end
+
+    def scoped_records_for(goal)
       scope = goal.user.financial_records.where("due_date >= ?", goal.start_date)
+      return scope if goal.target_date.blank?
 
-      total = case goal.goal_type
-              when "debt"
-                scope.where(record_type: "debt", status: "paid").sum(:amount)
-              else
-                scope.where(flow_type: "income", status: "received").sum(:amount)
-              end
+      scope.where("due_date <= ?", goal.target_date)
+    end
 
-      total.to_d
+    def debt_paid_amount(scope)
+      scope.where(record_type: "debt", status: "paid").sum(:amount).to_d
+    end
+
+    def net_settled_balance(scope)
+      received_income = scope.where(flow_type: "income", status: "received").sum(:amount).to_d
+      paid_expenses = scope.where(flow_type: "expense", status: "paid").sum(:amount).to_d
+
+      net = received_income - paid_expenses
+      net.positive? ? net : 0.to_d
     end
 
     def progress_for(target_amount, current_amount)
