@@ -1,7 +1,11 @@
 import api from './api';
 import { User } from '../types/auth';
 
-export const updateProfile = async (payload: { name: string; email: string }) => {
+export type UpdateProfilePayload = Partial<
+  Pick<User, 'name' | 'email' | 'profile_icon_key' | 'profile_frame_key'>
+>;
+
+export const updateProfile = async (payload: UpdateProfilePayload) => {
   const { data } = await api.patch('/auth/profile', payload);
   return data as { message: string; user: User };
 };

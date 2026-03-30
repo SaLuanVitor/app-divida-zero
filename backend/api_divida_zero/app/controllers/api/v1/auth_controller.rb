@@ -82,7 +82,13 @@ module Api
       end
 
       def update_profile
-        @current_user.update!(profile_params)
+        attrs = profile_params.to_h.symbolize_keys
+        validation_error = validate_profile_appearance(attrs)
+        if validation_error
+          return render json: { error: validation_error }, status: :unprocessable_entity
+        end
+
+        @current_user.update!(attrs)
 
         render json: {
           message: "Dados do usuário atualizados com sucesso.",
@@ -133,7 +139,31 @@ module Api
       end
 
       def profile_params
-        params.permit(:name, :email)
+        params.permit(:name, :email, :profile_icon_key, :profile_frame_key)
+      end
+
+      def validate_profile_appearance(attrs)
+        return nil if attrs.empty?
+
+        level = nil
+
+        if attrs.key?(:profile_icon_key)
+          icon_key = attrs[:profile_icon_key].to_s
+          return "Ícone de perfil inválido." unless ProfileAppearanceCatalog.valid_icon_key?(icon_key)
+
+          level ||= GamificationService.summary_for(@current_user)[:level]
+          return "Ícone de perfil bloqueado para seu nível atual." unless ProfileAppearanceCatalog.icon_unlocked?(icon_key, level)
+        end
+
+        if attrs.key?(:profile_frame_key)
+          frame_key = attrs[:profile_frame_key].to_s
+          return "Borda de perfil inválida." unless ProfileAppearanceCatalog.valid_frame_key?(frame_key)
+
+          level ||= GamificationService.summary_for(@current_user)[:level]
+          return "Borda de perfil bloqueada para seu nível atual." unless ProfileAppearanceCatalog.frame_unlocked?(frame_key, level)
+        end
+
+        nil
       end
 
       def bearer_token

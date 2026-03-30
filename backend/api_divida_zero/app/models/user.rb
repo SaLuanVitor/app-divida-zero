@@ -30,7 +30,9 @@
     {
       id: id,
       name: name,
-      email: email
+      email: email,
+      profile_icon_key: profile_icon_key.presence || ProfileAppearanceCatalog::DEFAULT_ICON_KEY,
+      profile_frame_key: profile_frame_key.presence || ProfileAppearanceCatalog::DEFAULT_FRAME_KEY
     }
   end
 

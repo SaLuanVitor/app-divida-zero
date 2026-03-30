@@ -26,6 +26,8 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert body["access_token"].present?
     assert body["refresh_token"].present?
     assert_equal "novo_usuario", body.dig("user", "email")
+    assert_equal "icon_01", body.dig("user", "profile_icon_key")
+    assert_equal "frame_01", body.dig("user", "profile_frame_key")
   end
 
   test "register returns unprocessable entity for duplicated usuario" do
@@ -45,6 +47,8 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     body = JSON.parse(response.body)
 
     assert_equal @user.id, body.dig("user", "id")
+    assert_equal "icon_01", body.dig("user", "profile_icon_key")
+    assert_equal "frame_01", body.dig("user", "profile_frame_key")
     assert body["access_token"].present?
     assert body["refresh_token"].present?
 
@@ -162,6 +166,8 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
     body = JSON.parse(response.body)
     assert_equal @user.id, body.dig("user", "id")
+    assert_equal "icon_01", body.dig("user", "profile_icon_key")
+    assert_equal "frame_01", body.dig("user", "profile_frame_key")
   end
 
   test "me returns unauthorized when using refresh token instead of access token" do
@@ -181,6 +187,69 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     @user.reload
     assert_equal "Nome Atualizado", @user.name
     assert_equal "usuario_atualizado", @user.email
+  end
+
+  test "update_profile updates appearance when icon and frame are unlocked" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    patch "/api/v1/auth/profile", params: {
+      profile_icon_key: "icon_10",
+      profile_frame_key: "frame_01"
+    }, headers: auth_header(tokens[:access_token])
+
+    assert_response :ok
+    @user.reload
+    assert_equal "icon_10", @user.profile_icon_key
+    assert_equal "frame_01", @user.profile_frame_key
+  end
+
+  test "update_profile rejects invalid icon key" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    patch "/api/v1/auth/profile", params: {
+      profile_icon_key: "icon_31"
+    }, headers: auth_header(tokens[:access_token])
+
+    assert_response :unprocessable_entity
+    body = JSON.parse(response.body)
+    assert_equal "Ícone de perfil inválido.", body["error"]
+  end
+
+  test "update_profile rejects locked icon key for current level" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    patch "/api/v1/auth/profile", params: {
+      profile_icon_key: "icon_11"
+    }, headers: auth_header(tokens[:access_token])
+
+    assert_response :unprocessable_entity
+    body = JSON.parse(response.body)
+    assert_equal "Ícone de perfil bloqueado para seu nível atual.", body["error"]
+  end
+
+  test "update_profile rejects locked frame key for current level" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    patch "/api/v1/auth/profile", params: {
+      profile_frame_key: "frame_02"
+    }, headers: auth_header(tokens[:access_token])
+
+    assert_response :unprocessable_entity
+    body = JSON.parse(response.body)
+    assert_equal "Borda de perfil bloqueada para seu nível atual.", body["error"]
+  end
+
+  test "update_profile allows frame_02 when user reaches level 10" do
+    @user.gamification_events.create!(event_type: "record_created", points: 4500)
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    patch "/api/v1/auth/profile", params: {
+      profile_frame_key: "frame_02"
+    }, headers: auth_header(tokens[:access_token])
+
+    assert_response :ok
+    @user.reload
+    assert_equal "frame_02", @user.profile_frame_key
   end
 
   test "update_profile returns unauthorized without token" do
@@ -239,4 +308,3 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     { "Authorization" => "Bearer #{token}" }
   end
 end
-
