@@ -71,6 +71,7 @@ const Profile = () => {
     const [appearanceFeedback, setAppearanceFeedback] = useState<string | null>(null);
 
     const scrollRef = useRef<ScrollView>(null);
+    const avatarPickerScrollRef = useRef<ScrollView>(null);
 
     const menuItems = [
         { label: 'Dados do usuário', icon: UserIcon, color: '#3b82f6', route: 'Dados Pessoais' },
@@ -100,9 +101,10 @@ const Profile = () => {
     const isCompactDevice = windowWidth < 380 || windowHeight < 740;
     const iconColumns = windowWidth < 360 ? 3 : 4;
     const frameColumns = windowWidth < 380 ? 2 : 3;
-    const pickerTopInset = Math.max(insets.top + 8, isCompactDevice ? 8 : 16);
-    const pickerBottomInset = Math.max(insets.bottom + 8, isCompactDevice ? 8 : 16);
-    const modalInnerWidth = Math.max(windowWidth - 64, 240);
+    const modalSideInset = windowWidth < 380 ? 12 : 16;
+    const pickerTopInset = Math.max(insets.top + 8, isCompactDevice ? 10 : 16);
+    const pickerBottomInset = Math.max(insets.bottom + 84, isCompactDevice ? 92 : 104);
+    const modalInnerWidth = Math.max(windowWidth - modalSideInset * 2 - 32, 240);
     const iconItemWidth = Math.floor((modalInnerWidth - (iconColumns - 1) * 10) / iconColumns);
     const frameItemWidth = Math.floor((modalInnerWidth - (frameColumns - 1) * 10) / frameColumns);
     const selectedIconOption = useMemo(() => getProfileIconOption(pendingIconKey), [pendingIconKey]);
@@ -160,6 +162,16 @@ const Profile = () => {
         setPendingIconKey(normalizeProfileIconKey(user?.profile_icon_key));
         setPendingFrameKey(normalizeProfileFrameKey(user?.profile_frame_key));
     }, [user?.profile_frame_key, user?.profile_icon_key]);
+
+    useEffect(() => {
+        if (!showAvatarPicker) return;
+
+        const timer = setTimeout(() => {
+            avatarPickerScrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, 0);
+
+        return () => clearTimeout(timer);
+    }, [showAvatarPicker, avatarPickerTab]);
 
     const openAvatarPicker = () => {
         setAppearanceFeedback(null);
@@ -411,8 +423,8 @@ const Profile = () => {
                 <View className="absolute inset-0 z-[58]">
                     <Pressable className="absolute inset-0 bg-black/40" onPress={() => !savingAppearance && setShowAvatarPicker(false)} />
                     <View
-                        className="absolute left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4"
-                        style={{ top: pickerTopInset, bottom: pickerBottomInset }}
+                        className="absolute bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4"
+                        style={{ left: modalSideInset, right: modalSideInset, top: pickerTopInset, bottom: pickerBottomInset }}
                     >
                         <View className="flex-row items-center justify-between mb-3">
                             <Text className="text-slate-900 dark:text-slate-100 text-base font-bold">Personalizar ícone</Text>
@@ -448,10 +460,11 @@ const Profile = () => {
                         </View>
 
                         <ScrollView
+                            ref={avatarPickerScrollRef}
                             showsVerticalScrollIndicator={false}
                             keyboardShouldPersistTaps="handled"
                             className="flex-1"
-                            contentContainerStyle={{ paddingBottom: 4 }}
+                            contentContainerStyle={{ paddingTop: 2, paddingBottom: 8 }}
                         >
                             {avatarPickerTab === 'icons' ? (
                                 <View className="flex-row flex-wrap justify-between">
