@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { View, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions, Modal } from 'react-native';
 import {
     User as UserIcon,
     Settings,
@@ -15,6 +15,7 @@ import {
     CheckCircle2,
     Crown,
     X,
+    Pencil,
 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -40,6 +41,13 @@ import { listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto } from '../../types/financialGoal';
 import { updateProfile } from '../../services/account';
 import {
+    getUnreadNotificationCount,
+    listNotificationHistory,
+    markNotificationHistorySeen,
+} from '../../services/notificationCenter';
+import { NotificationHistoryItem } from '../../types/notificationCenter';
+import { useThemeMode } from '../../context/ThemeContext';
+import {
     getFrameRequiredLevel,
     getUnlockedFramesCount,
     getUnlockedIconsCount,
@@ -54,8 +62,25 @@ import {
     PROFILE_ICON_OPTIONS,
 } from '../../utils/profileAppearance';
 
+const notificationKindIconMap: Record<NotificationHistoryItem['kind'], React.ComponentType<{ size?: number; color?: string }>> = {
+    achievement: Trophy,
+    goal: Target,
+    record: UserIcon,
+    reminder: Bell,
+    system: Bell,
+};
+
+const notificationKindColorMap: Record<NotificationHistoryItem['kind'], string> = {
+    achievement: '#f48c25',
+    goal: '#0ea5e9',
+    record: '#16a34a',
+    reminder: '#ef4444',
+    system: '#64748b',
+};
+
 const Profile = () => {
     const { user, signOut, updateUser } = useAuth();
+    const { darkMode } = useThemeMode();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -80,6 +105,10 @@ const Profile = () => {
     const [pendingFrameKey, setPendingFrameKey] = useState(normalizeProfileFrameKey(user?.profile_frame_key));
     const [savingAppearance, setSavingAppearance] = useState(false);
     const [appearanceFeedback, setAppearanceFeedback] = useState<string | null>(null);
+    const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
+    const [showNotificationsPopup, setShowNotificationsPopup] = useState(false);
+    const [notificationsPopupLoading, setNotificationsPopupLoading] = useState(false);
+    const [notificationItems, setNotificationItems] = useState<NotificationHistoryItem[]>([]);
 
     const scrollRef = useRef<ScrollView>(null);
     const avatarPickerScrollRef = useRef<ScrollView>(null);
@@ -124,6 +153,12 @@ const Profile = () => {
     const pickerItemIconSize = isLargeText ? 20 : 18;
     const selectedIconOption = useMemo(() => getProfileIconOption(pendingIconKey), [pendingIconKey]);
     const selectedFrameOption = useMemo(() => getProfileFrameOption(pendingFrameKey), [pendingFrameKey]);
+    const notificationModalWidth = useMemo(() => Math.min(windowWidth - 24, 420), [windowWidth]);
+    const notificationModalMaxHeight = useMemo(
+        () => Math.min(windowHeight - insets.top - insets.bottom - 32, 620),
+        [insets.bottom, insets.top, windowHeight]
+    );
+    const showNotifications = showNotificationsPopup;
 
     const loadGamification = useCallback(async () => {
         setLoadingGamification(true);
@@ -145,6 +180,16 @@ const Profile = () => {
         }
     }, []);
 
+    const loadNotificationBadge = useCallback(async (options: { force?: boolean } = {}) => {
+        const { force = false } = options;
+        try {
+            const unreadCount = await getUnreadNotificationCount({ force });
+            setNotificationUnreadCount(unreadCount);
+        } catch {
+            // Keep Profile stable if notification center fails temporarily.
+        }
+    }, []);
+
     const dailyDateLabel = useMemo(() => {
         const firstDate = dailyAchievements[0]?.date_key;
         if (!firstDate) return '';
@@ -152,6 +197,35 @@ const Profile = () => {
         if (Number.isNaN(parsed.getTime())) return '';
         return parsed.toLocaleDateString('pt-BR');
     }, [dailyAchievements]);
+    const publicHandle = useMemo(() => {
+        const base = user?.email?.split('@')[0]?.trim();
+        if (!base) return '@usuario_divida_zero';
+        return `@${base.replace(/\s+/g, '_').toLowerCase()}`;
+    }, [user?.email]);
+    const memberSinceLabel = useMemo(() => {
+        const candidates: Array<string | undefined> = [];
+        const userCreatedAt = (user as any)?.created_at as string | undefined;
+        if (userCreatedAt) candidates.push(userCreatedAt);
+
+        if (events.length > 0) {
+            const oldestEvent = [...events]
+                .map((item) => item?.created_at)
+                .filter((value): value is string => Boolean(value))
+                .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0];
+            if (oldestEvent) candidates.push(oldestEvent);
+        }
+
+        const validDate = candidates
+            .map((value) => new Date(value as string))
+            .find((date) => !Number.isNaN(date.getTime())) ?? new Date();
+
+        const formatted = new Intl.DateTimeFormat('pt-BR', {
+            month: 'long',
+            year: 'numeric',
+        }).format(validDate);
+
+        return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    }, [events, user]);
 
     useFocusEffect(
         useCallback(() => {
@@ -161,6 +235,16 @@ const Profile = () => {
 
             return cancel;
         }, [loadGamification])
+    );
+
+    useFocusEffect(
+        useCallback(() => {
+            const cancel = runWhenIdle(() => {
+                loadNotificationBadge();
+            });
+
+            return cancel;
+        }, [loadNotificationBadge])
     );
 
     useEffect(() => {
@@ -204,6 +288,29 @@ const Profile = () => {
         setPendingFrameKey(normalizeProfileFrameKey(user?.profile_frame_key));
         setShowAvatarPicker(true);
     };
+
+    const closeNotificationsPopup = useCallback(() => {
+        setShowNotificationsPopup(false);
+    }, []);
+
+    const openNotificationsPopup = useCallback(async () => {
+        setShowNotificationsPopup(true);
+        setNotificationsPopupLoading(true);
+
+        try {
+            const history = await listNotificationHistory({ force: true });
+            const safeItems = Array.isArray(history) ? history : [];
+            setNotificationItems(safeItems);
+            await markNotificationHistorySeen();
+            setNotificationItems((current) => current.map((item) => ({ ...item, read: true })));
+            setNotificationUnreadCount(0);
+            await loadNotificationBadge({ force: true });
+        } catch {
+            setNotificationItems([]);
+        } finally {
+            setNotificationsPopupLoading(false);
+        }
+    }, [loadNotificationBadge]);
 
     const saveProfileAppearance = async () => {
         if (savingAppearance) return;
@@ -252,50 +359,120 @@ const Profile = () => {
         <>
             <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
                 <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false}>
-                    <View className="bg-white dark:bg-[#121212] px-6 pt-8 pb-8 items-center border-b border-slate-100 dark:border-slate-800">
-                        <ProfileAvatar
-                            iconKey={user?.profile_icon_key}
-                            frameKey={user?.profile_frame_key}
-                            size={96}
-                            iconSize={44}
-                        />
+                    <View className="px-6 pt-8 pb-2 items-center">
+                        <View className="w-full flex-row items-center justify-between mb-4">
+                            <TouchableOpacity
+                                className="w-10 h-10 rounded-full bg-white dark:bg-[#121212] border border-slate-200 dark:border-slate-700 items-center justify-center"
+                                onPress={() => navigation.navigate('Configuracoes App')}
+                                accessibilityRole="button"
+                                accessibilityLabel="Abrir configurações do app"
+                            >
+                                <Settings size={18} color="#334155" />
+                            </TouchableOpacity>
 
-                        <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold mt-4">{user?.name || 'Usuário'}</AppText>
-                        <AppText className="text-slate-500 dark:text-slate-300 text-sm">{user?.email || 'usuario'}</AppText>
+                            <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">Meu Perfil</AppText>
 
-                        <TouchableOpacity
-                            className="mt-4 bg-[#f8f7f5] dark:bg-black px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700"
-                            onPress={openAvatarPicker}
-                            activeOpacity={0.8}
-                        >
-                            <AppText className="text-slate-700 dark:text-slate-200 text-xs font-bold">Personalizar ícone</AppText>
-                        </TouchableOpacity>
-                    </View>
-
-                    <View className="px-6 -mt-6">
-                        <Card className="p-4">
-                            <View className="flex-row items-center justify-between">
-                                <View className="flex-row items-center">
-                                    <View className="bg-primary/10 p-2 rounded-lg">
-                                        <Trophy size={18} color="#f48c25" />
-                                    </View>
-                                    <View className="ml-3">
-                                        <AppText className="text-slate-900 dark:text-slate-100 font-bold">Nível {summary.level} - {summary.level_title}</AppText>
-                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs">
-                                            {summary.xp_in_level}/{summary.xp_in_level + summary.xp_to_next_level} XP para o nível {summary.level + 1}
+                            <TouchableOpacity
+                                className="w-10 h-10 rounded-full bg-white dark:bg-[#121212] border border-slate-200 dark:border-slate-700 items-center justify-center"
+                                onPress={openNotificationsPopup}
+                                accessibilityRole="button"
+                                accessibilityLabel="Abrir notificações"
+                            >
+                                <Bell size={18} color={darkMode ? '#cbd5e1' : '#334155'} />
+                                {notificationUnreadCount > 0 ? (
+                                    <View className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 items-center justify-center px-1 border border-white dark:border-black">
+                                        <AppText disableUserFontScale className="text-white text-[9px] font-bold">
+                                            {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
                                         </AppText>
                                     </View>
+                                ) : null}
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity activeOpacity={0.9} onPress={openAvatarPicker}>
+                            <View className="relative">
+                                <ProfileAvatar
+                                    iconKey={user?.profile_icon_key}
+                                    frameKey={user?.profile_frame_key}
+                                    size={102}
+                                    iconSize={46}
+                                />
+                                <View className="absolute -right-1 -bottom-1 w-8 h-8 rounded-full bg-primary border-2 border-white dark:border-black items-center justify-center">
+                                    <Pencil size={14} color="#ffffff" />
                                 </View>
-                                {loadingGamification ? <ActivityIndicator size="small" color="#f48c25" /> : <ChevronRight size={20} color="#94a3b8" />}
                             </View>
-                            <View className="h-2 bg-slate-200 rounded-full overflow-hidden mt-3">
+                        </TouchableOpacity>
+
+                        <AppText className="text-slate-900 dark:text-slate-100 text-3xl font-extrabold mt-4">{user?.name || 'Usuário'}</AppText>
+                        <AppText className="text-slate-500 dark:text-slate-300 text-sm mt-0.5">{publicHandle}</AppText>
+
+                        <View className="mt-3 bg-primary/10 px-4 py-1.5 rounded-full">
+                            <AppText className="text-primary text-xs font-extrabold">MEMBRO ATIVO DESDE {memberSinceLabel}</AppText>
+                        </View>
+                    </View>
+
+                    <View className="px-4 pt-4">
+                        <Card className="p-4 rounded-3xl">
+                            <View className="flex-row items-center justify-between">
+                                <AppText className="text-primary text-sm font-extrabold tracking-wide">PROGRESSO</AppText>
+                                {loadingGamification ? <ActivityIndicator size="small" color="#f48c25" /> : null}
+                            </View>
+                            <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-black mt-1">
+                                Nível {summary.level} - {summary.level_title}
+                            </AppText>
+                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">
+                                {summary.xp_in_level}/{summary.xp_in_level + summary.xp_to_next_level} XP
+                            </AppText>
+                            <View className="h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                 <View className="h-full bg-primary rounded-full" style={{ width: `${summary.level_progress_pct}%` }} />
                             </View>
+                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">
+                                Faltam {summary.xp_to_next_level} XP para o nível {summary.level + 1}
+                            </AppText>
                         </Card>
                     </View>
 
-                    <View className="px-6 pt-6">
-                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Conquistas</AppText>
+                    <View className="px-4 pt-8">
+                        <View className="flex-row items-center justify-between mb-3">
+                            <AppText className="text-slate-900 dark:text-slate-100 font-bold text-2xl">Conquistas</AppText>
+                            <TouchableOpacity onPress={() => setBadgesExpanded((current) => !current)} activeOpacity={0.8}>
+                                <AppText className="text-primary font-bold text-sm">{badgesExpanded ? 'Recolher' : 'Ver todas'}</AppText>
+                            </TouchableOpacity>
+                        </View>
+
+                        {!badgesExpanded ? (
+                            <Card className="mb-4 p-4">
+                                <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
+                                    {gamification.badges.filter((badge) => badge.unlocked).length}/{gamification.badges.length} brasões coletados
+                                </AppText>
+                                <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                    Toque em "Ver todas" para abrir a coleção completa.
+                                </AppText>
+                            </Card>
+                        ) : (
+                            <Card className="mb-6">
+                                <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold mb-3">
+                                    {gamification.badges.filter((badge) => badge.unlocked).length}/{gamification.badges.length} brasões coletados
+                                </AppText>
+                                <View className="flex-row flex-wrap justify-between">
+                                    {gamification.badges.map((badge) => {
+                                        const Icon = badgeIconMap[badge.icon] || Trophy;
+                                        return (
+                                            <View key={badge.id} className="w-[48.5%] mb-3 rounded-2xl border border-slate-100 dark:border-slate-800 p-3 bg-white dark:bg-[#121212]">
+                                                <View className={`w-10 h-10 rounded-full items-center justify-center mb-2 ${badge.unlocked ? 'bg-primary/15' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                                                    <Icon size={19} color={badge.unlocked ? '#f48c25' : '#94a3b8'} />
+                                                </View>
+                                                <AppText className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-300'}`}>{badge.title}</AppText>
+                                                <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">{badge.description}</AppText>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            </Card>
+                        )}
+                    </View>
+
+                    <View className="px-4">
                         <Card className="mb-6" noPadding>
                             <TouchableOpacity
                                 activeOpacity={0.8}
@@ -345,7 +522,7 @@ const Profile = () => {
                         </Card>
                     </View>
 
-                    <View className="px-6">
+                    <View className="px-4">
                         <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Conquistas diárias</AppText>
                         <Card className="mb-6" noPadding>
                             {dailyAchievements.length === 0 ? (
@@ -408,55 +585,7 @@ const Profile = () => {
                         </Card>
                     </View>
 
-                    <View className="px-6">
-                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Medalhas</AppText>
-                        <Card className="mb-6" noPadding>
-                            <TouchableOpacity
-                                activeOpacity={0.8}
-                                onPress={() => setBadgesExpanded((current) => !current)}
-                                className="p-4"
-                            >
-                                <View className="flex-row items-center justify-between">
-                                    <View className="flex-1 pr-3">
-                                        <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
-                                            {gamification.badges.filter((badge) => badge.unlocked).length}/{gamification.badges.length} medalhas conquistadas
-                                        </AppText>
-                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
-                                            {badgesExpanded ? 'Toque para recolher a lista.' : 'Toque para expandir a lista de medalhas.'}
-                                        </AppText>
-                                    </View>
-                                    <ChevronRight
-                                        size={18}
-                                        color="#94a3b8"
-                                        style={{ transform: [{ rotate: badgesExpanded ? '90deg' : '0deg' }] }}
-                                    />
-                                </View>
-                            </TouchableOpacity>
-                            {badgesExpanded ? (
-                                <>
-                                    <View className="border-t border-slate-100 dark:border-slate-800" />
-                                    <View className="p-4">
-                                        <View className="flex-row flex-wrap justify-between">
-                                            {gamification.badges.map((badge) => {
-                                                const Icon = badgeIconMap[badge.icon] || Trophy;
-                                                return (
-                                                    <View key={badge.id} className="w-[48%] mb-3 rounded-xl border border-slate-100 dark:border-slate-800 p-3 bg-white dark:bg-[#121212]">
-                                                        <View className={`w-9 h-9 rounded-full items-center justify-center mb-2 ${badge.unlocked ? 'bg-primary/15' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                                                            <Icon size={18} color={badge.unlocked ? '#f48c25' : '#94a3b8'} />
-                                                        </View>
-                                                        <AppText className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-300'}`}>{badge.title}</AppText>
-                                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">{badge.description}</AppText>
-                                                    </View>
-                                                );
-                                            })}
-                                        </View>
-                                    </View>
-                                </>
-                            ) : null}
-                        </Card>
-                    </View>
-
-                    <View className="px-6" onLayout={(event) => setHistorySectionY(event.nativeEvent.layout.y)}>
+                    <View className="px-4" onLayout={(event) => setHistorySectionY(event.nativeEvent.layout.y)}>
                         <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Histórico de XP</AppText>
                         <Card className="mb-6 p-4">
                             <AppText className="text-slate-600 dark:text-slate-300 text-sm mb-3">
@@ -470,7 +599,7 @@ const Profile = () => {
                         </Card>
                     </View>
 
-                    <View className="px-6">
+                    <View className="px-4">
                         <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-4">Conta</AppText>
                         <Card className="mb-6 overflow-hidden" noPadding>
                             {menuItems.map((item, i) => (
@@ -507,6 +636,108 @@ const Profile = () => {
                 </ScrollView>
             </Layout>
 
+            <Modal
+                visible={showNotifications}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+                onRequestClose={closeNotificationsPopup}
+            >
+                <View className="flex-1 items-center justify-center px-3">
+                    <Pressable className="absolute inset-0 bg-black/30" onPress={closeNotificationsPopup} />
+                    <View
+                        className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 relative overflow-hidden"
+                        style={{
+                            width: notificationModalWidth,
+                            height: notificationModalMaxHeight,
+                        }}
+                    >
+                        <TouchableOpacity
+                            onPress={closeNotificationsPopup}
+                            className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 items-center justify-center"
+                        >
+                            <X size={16} color="#64748b" />
+                        </TouchableOpacity>
+
+                        <View className="px-4 pt-4 pb-3 pr-10 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#121212]">
+                            <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Notificações</AppText>
+                        </View>
+
+                        <View className="flex-1 bg-white dark:bg-[#121212] px-4 pt-3">
+                            {notificationsPopupLoading ? (
+                                <View className="items-center py-6">
+                                    <ActivityIndicator color="#f48c25" />
+                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">
+                                        Carregando notificações...
+                                    </AppText>
+                                </View>
+                            ) : notificationItems.length === 0 ? (
+                                <View className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] p-3">
+                                    <AppText className="text-slate-600 dark:text-slate-300 text-sm">
+                                        Não existem notificações.
+                                    </AppText>
+                                </View>
+                            ) : (
+                                <ScrollView
+                                    className="flex-1"
+                                    showsVerticalScrollIndicator={false}
+                                    contentContainerStyle={{ paddingBottom: 8 }}
+                                >
+                                    {notificationItems.map((item) => {
+                                        const Icon = notificationKindIconMap[item.kind] || Bell;
+                                        const iconColor = notificationKindColorMap[item.kind] || '#64748b';
+
+                                        return (
+                                            <View
+                                                key={item.id}
+                                                className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] p-3 mb-2 border border-slate-100 dark:border-slate-800"
+                                            >
+                                                <View className="flex-row items-start">
+                                                    <View className="w-8 h-8 rounded-lg items-center justify-center bg-white dark:bg-[#121212] border border-slate-200 dark:border-slate-700">
+                                                        <Icon size={14} color={iconColor} />
+                                                    </View>
+                                                    <View className="ml-2 flex-1">
+                                                        <View className="flex-row items-start justify-between">
+                                                            <AppText className="text-slate-900 dark:text-slate-100 text-xs font-bold flex-1 pr-2">
+                                                                {item.title}
+                                                            </AppText>
+                                                            {!item.read ? <View className="w-2 h-2 rounded-full bg-primary mt-1" /> : null}
+                                                        </View>
+                                                        <AppText className="text-slate-600 dark:text-slate-300 text-[11px] mt-1">
+                                                            {item.message}
+                                                        </AppText>
+                                                        <AppText className="text-slate-400 dark:text-slate-300 text-[10px] mt-1">
+                                                            {new Date(item.created_at).toLocaleString('pt-BR')}
+                                                        </AppText>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        );
+                                    })}
+                                </ScrollView>
+                            )}
+                        </View>
+
+                        <View className="flex-row gap-2 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#121212]">
+                            <Button
+                                title="Fechar"
+                                variant="outline"
+                                onPress={closeNotificationsPopup}
+                                className="flex-1"
+                            />
+                            <Button
+                                title="Ver histórico"
+                                onPress={() => {
+                                    closeNotificationsPopup();
+                                    navigation.navigate('Historico Notificacoes');
+                                }}
+                                className="flex-1"
+                            />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
             {showAvatarPicker ? (
                 <View className="absolute inset-0 z-[58]">
                     <Pressable className="absolute inset-0 bg-black/40" onPress={() => !savingAppearance && setShowAvatarPicker(false)} />
@@ -538,7 +769,7 @@ const Profile = () => {
                                 style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
                                 onPress={() => setAvatarPickerTab('icons')}
                             >
-                                <AppText className={`font-bold text-sm ${avatarPickerTab === 'icons' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>ícones</AppText>
+                                <AppText className={`font-bold text-sm ${avatarPickerTab === 'icons' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Ícones</AppText>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 className={`flex-1 rounded-xl items-center justify-center border ${avatarPickerTab === 'frames' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
@@ -701,3 +932,4 @@ const Profile = () => {
 };
 
 export default Profile;
+

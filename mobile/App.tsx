@@ -22,12 +22,19 @@ import { ThemeProvider, useThemeMode } from './src/context/ThemeContext';
 import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import { RootNavigator } from './src/navigation';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, View } from 'react-native';
+import { AppState, LogBox, View } from 'react-native';
 import { initializeNotificationLayer, syncScheduledLocalNotifications } from './src/services/notifications';
 import { useAuth } from './src/context/AuthContext';
 import { getAppPreferences } from './src/services/preferences';
 import { listFinancialRecords } from './src/services/financialRecords';
 import { trackAnalyticsEvent } from './src/services/analytics';
+
+if (__DEV__) {
+  LogBox.ignoreLogs([
+    "SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead.",
+    "InteractionManager has been deprecated and will be removed in a future release. Please refactor long tasks into smaller ones, and  use 'requestIdleCallback' instead.",
+  ]);
+}
 
 function AppContent() {
   const { darkMode, loadingTheme } = useThemeMode();
