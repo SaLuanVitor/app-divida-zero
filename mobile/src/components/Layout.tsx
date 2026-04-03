@@ -8,6 +8,7 @@ import {
     useWindowDimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -28,7 +29,10 @@ const Layout: React.FC<LayoutProps> = ({
     scrollViewProps,
 }) => {
     const { width } = useWindowDimensions();
+    const bottomTabBarHeight = React.useContext(BottomTabBarHeightContext) ?? 0;
     const shouldConstrain = width >= 768;
+    const { contentContainerStyle: userContentContainerStyle, ...restScrollViewProps } = scrollViewProps ?? {};
+    const bottomScrollPadding = bottomTabBarHeight > 0 ? bottomTabBarHeight + 32 : undefined;
 
     const contentWrapperStyle = {
         width: '100%' as const,
@@ -50,10 +54,14 @@ const Layout: React.FC<LayoutProps> = ({
                     <ScrollView
                         className="flex-1"
                         contentContainerClassName={cn('p-6 pb-8', contentContainerClassName)}
-                        contentContainerStyle={{ flexGrow: 1 }}
+                        contentContainerStyle={[
+                            { flexGrow: 1 },
+                            bottomScrollPadding !== undefined ? { paddingBottom: bottomScrollPadding } : null,
+                            userContentContainerStyle,
+                        ]}
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
-                        {...scrollViewProps}
+                        {...restScrollViewProps}
                     >
                         <View style={contentWrapperStyle}>{children}</View>
                     </ScrollView>

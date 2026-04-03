@@ -39,11 +39,11 @@ const AppSettings = () => {
     load();
   }, []);
 
-  const setFontScale = async (fontScale: AppPreferences['font_scale']) => {
+  const setFontScale = async (nextFontScale: AppPreferences['font_scale']) => {
     const next = {
       ...prefs,
-      font_scale: fontScale,
-      large_text: fontScale > 1,
+      font_scale: nextFontScale,
+      large_text: nextFontScale > 1,
     };
     setPrefs(next);
     setSaving(true);
@@ -88,7 +88,7 @@ const AppSettings = () => {
   };
 
   const updateAccessibilityToggle = async (
-    key: 'reduce_motion' | 'larger_touch_targets',
+    key: 'larger_touch_targets',
     value: boolean,
     successMessage: string
   ) => {
@@ -160,13 +160,6 @@ const AppSettings = () => {
           />
 
           <Item
-            title="Reduzir animações"
-            subtitle="Diminui movimentos para maior conforto visual."
-            value={prefs.reduce_motion}
-            onChange={(value) => updateAccessibilityToggle('reduce_motion', value, 'Preferência de animação atualizada.')}
-          />
-
-          <Item
             title="Botões maiores"
             subtitle="Aumenta áreas de toque para facilitar a navegação."
             value={prefs.larger_touch_targets}
@@ -175,24 +168,24 @@ const AppSettings = () => {
 
           <View className="pt-3">
             <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-2">Tamanho do texto</AppText>
-            <View className="flex-row flex-wrap gap-2">
+            <View className="flex-row flex-wrap justify-between">
               {TEXT_SIZE_OPTIONS.map((option) => {
                 const selected = prefs.font_scale === option.value;
                 return (
                   <TouchableOpacity
                     key={option.value}
-                    className={`px-3 py-2 rounded-full border ${
+                    className={`w-[48.5%] px-3 rounded-xl border items-center justify-center mb-2 ${
                       selected
                         ? 'bg-primary border-primary'
                         : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'
                     }`}
                     onPress={() => setFontScale(option.value)}
-                    style={{ minHeight: rowHeight }}
+                    style={{ minHeight: rowHeight, height: rowHeight }}
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
                     accessibilityLabel={`Tamanho do texto ${option.label}`}
                   >
-                    <AppText className={`text-xs font-bold ${selected ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>
+                    <AppText className={`text-xs font-bold text-center ${selected ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>
                       {option.label}
                     </AppText>
                   </TouchableOpacity>

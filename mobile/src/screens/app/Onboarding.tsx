@@ -109,7 +109,7 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
         <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
           <AppText className="text-slate-900 dark:text-slate-100 font-bold">{modeTitle}</AppText>
           <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-1">
-            O app vai usar esse perfil para priorizar dicas e orientar sua evolu??o.
+            O app vai usar esse perfil para priorizar dicas e orientar sua evolução.
           </AppText>
         </View>
 
@@ -121,4 +121,3 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
 };
 
 export default Onboarding;
-

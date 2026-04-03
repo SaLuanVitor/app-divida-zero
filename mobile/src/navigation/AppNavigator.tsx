@@ -20,10 +20,39 @@ import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, L
 import { useOverlay } from '../context/OverlayContext';
 import { useThemeMode } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { useIsFocused } from '@react-navigation/native';
 import AppText from '../components/AppText';
 import { useAccessibility } from '../context/AccessibilityContext';
 
 const Tab = createBottomTabNavigator();
+
+const withUnmountOnBlur = <P extends object>(ScreenComponent: React.ComponentType<P>) => {
+    const WrappedScreen = (props: P) => {
+        const isFocused = useIsFocused();
+        if (!isFocused) {
+            return null;
+        }
+        return <ScreenComponent {...props} />;
+    };
+
+    WrappedScreen.displayName = `UnmountOnBlur(${ScreenComponent.displayName || ScreenComponent.name || 'Screen'})`;
+    return WrappedScreen;
+};
+
+const HomeScreen = withUnmountOnBlur(Home);
+const MetasScreen = withUnmountOnBlur(Metas);
+const MetaFormScreen = withUnmountOnBlur(MetaForm);
+const RelatoriosScreen = withUnmountOnBlur(Relatorios);
+const ProfileScreen = withUnmountOnBlur(Profile);
+const LancamentosScreen = withUnmountOnBlur(Lancamentos);
+const XpHistoryScreen = withUnmountOnBlur(XpHistory);
+const NotificationHistoryScreen = withUnmountOnBlur(NotificationHistory);
+const PersonalDataScreen = withUnmountOnBlur(PersonalData);
+const AppSettingsScreen = withUnmountOnBlur(AppSettings);
+const NotificationSettingsScreen = withUnmountOnBlur(NotificationSettings);
+const SecuritySettingsScreen = withUnmountOnBlur(SecuritySettings);
+const HelpSupportScreen = withUnmountOnBlur(HelpSupport);
+const TutorialScreen = withUnmountOnBlur(Tutorial);
 
 const NavItem = ({
     label,
@@ -170,21 +199,26 @@ export const AppNavigator = () => {
     }
 
     return (
-        <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
-            <Tab.Screen name="Inicio" component={Home} />
-            <Tab.Screen name="Metas" component={Metas} />
-            <Tab.Screen name="MetaForm" component={MetaForm} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Relatorios" component={Relatorios} />
-            <Tab.Screen name="Perfil" component={Profile} />
-            <Tab.Screen name="Lancamentos" component={Lancamentos} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Historico XP" component={XpHistory} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Historico Notificacoes" component={NotificationHistory} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Dados Pessoais" component={PersonalData} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Configuracoes App" component={AppSettings} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Notificacoes" component={NotificationSettings} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Seguranca" component={SecuritySettings} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Ajuda e Suporte" component={HelpSupport} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Tutorial" component={Tutorial} options={{ tabBarButton: () => null }} />
+        <Tab.Navigator
+            tabBar={(props) => <CustomTabBar {...props} />}
+            screenOptions={{
+                headerShown: false,
+            }}
+        >
+            <Tab.Screen name="Inicio" component={HomeScreen} />
+            <Tab.Screen name="Metas" component={MetasScreen} />
+            <Tab.Screen name="MetaForm" component={MetaFormScreen} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Relatorios" component={RelatoriosScreen} />
+            <Tab.Screen name="Perfil" component={ProfileScreen} />
+            <Tab.Screen name="Lancamentos" component={LancamentosScreen} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Historico XP" component={XpHistoryScreen} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Historico Notificacoes" component={NotificationHistoryScreen} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Dados Pessoais" component={PersonalDataScreen} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Configuracoes App" component={AppSettingsScreen} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Notificacoes" component={NotificationSettingsScreen} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Seguranca" component={SecuritySettingsScreen} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Ajuda e Suporte" component={HelpSupportScreen} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Tutorial" component={TutorialScreen} options={{ tabBarButton: () => null }} />
         </Tab.Navigator>
     );
 };
