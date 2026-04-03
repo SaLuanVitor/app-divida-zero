@@ -201,8 +201,10 @@ const buildReminderNotifications = (
   });
 
   const reminders: NotificationHistoryItem[] = [];
+  // Keep reminder timestamps at start of day to avoid "future" timestamps,
+  // which can incorrectly keep items unread when user opens notifications early.
   const baseDate = new Date();
-  baseDate.setHours(9, 0, 0, 0);
+  baseDate.setHours(0, 0, 0, 0);
 
   if (overdueCount > 0) {
     reminders.push({
@@ -210,7 +212,7 @@ const buildReminderNotifications = (
       kind: 'reminder',
       title: 'Pendencias em atraso',
       message: `Voce tem ${overdueCount} lancamento(s) pendente(s) em atraso.`,
-      created_at: new Date().toISOString(),
+      created_at: baseDate.toISOString(),
       read: false,
     });
   }

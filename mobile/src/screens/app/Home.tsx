@@ -328,13 +328,14 @@ const Home = () => {
             await markNotificationHistorySeen();
             setNotificationItems((current) => current.map((item) => ({ ...item, read: true })));
             setNotificationUnreadCount(0);
+            await loadNotificationBadge({ force: true });
         } catch {
             setNotificationItems([]);
             pushFeedback('error', 'Falha ao carregar', 'Nao foi possivel abrir as notificacoes agora.');
         } finally {
             setNotificationsPopupLoading(false);
         }
-    }, [pushFeedback]);
+    }, [loadNotificationBadge, pushFeedback]);
 
     useFocusEffect(
         useCallback(() => {

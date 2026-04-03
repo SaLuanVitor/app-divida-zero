@@ -5,12 +5,37 @@ import { Platform } from 'react-native';
 type NotificationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable';
 
 let cachedNotificationsModule: any | null | undefined;
+let cachedExpoGoDetection: boolean | undefined;
 let handlerConfigured = false;
 const APP_NOTIFICATION_SOURCE = 'divida_zero_mobile';
 const DEVICE_XP_NOTIFICATIONS_ENABLED = false;
 
+const isExpoGoClient = () => {
+  if (cachedExpoGoDetection !== undefined) return cachedExpoGoDetection;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const ExpoConstantsModule = require('expo-constants');
+    const Constants = ExpoConstantsModule?.default ?? ExpoConstantsModule;
+    const executionEnvironment = Constants?.executionEnvironment;
+    const appOwnership = Constants?.appOwnership;
+    cachedExpoGoDetection = executionEnvironment === 'storeClient' || appOwnership === 'expo';
+  } catch {
+    cachedExpoGoDetection = false;
+  }
+
+  return cachedExpoGoDetection;
+};
+
 const getNotificationsModule = () => {
   if (cachedNotificationsModule !== undefined) return cachedNotificationsModule;
+
+  // Expo Go (SDK 53+) no longer supports Android remote push APIs.
+  // Disable this module there to keep startup behavior stable.
+  if (isExpoGoClient()) {
+    cachedNotificationsModule = null;
+    return cachedNotificationsModule;
+  }
 
   try {
     // Optional dependency: keep app stable if module/native bridge is unavailable.
