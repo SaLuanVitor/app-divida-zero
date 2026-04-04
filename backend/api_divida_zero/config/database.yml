@@ -7,6 +7,7 @@ development:
   username: <%= ENV.fetch("POSTGRES_USER", "postgres") %>
   password: <%= ENV.fetch("POSTGRES_PASSWORD", "postgres") %>
   database: <%= ENV.fetch("POSTGRES_DB", "app_divida_zero_development") %>
+  migrations_paths: db/migrate
 
 test:
   adapter: postgresql
@@ -17,6 +18,7 @@ test:
   username: <%= ENV.fetch("POSTGRES_USER", "postgres") %>
   password: <%= ENV.fetch("POSTGRES_PASSWORD", "postgres") %>
   database: <%= ENV.fetch("POSTGRES_TEST_DB", "app_divida_zero_test") %>
+  migrations_paths: db/migrate
 
 production:
   primary:

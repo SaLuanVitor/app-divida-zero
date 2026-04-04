@@ -109,6 +109,7 @@ const Profile = () => {
     const [showNotificationsPopup, setShowNotificationsPopup] = useState(false);
     const [notificationsPopupLoading, setNotificationsPopupLoading] = useState(false);
     const [notificationItems, setNotificationItems] = useState<NotificationHistoryItem[]>([]);
+    const [loadError, setLoadError] = useState('');
 
     const scrollRef = useRef<ScrollView>(null);
     const avatarPickerScrollRef = useRef<ScrollView>(null);
@@ -160,14 +161,15 @@ const Profile = () => {
     );
     const showNotifications = showNotificationsPopup;
 
-    const loadGamification = useCallback(async () => {
-        setLoadingGamification(true);
+    const loadGamification = useCallback(async (options: { force?: boolean; silent?: boolean } = {}) => {
+        const { force = false, silent = false } = options;
+        if (!silent) setLoadingGamification(true);
         try {
             const [recordsResult, goalsResult, eventsResult, summaryResult] = await Promise.all([
-                listFinancialRecords(),
-                listFinancialGoals(),
-                listGamificationEvents(),
-                getGamificationSummary(),
+                listFinancialRecords(undefined, undefined, { force }),
+                listFinancialGoals({ force }),
+                listGamificationEvents({ force }),
+                getGamificationSummary({ force }),
             ]);
 
             setRecords(recordsResult.records);
@@ -175,8 +177,14 @@ const Profile = () => {
             setEvents(eventsResult.events);
             setSummary(normalizeGamificationSummary(summaryResult.summary));
             setDailyAchievements(Array.isArray(summaryResult.daily_achievements) ? summaryResult.daily_achievements : []);
+            if (!silent) setLoadError('');
+        } catch (error: any) {
+            if (!silent) {
+                const message = error?.response?.data?.error ?? 'Não foi possível carregar os dados do perfil agora.';
+                setLoadError(message);
+            }
         } finally {
-            setLoadingGamification(false);
+            if (!silent) setLoadingGamification(false);
         }
     }, []);
 
@@ -230,17 +238,20 @@ const Profile = () => {
     useFocusEffect(
         useCallback(() => {
             const cancel = runWhenIdle(() => {
-                loadGamification();
+                const hasData = records.length > 0 || goals.length > 0 || events.length > 0;
+                loadGamification({ force: false, silent: hasData });
+                void loadGamification({ force: true, silent: true });
             });
 
             return cancel;
-        }, [loadGamification])
+        }, [events.length, goals.length, loadGamification, records.length])
     );
 
     useFocusEffect(
         useCallback(() => {
             const cancel = runWhenIdle(() => {
-                loadNotificationBadge();
+                loadNotificationBadge({ force: false });
+                void loadNotificationBadge({ force: true });
             });
 
             return cancel;
@@ -292,6 +303,17 @@ const Profile = () => {
     const closeNotificationsPopup = useCallback(() => {
         setShowNotificationsPopup(false);
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            return () => {
+                setShowNotificationsPopup(false);
+                setShowAvatarPicker(false);
+                setShowLogoutConfirm(false);
+                setAppearanceFeedback(null);
+            };
+        }, [])
+    );
 
     const openNotificationsPopup = useCallback(async () => {
         setShowNotificationsPopup(true);
@@ -412,6 +434,11 @@ const Profile = () => {
                     </View>
 
                     <View className="px-4 pt-4">
+                        {loadError ? (
+                            <Card className="p-3 mb-3 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+                                <AppText className="text-red-700 dark:text-red-300 text-xs">{loadError}</AppText>
+                            </Card>
+                        ) : null}
                         <Card className="p-4 rounded-3xl">
                             <View className="flex-row items-center justify-between">
                                 <AppText className="text-primary text-sm font-extrabold tracking-wide">PROGRESSO</AppText>

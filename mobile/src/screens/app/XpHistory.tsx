@@ -3,9 +3,11 @@ import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, ActivityIndicator, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { ArrowLeft, Clock3, Filter, Search, Sparkles } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useThemeMode } from '../../context/ThemeContext';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import { listGamificationEvents } from '../../services/gamification';
 import { GamificationEventDto } from '../../types/gamification';
 import { runWhenIdle } from '../../utils/idle';
@@ -212,22 +214,27 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
     const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
 
-    useEffect(() => {
-        const load = async () => {
-            setLoading(true);
-            try {
-                const result = await listGamificationEvents();
-                setEvents(Array.isArray(result.events) ? result.events : []);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const cancel = runWhenIdle(() => {
-            load();
-        });
-        return cancel;
+    const loadEvents = useCallback(async (options: { force?: boolean; silent?: boolean } = {}) => {
+        const { force = false, silent = false } = options;
+        if (!silent) setLoading(true);
+        try {
+            const result = await listGamificationEvents({ force });
+            setEvents(Array.isArray(result.events) ? result.events : []);
+        } finally {
+            if (!silent) setLoading(false);
+        }
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            const hasData = events.length > 0;
+            const cancel = runWhenIdle(() => {
+                loadEvents({ force: false, silent: hasData });
+                void loadEvents({ force: true, silent: true });
+            });
+            return cancel;
+        }, [events.length, loadEvents])
+    );
 
     const filteredEvents = useMemo(() => {
         let base = events;
@@ -346,9 +353,16 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
 
                 <View className="p-4">
                     {loading ? (
-                        <View className="items-center py-10">
-                            <ActivityIndicator color="#f48c25" />
-                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando histórico...</AppText>
+                        <View className="py-4">
+                            <Card noPadding>
+                                <View className="p-4">
+                                    <LoadingSkeleton rows={4} height={14} />
+                                </View>
+                            </Card>
+                            <View className="items-center py-5">
+                                <ActivityIndicator color="#f48c25" />
+                                <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Atualizando histórico...</AppText>
+                            </View>
                         </View>
                     ) : null}
 

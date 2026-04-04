@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_30_000300) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_04_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -72,6 +72,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_30_000300) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["group_code"], name: "index_financial_records_on_group_code"
+    t.index ["user_id", "due_date", "category"], name: "index_financial_records_on_user_due_category"
+    t.index ["user_id", "due_date", "flow_type", "status"], name: "index_financial_records_on_user_due_flow_status"
     t.index ["user_id", "due_date"], name: "index_financial_records_on_user_id_and_due_date"
     t.index ["user_id", "status"], name: "index_financial_records_on_user_id_and_status"
     t.index ["user_id"], name: "index_financial_records_on_user_id"

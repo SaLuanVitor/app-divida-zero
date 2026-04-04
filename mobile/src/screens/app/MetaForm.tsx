@@ -12,7 +12,7 @@ import { CreateFinancialGoalPayload, FinancialGoalDto, FinancialGoalType } from 
 import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamification';
 import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
-import { trackAnalyticsEvent } from '../../services/analytics';
+import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { useAccessibility } from '../../context/AccessibilityContext';
 
 type GoalDateField = 'start' | 'target';
@@ -193,7 +193,7 @@ const MetaForm = () => {
             }
 
             const result = await createFinancialGoal(payload);
-            await trackAnalyticsEvent({
+            trackAnalyticsEventDeferred({
                 event_name: 'goal_created',
                 screen: 'MetaForm',
                 metadata: {

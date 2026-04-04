@@ -5,7 +5,7 @@ import { Lightbulb, Rocket, ShieldCheck } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Button from '../../components/Button';
 import { updateAppPreferences } from '../../services/preferences';
-import { trackAnalyticsEvent } from '../../services/analytics';
+import { trackAnalyticsEventDeferred } from '../../services/analytics';
 
 type OnboardingProps = {
   onDone: () => void;
@@ -18,7 +18,7 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    trackAnalyticsEvent({
+    trackAnalyticsEventDeferred({
       event_name: 'onboarding_viewed',
       screen: 'Onboarding',
     });
@@ -43,11 +43,11 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
         tutorial_reopen_enabled: true,
       });
 
-      await trackAnalyticsEvent({
+      trackAnalyticsEventDeferred({
         event_name: eventName,
         screen: 'Onboarding',
         metadata: {
-          mode: mode || 'skipped',
+            mode: mode || 'skipped',
         },
       });
 
