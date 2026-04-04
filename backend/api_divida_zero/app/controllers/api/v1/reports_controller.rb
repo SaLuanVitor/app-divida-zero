@@ -49,6 +49,17 @@ module Api
           category_filter: category_filter
         )
 
+        period_scope = apply_common_filters(
+          month_records,
+          flow_filter: flow_filter,
+          category_filter: category_filter
+        )
+        period_settled_balance_total = settled_balance_for(period_scope)
+        period_pending_income_total = period_scope.where(status: "pending", flow_type: "income").sum(:amount).to_d
+        period_pending_expense_total = period_scope.where(status: "pending", flow_type: "expense").sum(:amount).to_d
+        period_projected_balance_total =
+          period_settled_balance_total + period_pending_income_total - period_pending_expense_total
+
         global_scope = apply_common_filters(
           @current_user.financial_records,
           flow_filter: flow_filter,
@@ -65,6 +76,12 @@ module Api
             pending_income_total: decimal_string(pending_income_total),
             pending_expense_total: decimal_string(pending_expense_total),
             projected_balance_total: decimal_string(projected_balance_total)
+          },
+          period_indicators: {
+            settled_balance_total: decimal_string(period_settled_balance_total),
+            pending_income_total: decimal_string(period_pending_income_total),
+            pending_expense_total: decimal_string(period_pending_expense_total),
+            projected_balance_total: decimal_string(period_projected_balance_total)
           },
           monthly_summary: {
             income_total: decimal_string(monthly_income_total),
