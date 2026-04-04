@@ -10,7 +10,7 @@ import { AppPreferences } from '../../types/settings';
 import { defaultAppPreferences, getAppPreferences, saveAppPreferences, updateAppPreferences } from '../../services/preferences';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
-import { trackAnalyticsEvent } from '../../services/analytics';
+import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import useBackToProfile from '../../hooks/useBackToProfile';
 
 const TEXT_SIZE_OPTIONS: Array<{ label: string; value: AppPreferences['font_scale'] }> = [
@@ -76,7 +76,7 @@ const AppSettings = () => {
         onboarding_seen: false,
         tutorial_reopen_enabled: true,
       });
-      await trackAnalyticsEvent({
+      trackAnalyticsEventDeferred({
         event_name: 'tutorial_reopened',
         screen: 'AppSettings',
       });

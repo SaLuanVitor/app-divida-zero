@@ -1,7 +1,9 @@
 import api from './api';
 import { ReportsSummaryDto, ReportsSummaryFilters } from '../types/report';
 
-const DEFAULT_TTL_MS = 15000;
+const DEFAULT_TTL_MS = 30000;
+const PREFETCH_TTL_MS = 60000;
+const STALE_SOON_THRESHOLD_MS = 5000;
 
 type CacheOptions = {
   force?: boolean;
@@ -10,6 +12,7 @@ type CacheOptions = {
 
 const reportsCache = new Map<string, { expiresAt: number; value: ReportsSummaryDto }>();
 const reportsInFlight = new Map<string, Promise<ReportsSummaryDto>>();
+const shouldLogPerf = __DEV__;
 
 const isValid = (expiresAt: number) => Date.now() < expiresAt;
 
@@ -21,9 +24,44 @@ const toKey = (filters: ReportsSummaryFilters) => JSON.stringify({
   category: filters.category ?? null,
 });
 
+const buildAdjacentPeriods = (filters: ReportsSummaryFilters) => {
+  const year = filters.year;
+  const month = filters.month;
+  if (typeof year !== 'number' || typeof month !== 'number') return [];
+
+  const anchor = new Date(year, month - 1, 1);
+  const prev = new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1);
+  const next = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1);
+  const shared = {
+    status: filters.status,
+    flow_type: filters.flow_type,
+    category: filters.category,
+  };
+
+  return [
+    { ...shared, year: prev.getFullYear(), month: prev.getMonth() + 1 },
+    { ...shared, year: next.getFullYear(), month: next.getMonth() + 1 },
+  ];
+};
+
 export const invalidateReportsCache = () => {
   reportsCache.clear();
   reportsInFlight.clear();
+};
+
+export const getCachedReportsSummary = (filters: ReportsSummaryFilters = {}) => {
+  const cached = reportsCache.get(toKey(filters));
+  if (!cached || !isValid(cached.expiresAt)) return null;
+  return cached.value;
+};
+
+export const isReportsCacheStaleSoon = (
+  filters: ReportsSummaryFilters = {},
+  thresholdMs = STALE_SOON_THRESHOLD_MS
+) => {
+  const cached = reportsCache.get(toKey(filters));
+  if (!cached) return true;
+  return cached.expiresAt - Date.now() <= thresholdMs;
 };
 
 const normalize = (payload: Partial<ReportsSummaryDto> | null | undefined): ReportsSummaryDto => {
@@ -127,15 +165,23 @@ export const getReportsSummary = async (
   const { force = false, ttlMs = DEFAULT_TTL_MS } = options;
   const key = toKey(filters);
 
+  const inFlight = reportsInFlight.get(key);
+  if (inFlight) {
+    if (shouldLogPerf) {
+      // eslint-disable-next-line no-console
+      console.log('[reports-cache] dedup in-flight', key);
+    }
+    return inFlight;
+  }
+
   if (!force) {
     const cached = reportsCache.get(key);
     if (cached && isValid(cached.expiresAt)) {
+      if (shouldLogPerf) {
+        // eslint-disable-next-line no-console
+        console.log('[reports-cache] hit', key);
+      }
       return cached.value;
-    }
-
-    const inFlight = reportsInFlight.get(key);
-    if (inFlight) {
-      return inFlight;
     }
   }
 
@@ -155,6 +201,10 @@ export const getReportsSummary = async (
       expiresAt: Date.now() + ttlMs,
       value: normalized,
     });
+    if (shouldLogPerf) {
+      // eslint-disable-next-line no-console
+      console.log('[reports-cache] store', key);
+    }
 
     return normalized;
   })().finally(() => {
@@ -163,4 +213,25 @@ export const getReportsSummary = async (
 
   reportsInFlight.set(key, request);
   return request;
+};
+
+export const prefetchReportsSummary = async (
+  filters: ReportsSummaryFilters = {},
+  options: CacheOptions = {}
+) => {
+  const { ttlMs = PREFETCH_TTL_MS } = options;
+  try {
+    await getReportsSummary(filters, { force: false, ttlMs });
+  } catch {
+    // Prefetch is opportunistic and should not fail caller flows.
+  }
+};
+
+export const prefetchAdjacentReportsSummary = async (
+  filters: ReportsSummaryFilters = {},
+  options: CacheOptions = {}
+) => {
+  const periods = buildAdjacentPeriods(filters);
+  if (!periods.length) return;
+  await Promise.all(periods.map((period) => prefetchReportsSummary(period, options)));
 };

@@ -20,12 +20,10 @@ module Api
         )
         monthly_records = apply_status_filter(filtered_month_records, status_filter)
 
-        monthly_income_total = monthly_records.where(flow_type: "income").sum(:amount).to_d
-        monthly_expense_total = monthly_records.where(flow_type: "expense").sum(:amount).to_d
+        monthly_income_total, monthly_expense_total = totals_by_flow(monthly_records)
         monthly_balance = monthly_income_total - monthly_expense_total
 
-        legacy_income_total = month_records.where(flow_type: "income").sum(:amount).to_d
-        legacy_expense_total = month_records.where(flow_type: "expense").sum(:amount).to_d
+        legacy_income_total, legacy_expense_total = totals_by_flow(month_records)
         legacy_balance = legacy_income_total - legacy_expense_total
         top_categories = build_legacy_top_categories(month_records)
 
@@ -55,8 +53,7 @@ module Api
           category_filter: category_filter
         )
         period_settled_balance_total = settled_balance_for(period_scope)
-        period_pending_income_total = period_scope.where(status: "pending", flow_type: "income").sum(:amount).to_d
-        period_pending_expense_total = period_scope.where(status: "pending", flow_type: "expense").sum(:amount).to_d
+        period_pending_income_total, period_pending_expense_total = totals_by_flow(period_scope.where(status: "pending"))
         period_projected_balance_total =
           period_settled_balance_total + period_pending_income_total - period_pending_expense_total
 
@@ -66,8 +63,7 @@ module Api
           category_filter: category_filter
         )
         settled_balance_total = settled_balance_for(global_scope)
-        pending_income_total = global_scope.where(status: "pending", flow_type: "income").sum(:amount).to_d
-        pending_expense_total = global_scope.where(status: "pending", flow_type: "expense").sum(:amount).to_d
+        pending_income_total, pending_expense_total = totals_by_flow(global_scope.where(status: "pending"))
         projected_balance_total = settled_balance_total + pending_income_total - pending_expense_total
 
         render json: {
@@ -171,9 +167,16 @@ module Api
 
       def settled_balance_for(scope)
         settled_scope = scope.where.not(status: "pending")
-        settled_income_total = settled_scope.where(flow_type: "income").sum(:amount).to_d
-        settled_expense_total = settled_scope.where(flow_type: "expense").sum(:amount).to_d
+        settled_income_total, settled_expense_total = totals_by_flow(settled_scope)
         settled_income_total - settled_expense_total
+      end
+
+      def totals_by_flow(scope)
+        totals = scope.group(:flow_type).sum(:amount)
+        [
+          totals.fetch("income", 0).to_d,
+          totals.fetch("expense", 0).to_d
+        ]
       end
 
       def build_legacy_top_categories(scope)
@@ -239,8 +242,7 @@ module Api
             apply_common_filters(month_scope, flow_filter: flow_filter, category_filter: category_filter),
             status_filter
           )
-          income_total = filtered_scope.where(flow_type: "income").sum(:amount).to_d
-          expense_total = filtered_scope.where(flow_type: "expense").sum(:amount).to_d
+          income_total, expense_total = totals_by_flow(filtered_scope)
           balance = income_total - expense_total
 
           {

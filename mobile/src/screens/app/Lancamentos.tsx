@@ -12,7 +12,7 @@ import { CreateFinancialRecordPayload, FinancialRecurrenceType } from '../../typ
 import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamification';
 import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
-import { trackAnalyticsEvent } from '../../services/analytics';
+import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { useAccessibility } from '../../context/AccessibilityContext';
 
 type RegisterTab = 'income' | 'debt';
@@ -346,7 +346,7 @@ const Lancamentos = () => {
         setLoading(true);
         try {
             const result = await createFinancialRecord(payload);
-            await trackAnalyticsEvent({
+            trackAnalyticsEventDeferred({
                 event_name: 'record_created',
                 screen: 'Lancamentos',
                 metadata: {

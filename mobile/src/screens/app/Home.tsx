@@ -41,7 +41,8 @@ import { FinancialGoalDto } from '../../types/financialGoal';
 import { runWhenIdle } from '../../utils/idle';
 import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
-import { trackAnalyticsEvent } from '../../services/analytics';
+import { trackAnalyticsEventDeferred } from '../../services/analytics';
+import { markPerf, measurePerf } from '../../services/perf';
 import {
     getUnreadNotificationCount,
     listNotificationHistory,
@@ -262,9 +263,10 @@ const Home = () => {
         };
     }, []);
 
-    const loadMonthlyRecords = useCallback(async (options: { force?: boolean } = {}) => {
-        const { force = false } = options;
-        setLoading(true);
+    const loadMonthlyRecords = useCallback(async (options: { force?: boolean; silent?: boolean } = {}) => {
+        const { force = false, silent = false } = options;
+        markPerf('home_focus_to_content');
+        if (!silent) setLoading(true);
         try {
             const [monthResult] = await Promise.all([
                 listFinancialRecords(currentMonth.getFullYear(), currentMonth.getMonth() + 1, { force }),
@@ -272,9 +274,12 @@ const Home = () => {
             setRecords(Array.isArray(monthResult.records) ? monthResult.records : []);
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível carregar os registros do mês.';
-            pushFeedback('error', 'Falha ao carregar', message);
+            if (!silent) {
+                pushFeedback('error', 'Falha ao carregar', message);
+            }
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
+            measurePerf('home_focus_to_content', 'Home focus -> monthly content');
         }
     }, [currentMonth]);
 
@@ -317,6 +322,18 @@ const Home = () => {
         setShowNotificationsPopup(false);
     }, []);
 
+    useFocusEffect(
+        useCallback(() => {
+            return () => {
+                closeOverlay();
+                setShowNotificationsPopup(false);
+                setShowPeriodPicker(false);
+                setConfirmState(null);
+                setXpPopup(null);
+            };
+        }, [closeOverlay])
+    );
+
     const openNotificationsPopup = useCallback(async () => {
         setShowNotificationsPopup(true);
         setNotificationsPopupLoading(true);
@@ -339,12 +356,14 @@ const Home = () => {
 
     useFocusEffect(
         useCallback(() => {
+            const hasData = records.length > 0;
             const cancel = runWhenIdle(() => {
-                loadMonthlyRecords();
+                loadMonthlyRecords({ force: false, silent: hasData });
+                void loadMonthlyRecords({ force: true, silent: true });
             });
 
             return cancel;
-        }, [loadMonthlyRecords])
+        }, [loadMonthlyRecords, records.length])
     );
 
     useFocusEffect(
@@ -597,7 +616,7 @@ const Home = () => {
         ]);
         pushFeedback('success', 'Status atualizado', result.message);
         await maybeNotifyXp(result.xp_feedback, 'XP atualizado');
-        await trackAnalyticsEvent({
+        trackAnalyticsEventDeferred({
             event_name: 'record_paid_or_received',
             screen: 'Home',
             metadata: {
@@ -1224,3 +1243,6 @@ const Home = () => {
 };
 
 export default Home;
+
+
+

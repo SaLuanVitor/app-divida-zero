@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import AppText from './AppText';
 import { useAccessibility } from '../context/AccessibilityContext';
+import { MOTION } from '../utils/motion';
 
 interface ButtonProps extends TouchableOpacityProps {
     title: string;
@@ -66,7 +67,8 @@ const Button: React.FC<ButtonProps> = ({
 
     return (
         <TouchableOpacity
-            activeOpacity={0.7}
+            activeOpacity={MOTION.press.activeOpacity}
+            delayPressIn={MOTION.press.pressInDelayMs}
             disabled={loading || disabled}
             accessibilityRole="button"
             accessibilityLabel={title}

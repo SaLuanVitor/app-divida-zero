@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
@@ -6,8 +6,15 @@ import { ArrowDownCircle, ArrowUpCircle, Calendar, ChevronLeft, ChevronRight, Fi
 import Layout from '../../components/Layout';
 import AppText from '../../components/AppText';
 import Card from '../../components/Card';
-import { getReportsSummary } from '../../services/reports';
-import { trackAnalyticsEvent } from '../../services/analytics';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
+import {
+  getCachedReportsSummary,
+  getReportsSummary,
+  isReportsCacheStaleSoon,
+  prefetchAdjacentReportsSummary,
+} from '../../services/reports';
+import { trackAnalyticsEventDeferred } from '../../services/analytics';
+import { markPerf, measurePerf } from '../../services/perf';
 import { ReportFlowFilter, ReportsSummaryDto, ReportStatusFilter } from '../../types/report';
 import { useThemeMode } from '../../context/ThemeContext';
 
@@ -54,13 +61,19 @@ const LegendPill = ({ color, label }: { color: string; label: string }) => (
   </View>
 );
 
-const TrendChart: React.FC<{
+const TrendChart = React.memo(({
+  items,
+  darkMode,
+  width,
+  selectedKey,
+  onSelect,
+}: {
   items: ReportsSummaryDto['monthly_trend'];
   darkMode: boolean;
   width: number;
   selectedKey: string | null;
   onSelect: (item: TrendPoint) => void;
-}> = ({ items, darkMode, width, selectedKey, onSelect }) => {
+}) => {
   if (items.length === 0) return null;
 
   const height = 188;
@@ -128,7 +141,34 @@ const TrendChart: React.FC<{
       })}
     </Svg>
   );
-};
+});
+
+const IndicatorsGrid = React.memo(({ data }: { data: ReportsSummaryDto['period_indicators'] }) => (
+  <>
+    <View className="flex-row gap-3 mb-3">
+      <Card className="flex-1" noPadding><View className="p-4"><Wallet size={18} color="#16a34a" /><AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Saldo quitado no período</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.settled_balance_total)}</AppText></View></Card>
+      <Card className="flex-1" noPadding><View className="p-4"><Scale size={18} color="#0ea5e9" /><AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Projeção no período</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.projected_balance_total)}</AppText></View></Card>
+    </View>
+
+    <View className="flex-row gap-3 mb-3">
+      <Card className="flex-1" noPadding><View className="p-4"><ArrowUpCircle size={18} color="#16a34a" /><AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Pendente a receber</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.pending_income_total)}</AppText></View></Card>
+      <Card className="flex-1" noPadding><View className="p-4"><ArrowDownCircle size={18} color="#ef4444" /><AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Pendente a pagar</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.pending_expense_total)}</AppText></View></Card>
+    </View>
+  </>
+));
+
+const IndicatorsShimmer = React.memo(() => (
+  <>
+    <View className="flex-row gap-3 mb-3">
+      <Card className="flex-1" noPadding><View className="p-4"><LoadingSkeleton rows={2} height={12} /></View></Card>
+      <Card className="flex-1" noPadding><View className="p-4"><LoadingSkeleton rows={2} height={12} /></View></Card>
+    </View>
+    <View className="flex-row gap-3 mb-3">
+      <Card className="flex-1" noPadding><View className="p-4"><LoadingSkeleton rows={2} height={12} /></View></Card>
+      <Card className="flex-1" noPadding><View className="p-4"><LoadingSkeleton rows={2} height={12} /></View></Card>
+    </View>
+  </>
+));
 
 const Relatorios = () => {
   const { darkMode } = useThemeMode();
@@ -139,6 +179,7 @@ const Relatorios = () => {
   const [category, setCategory] = useState<string | null>(null);
   const [data, setData] = useState<ReportsSummaryDto>(emptyData);
   const [loading, setLoading] = useState(false);
+  const [isRefreshingPeriod, setIsRefreshingPeriod] = useState(false);
   const [error, setError] = useState('');
   const [showPeriodPicker, setShowPeriodPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState<PickerMode>('month');
@@ -146,33 +187,82 @@ const Relatorios = () => {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [tab, setTab] = useState<DetailsTab>('records');
   const [selectedTrendKey, setSelectedTrendKey] = useState<string | null>(null);
+  const hasVisibleDataRef = useRef(false);
 
   const yearOptions = useMemo(() => Array.from({ length: 9 }, (_, idx) => monthRef.getFullYear() - 4 + idx), [monthRef]);
   const hasFilter = status !== 'all' || flowType !== 'all' || !!category;
   const chartWidth = useMemo(() => Math.max(260, Math.min(screenWidth - 88, 560)), [screenWidth]);
+  const activeFilters = useMemo(() => ({
+    year: monthRef.getFullYear(),
+    month: monthRef.getMonth() + 1,
+    status,
+    flow_type: flowType,
+    category,
+  }), [category, flowType, monthRef, status]);
+  const hasVisibleData = data.monthly_summary.records_count > 0 || data.monthly_trend.length > 0;
+  const isInitialEmptyLoading = loading && !hasVisibleData;
 
-  const load = useCallback(async (force = false) => {
-    setLoading(true);
-    setError('');
+  useEffect(() => {
+    hasVisibleDataRef.current = hasVisibleData;
+  }, [hasVisibleData]);
+
+  const load = useCallback(async (mode: 'initial_load' | 'month_change' | 'background_revalidate') => {
+    markPerf('reports_focus_to_content');
+    const canShowFullLoading = mode === 'initial_load';
+    const shouldShowInline = mode === 'month_change' || mode === 'background_revalidate';
+
+    if (canShowFullLoading) {
+      setLoading(true);
+    }
+    if (shouldShowInline) {
+      setIsRefreshingPeriod(true);
+    }
+    if (mode !== 'background_revalidate') {
+      setError('');
+    }
     try {
-      const result = await getReportsSummary(
-        { year: monthRef.getFullYear(), month: monthRef.getMonth() + 1, status, flow_type: flowType, category },
-        { force }
-      );
+      const result = await getReportsSummary(activeFilters, { force: mode === 'background_revalidate' });
       setData(result);
-      await trackAnalyticsEvent({
+      trackAnalyticsEventDeferred({
         event_name: 'reports_viewed',
         screen: 'Relatorios',
         metadata: { year: result.period.year, month: result.period.month, status, flow_type: flowType, has_category: !!category },
       });
+      void prefetchAdjacentReportsSummary(activeFilters);
     } catch (e: any) {
-      setError(e?.response?.data?.error ?? 'Não foi possível carregar os relatórios agora.');
+      if (mode !== 'background_revalidate') {
+        setError(e?.response?.data?.error ?? 'Não foi possível carregar os Relatórios agora.');
+      }
     } finally {
-      setLoading(false);
+      if (canShowFullLoading) {
+        setLoading(false);
+      }
+      if (shouldShowInline) {
+        setIsRefreshingPeriod(false);
+      }
+      measurePerf('reports_focus_to_content', 'Reports focus -> content');
     }
-  }, [monthRef, status, flowType, category]);
+  }, [activeFilters, category, flowType, status]);
 
-  useFocusEffect(useCallback(() => { load(true); }, [load]));
+  useFocusEffect(
+    useCallback(() => {
+      const cached = getCachedReportsSummary(activeFilters);
+      if (cached) {
+        setData(cached);
+        void prefetchAdjacentReportsSummary(activeFilters);
+        if (!isReportsCacheStaleSoon(activeFilters)) {
+          return undefined;
+        }
+        const refreshTimer = setTimeout(() => {
+          void load('background_revalidate');
+        }, 0);
+        return () => clearTimeout(refreshTimer);
+      }
+
+      void load(hasVisibleDataRef.current ? 'month_change' : 'initial_load');
+      return undefined;
+    }, [activeFilters, load])
+  );
 
   useEffect(() => {
     if (!category) return;
@@ -217,18 +307,17 @@ const Relatorios = () => {
               <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(1)}><ChevronRight size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} /></TouchableOpacity>
             </View>
           </View>
-          <AppText className="text-xs text-slate-500 dark:text-slate-300">Competência por vencimento.</AppText>
+          <View className="flex-row items-center justify-between">
+            <AppText className="text-xs text-slate-500 dark:text-slate-300">Competência por vencimento.</AppText>
+            {isRefreshingPeriod ? (
+              <View className="px-2 py-1 rounded-full bg-primary/10 border border-primary/20">
+                <AppText className="text-primary text-[10px] font-bold uppercase">Atualizando...</AppText>
+              </View>
+            ) : null}
+          </View>
         </View></Card>
 
-        <View className="flex-row gap-3 mb-3">
-          <Card className="flex-1" noPadding><View className="p-4"><Wallet size={18} color="#16a34a" /><AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Saldo quitado no período</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.period_indicators.settled_balance_total)}</AppText></View></Card>
-          <Card className="flex-1" noPadding><View className="p-4"><Scale size={18} color="#0ea5e9" /><AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Projeção no período</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.period_indicators.projected_balance_total)}</AppText></View></Card>
-        </View>
-
-        <View className="flex-row gap-3 mb-3">
-          <Card className="flex-1" noPadding><View className="p-4"><ArrowUpCircle size={18} color="#16a34a" /><AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Pendente a receber</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.period_indicators.pending_income_total)}</AppText></View></Card>
-          <Card className="flex-1" noPadding><View className="p-4"><ArrowDownCircle size={18} color="#ef4444" /><AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Pendente a pagar</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.period_indicators.pending_expense_total)}</AppText></View></Card>
-        </View>
+        {isRefreshingPeriod ? <IndicatorsShimmer /> : <IndicatorsGrid data={data.period_indicators} />}
 
         <Card className="mb-3" noPadding><View className="p-4">
           <View className="flex-row items-center gap-2 mb-2"><Calendar size={18} color="#f48c25" /><AppText className="text-slate-900 dark:text-slate-100 font-bold">Saldo mensal com filtros</AppText></View>
@@ -259,10 +348,22 @@ const Relatorios = () => {
           </View>
         </View></Card>
 
-        {loading ? <View className="items-center py-8"><ActivityIndicator color="#f48c25" /><AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando relatórios...</AppText></View> : null}
-        {error ? <Card className="mb-3" noPadding><View className="p-4"><AppText className="text-red-700 dark:text-red-300 text-sm">{error}</AppText><TouchableOpacity onPress={() => load(true)} className="mt-3 self-start px-3 py-2 rounded-lg bg-primary/10 border border-primary/20"><AppText className="text-primary text-xs font-bold">Tentar novamente</AppText></TouchableOpacity></View></Card> : null}
+        {isInitialEmptyLoading ? (
+          <View className="py-2">
+            <Card className="mb-3" noPadding>
+              <View className="p-4">
+                <LoadingSkeleton rows={3} height={16} />
+              </View>
+            </Card>
+            <View className="items-center py-4">
+              <ActivityIndicator color="#f48c25" />
+              <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Atualizando dados...</AppText>
+            </View>
+          </View>
+        ) : null}
+        {error ? <Card className="mb-3" noPadding><View className="p-4"><AppText className="text-red-700 dark:text-red-300 text-sm">{error}</AppText><TouchableOpacity onPress={() => void load('initial_load')} className="mt-3 self-start px-3 py-2 rounded-lg bg-primary/10 border border-primary/20"><AppText className="text-primary text-xs font-bold">Tentar novamente</AppText></TouchableOpacity></View></Card> : null}
 
-        {!loading && !error ? (
+        {!isInitialEmptyLoading && !error ? (
           <>
             <Card className="mb-3" noPadding><View className="p-4">
               <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-2">Tendência dos últimos 6 meses</AppText>
@@ -372,3 +473,4 @@ const Relatorios = () => {
 };
 
 export default Relatorios;
+

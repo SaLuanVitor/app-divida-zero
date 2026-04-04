@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
 
 const SESSION_KEY = '@DividaZero:analyticsSessionId';
+let cachedSessionId: string | null = null;
 
 const EVENT_ALLOWLIST = [
   'app_opened',
@@ -27,11 +28,17 @@ type AnalyticsPayload = {
 const createSessionId = () => `session_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
 
 const getSessionId = async () => {
+  if (cachedSessionId) return cachedSessionId;
+
   const existing = await AsyncStorage.getItem(SESSION_KEY);
-  if (existing) return existing;
+  if (existing) {
+    cachedSessionId = existing;
+    return existing;
+  }
 
   const created = createSessionId();
   await AsyncStorage.setItem(SESSION_KEY, created);
+  cachedSessionId = created;
   return created;
 };
 
@@ -51,4 +58,8 @@ export const trackAnalyticsEvent = async ({ event_name, screen, metadata = {} }:
   } catch {
     // Ignore analytics failures so user flow is never blocked.
   }
+};
+
+export const trackAnalyticsEventDeferred = (payload: AnalyticsPayload) => {
+  void trackAnalyticsEvent(payload);
 };
