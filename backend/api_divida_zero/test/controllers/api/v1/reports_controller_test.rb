@@ -108,6 +108,10 @@ class Api::V1::ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "1000.0", body.dig("global_indicators", "pending_income_total")
     assert_equal "500.0", body.dig("global_indicators", "pending_expense_total")
     assert_equal "9700.0", body.dig("global_indicators", "projected_balance_total")
+    assert_equal "4700.0", body.dig("period_indicators", "settled_balance_total")
+    assert_equal "1000.0", body.dig("period_indicators", "pending_income_total")
+    assert_equal "500.0", body.dig("period_indicators", "pending_expense_total")
+    assert_equal "5200.0", body.dig("period_indicators", "projected_balance_total")
 
     assert_equal "6000.0", body.dig("monthly_summary", "income_total")
     assert_equal "800.0", body.dig("monthly_summary", "expense_total")
@@ -141,6 +145,10 @@ class Api::V1::ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "500.0", body.dig("monthly_summary", "expense_total")
     assert_equal "-500.0", body.dig("monthly_summary", "balance")
     assert_equal 1, body.dig("monthly_summary", "records_count")
+    assert_equal "-300.0", body.dig("period_indicators", "settled_balance_total")
+    assert_equal "0.0", body.dig("period_indicators", "pending_income_total")
+    assert_equal "500.0", body.dig("period_indicators", "pending_expense_total")
+    assert_equal "-800.0", body.dig("period_indicators", "projected_balance_total")
 
     assert_equal 1, body["detailed_records"].length
     assert_equal "Mercado", body["detailed_records"].first["category"]
@@ -178,6 +186,10 @@ class Api::V1::ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Sem categoria", body.dig("filters", "category")
     assert_equal 2, body.dig("monthly_summary", "records_count")
     assert body["categories_breakdown"].all? { |item| item["category"] == "Sem categoria" }
+    assert_equal "5000.0", body.dig("period_indicators", "settled_balance_total")
+    assert_equal "0.0", body.dig("period_indicators", "pending_income_total")
+    assert_equal "90.0", body.dig("period_indicators", "pending_expense_total")
+    assert_equal "4910.0", body.dig("period_indicators", "projected_balance_total")
   end
 
   test "summary returns unauthorized without token" do

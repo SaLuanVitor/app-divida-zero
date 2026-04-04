@@ -51,6 +51,7 @@ export interface ReportDetailedRecordItemDto {
 
 export interface ReportsSummaryDto {
   global_indicators: ReportGlobalIndicatorsDto;
+  period_indicators: ReportGlobalIndicatorsDto;
   monthly_summary: ReportMonthlySummaryDto;
   monthly_trend: ReportMonthlyTrendItemDto[];
   categories_breakdown: ReportCategoryBreakdownItemDto[];
@@ -75,4 +76,3 @@ export interface ReportsSummaryDto {
     total: string;
   }>;
 }
-

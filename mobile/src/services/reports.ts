@@ -37,6 +37,28 @@ const normalize = (payload: Partial<ReportsSummaryDto> | null | undefined): Repo
       pending_expense_total: String(payload?.global_indicators?.pending_expense_total ?? '0'),
       projected_balance_total: String(payload?.global_indicators?.projected_balance_total ?? '0'),
     },
+    period_indicators: {
+      settled_balance_total: String(
+        payload?.period_indicators?.settled_balance_total ??
+          payload?.global_indicators?.settled_balance_total ??
+          '0'
+      ),
+      pending_income_total: String(
+        payload?.period_indicators?.pending_income_total ??
+          payload?.global_indicators?.pending_income_total ??
+          '0'
+      ),
+      pending_expense_total: String(
+        payload?.period_indicators?.pending_expense_total ??
+          payload?.global_indicators?.pending_expense_total ??
+          '0'
+      ),
+      projected_balance_total: String(
+        payload?.period_indicators?.projected_balance_total ??
+          payload?.global_indicators?.projected_balance_total ??
+          '0'
+      ),
+    },
     monthly_summary: {
       income_total: String(payload?.monthly_summary?.income_total ?? payload?.summary?.income_total ?? '0'),
       expense_total: String(payload?.monthly_summary?.expense_total ?? payload?.summary?.expense_total ?? '0'),
@@ -142,4 +164,3 @@ export const getReportsSummary = async (
   reportsInFlight.set(key, request);
   return request;
 };
-
