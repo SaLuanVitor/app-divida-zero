@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Switch } from 'react-native';
 import { ArrowLeft, Bell } from 'lucide-react-native';
+import AppText from '../../components/AppText';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import { AppPreferences } from '../../types/settings';
 import { defaultAppPreferences, getAppPreferences, saveAppPreferences } from '../../services/preferences';
 import {
+  getDeviceNotificationRuntimeStatus,
   getDeviceNotificationPermissionStatus,
+  NotificationRuntimeReason,
   requestDeviceNotificationPermission,
   sendLocalTestNotification,
   syncScheduledLocalNotifications,
@@ -38,6 +40,8 @@ const NotificationSettings = () => {
     'undetermined'
   );
   const [loading, setLoading] = useState(false);
+  const [runtimeAvailable, setRuntimeAvailable] = useState(true);
+  const [runtimeReason, setRuntimeReason] = useState<NotificationRuntimeReason>('available');
   const rowHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
 
   const iconColor = darkMode ? '#e2e8f0' : '#0f172a';
@@ -46,9 +50,10 @@ const NotificationSettings = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [storedPrefs, status] = await Promise.all([
+        const [storedPrefs, status, runtimeOk] = await Promise.all([
           getAppPreferences(),
           getDeviceNotificationPermissionStatus(),
+          getDeviceNotificationRuntimeStatus(),
         ]);
 
         const nextPrefs = { ...storedPrefs };
@@ -59,6 +64,8 @@ const NotificationSettings = () => {
 
         setPrefs(nextPrefs);
         setPermissionStatus(status);
+        setRuntimeAvailable(runtimeOk.available);
+        setRuntimeReason(runtimeOk.reason);
         const allRecords = await listFinancialRecords(undefined, undefined, { force: true });
         await syncScheduledLocalNotifications({
           prefs: nextPrefs,
@@ -71,15 +78,22 @@ const NotificationSettings = () => {
         setLoading(false);
       }
     };
-    load();
+
+    void load();
   }, []);
 
   const permissionLabel = useMemo(() => {
+    if (!runtimeAvailable) {
+      if (runtimeReason === 'native_module_mismatch') return 'Permissão no dispositivo: Dev Client desatualizado (rebuild necessário)';
+      if (runtimeReason === 'expo_go_limited') return 'Permissão no dispositivo: use Dev Build para testar notificação local';
+      if (runtimeReason === 'permission_denied') return 'Permissão no dispositivo: negada';
+      return 'Permissão no dispositivo: indisponível neste ambiente';
+    }
     if (permissionStatus === 'granted') return 'Permissão no dispositivo: permitida';
     if (permissionStatus === 'denied') return 'Permissão no dispositivo: negada';
     if (permissionStatus === 'undetermined') return 'Permissão no dispositivo: não definida';
     return 'Permissão no dispositivo: indisponível neste ambiente';
-  }, [permissionStatus]);
+  }, [permissionStatus, runtimeAvailable, runtimeReason]);
 
   const persist = async (next: AppPreferences, kind: SaveMessageKind, text: string) => {
     setPrefs(next);
@@ -122,15 +136,20 @@ const NotificationSettings = () => {
 
         const granted = await requestDeviceNotificationPermission();
         const refreshedStatus = await getDeviceNotificationPermissionStatus();
+        const runtimeStatus = await getDeviceNotificationRuntimeStatus();
         const effectiveStatus = granted ? 'granted' : refreshedStatus;
         setPermissionStatus(effectiveStatus);
+        setRuntimeAvailable(runtimeStatus.available);
+        setRuntimeReason(runtimeStatus.reason);
 
         if (!granted && effectiveStatus !== 'granted') {
           next.device_push_enabled = false;
           await persist(
             next,
             'error',
-            effectiveStatus === 'unavailable'
+            runtimeStatus.reason === 'native_module_mismatch'
+              ? 'Runtime nativo de notificações desatualizado. Rode: expo run:android e depois expo start --dev-client.'
+              : effectiveStatus === 'unavailable'
               ? 'Notificação no celular indisponível neste ambiente.'
               : 'Permissão negada no dispositivo. As notificações continuarão somente dentro do aplicativo.'
           );
@@ -155,6 +174,17 @@ const NotificationSettings = () => {
   };
 
   const sendTest = async () => {
+    if (!runtimeAvailable) {
+      setMessageKind('error');
+      setMessage(
+        runtimeReason === 'native_module_mismatch'
+          ? 'Dev Client desatualizado para notificações. Recompile: expo run:android e abra com expo start --dev-client.'
+          : runtimeReason === 'expo_go_limited'
+          ? 'No Expo Go, use Dev Build para testar notificação local no dispositivo.'
+          : 'Notificação local indisponível neste ambiente de execução.'
+      );
+      return;
+    }
     const result = await sendLocalTestNotification();
     if (result.sent) {
       setMessageKind('success');
@@ -165,6 +195,18 @@ const NotificationSettings = () => {
     if (result.reason === 'permission_denied') {
       setMessageKind('error');
       setMessage('Não foi possível enviar teste: permita notificações no dispositivo.');
+      return;
+    }
+
+    if (result.reason === 'native_module_mismatch') {
+      setMessageKind('error');
+      setMessage('Runtime nativo de notificações desatualizado. Rode: expo run:android e depois expo start --dev-client.');
+      return;
+    }
+
+    if (result.reason === 'expo_go_limited') {
+      setMessageKind('error');
+      setMessage('No Expo Go, use Dev Build para testar notificação local no dispositivo.');
       return;
     }
 
@@ -276,17 +318,13 @@ const NotificationSettings = () => {
             className="mt-3 rounded-xl border border-primary/30 bg-primary/10 items-center justify-center"
             style={{ minHeight: rowHeight, height: rowHeight }}
             onPress={sendTest}
-            disabled={!prefs.notifications_enabled || !prefs.device_push_enabled}
+            disabled={!runtimeAvailable || !prefs.notifications_enabled || !prefs.device_push_enabled}
           >
-            <AppText className="text-primary font-bold">
-              Enviar notificação de teste
-            </AppText>
+            <AppText className="text-primary font-bold">Enviar notificação de teste</AppText>
           </TouchableOpacity>
         </Card>
 
-        {loading ? (
-          <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando preferências...</AppText>
-        ) : null}
+        {loading ? <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando preferências...</AppText> : null}
 
         {message ? (
           <View
