@@ -30,6 +30,23 @@ As variaveis usadas para banco em `development/test`:
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
 
+## Producao (Railway/Postgres)
+
+Em producao, o app usa PostgreSQL via `DATABASE_URL` (nao SQLite).
+
+Variaveis minimas:
+
+- `RAILS_ENV=production`
+- `RAILS_MASTER_KEY`
+- `RAILS_LOG_LEVEL=info`
+- `DATABASE_URL`
+
+URLs opcionais para separar conexoes:
+
+- `DATABASE_CACHE_URL`
+- `DATABASE_QUEUE_URL`
+- `DATABASE_CABLE_URL`
+
 ## Android (Expo)
 
 No emulador Android, use:

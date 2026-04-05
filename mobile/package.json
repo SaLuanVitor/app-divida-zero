@@ -5,6 +5,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
+    "build:apk": "eas build -p android --profile preview",
+    "build:aab": "eas build -p android --profile production",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --runInBand",
