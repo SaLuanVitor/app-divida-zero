@@ -13,6 +13,7 @@ import NotificationHistory from '../screens/app/NotificationHistory';
 import PersonalData from '../screens/app/PersonalData';
 import AppSettings from '../screens/app/AppSettings';
 import NotificationSettings from '../screens/app/NotificationSettings';
+import NotificationManualSender from '../screens/app/NotificationManualSender';
 import SecuritySettings from '../screens/app/SecuritySettings';
 import HelpSupport from '../screens/app/HelpSupport';
 import Tutorial from '../screens/app/Tutorial';
@@ -193,6 +194,7 @@ export const AppNavigator = () => {
             <Tab.Screen name="Dados Pessoais" component={PersonalData} options={{ tabBarButton: () => null }} />
             <Tab.Screen name="Configuracoes App" component={AppSettings} options={{ tabBarButton: () => null }} />
             <Tab.Screen name="Notificacoes" component={NotificationSettings} options={{ tabBarButton: () => null }} />
+            <Tab.Screen name="Envio Notificacoes" component={NotificationManualSender} options={{ tabBarButton: () => null }} />
             <Tab.Screen name="Seguranca" component={SecuritySettings} options={{ tabBarButton: () => null }} />
             <Tab.Screen name="Ajuda e Suporte" component={HelpSupport} options={{ tabBarButton: () => null }} />
             <Tab.Screen name="Tutorial" component={Tutorial} options={{ tabBarButton: () => null }} />

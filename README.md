@@ -118,3 +118,34 @@ node .\scripts\check-mojibake.js
 ```
 
 Esse check tambem roda no CI e bloqueia merge se detectar quebra de charset.
+
+## 7) Android - notificacoes (Expo Go x Dev Build)
+
+No Android, o app suporta dois modos:
+
+- Expo Go (mais rapido para desenvolvimento de UI): `npx expo start --android`
+- Dev Build (necessario para validar recursos nativos avancados): `npx expo run:android` e depois `npx expo start --dev-client`
+
+Se o modulo nativo de notificacoes nao estiver disponivel no ambiente atual, o app continua abrindo e mostra feedback de indisponivel nas telas de notificacao/teste manual.
+
+### Checklist rapido para ambiente de notificacoes
+
+No `mobile/`, rode estes comandos quando houver erro de modulo nativo:
+
+```powershell
+npx expo install --fix
+npx expo doctor
+```
+
+Resultado esperado:
+- Dev Build: envio manual/local de notificacoes funcionando.
+- Expo Go: app estavel com aviso de limitacao do ambiente (sem crash).
+
+Se aparecer `native_module_mismatch` ou erro de modulo nativo ausente, rode:
+
+```powershell
+cd C:\Users\luanv\Projetos\app-divida-zero\mobile
+npx expo install --fix
+npx expo run:android
+npx expo start --dev-client
+```

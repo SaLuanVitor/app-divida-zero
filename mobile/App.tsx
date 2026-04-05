@@ -23,7 +23,11 @@ import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import { RootNavigator } from './src/navigation';
 import { StatusBar } from 'expo-status-bar';
 import { AppState, LogBox, View } from 'react-native';
-import { initializeNotificationLayer, syncScheduledLocalNotifications } from './src/services/notifications';
+import {
+  getDeviceNotificationRuntimeStatus,
+  initializeNotificationLayer,
+  syncScheduledLocalNotifications,
+} from './src/services/notifications';
 import { useAuth } from './src/context/AuthContext';
 import { getAppPreferences } from './src/services/preferences';
 import { listFinancialRecords } from './src/services/financialRecords';
@@ -42,6 +46,12 @@ function AppContent() {
 
   React.useEffect(() => {
     initializeNotificationLayer();
+    void getDeviceNotificationRuntimeStatus().then((runtimeStatus) => {
+      if (__DEV__ && !runtimeStatus.available) {
+        // eslint-disable-next-line no-console
+        console.info(`[notifications] runtime indisponível: ${runtimeStatus.reason}`);
+      }
+    });
   }, []);
 
   React.useEffect(() => {

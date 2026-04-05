@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
-import { ArrowDownCircle, ArrowUpCircle, Calendar, ChevronLeft, ChevronRight, Filter, Scale, Wallet, X } from 'lucide-react-native';
+import { ArrowDownCircle, ArrowUpCircle, Calendar, ChevronLeft, ChevronRight, FileDown, Filter, Scale, Wallet, X } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import AppText from '../../components/AppText';
 import Card from '../../components/Card';
@@ -17,6 +17,7 @@ import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { markPerf, measurePerf } from '../../services/perf';
 import { ReportFlowFilter, ReportsSummaryDto, ReportStatusFilter } from '../../types/report';
 import { useThemeMode } from '../../context/ThemeContext';
+import { exportReportsPdf } from '../../services/reportsExport';
 
 type DetailsTab = 'records' | 'categories';
 type PickerMode = 'month' | 'year';
@@ -187,6 +188,8 @@ const Relatorios = () => {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [tab, setTab] = useState<DetailsTab>('records');
   const [selectedTrendKey, setSelectedTrendKey] = useState<string | null>(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportFeedback, setExportFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const hasVisibleDataRef = useRef(false);
 
   const yearOptions = useMemo(() => Array.from({ length: 9 }, (_, idx) => monthRef.getFullYear() - 4 + idx), [monthRef]);
@@ -205,6 +208,16 @@ const Relatorios = () => {
   useEffect(() => {
     hasVisibleDataRef.current = hasVisibleData;
   }, [hasVisibleData]);
+
+  useEffect(() => {
+    setExportFeedback(null);
+  }, [activeFilters]);
+
+  useEffect(() => {
+    if (!exportFeedback) return;
+    const timeout = setTimeout(() => setExportFeedback(null), 3500);
+    return () => clearTimeout(timeout);
+  }, [exportFeedback]);
 
   const load = useCallback(async (mode: 'initial_load' | 'month_change' | 'background_revalidate') => {
     markPerf('reports_focus_to_content');
@@ -264,6 +277,14 @@ const Relatorios = () => {
     }, [activeFilters, load])
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setExportFeedback(null);
+      };
+    }, [])
+  );
+
   useEffect(() => {
     if (!category) return;
     if (data.available_categories.includes(category)) return;
@@ -289,12 +310,49 @@ const Relatorios = () => {
   const changeMonth = (delta: number) => setMonthRef((p) => new Date(p.getFullYear(), p.getMonth() + delta, 1));
   const today = () => { const now = new Date(); setMonthRef(new Date(now.getFullYear(), now.getMonth(), 1)); };
   const clearFilters = () => { setStatus('all'); setFlowType('all'); setCategory(null); };
+  const handleExportPdf = useCallback(async () => {
+    if (exportingPdf) return;
+
+    setExportingPdf(true);
+    setExportFeedback(null);
+
+    const result = await exportReportsPdf({
+      summary: data,
+      periodLabel: monthLabel(monthRef),
+      filters: {
+        status,
+        flow_type: flowType,
+        category,
+      },
+    });
+
+    if (result.ok) {
+      setExportFeedback({ type: 'success', text: result.message });
+    } else {
+      setExportFeedback({ type: 'error', text: result.message });
+    }
+
+    setExportingPdf(false);
+  }, [category, data, exportingPdf, flowType, monthRef, status]);
 
   return (
     <>
       <Layout scrollable contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black pb-28">
         <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold mb-1">Relatórios</AppText>
-        <AppText className="text-slate-500 dark:text-slate-300 mb-4">Indicadores gerais, filtros rápidos e detalhamento mensal.</AppText>
+        <AppText className="text-slate-500 dark:text-slate-300 mb-3">Indicadores gerais, filtros rápidos e detalhamento mensal.</AppText>
+
+        <Card className="mb-3" noPadding>
+          <View className="p-3">
+            <TouchableOpacity
+              className={`h-11 rounded-xl border flex-row items-center justify-center ${exportingPdf ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700' : 'bg-primary/10 border-primary/30'}`}
+              onPress={() => void handleExportPdf()}
+              disabled={exportingPdf || isInitialEmptyLoading}
+            >
+              {exportingPdf ? <ActivityIndicator size="small" color="#f48c25" /> : <FileDown size={16} color="#f48c25" />}
+              <AppText className="text-primary text-sm font-bold ml-2">{exportingPdf ? 'Gerando relat\u00f3rio PDF...' : 'Gerar relat\u00f3rio em PDF'}</AppText>
+            </TouchableOpacity>
+          </View>
+        </Card>
 
         <Card className="mb-3" noPadding><View className="p-4">
           <View className="flex-row items-center justify-between mb-1">
@@ -316,6 +374,16 @@ const Relatorios = () => {
             ) : null}
           </View>
         </View></Card>
+
+        {exportFeedback ? (
+          <Card className="mb-3" noPadding>
+            <View className="p-4">
+              <AppText className={`text-sm ${exportFeedback.type === 'error' ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
+                {exportFeedback.text}
+              </AppText>
+            </View>
+          </Card>
+        ) : null}
 
         {isRefreshingPeriod ? <IndicatorsShimmer /> : <IndicatorsGrid data={data.period_indicators} />}
 
@@ -368,7 +436,7 @@ const Relatorios = () => {
             <Card className="mb-3" noPadding><View className="p-4">
               <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-2">Tendência dos últimos 6 meses</AppText>
               {data.monthly_trend.length === 0 ? (
-                <AppText className="text-slate-500 dark:text-slate-300 text-sm">Sem dados para o gráfico de tendência.</AppText>
+                <AppText className="text-slate-500 dark:text-slate-300 text-sm">Sem dados para o gr\u00e1fico de tend\u00eancia.</AppText>
               ) : (
                 <>
                   <View className="items-center">
@@ -473,4 +541,3 @@ const Relatorios = () => {
 };
 
 export default Relatorios;
-
