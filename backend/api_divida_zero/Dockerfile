@@ -56,8 +56,10 @@ RUN chmod +x bin/* && \
     sed -i "s/\r$//g" bin/* && \
     sed -i 's/ruby\.exe$/ruby/' bin/*
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompile assets during image build.
+# Railway injects DATABASE_URL only at runtime, so we provide a dummy URL here
+# to let Rails boot for assets compilation without affecting runtime settings.
+RUN SECRET_KEY_BASE_DUMMY=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/app_divida_zero_build ./bin/rails assets:precompile
 
 
 
