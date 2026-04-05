@@ -21,26 +21,21 @@ test:
   migrations_paths: db/migrate
 
 production:
-  primary:
-    adapter: sqlite3
-    max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-    database: storage/production.sqlite3
+  primary: &production_primary
+    adapter: postgresql
+    encoding: unicode
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    url: <%= ENV.fetch("DATABASE_URL") %>
+    migrations_paths: db/migrate
   cache:
-    adapter: sqlite3
-    max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-    database: storage/production_cache.sqlite3
+    <<: *production_primary
+    url: <%= ENV.fetch("DATABASE_CACHE_URL", ENV.fetch("DATABASE_URL")) %>
     migrations_paths: db/cache_migrate
   queue:
-    adapter: sqlite3
-    max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-    database: storage/production_queue.sqlite3
+    <<: *production_primary
+    url: <%= ENV.fetch("DATABASE_QUEUE_URL", ENV.fetch("DATABASE_URL")) %>
     migrations_paths: db/queue_migrate
   cable:
-    adapter: sqlite3
-    max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-    database: storage/production_cable.sqlite3
+    <<: *production_primary
+    url: <%= ENV.fetch("DATABASE_CABLE_URL", ENV.fetch("DATABASE_URL")) %>
     migrations_paths: db/cable_migrate

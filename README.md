@@ -149,3 +149,82 @@ npx expo install --fix
 npx expo run:android
 npx expo start --dev-client
 ```
+
+## 8) Publicacao para testes externos (Railway + Cloudflare + APK)
+
+Objetivo: permitir que outras pessoas instalem o app e usem com dados persistentes.
+
+### 8.1 Backend (Railway)
+
+Crie no Railway:
+
+- 1 servico `api` (Rails, apontando para `backend/api_divida_zero`)
+- 1 banco `PostgreSQL` gerenciado
+
+Variaveis minimas no servico `api`:
+
+```env
+RAILS_ENV=production
+RAILS_LOG_LEVEL=info
+RAILS_MASTER_KEY=<valor de backend/api_divida_zero/config/master.key>
+DATABASE_URL=<fornecida pelo Postgres do Railway>
+```
+
+Comando de start/release do servico:
+
+```bash
+bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p ${PORT:-3000}
+```
+
+Validacao:
+
+- endpoint de health deve responder: `https://<dominio-publico-railway>/up`
+
+### 8.2 Dominio no Cloudflare
+
+Defina o subdominio da API (exemplo):
+
+- `api.seudominio.com`
+
+Crie registro:
+
+- `CNAME` `api` -> `<dominio-publico-railway>`
+
+TLS:
+
+- SSL/TLS: `Full (strict)`
+- `Always Use HTTPS`: ligado
+
+Validacao final:
+
+- `https://api.seudominio.com/up`
+
+### 8.3 Mobile para producao
+
+No build de distribuicao, use:
+
+```env
+EXPO_PUBLIC_API_URL=https://api.seudominio.com/api/v1
+```
+
+Arquivo de referencia:
+
+- `mobile/.env.production.example`
+
+### 8.4 Gerar APK para distribuir
+
+No diretorio `mobile/`:
+
+```powershell
+npx eas login
+npx eas build:configure
+npm run build:apk
+```
+
+Compartilhe o link/arquivo APK gerado pelo EAS com os testers.
+
+### 8.5 Operacao segura (nao perder dados)
+
+- Nao executar rotinas destrutivas no ambiente remoto.
+- Manter backup/snapshot do Postgres no Railway habilitado.
+- Em problema de deploy: fazer rollback da API e restaurar backup do banco.
