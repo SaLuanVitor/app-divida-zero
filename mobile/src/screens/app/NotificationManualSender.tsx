@@ -1,24 +1,39 @@
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
-import { ArrowLeft, BellRing, CalendarCheck2, CalendarClock, Sparkles, TestTube2, Trophy } from 'lucide-react-native';
+import { ArrowLeft, BellRing, CalendarCheck2, CalendarClock, Sparkles, Trophy } from 'lucide-react-native';
 import AppText from '../../components/AppText';
 import Card from '../../components/Card';
 import Layout from '../../components/Layout';
 import useBackToProfile from '../../hooks/useBackToProfile';
 import {
-  getDeviceNotificationRuntimeStatus,
+  buildManualNotificationScenarioFromAccount,
   getDeviceNotificationPermissionStatus,
+  getDeviceNotificationRuntimeStatus,
   ManualNotificationKind,
+  ManualNotificationScenarioResultStep,
+  ManualNotificationScenarioStep,
   NotificationRuntimeReason,
   requestDeviceNotificationPermission,
+  runManualNotificationScenario,
   sendManualNotification,
 } from '../../services/notifications';
 import { useThemeMode } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 type MessageKind = 'success' | 'error' | '';
 
+const FALLBACK_MANUAL_PAYLOADS: Record<ManualNotificationKind, { title: string; body: string }> = {
+  test: { title: 'Dívida Zero', body: 'Atualização da conta enviada com sucesso.' },
+  due_today: { title: 'Vencimentos de hoje', body: 'Você tem pendências para hoje.' },
+  due_tomorrow: { title: 'Lembrete para amanhã', body: 'Você tem pendências para amanhã.' },
+  weekly_summary: { title: 'Resumo semanal', body: 'Seu resumo semanal está disponível.' },
+  xp_badge: { title: 'Nova conquista desbloqueada', body: 'Você ganhou +20 XP. Continue evoluindo.' },
+  generic: { title: '', body: '' },
+};
+
 const NotificationManualSender = () => {
   const { darkMode } = useThemeMode();
+  const { user } = useAuth();
   const goBackToProfile = useBackToProfile();
 
   const [permissionStatus, setPermissionStatus] = useState<'granted' | 'denied' | 'undetermined' | 'unavailable'>('undetermined');
@@ -29,31 +44,40 @@ const NotificationManualSender = () => {
   const [sendingKind, setSendingKind] = useState<ManualNotificationKind | null>(null);
   const [message, setMessage] = useState('');
   const [messageKind, setMessageKind] = useState<MessageKind>('');
+  const [scenarioLoading, setScenarioLoading] = useState(true);
+  const [scenarioRunning, setScenarioRunning] = useState(false);
+  const [scenarioSteps, setScenarioSteps] = useState<ManualNotificationScenarioStep[]>([]);
+  const [scenarioResults, setScenarioResults] = useState<ManualNotificationScenarioResultStep[]>([]);
 
   React.useEffect(() => {
     let active = true;
 
-    const loadPermission = async () => {
+    const load = async () => {
       setCheckingPermission(true);
+      setScenarioLoading(true);
       try {
-        const [status, runtimeOk] = await Promise.all([
+        const [status, runtimeOk, builtScenario] = await Promise.all([
           getDeviceNotificationPermissionStatus(),
           getDeviceNotificationRuntimeStatus(),
+          buildManualNotificationScenarioFromAccount({ userName: user?.name }),
         ]);
         if (!active) return;
         setPermissionStatus(status);
         setRuntimeAvailable(runtimeOk.available);
         setRuntimeReason(runtimeOk.reason);
+        setScenarioSteps(builtScenario);
       } finally {
-        if (active) setCheckingPermission(false);
+        if (!active) return;
+        setCheckingPermission(false);
+        setScenarioLoading(false);
       }
     };
 
-    void loadPermission();
+    void load();
     return () => {
       active = false;
     };
-  }, []);
+  }, [user?.name]);
 
   const permissionLabel = useMemo(() => {
     if (!runtimeAvailable) {
@@ -68,6 +92,12 @@ const NotificationManualSender = () => {
     return 'Permissão no dispositivo: indisponível neste ambiente';
   }, [permissionStatus, runtimeAvailable, runtimeReason]);
 
+  const scenarioByKind = useMemo(() => {
+    const map = new Map<ManualNotificationKind, ManualNotificationScenarioStep>();
+    scenarioSteps.forEach((step) => map.set(step.kind, step));
+    return map;
+  }, [scenarioSteps]);
+
   const notifyActions: Array<{
     kind: ManualNotificationKind;
     title: string;
@@ -77,76 +107,78 @@ const NotificationManualSender = () => {
   }> = [
     {
       kind: 'test',
-      title: 'Teste genérico',
-      subtitle: 'Valida o template base.',
-      icon: TestTube2,
-      payload: {
-        title: 'Dívida Zero',
-        body: 'Teste manual enviado com sucesso.',
-      },
+      title: 'Abertura da conta',
+      subtitle: 'Abre os alertas com dados reais da sua conta.',
+      icon: Sparkles,
+      payload: scenarioByKind.get('test') ?? FALLBACK_MANUAL_PAYLOADS.test,
     },
     {
       kind: 'due_today',
       title: 'Vencimento de hoje',
-      subtitle: 'Simula alerta de pendência no dia.',
+      subtitle: 'Alerta diário com pendências reais.',
       icon: CalendarCheck2,
-      payload: {
-        title: 'Vencimentos de hoje',
-        body: 'Você tem 2 lançamentos pendentes para hoje.',
-      },
+      payload: scenarioByKind.get('due_today') ?? FALLBACK_MANUAL_PAYLOADS.due_today,
     },
     {
       kind: 'due_tomorrow',
       title: 'Lembrete amanhã',
-      subtitle: 'Simula aviso antecipado de vencimento.',
+      subtitle: 'Aviso antecipado com dados reais.',
       icon: CalendarClock,
-      payload: {
-        title: 'Lembrete para amanhã',
-        body: 'Você tem 1 lançamento pendente para amanhã.',
-      },
+      payload: scenarioByKind.get('due_tomorrow') ?? FALLBACK_MANUAL_PAYLOADS.due_tomorrow,
     },
     {
       kind: 'weekly_summary',
       title: 'Resumo semanal',
-      subtitle: 'Simula resumo semanal de pendências.',
+      subtitle: 'Usa totais reais pendentes da sua conta.',
       icon: BellRing,
-      payload: {
-        title: 'Resumo semanal',
-        body: 'Semana iniciando: você tem 3 lançamentos pendentes.',
-      },
+      payload: scenarioByKind.get('weekly_summary') ?? FALLBACK_MANUAL_PAYLOADS.weekly_summary,
     },
     {
       kind: 'xp_badge',
       title: 'XP e badge',
-      subtitle: 'Simula avanço de progresso.',
+      subtitle: 'Avanço de jornada com contexto da conta.',
       icon: Trophy,
-      payload: {
-        title: 'Nova conquista desbloqueada',
-        body: 'Você ganhou +20 XP. Continue evoluindo.',
-      },
+      payload: scenarioByKind.get('xp_badge') ?? FALLBACK_MANUAL_PAYLOADS.xp_badge,
     },
     {
       kind: 'generic',
       title: 'Alerta genérico',
       subtitle: 'Valida fallback robusto.',
       icon: Sparkles,
-      payload: {
-        title: '',
-        body: '',
-      },
+      payload: FALLBACK_MANUAL_PAYLOADS.generic,
     },
   ];
+
+  const runtimeBlockedMessage = () => {
+    if (runtimeReason === 'native_module_mismatch') {
+      return 'Dev Client desatualizado para notificações. Recompile: expo run:android e abra com expo start --dev-client.';
+    }
+    if (runtimeReason === 'expo_go_limited') {
+      return 'No Expo Go, use Dev Build para validar notificações no dispositivo.';
+    }
+    return 'Notificação local indisponível neste ambiente de execução.';
+  };
+
+  const refreshScenario = async () => {
+    setScenarioLoading(true);
+    try {
+      const steps = await buildManualNotificationScenarioFromAccount({ userName: user?.name });
+      setScenarioSteps(steps);
+      setScenarioResults([]);
+      setMessageKind('success');
+      setMessage('Alertas atualizados com os dados atuais da conta.');
+    } catch {
+      setMessageKind('error');
+      setMessage('Não foi possível atualizar os alertas da conta agora.');
+    } finally {
+      setScenarioLoading(false);
+    }
+  };
 
   const requestPermission = async () => {
     if (!runtimeAvailable) {
       setMessageKind('error');
-      setMessage(
-        runtimeReason === 'native_module_mismatch'
-          ? 'Dev Client desatualizado para notificações. Recompile: expo run:android e abra com expo start --dev-client.'
-          : runtimeReason === 'expo_go_limited'
-          ? 'No Expo Go, use Dev Build para testar notificações no dispositivo.'
-          : 'Notificações no dispositivo não estão disponíveis neste ambiente.'
-      );
+      setMessage(runtimeBlockedMessage());
       return;
     }
     setRequestingPermission(true);
@@ -157,37 +189,68 @@ const NotificationManualSender = () => {
       setPermissionStatus(refreshed);
       setRuntimeAvailable(runtimeStatus.available);
       setRuntimeReason(runtimeStatus.reason);
+
       if (granted || refreshed === 'granted') {
         setMessageKind('success');
         setMessage('Permissão de notificações concedida no dispositivo.');
         return;
       }
+
       setMessageKind('error');
       setMessage(
         runtimeStatus.reason === 'native_module_mismatch'
           ? 'Runtime nativo de notificações desatualizado. Rode: expo run:android e depois expo start --dev-client.'
           : refreshed === 'unavailable'
           ? 'Notificações no dispositivo não estão disponíveis neste ambiente.'
-          : 'Permissão negada. Ative nas configurações do Android para testar.'
+          : 'Permissão negada. Ative nas configurações do Android para receber alertas.'
       );
     } finally {
       setRequestingPermission(false);
     }
   };
 
+  const runScenario = async () => {
+    if (!runtimeAvailable) {
+      setMessageKind('error');
+      setMessage(runtimeBlockedMessage());
+      return;
+    }
+    if (scenarioRunning || scenarioLoading) return;
+
+    const steps = scenarioSteps.length ? scenarioSteps : await buildManualNotificationScenarioFromAccount({ userName: user?.name });
+
+    setScenarioRunning(true);
+    setScenarioResults([]);
+    setMessage('');
+    setMessageKind('');
+
+    try {
+      const results = await runManualNotificationScenario({ steps });
+      setScenarioResults(results);
+
+      const failures = results.filter((entry) => !entry.result.sent);
+      if (failures.length === 0) {
+        setMessageKind('success');
+        setMessage(`Notificações concluídas com sucesso (${results.length} etapa(s) enviadas).`);
+      } else {
+        setMessageKind('error');
+        setMessage(`Notificações concluídas com ${failures.length} falha(s). Verifique os detalhes abaixo.`);
+      }
+    } catch {
+      setMessageKind('error');
+      setMessage('Não foi possível executar as notificações agora.');
+    } finally {
+      setScenarioRunning(false);
+    }
+  };
+
   const sendNow = async (kind: ManualNotificationKind, title: string, body: string) => {
     if (!runtimeAvailable) {
       setMessageKind('error');
-      setMessage(
-        runtimeReason === 'native_module_mismatch'
-          ? 'Dev Client desatualizado para notificações. Recompile: expo run:android e abra com expo start --dev-client.'
-          : runtimeReason === 'expo_go_limited'
-          ? 'No Expo Go, use Dev Build para validar envio local de notificações.'
-          : 'Notificação local indisponível neste ambiente de execução.'
-      );
+      setMessage(runtimeBlockedMessage());
       return;
     }
-    if (sendingKind) return;
+    if (sendingKind || scenarioRunning) return;
     setSendingKind(kind);
     setMessage('');
     setMessageKind('');
@@ -196,7 +259,7 @@ const NotificationManualSender = () => {
       kind,
       title,
       body,
-      data: { source: 'manual_test', context: 'profile_sender' },
+      data: { source: 'mobile_alerts', context: 'account_notifications_single' },
     });
 
     if (result.sent) {
@@ -229,7 +292,7 @@ const NotificationManualSender = () => {
           <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Envio de notificações</AppText>
             <AppText className="text-slate-500 dark:text-slate-300 text-xs">
-              Teste manual de alertas locais no Android.
+              Alertas locais com dados reais da sua conta.
             </AppText>
           </View>
         </View>
@@ -260,8 +323,71 @@ const NotificationManualSender = () => {
           </TouchableOpacity>
         </Card>
 
+        <Card className="p-4 mb-3">
+          <View className="flex-row items-center justify-between mb-3">
+            <AppText className="text-slate-900 dark:text-slate-100 font-bold">Alertas da conta</AppText>
+            <TouchableOpacity
+              onPress={() => void refreshScenario()}
+              disabled={scenarioLoading || scenarioRunning}
+              className="h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 items-center justify-center"
+            >
+              <AppText className="text-slate-700 dark:text-slate-200 text-xs font-semibold">Atualizar dados</AppText>
+            </TouchableOpacity>
+          </View>
+
+          {scenarioLoading ? (
+            <View className="flex-row items-center mb-3">
+              <ActivityIndicator color="#f48c25" />
+              <AppText className="text-slate-500 dark:text-slate-300 text-xs ml-2">Carregando alertas da conta...</AppText>
+            </View>
+          ) : (
+            <View className="mb-3">
+              {scenarioSteps.map((step, index) => (
+                <View key={step.id} className="py-2 border-b border-slate-100 dark:border-slate-800">
+                  <AppText className="text-slate-900 dark:text-slate-100 text-xs font-semibold">
+                    {index + 1}. {step.title}
+                  </AppText>
+                  <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-0.5">{step.body}</AppText>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <TouchableOpacity
+            onPress={() => void runScenario()}
+            disabled={scenarioRunning || scenarioLoading || !runtimeAvailable}
+            className="h-11 rounded-xl border border-primary/30 bg-primary/10 items-center justify-center"
+          >
+            {scenarioRunning ? (
+              <ActivityIndicator color="#f48c25" />
+            ) : (
+              <AppText className="text-primary font-bold text-sm">Executar notificações</AppText>
+            )}
+          </TouchableOpacity>
+        </Card>
+
+        {scenarioResults.length > 0 ? (
+          <Card className="p-4 mb-3">
+            <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-2">Resultado dos alertas</AppText>
+            {scenarioResults.map((entry, index) => (
+              <View key={`${entry.step.id}-${index}`} className="py-2 border-b border-slate-100 dark:border-slate-800">
+                <AppText className="text-slate-800 dark:text-slate-100 text-xs font-semibold">
+                  {index + 1}. {entry.step.title}
+                </AppText>
+                <AppText
+                  className={`text-xs mt-0.5 ${
+                    entry.result.sent ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
+                  }`}
+                >
+                  {entry.result.sent ? 'Enviada com sucesso' : `Falha: ${entry.result.reason}`}
+                </AppText>
+              </View>
+            ))}
+          </Card>
+        ) : null}
+
         <Card className="p-4">
-          <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Enviar agora</AppText>
+          <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Ações individuais</AppText>
 
           {notifyActions.map((action) => {
             const Icon = action.icon;
@@ -279,7 +405,7 @@ const NotificationManualSender = () => {
                   </View>
                   <TouchableOpacity
                     onPress={() => void sendNow(action.kind, action.payload.title, action.payload.body)}
-                    disabled={Boolean(sendingKind)}
+                    disabled={Boolean(sendingKind) || scenarioRunning}
                     className="ml-2 h-9 px-3 rounded-lg border border-primary/30 bg-primary/10 items-center justify-center"
                   >
                     {isSending ? (

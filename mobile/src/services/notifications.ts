@@ -1,6 +1,8 @@
 import { Platform } from 'react-native';
 import { AppPreferences } from '../types/settings';
 import { FinancialRecordDto } from '../types/financialRecord';
+import { listFinancialRecords } from './financialRecords';
+import { getAppPreferences } from './preferences';
 
 type NotificationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable';
 export type ManualNotificationKind = 'test' | 'due_today' | 'due_tomorrow' | 'weekly_summary' | 'xp_badge' | 'generic';
@@ -16,9 +18,22 @@ export type NotificationRuntimeStatus = {
   reason: NotificationRuntimeReason;
 };
 
-type NotificationSendResult =
+export type NotificationSendResult =
   | { sent: true }
   | { sent: false; reason: 'permission_denied' | 'native_module_mismatch' | 'expo_go_limited' | 'unavailable' | 'disabled' };
+
+export type ManualNotificationScenarioStep = {
+  id: string;
+  kind: ManualNotificationKind;
+  title: string;
+  body: string;
+  data?: NotificationData;
+};
+
+export type ManualNotificationScenarioResultStep = {
+  step: ManualNotificationScenarioStep;
+  result: NotificationSendResult;
+};
 
 let cachedNotificationsModule: any | null | undefined;
 let cachedExpoGoDetection: boolean | undefined;
@@ -32,7 +47,7 @@ const NOTIFICATION_CHANNEL_ID = 'default';
 const FALLBACK_NOTIFICATION_TITLE = 'Dívida Zero';
 
 const NOTIFICATION_BODY_FALLBACKS: Record<ManualNotificationKind, string> = {
-  test: 'Notificações no celular ativadas com sucesso.',
+  test: 'Atualização da conta disponível no dispositivo.',
   due_today: 'Você tem pendências para hoje. Abra o app para revisar.',
   due_tomorrow: 'Você tem pendências para amanhã. Organize-se no app.',
   weekly_summary: 'Seu resumo semanal está disponível no app.',
@@ -44,6 +59,27 @@ const sanitizeText = (value: unknown) => {
   if (typeof value !== 'string') return '';
   return value.replace(/\s+/g, ' ').trim();
 };
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+  }).format(value);
+
+const toMoney = (value: string | number | null | undefined) => {
+  const parsed = typeof value === 'number' ? value : Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const toDateLabel = (dateIso: string) => {
+  const date = new Date(`${dateIso}T00:00:00`);
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(date);
+};
+
+const isPending = (record: FinancialRecordDto) => record.status === 'pending';
+const isIncome = (record: FinancialRecordDto) => record.flow_type === 'income';
+const isExpense = (record: FinancialRecordDto) => record.flow_type === 'expense';
 
 const isExpoGoClient = () => {
   if (cachedExpoGoDetection !== undefined) return cachedExpoGoDetection;
@@ -354,6 +390,217 @@ export const sendLocalTestNotification = async (): Promise<NotificationSendResul
     title: 'Dívida Zero',
     body: 'Notificações no celular ativadas com sucesso.',
   });
+
+const getPendingRecordsForDate = (records: FinancialRecordDto[], targetDate: Date) =>
+  records.filter((record) => {
+    if (!isPending(record)) return false;
+    const due = new Date(`${record.due_date}T00:00:00`);
+    return sameDay(due, targetDate);
+  });
+
+const sumAmount = (records: FinancialRecordDto[]) => records.reduce((sum, item) => sum + toMoney(item.amount), 0);
+
+const getRecordsOverview = (records: FinancialRecordDto[]) => {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+
+  const pendingRecords = records.filter(isPending);
+  const dueToday = getPendingRecordsForDate(records, now);
+  const dueTomorrow = getPendingRecordsForDate(records, tomorrow);
+  const pendingIncome = pendingRecords.filter(isIncome);
+  const pendingExpense = pendingRecords.filter(isExpense);
+  const overdue = pendingRecords.filter((record) => {
+    const dueDate = new Date(`${record.due_date}T00:00:00`);
+    return dueDate.getTime() < new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  });
+
+  return {
+    pendingRecords,
+    dueToday,
+    dueTomorrow,
+    pendingIncome,
+    pendingExpense,
+    overdue,
+    pendingIncomeTotal: sumAmount(pendingIncome),
+    pendingExpenseTotal: sumAmount(pendingExpense),
+  };
+};
+
+const formatTopRecordSnippet = (records: FinancialRecordDto[]) => {
+  const first = records[0];
+  if (!first) return '';
+  const amount = formatCurrency(toMoney(first.amount));
+  return `${first.title} (${amount}, ${toDateLabel(first.due_date)})`;
+};
+
+export const buildManualNotificationScenario = ({
+  records,
+  prefs,
+  userName,
+}: {
+  records: FinancialRecordDto[];
+  prefs: AppPreferences;
+  userName?: string;
+}): ManualNotificationScenarioStep[] => {
+  const displayName = sanitizeText(userName) || 'Usuário';
+  const overview = getRecordsOverview(records);
+  const todayTotal = sumAmount(overview.dueToday);
+  const tomorrowTotal = sumAmount(overview.dueTomorrow);
+  const weeklyBalance = overview.pendingIncomeTotal - overview.pendingExpenseTotal;
+  const mockedXp = Math.max(15, Math.min(80, overview.pendingRecords.length * 5));
+
+  const dueTodayStep: ManualNotificationScenarioStep = overview.dueToday.length
+    ? {
+        id: 'alerts-due-today',
+        kind: 'due_today',
+        title: 'Vencimentos de hoje',
+        body: `${displayName}, você tem ${overview.dueToday.length} pendência(s) para hoje somando ${formatCurrency(
+          todayTotal
+        )}. Ex.: ${formatTopRecordSnippet(overview.dueToday)}.`,
+        data: {
+          source: 'mobile_alerts',
+          context: 'account_notifications',
+          due_count: overview.dueToday.length,
+          due_total: todayTotal,
+        },
+      }
+    : {
+        id: 'alerts-due-today',
+        kind: 'due_today',
+        title: 'Vencimentos de hoje',
+        body: `${displayName}, hoje não há pendências com vencimento. Sua conta está em dia.`,
+        data: {
+          source: 'mobile_alerts',
+          context: 'account_notifications',
+          due_count: 0,
+          due_total: 0,
+        },
+      };
+
+  const dueTomorrowStep: ManualNotificationScenarioStep = overview.dueTomorrow.length
+    ? {
+        id: 'alerts-due-tomorrow',
+        kind: 'due_tomorrow',
+        title: 'Lembrete para amanhã',
+        body: `Amanhã você terá ${overview.dueTomorrow.length} pendência(s) (${formatCurrency(
+          tomorrowTotal
+        )}). Ex.: ${formatTopRecordSnippet(overview.dueTomorrow)}.`,
+        data: {
+          source: 'mobile_alerts',
+          context: 'account_notifications',
+          due_count: overview.dueTomorrow.length,
+          due_total: tomorrowTotal,
+        },
+      }
+    : {
+        id: 'alerts-due-tomorrow',
+        kind: 'due_tomorrow',
+        title: 'Lembrete para amanhã',
+        body: 'Nenhuma pendência para amanhã na sua conta.',
+        data: {
+          source: 'mobile_alerts',
+          context: 'account_notifications',
+          due_count: 0,
+          due_total: 0,
+        },
+      };
+
+  const weeklySummaryStep: ManualNotificationScenarioStep = {
+    id: 'alerts-weekly-summary',
+    kind: 'weekly_summary',
+    title: 'Resumo semanal da conta',
+    body: `Pendências: ${overview.pendingRecords.length}. Entradas pendentes ${formatCurrency(
+      overview.pendingIncomeTotal
+    )} e saídas pendentes ${formatCurrency(overview.pendingExpenseTotal)}. Saldo previsto ${formatCurrency(
+      weeklyBalance
+    )}.`,
+    data: {
+      source: 'mobile_alerts',
+      context: 'account_notifications',
+      pending_count: overview.pendingRecords.length,
+      overdue_count: overview.overdue.length,
+      pending_income_total: overview.pendingIncomeTotal,
+      pending_expense_total: overview.pendingExpenseTotal,
+      projected_balance: weeklyBalance,
+    },
+  };
+
+  const xpBadgeStep: ManualNotificationScenarioStep = {
+    id: 'alerts-xp-badge',
+    kind: 'xp_badge',
+    title: 'Progresso da jornada',
+    body:
+      overview.pendingRecords.length === 0
+        ? `Conta organizada! Você pode receber +${mockedXp} XP por manter zero pendências.`
+        : `Ao regularizar pendências, você pode ganhar cerca de +${mockedXp} XP nesta etapa.`,
+    data: {
+      source: 'mobile_alerts',
+      context: 'account_notifications',
+      simulated_xp: mockedXp,
+      pending_count: overview.pendingRecords.length,
+    },
+  };
+
+  const testHeaderStep: ManualNotificationScenarioStep = {
+    id: 'alerts-account-header',
+    kind: 'test',
+    title: 'Alertas da conta atualizados',
+    body: `Dados da conta de ${displayName} atualizados. Preferências ativas: ${
+      prefs.notifications_enabled ? 'sim' : 'não'
+    }, push no dispositivo: ${prefs.device_push_enabled ? 'sim' : 'não'}.`,
+    data: {
+      source: 'mobile_alerts',
+      context: 'account_notifications',
+      notifications_enabled: prefs.notifications_enabled,
+      device_push_enabled: prefs.device_push_enabled,
+    },
+  };
+
+  return [testHeaderStep, dueTodayStep, dueTomorrowStep, weeklySummaryStep, xpBadgeStep];
+};
+
+export const buildManualNotificationScenarioFromAccount = async ({
+  userName,
+}: {
+  userName?: string;
+} = {}): Promise<ManualNotificationScenarioStep[]> => {
+  const [recordsResult, prefs] = await Promise.all([
+    listFinancialRecords(undefined, undefined, { force: false }),
+    getAppPreferences(),
+  ]);
+
+  return buildManualNotificationScenario({
+    records: recordsResult.records,
+    prefs,
+    userName,
+  });
+};
+
+export const runManualNotificationScenario = async ({
+  steps,
+}: {
+  steps: ManualNotificationScenarioStep[];
+}): Promise<ManualNotificationScenarioResultStep[]> => {
+  const results: ManualNotificationScenarioResultStep[] = [];
+
+  for (const step of steps) {
+    const result = await sendManualNotification({
+      kind: step.kind,
+      title: step.title,
+      body: step.body,
+      data: {
+        source: 'mobile_alerts',
+        context: 'account_notifications',
+        ...(step.data || {}),
+      },
+    });
+
+    results.push({ step, result });
+  }
+
+  return results;
+};
 
 const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
