@@ -6,6 +6,10 @@ const useBackToProfile = () => {
   const navigation = useNavigation<any>();
 
   const goBackToProfile = useCallback(() => {
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+      return true;
+    }
     navigation.navigate('Perfil');
     return true;
   }, [navigation]);

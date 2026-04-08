@@ -104,7 +104,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
                   navigation.goBack();
                   return;
                 }
-                navigation?.navigate?.('Inicio');
+                navigation?.navigate?.('Perfil');
               }}
               className="p-2 -ml-2 mr-1"
             >
