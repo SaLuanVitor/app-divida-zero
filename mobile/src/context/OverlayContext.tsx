@@ -7,15 +7,19 @@ interface OverlayContextData {
     openOverlay: (overlay: Exclude<OverlayType, null>) => void;
     closeOverlay: () => void;
     isOverlayOpen: (overlay: Exclude<OverlayType, null>) => boolean;
+    setOverlayBlocked: (blocked: boolean) => void;
+    overlayBlocked: boolean;
 }
 
 const OverlayContext = createContext<OverlayContextData>({} as OverlayContextData);
 
 export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [activeOverlay, setActiveOverlay] = useState<OverlayType>(null);
+    const [overlayBlocked, setOverlayBlocked] = useState(false);
     const openOverlay = useCallback((overlay: Exclude<OverlayType, null>) => {
+        if (overlayBlocked) return;
         setActiveOverlay(overlay);
-    }, []);
+    }, [overlayBlocked]);
     const closeOverlay = useCallback(() => {
         setActiveOverlay(null);
     }, []);
@@ -30,8 +34,10 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
             openOverlay,
             closeOverlay,
             isOverlayOpen,
+            setOverlayBlocked,
+            overlayBlocked,
         }),
-        [activeOverlay, closeOverlay, isOverlayOpen, openOverlay]
+        [activeOverlay, closeOverlay, isOverlayOpen, openOverlay, overlayBlocked]
     );
 
     return <OverlayContext.Provider value={value}>{children}</OverlayContext.Provider>;

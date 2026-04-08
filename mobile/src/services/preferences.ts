@@ -23,6 +23,7 @@ export const defaultAppPreferences: AppPreferences = {
   onboarding_seen: false,
   onboarding_mode: null,
   tutorial_reopen_enabled: true,
+  tutorial_active_mode: null,
   tutorial_beginner_completed: false,
   tutorial_advanced_completed: false,
   tutorial_last_step: null,
@@ -46,6 +47,10 @@ const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): 
     onboarding_mode:
       raw?.onboarding_mode === 'beginner' || raw?.onboarding_mode === 'advanced'
         ? raw.onboarding_mode
+        : null,
+    tutorial_active_mode:
+      raw?.tutorial_active_mode === 'beginner' || raw?.tutorial_active_mode === 'advanced'
+        ? raw.tutorial_active_mode
         : null,
     tutorial_beginner_completed:
       typeof raw?.tutorial_beginner_completed === 'boolean' ? raw.tutorial_beginner_completed : false,

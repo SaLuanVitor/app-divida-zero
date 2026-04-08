@@ -1,11 +1,16 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppText from '../components/AppText';
 import Button from '../components/Button';
-import { getAppPreferences, updateAppPreferences } from '../services/preferences';
 import { AnalyticsEventName, subscribeAnalyticsEvents, trackAnalyticsEventDeferred } from '../services/analytics';
+import { getAppPreferences, updateAppPreferences } from '../services/preferences';
+import { AppPreferences } from '../types/settings';
 import { navigateSafely } from '../navigation/navigationRef';
+import { useAccessibility } from './AccessibilityContext';
 import { useAuth } from './AuthContext';
+import { useOverlay } from './OverlayContext';
+import { useThemeMode } from './ThemeContext';
 
 type SpotlightRect = {
   x: number;
@@ -127,6 +132,8 @@ type TutorialContextData = {
   beginnerCompleted: boolean;
   advancedCompleted: boolean;
   advancedDoneTasks: string[];
+  isTutorialActive: boolean;
+  isBeginnerTutorialActive: boolean;
 };
 
 const TutorialContext = createContext<TutorialContextData>({} as TutorialContextData);
@@ -136,8 +143,17 @@ type TutorialProviderProps = {
   currentRouteName?: string;
 };
 
+const STEP_MARGIN = 12;
+const STEP_PADDING = 8;
+
 export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, currentRouteName }) => {
   const { signed } = useAuth();
+  const { darkMode } = useThemeMode();
+  const { fontScale } = useAccessibility();
+  const { closeOverlay, setOverlayBlocked } = useOverlay();
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+
   const [beginnerActive, setBeginnerActive] = useState(false);
   const [advancedActive, setAdvancedActive] = useState(false);
   const [beginnerIndex, setBeginnerIndex] = useState(0);
@@ -145,21 +161,40 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   const [beginnerCompleted, setBeginnerCompleted] = useState(false);
   const [advancedCompleted, setAdvancedCompleted] = useState(false);
   const [advancedDoneTasks, setAdvancedDoneTasks] = useState<string[]>([]);
+  const [measureFailCount, setMeasureFailCount] = useState(0);
+  const [targetUnavailable, setTargetUnavailable] = useState(false);
+  const [tooltipHeight, setTooltipHeight] = useState(228);
   const targetRefs = useRef<Record<string, View | null>>({});
 
+  const isTutorialActive = beginnerActive || advancedActive;
+  const isBeginnerTutorialActive = beginnerActive;
   const currentStep = BEGINNER_STEPS[beginnerIndex] ?? null;
 
   const persistState = useCallback(
-    async (partial: {
-      tutorial_beginner_completed?: boolean;
-      tutorial_advanced_completed?: boolean;
-      tutorial_last_step?: string | null;
-      tutorial_advanced_tasks_done?: string[];
-    }) => {
-      await updateAppPreferences(partial as any);
+    async (partial: Partial<AppPreferences>) => {
+      await updateAppPreferences(partial);
     },
     []
   );
+
+  const registerTarget = useCallback((id: string, ref: View | null) => {
+    targetRefs.current[id] = ref;
+  }, []);
+
+  const unregisterTarget = useCallback((id: string) => {
+    delete targetRefs.current[id];
+  }, []);
+
+  const markMeasureFailure = useCallback(() => {
+    setSpotlightRect(null);
+    setMeasureFailCount((previous) => {
+      const next = previous + 1;
+      if (next >= 3) {
+        setTargetUnavailable(true);
+      }
+      return next;
+    });
+  }, []);
 
   const measureCurrentStep = useCallback(() => {
     if (!beginnerActive || !currentStep) {
@@ -169,31 +204,44 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
 
     const target = targetRefs.current[currentStep.targetId];
     if (!target || typeof target.measureInWindow !== 'function') {
-      setSpotlightRect(null);
+      markMeasureFailure();
       return;
     }
 
     target.measureInWindow((x, y, width, height) => {
       if (!width || !height) {
-        setSpotlightRect(null);
+        markMeasureFailure();
         return;
       }
+
+      const safeTop = insets.top + 4;
+      const safeBottom = windowHeight - insets.bottom - 4;
+      const maxAllowedWidth = Math.max(40, windowWidth - STEP_MARGIN * 2);
+
+      const nextWidth = Math.min(width + STEP_PADDING * 2, maxAllowedWidth);
+      const maxX = Math.max(STEP_MARGIN, windowWidth - STEP_MARGIN - nextWidth);
+      const nextX = Math.min(Math.max(STEP_MARGIN, x - STEP_PADDING), maxX);
+
+      const rawY = y - STEP_PADDING;
+      const nextY = Math.max(safeTop, rawY);
+      const rawHeight = height + STEP_PADDING * 2;
+      const boundedHeight = Math.min(rawHeight, Math.max(40, safeBottom - nextY));
+
+      if (boundedHeight <= 0) {
+        markMeasureFailure();
+        return;
+      }
+
       setSpotlightRect({
-        x: Math.max(0, x - 8),
-        y: Math.max(0, y - 8),
-        width: width + 16,
-        height: height + 16,
+        x: nextX,
+        y: nextY,
+        width: nextWidth,
+        height: boundedHeight,
       });
+      setMeasureFailCount(0);
+      setTargetUnavailable(false);
     });
-  }, [beginnerActive, currentStep]);
-
-  const registerTarget = useCallback((id: string, ref: View | null) => {
-    targetRefs.current[id] = ref;
-  }, []);
-
-  const unregisterTarget = useCallback((id: string) => {
-    delete targetRefs.current[id];
-  }, []);
+  }, [beginnerActive, currentStep, insets.bottom, insets.top, markMeasureFailure, windowHeight, windowWidth]);
 
   const refreshTargetMeasure = useCallback(() => {
     measureCurrentStep();
@@ -212,62 +260,81 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   );
 
   const startBeginnerTutorial = useCallback(
-    async (options?: { replay?: boolean }) => {
+    async (options?: { replay?: boolean; source?: 'auto' | 'manual' }) => {
       const replay = Boolean(options?.replay);
+      const source = options?.source ?? 'manual';
+      closeOverlay();
       setAdvancedActive(false);
       setBeginnerIndex(0);
+      setSpotlightRect(null);
+      setTargetUnavailable(false);
+      setMeasureFailCount(0);
       setBeginnerActive(true);
       if (replay) {
         setBeginnerCompleted(false);
-        await persistState({
-          tutorial_beginner_completed: false,
-          tutorial_last_step: BEGINNER_STEPS[0]?.id ?? null,
+      }
+      await persistState({
+        tutorial_reopen_enabled: true,
+        tutorial_active_mode: 'beginner',
+        tutorial_beginner_completed: replay ? false : undefined,
+        tutorial_last_step: BEGINNER_STEPS[0]?.id ?? null,
+      });
+      if (source !== 'auto') {
+        trackAnalyticsEventDeferred({
+          event_name: 'tutorial_reopened',
+          screen: 'TutorialBeginner',
+          metadata: { mode: 'beginner' },
         });
       }
-      trackAnalyticsEventDeferred({
-        event_name: 'tutorial_reopened',
-        screen: 'TutorialBeginner',
-        metadata: { mode: 'beginner' },
-      });
       navigateSafely(BEGINNER_STEPS[0].screen);
     },
-    [persistState]
+    [closeOverlay, persistState]
   );
 
   const startAdvancedTutorial = useCallback(
-    async (options?: { replay?: boolean }) => {
+    async (options?: { replay?: boolean; source?: 'auto' | 'manual' }) => {
       const replay = Boolean(options?.replay);
+      const source = options?.source ?? 'manual';
+      closeOverlay();
       setBeginnerActive(false);
       setAdvancedActive(true);
       if (replay) {
         setAdvancedCompleted(false);
         setAdvancedDoneTasks([]);
-        await persistState({
-          tutorial_advanced_completed: false,
-          tutorial_advanced_tasks_done: [],
+      }
+      await persistState({
+        tutorial_reopen_enabled: true,
+        tutorial_active_mode: 'advanced',
+        tutorial_advanced_completed: replay ? false : undefined,
+        tutorial_advanced_tasks_done: replay ? [] : undefined,
+      });
+      if (source !== 'auto') {
+        trackAnalyticsEventDeferred({
+          event_name: 'tutorial_reopened',
+          screen: 'TutorialAdvanced',
+          metadata: { mode: 'advanced' },
         });
       }
-      trackAnalyticsEventDeferred({
-        event_name: 'tutorial_reopened',
-        screen: 'TutorialAdvanced',
-        metadata: { mode: 'advanced' },
-      });
     },
-    [persistState]
+    [closeOverlay, persistState]
   );
 
   const stopTutorial = useCallback(async () => {
     setBeginnerActive(false);
     setAdvancedActive(false);
+    setSpotlightRect(null);
     await persistState({ tutorial_last_step: null });
   }, [persistState]);
 
   const completeBeginner = useCallback(async () => {
     setBeginnerActive(false);
     setBeginnerCompleted(true);
+    setSpotlightRect(null);
     await persistState({
       tutorial_beginner_completed: true,
       tutorial_last_step: null,
+      tutorial_reopen_enabled: false,
+      tutorial_active_mode: null,
     });
     trackAnalyticsEventDeferred({
       event_name: 'onboarding_completed',
@@ -282,6 +349,8 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     await persistState({
       tutorial_advanced_completed: true,
       tutorial_advanced_tasks_done: ADVANCED_TASKS.map((task) => task.id),
+      tutorial_reopen_enabled: false,
+      tutorial_active_mode: null,
     });
     trackAnalyticsEventDeferred({
       event_name: 'onboarding_completed',
@@ -303,11 +372,19 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     async (nextIndex: number) => {
       const step = BEGINNER_STEPS[nextIndex];
       if (!step) return;
+      closeOverlay();
+      setSpotlightRect(null);
+      setTargetUnavailable(false);
+      setMeasureFailCount(0);
       setBeginnerIndex(nextIndex);
-      await persistState({ tutorial_last_step: step.id });
+      await persistState({
+        tutorial_last_step: step.id,
+        tutorial_active_mode: 'beginner',
+        tutorial_reopen_enabled: true,
+      });
       navigateSafely(step.screen);
     },
-    [persistState]
+    [closeOverlay, persistState]
   );
 
   const handleNextStep = useCallback(async () => {
@@ -326,6 +403,13 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   }, [beginnerIndex, goToStep]);
 
   useEffect(() => {
+    setOverlayBlocked(beginnerActive);
+    if (beginnerActive) {
+      closeOverlay();
+    }
+  }, [beginnerActive, closeOverlay, setOverlayBlocked]);
+
+  useEffect(() => {
     if (!signed) return;
     let mounted = true;
 
@@ -333,24 +417,27 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       const prefs = await getAppPreferences();
       if (!mounted) return;
 
-      const beginnerDone = Boolean((prefs as any).tutorial_beginner_completed);
-      const advancedDone = Boolean((prefs as any).tutorial_advanced_completed);
-      const advancedDoneList = Array.isArray((prefs as any).tutorial_advanced_tasks_done)
-        ? (prefs as any).tutorial_advanced_tasks_done.filter((item: unknown) => typeof item === 'string')
+      const beginnerDone = Boolean(prefs.tutorial_beginner_completed);
+      const advancedDone = Boolean(prefs.tutorial_advanced_completed);
+      const advancedDoneList = Array.isArray(prefs.tutorial_advanced_tasks_done)
+        ? prefs.tutorial_advanced_tasks_done.filter((item) => typeof item === 'string')
         : [];
 
       setBeginnerCompleted(beginnerDone);
       setAdvancedCompleted(advancedDone);
       setAdvancedDoneTasks(advancedDoneList);
 
-      if (!prefs.onboarding_seen || !prefs.onboarding_mode) return;
+      if (!prefs.onboarding_seen || !prefs.tutorial_reopen_enabled) return;
 
-      if (prefs.onboarding_mode === 'beginner' && !beginnerDone) {
-        await startBeginnerTutorial();
+      const preferredMode = prefs.tutorial_active_mode ?? prefs.onboarding_mode;
+      if (!preferredMode) return;
+
+      if (preferredMode === 'beginner' && !beginnerDone) {
+        await startBeginnerTutorial({ source: 'auto' });
       }
 
-      if (prefs.onboarding_mode === 'advanced' && !advancedDone) {
-        await startAdvancedTutorial();
+      if (preferredMode === 'advanced' && !advancedDone) {
+        await startAdvancedTutorial({ source: 'auto' });
       }
     };
 
@@ -369,16 +456,28 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       return;
     }
     measureCurrentStep();
-    const timeout = setTimeout(measureCurrentStep, 120);
-    return () => clearTimeout(timeout);
-  }, [beginnerActive, currentStep, currentRouteName, measureCurrentStep]);
+    const shortTimeout = setTimeout(measureCurrentStep, 90);
+    const longTimeout = setTimeout(measureCurrentStep, 260);
+    return () => {
+      clearTimeout(shortTimeout);
+      clearTimeout(longTimeout);
+    };
+  }, [beginnerActive, currentStep, currentRouteName, measureCurrentStep, windowHeight, windowWidth, fontScale]);
 
   useEffect(() => {
+    if (!beginnerActive) return;
     const interval = setInterval(() => {
-      if (beginnerActive) measureCurrentStep();
-    }, 450);
+      measureCurrentStep();
+    }, 280);
     return () => clearInterval(interval);
   }, [beginnerActive, measureCurrentStep]);
+
+  useEffect(() => {
+    if (!beginnerActive || !currentStep) return;
+    setSpotlightRect(null);
+    setTargetUnavailable(false);
+    setMeasureFailCount(0);
+  }, [beginnerActive, currentStep?.id]);
 
   useEffect(() => {
     if (!advancedActive || !currentRouteName) return;
@@ -403,11 +502,19 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   }, [advancedActive, advancedDoneTasks, completeAdvanced]);
 
   const tooltipTop = useMemo(() => {
-    const windowHeight = Dimensions.get('window').height;
-    if (!spotlightRect) return windowHeight * 0.62;
-    const afterTarget = spotlightRect.y + spotlightRect.height + 16;
-    return Math.min(Math.max(24, afterTarget), windowHeight - 240);
-  }, [spotlightRect]);
+    const safeTop = insets.top + 12;
+    const safeBottom = windowHeight - insets.bottom - 12;
+    const maxTop = Math.max(safeTop, safeBottom - tooltipHeight);
+
+    if (!spotlightRect) return maxTop;
+
+    const preferredBelow = spotlightRect.y + spotlightRect.height + 12;
+    const preferredAbove = spotlightRect.y - tooltipHeight - 12;
+
+    if (preferredBelow <= maxTop) return preferredBelow;
+    if (preferredAbove >= safeTop) return preferredAbove;
+    return maxTop;
+  }, [insets.bottom, insets.top, spotlightRect, tooltipHeight, windowHeight]);
 
   const value = useMemo(
     () => ({
@@ -420,6 +527,8 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       beginnerCompleted,
       advancedCompleted,
       advancedDoneTasks,
+      isTutorialActive,
+      isBeginnerTutorialActive,
     }),
     [
       registerTarget,
@@ -431,6 +540,8 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       beginnerCompleted,
       advancedCompleted,
       advancedDoneTasks,
+      isTutorialActive,
+      isBeginnerTutorialActive,
     ]
   );
 
@@ -438,7 +549,14 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     <TutorialContext.Provider value={value}>
       {children}
 
-      <Modal visible={beginnerActive} transparent animationType="fade" statusBarTranslucent onRequestClose={() => void skipBeginner()}>
+      <Modal
+        visible={beginnerActive}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        presentationStyle="overFullScreen"
+        onRequestClose={() => void skipBeginner()}
+      >
         <View style={styles.overlayRoot}>
           {spotlightRect ? (
             <>
@@ -476,6 +594,17 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
                   },
                 ]}
               />
+              <Pressable
+                style={[
+                  styles.touchBlocker,
+                  {
+                    left: spotlightRect.x,
+                    top: spotlightRect.y,
+                    width: spotlightRect.width,
+                    height: spotlightRect.height,
+                  },
+                ]}
+              />
               <View
                 pointerEvents="none"
                 style={[
@@ -493,11 +622,27 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
             <Pressable style={[StyleSheet.absoluteFillObject, styles.dim]} />
           )}
 
-          <View style={[styles.tooltipCard, { top: tooltipTop }]}>
-            <AppText className="text-slate-900 text-base font-bold">{currentStep?.title}</AppText>
-            <AppText className="text-slate-600 text-sm mt-1">{currentStep?.description}</AppText>
-            <AppText className="text-slate-400 text-xs mt-2">
+          <View
+            style={[
+              styles.tooltipCard,
+              {
+                top: tooltipTop,
+                backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+                borderColor: darkMode ? '#334155' : '#e2e8f0',
+              },
+            ]}
+            onLayout={(event) => {
+              const height = Math.max(180, Math.round(event.nativeEvent.layout.height));
+              if (Math.abs(tooltipHeight - height) > 2) {
+                setTooltipHeight(height);
+              }
+            }}
+          >
+            <AppText style={[styles.titleText, { color: darkMode ? '#f8fafc' : '#0f172a' }]}>{currentStep?.title}</AppText>
+            <AppText style={[styles.bodyText, { color: darkMode ? '#cbd5e1' : '#475569' }]}>{currentStep?.description}</AppText>
+            <AppText style={[styles.stepText, { color: darkMode ? '#94a3b8' : '#94a3b8' }]}>
               Passo {Math.min(beginnerIndex + 1, BEGINNER_STEPS.length)} de {BEGINNER_STEPS.length}
+              {targetUnavailable ? ' • ajuste de layout detectado' : ''}
             </AppText>
 
             <View className="flex-row mt-4 gap-2">
@@ -515,23 +660,38 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
         </View>
       </Modal>
 
-      <Modal visible={advancedActive} transparent animationType="fade" statusBarTranslucent onRequestClose={() => void stopTutorial()}>
+      <Modal
+        visible={advancedActive}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        presentationStyle="overFullScreen"
+        onRequestClose={() => void stopTutorial()}
+      >
         <View style={styles.overlayRoot}>
           <Pressable style={[StyleSheet.absoluteFillObject, styles.dim]} onPress={() => void stopTutorial()} />
-          <View style={styles.advancedCard}>
-            <AppText className="text-slate-900 text-lg font-bold">Checklist rápido (Avançado)</AppText>
-            <AppText className="text-slate-600 text-sm mt-1 mb-3">
+          <View style={[styles.advancedCard, { backgroundColor: darkMode ? '#0f172a' : '#f8fafc', borderColor: darkMode ? '#334155' : '#e2e8f0' }]}>
+            <AppText style={[styles.advancedTitle, { color: darkMode ? '#f8fafc' : '#0f172a' }]}>Checklist rápido (Avançado)</AppText>
+            <AppText style={[styles.advancedDescription, { color: darkMode ? '#cbd5e1' : '#475569' }]}>
               Complete os objetivos para finalizar seu tutorial avançado.
             </AppText>
 
             {ADVANCED_TASKS.map((task) => {
               const done = advancedDoneTasks.includes(task.id);
               return (
-                <View key={task.id} className={`rounded-xl border px-3 py-3 mb-2 ${done ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200'}`}>
-                  <AppText className={`font-bold text-sm ${done ? 'text-emerald-700' : 'text-slate-900'}`}>
+                <View
+                  key={task.id}
+                  style={[
+                    styles.taskCard,
+                    done
+                      ? { backgroundColor: darkMode ? '#052e24' : '#ecfdf5', borderColor: darkMode ? '#065f46' : '#a7f3d0' }
+                      : { backgroundColor: darkMode ? '#111827' : '#ffffff', borderColor: darkMode ? '#334155' : '#e2e8f0' },
+                  ]}
+                >
+                  <AppText style={[styles.taskTitle, { color: done ? '#10b981' : darkMode ? '#f8fafc' : '#0f172a' }]}>
                     {done ? 'Concluído' : 'Pendente'} · {task.label}
                   </AppText>
-                  <AppText className="text-slate-600 text-xs mt-1">{task.description}</AppText>
+                  <AppText style={[styles.taskDescription, { color: darkMode ? '#cbd5e1' : '#475569' }]}>{task.description}</AppText>
                 </View>
               );
             })}
@@ -562,24 +722,60 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#f48c25',
   },
+  touchBlocker: {
+    position: 'absolute',
+    backgroundColor: 'transparent',
+  },
   tooltipCard: {
     position: 'absolute',
     left: 16,
     right: 16,
-    backgroundColor: '#ffffff',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     padding: 14,
+  },
+  titleText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  bodyText: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  stepText: {
+    fontSize: 12,
+    marginTop: 8,
   },
   advancedCard: {
     marginHorizontal: 16,
     marginTop: 120,
-    backgroundColor: '#f8fafc',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     padding: 14,
+  },
+  advancedTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  advancedDescription: {
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  taskCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  taskTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  taskDescription: {
+    fontSize: 12,
+    marginTop: 4,
   },
 });
 

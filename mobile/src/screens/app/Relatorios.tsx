@@ -18,6 +18,7 @@ import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { markPerf, measurePerf } from '../../services/perf';
 import { ReportFlowFilter, ReportsSummaryDto, ReportStatusFilter } from '../../types/report';
 import { useThemeMode } from '../../context/ThemeContext';
+import { useTutorial } from '../../context/TutorialContext';
 import { exportReportsPdf } from '../../services/reportsExport';
 
 type DetailsTab = 'records' | 'categories';
@@ -174,6 +175,7 @@ const IndicatorsShimmer = React.memo(() => (
 
 const Relatorios = () => {
   const { darkMode } = useThemeMode();
+  const { isBeginnerTutorialActive } = useTutorial();
   const { width: screenWidth } = useWindowDimensions();
   const [monthRef, setMonthRef] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [status, setStatus] = useState<ReportStatusFilter>('all');
@@ -213,6 +215,12 @@ const Relatorios = () => {
   useEffect(() => {
     setExportFeedback(null);
   }, [activeFilters]);
+
+  useEffect(() => {
+    if (!isBeginnerTutorialActive) return;
+    setShowCategoryPicker(false);
+    setShowPeriodPicker(false);
+  }, [isBeginnerTutorialActive]);
 
   useEffect(() => {
     if (!exportFeedback) return;

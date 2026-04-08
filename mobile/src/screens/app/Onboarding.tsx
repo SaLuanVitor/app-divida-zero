@@ -41,6 +41,7 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
         onboarding_seen: true,
         onboarding_mode: mode,
         tutorial_reopen_enabled: true,
+        tutorial_active_mode: mode,
         tutorial_beginner_completed: mode === 'beginner' ? false : undefined,
         tutorial_advanced_completed: mode === 'advanced' ? false : undefined,
         tutorial_last_step: mode === 'beginner' ? 'home_summary' : null,
