@@ -17,10 +17,12 @@ const getLocalDateHeader = () => {
     return `${year}-${month}-${day}`;
 };
 
-const defaultApiBaseUrl =
+const defaultDevApiBaseUrl =
     Platform.OS === 'android'
         ? 'http://10.0.2.2:3000/api/v1'
         : 'http://localhost:3000/api/v1';
+const defaultReleaseApiBaseUrl = 'https://app-divida-zero-production-5333.up.railway.app/api/v1';
+const defaultApiBaseUrl = __DEV__ ? defaultDevApiBaseUrl : defaultReleaseApiBaseUrl;
 const envApiBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 const normalizedApiBaseUrl =
     Platform.OS === 'android' && envApiBaseUrl?.includes('localhost')
