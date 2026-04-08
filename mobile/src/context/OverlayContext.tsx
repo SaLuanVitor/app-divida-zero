@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 type OverlayType = 'actions' | 'dayDetails' | null;
 
@@ -13,15 +13,25 @@ const OverlayContext = createContext<OverlayContextData>({} as OverlayContextDat
 
 export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [activeOverlay, setActiveOverlay] = useState<OverlayType>(null);
+    const openOverlay = useCallback((overlay: Exclude<OverlayType, null>) => {
+        setActiveOverlay(overlay);
+    }, []);
+    const closeOverlay = useCallback(() => {
+        setActiveOverlay(null);
+    }, []);
+    const isOverlayOpen = useCallback(
+        (overlay: Exclude<OverlayType, null>) => activeOverlay === overlay,
+        [activeOverlay]
+    );
 
     const value = useMemo(
         () => ({
             activeOverlay,
-            openOverlay: (overlay: Exclude<OverlayType, null>) => setActiveOverlay(overlay),
-            closeOverlay: () => setActiveOverlay(null),
-            isOverlayOpen: (overlay: Exclude<OverlayType, null>) => activeOverlay === overlay,
+            openOverlay,
+            closeOverlay,
+            isOverlayOpen,
         }),
-        [activeOverlay]
+        [activeOverlay, closeOverlay, isOverlayOpen, openOverlay]
     );
 
     return <OverlayContext.Provider value={value}>{children}</OverlayContext.Provider>;

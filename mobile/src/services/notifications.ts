@@ -520,12 +520,20 @@ const getRecordsOverview = (records: FinancialRecordDto[]) => {
   const now = new Date();
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
+  const startOfCurrentWeek = startOfWeekMonday(now);
+  const todayFloor = startOfDay(now);
 
   const pendingRecords = records.filter(isPending);
   const dueToday = getPendingRecordsForDate(records, now);
   const dueTomorrow = getPendingRecordsForDate(records, tomorrow);
   const pendingIncome = pendingRecords.filter(isIncome);
   const pendingExpense = pendingRecords.filter(isExpense);
+  const weeklyPendingRecords = pendingRecords.filter((record) => {
+    const dueDate = new Date(`${record.due_date}T00:00:00`);
+    return dueDate.getTime() >= startOfCurrentWeek.getTime() && dueDate.getTime() <= todayFloor.getTime();
+  });
+  const weeklyPendingIncome = weeklyPendingRecords.filter(isIncome);
+  const weeklyPendingExpense = weeklyPendingRecords.filter(isExpense);
   const overdue = pendingRecords.filter((record) => {
     const dueDate = new Date(`${record.due_date}T00:00:00`);
     return dueDate.getTime() < new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -533,13 +541,18 @@ const getRecordsOverview = (records: FinancialRecordDto[]) => {
 
   return {
     pendingRecords,
+    weeklyPendingRecords,
     dueToday,
     dueTomorrow,
     pendingIncome,
     pendingExpense,
+    weeklyPendingIncome,
+    weeklyPendingExpense,
     overdue,
     pendingIncomeTotal: sumAmount(pendingIncome),
     pendingExpenseTotal: sumAmount(pendingExpense),
+    weeklyPendingIncomeTotal: sumAmount(weeklyPendingIncome),
+    weeklyPendingExpenseTotal: sumAmount(weeklyPendingExpense),
   };
 };
 
@@ -563,7 +576,7 @@ export const buildManualNotificationScenario = ({
   const overview = getRecordsOverview(records);
   const todayTotal = sumAmount(overview.dueToday);
   const tomorrowTotal = sumAmount(overview.dueTomorrow);
-  const weeklyBalance = overview.pendingIncomeTotal - overview.pendingExpenseTotal;
+  const weeklyBalance = overview.weeklyPendingIncomeTotal - overview.weeklyPendingExpenseTotal;
   const mockedXp = Math.max(15, Math.min(80, overview.pendingRecords.length * 5));
 
   const dueTodayStep: ManualNotificationScenarioStep = overview.dueToday.length
@@ -626,18 +639,18 @@ export const buildManualNotificationScenario = ({
     id: 'alerts-weekly-summary',
     kind: 'weekly_summary',
     title: 'Resumo semanal da conta',
-    body: `Pendências: ${overview.pendingRecords.length}. Entradas pendentes ${formatCurrency(
-      overview.pendingIncomeTotal
-    )} e saídas pendentes ${formatCurrency(overview.pendingExpenseTotal)}. Saldo previsto ${formatCurrency(
+    body: `Até hoje nesta semana: ${overview.weeklyPendingRecords.length} pendência(s). Entradas pendentes ${formatCurrency(
+      overview.weeklyPendingIncomeTotal
+    )} e saídas pendentes ${formatCurrency(overview.weeklyPendingExpenseTotal)}. Saldo previsto ${formatCurrency(
       weeklyBalance
     )}.`,
     data: {
       source: 'mobile_alerts',
       context: 'account_notifications',
-      pending_count: overview.pendingRecords.length,
+      pending_count: overview.weeklyPendingRecords.length,
       overdue_count: overview.overdue.length,
-      pending_income_total: overview.pendingIncomeTotal,
-      pending_expense_total: overview.pendingExpenseTotal,
+      pending_income_total: overview.weeklyPendingIncomeTotal,
+      pending_expense_total: overview.weeklyPendingExpenseTotal,
       projected_balance: weeklyBalance,
     },
   };
@@ -727,11 +740,27 @@ const atNineAM = (base: Date) => {
   return date;
 };
 
-const nextMondayAtNine = () => {
+const startOfDay = (base: Date) => {
+  const date = new Date(base);
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const startOfWeekMonday = (base: Date) => {
+  const date = startOfDay(base);
+  const day = date.getDay();
+  const offset = day === 0 ? 6 : day - 1;
+  date.setDate(date.getDate() - offset);
+  return date;
+};
+
+const nextFridayAtNine = () => {
   const now = new Date();
   const date = new Date(now);
   const day = now.getDay();
-  const diff = day === 1 ? 7 : (8 - day) % 7;
+  const friday = 5;
+  let diff = (friday - day + 7) % 7;
+  if (diff === 0 && now.getHours() >= 9) diff = 7;
   date.setDate(now.getDate() + diff);
   date.setHours(9, 0, 0, 0);
   return date;
@@ -744,8 +773,15 @@ const getPendingCountForDate = (records: FinancialRecordDto[], targetDate: Date)
     return sameDay(due, targetDate);
   }).length;
 
-const getPendingTotalCount = (records: FinancialRecordDto[]) =>
-  records.filter((record) => record.status === 'pending').length;
+const getPendingWeekToDate = (records: FinancialRecordDto[], now: Date) => {
+  const weekStart = startOfWeekMonday(now);
+  const todayFloor = startOfDay(now);
+  return records.filter((record) => {
+    if (record.status !== 'pending') return false;
+    const due = new Date(`${record.due_date}T00:00:00`);
+    return due.getTime() >= weekStart.getTime() && due.getTime() <= todayFloor.getTime();
+  });
+};
 
 const safeFutureDate = (date: Date) => {
   const now = new Date();
@@ -836,17 +872,18 @@ export const syncScheduledLocalNotifications = async ({
     }
 
     if (prefs.notify_weekly_summary) {
-      const pendingCount = getPendingTotalCount(records);
+      const weeklyPending = getPendingWeekToDate(records, now);
+      const pendingCount = weeklyPending.length;
       await Notifications.scheduleNotificationAsync({
         content: buildSchedulePayload({
           kind: 'weekly_summary',
-          title: 'Resumo semanal',
+          title: 'Resumo semanal (até hoje)',
           body:
             pendingCount > 0
-              ? `Semana iniciando: você tem ${pendingCount} lançamento(s) pendente(s).`
-              : 'Semana iniciando: sem pendências no momento. Continue assim.',
+              ? `Até hoje nesta semana, você tem ${pendingCount} lançamento(s) pendente(s).`
+              : 'Até hoje nesta semana, você não tem pendências. Continue assim.',
         }),
-        trigger: nextMondayAtNine(),
+        trigger: nextFridayAtNine(),
       });
     }
   } catch {

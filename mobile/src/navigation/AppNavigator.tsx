@@ -62,9 +62,13 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     const showActions = isOverlayOpen('actions');
     const inactiveIcon = darkMode ? '#94a3b8' : '#8a7560';
     const activeRouteName = useMemo(() => state?.routes?.[state?.index]?.name, [state?.index, state?.routes]);
+    const previousRouteRef = React.useRef(activeRouteName);
 
     useEffect(() => {
-        closeOverlay();
+        if (previousRouteRef.current !== activeRouteName) {
+            closeOverlay();
+            previousRouteRef.current = activeRouteName;
+        }
     }, [activeRouteName, closeOverlay]);
 
     const goTo = (name: string, params?: Record<string, unknown>) => {
@@ -85,7 +89,8 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     return (
         <>
             {showActions ? (
-                <Pressable style={styles.overlay} onPress={closeOverlay}>
+                <View style={styles.overlay}>
+                    <Pressable style={StyleSheet.absoluteFill} onPress={closeOverlay} />
                     <View style={[styles.actionsContainer, darkMode && styles.actionsContainerDark]}>
                         <TouchableOpacity
                             style={[styles.actionButton, darkMode && styles.actionButtonDark, largerTouchTargets && styles.actionButtonLarge]}
@@ -103,7 +108,7 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                             <AppText style={[styles.actionText, darkMode && styles.actionTextDark]}>Nova dívida</AppText>
                         </TouchableOpacity>
                     </View>
-                </Pressable>
+                </View>
             ) : null}
 
             <View style={[styles.tabBar, darkMode && styles.tabBarDark, { paddingBottom: Math.max(10, insets.bottom) }]}>

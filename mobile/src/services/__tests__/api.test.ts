@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api, {
   ACCESS_TOKEN_KEY,
   REFRESH_TOKEN_KEY,
+  resolveApiBaseUrl,
   setUnauthorizedHandler,
 } from '../api';
 
@@ -72,5 +73,64 @@ describe('api interceptor hardening', () => {
     expect(AsyncStorage.multiRemove).toHaveBeenCalled();
     expect(unauthorizedSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('triggers unauthorized callback once for concurrent refresh failures', async () => {
+    const rejected = (api.interceptors.response as any).handlers[0].rejected as Function;
+
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue('refresh-invalid');
+    (AsyncStorage.multiRemove as jest.Mock).mockResolvedValue(undefined);
+    jest.spyOn(api, 'post').mockRejectedValueOnce(new Error('refresh failed'));
+
+    const unauthorizedSpy = jest.fn().mockResolvedValue(undefined);
+    setUnauthorizedHandler(unauthorizedSpy);
+
+    const errorA = { config: { url: '/financial_records', headers: {} }, response: { status: 401 } } as any;
+    const errorB = { config: { url: '/financial_goals', headers: {} }, response: { status: 401 } } as any;
+
+    await Promise.allSettled([rejected(errorA), rejected(errorB)]);
+
+    expect(AsyncStorage.multiRemove).toHaveBeenCalledTimes(1);
+    expect(unauthorizedSpy).toHaveBeenCalledTimes(1);
+  });
 });
 
+describe('resolveApiBaseUrl', () => {
+  it('uses env url in dev mode and normalizes localhost on android', () => {
+    const result = resolveApiBaseUrl({
+      isDev: true,
+      platform: 'android',
+      envApiBaseUrl: 'http://localhost:3000/api/v1',
+    });
+
+    expect(result).toBe('http://10.0.2.2:3000/api/v1');
+  });
+
+  it('falls back to local dev url when env is missing in dev mode', () => {
+    const result = resolveApiBaseUrl({
+      isDev: true,
+      platform: 'android',
+      envApiBaseUrl: '',
+    });
+
+    expect(result).toBe('http://10.0.2.2:3000/api/v1');
+  });
+
+  it('always uses Railway in release mode even with local env url', () => {
+    const result = resolveApiBaseUrl({
+      isDev: false,
+      platform: 'android',
+      envApiBaseUrl: 'http://10.0.2.2:3000/api/v1',
+    });
+
+    expect(result).toBe('https://app-divida-zero-production-5333.up.railway.app/api/v1');
+  });
+
+  it('uses Railway in release mode without env', () => {
+    const result = resolveApiBaseUrl({
+      isDev: false,
+      platform: 'android',
+    });
+
+    expect(result).toBe('https://app-divida-zero-production-5333.up.railway.app/api/v1');
+  });
+});
