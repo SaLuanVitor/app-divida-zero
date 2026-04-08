@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity } from 'react-native';
 import { ArrowLeft, LockKeyhole } from 'lucide-react-native';
@@ -66,7 +66,7 @@ const SecuritySettings = () => {
           </TouchableOpacity>
           <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Segurança</AppText>
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Gerencie senha e proteção da conta.</AppText>
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs">Gerencie senha e proteção da conta.</AppText>
           </View>
         </View>
       </View>
@@ -122,3 +122,5 @@ const SecuritySettings = () => {
 };
 
 export default SecuritySettings;
+
+

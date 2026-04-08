@@ -8,6 +8,7 @@ import { Eye, EyeOff, LucideIcon } from 'lucide-react-native';
 import AppText from './AppText';
 import AppTextInput from './AppTextInput';
 import { useAccessibility } from '../context/AccessibilityContext';
+import { useThemeMode } from '../context/ThemeContext';
 
 interface InputProps extends TextInputProps {
     label?: string;
@@ -35,6 +36,7 @@ const Input: React.FC<InputProps> = ({
     const [isFocused, setIsFocused] = useState(false);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const { largerTouchTargets, fontScale } = useAccessibility();
+    const { darkMode } = useThemeMode();
 
     const togglePasswordVisibility = () => {
         setIsPasswordVisible(!isPasswordVisible);
@@ -64,14 +66,14 @@ const Input: React.FC<InputProps> = ({
                 {Icon && (
                     <Icon
                         size={iconSize}
-                        color={isFocused ? '#f48c25' : '#94a3b8'}
+                        color={isFocused ? '#f48c25' : darkMode ? '#cbd5e1' : '#94a3b8'}
                         className="mr-3"
                     />
                 )}
 
                 <AppTextInput
                     className={cn('flex-1 h-full text-slate-900 dark:text-slate-100 text-base font-normal', className)}
-                    placeholderTextColor="#94a3b8"
+                    placeholderTextColor={darkMode ? '#cbd5e1' : '#94a3b8'}
                     accessibilityLabel={label || rest.placeholder || 'Campo de texto'}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
@@ -86,9 +88,9 @@ const Input: React.FC<InputProps> = ({
                         className="p-2"
                     >
                         {isPasswordVisible ? (
-                            <EyeOff size={iconSize} color="#94a3b8" />
+                            <EyeOff size={iconSize} color={darkMode ? '#cbd5e1' : '#94a3b8'} />
                         ) : (
-                            <Eye size={iconSize} color="#94a3b8" />
+                            <Eye size={iconSize} color={darkMode ? '#cbd5e1' : '#94a3b8'} />
                         )}
                     </TouchableOpacity>
                 ) : RightIcon ? (
@@ -98,7 +100,7 @@ const Input: React.FC<InputProps> = ({
                         className="p-2"
                         disabled={!onRightIconPress}
                     >
-                        <RightIcon size={iconSize} color="#94a3b8" />
+                        <RightIcon size={iconSize} color={darkMode ? '#cbd5e1' : '#94a3b8'} />
                     </TouchableOpacity>
                 ) : null}
             </View>

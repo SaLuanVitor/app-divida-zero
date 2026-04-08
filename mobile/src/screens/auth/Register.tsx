@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Alert } from 'react-native';
 import { Mail, Lock, User, ArrowLeft, Trophy } from 'lucide-react-native';
@@ -7,6 +7,7 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
+import { useThemeMode } from '../../context/ThemeContext';
 
 const getFirstError = (value: unknown) => {
   if (Array.isArray(value) && value.length > 0) return String(value[0]);
@@ -17,6 +18,7 @@ const getFirstError = (value: unknown) => {
 const Register = () => {
   const navigation = useNavigation<any>();
   const { signUp } = useAuth();
+  const { darkMode } = useThemeMode();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -109,27 +111,27 @@ const Register = () => {
   return (
     <Layout scrollable className="bg-[#f8f7f5] dark:bg-black" contentContainerClassName="bg-[#f8f7f5] dark:bg-black pb-10">
       <View className="flex-row items-center mb-5">
-        <TouchableOpacity
+                <TouchableOpacity
           onPress={() => navigation.goBack()}
           className="p-2 -ml-2 self-start"
         >
-          <ArrowLeft size={24} color="#0f172a" />
+          <ArrowLeft size={24} color={darkMode ? '#e2e8f0' : '#0f172a'} />
         </TouchableOpacity>
-        <AppText className="text-slate-900 text-lg font-bold ml-2">Cadastro</AppText>
+        <AppText className="text-slate-900 dark:text-slate-100 text-lg font-bold ml-2">Cadastro</AppText>
       </View>
 
-      <AppText className="text-slate-900 text-[30px] font-extrabold leading-tight mb-7">
+      <AppText className="text-slate-900 dark:text-slate-100 text-[30px] font-extrabold leading-tight mb-7">
         Crie sua conta e <AppText className="text-primary">comece sua jornada</AppText>
       </AppText>
 
-      <View className="bg-white dark:bg-[#121212] border border-[#e6e0db] rounded-2xl p-5 mb-8">
+      <View className="bg-white dark:bg-[#121212] border border-[#e6e0db] dark:border-slate-700 rounded-2xl p-5 mb-8">
         <View className="flex-row items-center gap-4">
-          <View className="w-16 h-16 rounded-full bg-[#f8f7f5] dark:bg-black items-center justify-center border-2 border-dashed border-slate-300">
-            <Trophy size={30} color="#94a3b8" />
+          <View className="w-16 h-16 rounded-full bg-[#f8f7f5] dark:bg-black items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600">
+            <Trophy size={30} color={darkMode ? '#cbd5e1' : '#94a3b8'} />
           </View>
           <View className="flex-1">
-            <AppText className="text-slate-900 font-bold text-base mb-1">Sua primeira conquista</AppText>
-            <AppText className="text-slate-600 dark:text-slate-300 text-sm">
+            <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base mb-1">Sua primeira conquista</AppText>
+            <AppText className="text-slate-600 dark:text-slate-100 text-sm">
               Complete o cadastro para desbloquear a medalha de <AppText className="text-primary font-bold">Novato</AppText>.
             </AppText>
           </View>
@@ -176,7 +178,7 @@ const Register = () => {
         error={passwordError}
       />
 
-      <AppText className={`text-xs mb-4 ml-1 ${password.length >= 8 ? 'text-emerald-600' : 'text-slate-500 dark:text-slate-300'}`}>
+      <AppText className={`text-xs mb-4 ml-1 ${password.length >= 8 ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-200'}`}>
         {passwordHint}
       </AppText>
 
@@ -189,7 +191,7 @@ const Register = () => {
       />
 
       <View className="mt-8 items-center">
-        <AppText className="text-slate-500 dark:text-slate-300 text-sm">
+        <AppText className="text-slate-500 dark:text-slate-200 text-sm">
           Já tem uma conta?{' '}
           <AppText className="text-primary font-bold" onPress={() => navigation.goBack()}>
             Faça login
@@ -201,4 +203,6 @@ const Register = () => {
 };
 
 export default Register;
+
+
 

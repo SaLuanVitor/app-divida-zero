@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { View, TouchableOpacity, Switch } from 'react-native';
 import { ArrowLeft, Bell } from 'lucide-react-native';
 import AppText from '../../components/AppText';
@@ -237,7 +237,7 @@ const NotificationSettings = () => {
       <View className="flex-row items-center justify-between">
         <View className="flex-1 pr-3">
           <AppText className="text-slate-900 dark:text-slate-100 font-semibold">{title}</AppText>
-          <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-0.5">{subtitle}</AppText>
+          <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">{subtitle}</AppText>
         </View>
         <Switch value={value} onValueChange={onChange} disabled={disabled} trackColor={{ true: '#f48c25' }} />
       </View>
@@ -253,7 +253,7 @@ const NotificationSettings = () => {
           </TouchableOpacity>
           <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Notificações</AppText>
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs">
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs">
               Somente no aplicativo. No celular apenas com sua permissão.
             </AppText>
           </View>
@@ -269,10 +269,10 @@ const NotificationSettings = () => {
 
           <View className="mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a1a1a] p-3">
             <AppText className="text-slate-900 dark:text-slate-100 font-semibold text-sm">Canal único: aplicativo</AppText>
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
               Este app não envia e-mail nem SMS. O alerta aparece no app e, opcionalmente, no celular.
             </AppText>
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">{permissionLabel}</AppText>
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">{permissionLabel}</AppText>
           </View>
 
           <Item
@@ -327,7 +327,7 @@ const NotificationSettings = () => {
           </TouchableOpacity>
         </Card>
 
-        {loading ? <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando preferências...</AppText> : null}
+        {loading ? <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">Carregando preferências...</AppText> : null}
 
         {message ? (
           <View
@@ -352,3 +352,5 @@ const NotificationSettings = () => {
 };
 
 export default NotificationSettings;
+
+

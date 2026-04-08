@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity } from 'react-native';
 import { ArrowLeft, Mail, User } from 'lucide-react-native';
@@ -63,7 +63,7 @@ const PersonalData = () => {
           </TouchableOpacity>
           <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Dados do usuário</AppText>
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Atualize os identificadores visuais da conta.</AppText>
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs">Atualize os identificadores visuais da conta.</AppText>
           </View>
         </View>
       </View>
@@ -102,3 +102,5 @@ const PersonalData = () => {
 };
 
 export default PersonalData;
+
+

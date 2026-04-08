@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity, Switch } from 'react-native';
 import { ArrowLeft, Settings2 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -122,7 +122,7 @@ const AppSettings = () => {
       <View className="flex-row items-center justify-between">
         <View className="flex-1 pr-3">
           <AppText className="text-slate-900 dark:text-slate-100 font-semibold">{title}</AppText>
-          <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-0.5">{subtitle}</AppText>
+          <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">{subtitle}</AppText>
         </View>
         <Switch value={value} onValueChange={onChange} trackColor={{ true: '#f48c25' }} />
       </View>
@@ -138,7 +138,7 @@ const AppSettings = () => {
           </TouchableOpacity>
           <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Configurações do app</AppText>
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs">
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs">
               Ajuste visual, tutorial e leitura do aplicativo.
             </AppText>
           </View>
@@ -167,7 +167,7 @@ const AppSettings = () => {
           />
 
           <View className="pt-3">
-            <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-2">Tamanho do texto</AppText>
+            <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-2">Tamanho do texto</AppText>
             <View className="flex-row flex-wrap justify-between">
               {TEXT_SIZE_OPTIONS.map((option) => {
                 const selected = prefs.font_scale === option.value;
@@ -192,7 +192,7 @@ const AppSettings = () => {
                 );
               })}
             </View>
-            <AppText className="text-[11px] text-slate-500 dark:text-slate-300 mt-2">
+            <AppText className="text-[11px] text-slate-500 dark:text-slate-200 mt-2">
               Pré-visualização: o app inteiro aplica este tamanho automaticamente.
             </AppText>
           </View>
@@ -200,7 +200,7 @@ const AppSettings = () => {
 
         <Card className="p-4 mt-4">
           <AppText className="text-slate-700 dark:text-slate-200 font-bold mb-1">Tutorial inicial</AppText>
-          <AppText className="text-slate-500 dark:text-slate-300 text-xs mb-3">
+          <AppText className="text-slate-500 dark:text-slate-200 text-xs mb-3">
             Reabra o tutorial para revisar orientações de uso quando quiser.
           </AppText>
           <Button title="Ver tutorial novamente" variant="outline" onPress={reopenTutorial} className="h-11" />
@@ -212,10 +212,12 @@ const AppSettings = () => {
           </View>
         ) : null}
 
-        {saving ? <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Salvando...</AppText> : null}
+        {saving ? <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">Salvando...</AppText> : null}
       </View>
     </Layout>
   );
 };
 
 export default AppSettings;
+
+

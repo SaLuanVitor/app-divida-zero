@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import { ArrowLeft, BellRing, CalendarCheck2, CalendarClock, Sparkles, Trophy } from 'lucide-react-native';
 import AppText from '../../components/AppText';
@@ -294,7 +294,7 @@ const NotificationManualSender = () => {
           </TouchableOpacity>
           <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Envio de notificações</AppText>
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs">
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs">
               Alertas locais com dados reais da sua conta.
             </AppText>
           </View>
@@ -307,10 +307,10 @@ const NotificationManualSender = () => {
           {checkingPermission ? (
             <View className="flex-row items-center">
               <ActivityIndicator color="#f48c25" />
-              <AppText className="text-slate-500 dark:text-slate-300 text-xs ml-2">Verificando permissão...</AppText>
+              <AppText className="text-slate-500 dark:text-slate-200 text-xs ml-2">Verificando permissão...</AppText>
             </View>
           ) : (
-            <AppText className="text-slate-600 dark:text-slate-300 text-sm">{permissionLabel}</AppText>
+            <AppText className="text-slate-600 dark:text-slate-200 text-sm">{permissionLabel}</AppText>
           )}
 
           <TouchableOpacity
@@ -341,7 +341,7 @@ const NotificationManualSender = () => {
           {scenarioLoading ? (
             <View className="flex-row items-center mb-3">
               <ActivityIndicator color="#f48c25" />
-              <AppText className="text-slate-500 dark:text-slate-300 text-xs ml-2">Carregando alertas da conta...</AppText>
+              <AppText className="text-slate-500 dark:text-slate-200 text-xs ml-2">Carregando alertas da conta...</AppText>
             </View>
           ) : (
             <View className="mb-3">
@@ -350,7 +350,7 @@ const NotificationManualSender = () => {
                   <AppText className="text-slate-900 dark:text-slate-100 text-xs font-semibold">
                     {index + 1}. {step.title}
                   </AppText>
-                  <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-0.5">{step.body}</AppText>
+                  <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">{step.body}</AppText>
                 </View>
               ))}
             </View>
@@ -404,7 +404,7 @@ const NotificationManualSender = () => {
                   </View>
                   <View className="flex-1">
                     <AppText className="text-slate-900 dark:text-slate-100 font-semibold text-sm">{action.title}</AppText>
-                    <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-0.5">{action.subtitle}</AppText>
+                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">{action.subtitle}</AppText>
                   </View>
                   <TouchableOpacity
                     onPress={() => void sendNow(action.kind, action.payload.title, action.payload.body)}
@@ -446,3 +446,5 @@ const NotificationManualSender = () => {
 };
 
 export default NotificationManualSender;
+
+

@@ -48,14 +48,14 @@ let handlerConfigured = false;
 const APP_NOTIFICATION_SOURCE = 'divida_zero_mobile';
 const DEVICE_XP_NOTIFICATIONS_ENABLED = false;
 const NOTIFICATION_CHANNEL_ID = 'default';
-const FALLBACK_NOTIFICATION_TITLE = 'DÃ­vida Zero';
+const FALLBACK_NOTIFICATION_TITLE = 'Dívida Zero';
 
 const NOTIFICATION_BODY_FALLBACKS: Record<ManualNotificationKind, string> = {
-  test: 'AtualizaÃ§Ã£o da conta disponÃ­vel no dispositivo.',
-  due_today: 'VocÃª tem pendÃªncias para hoje. Abra o app para revisar.',
-  due_tomorrow: 'VocÃª tem pendÃªncias para amanhÃ£. Organize-se no app.',
-  weekly_summary: 'Seu resumo semanal estÃ¡ disponÃ­vel no app.',
-  xp_badge: 'VocÃª recebeu uma atualizaÃ§Ã£o de progresso no app.',
+  test: 'Atualização da conta disponível no dispositivo.',
+  due_today: 'Você tem pendências para hoje. Abra o app para revisar.',
+  due_tomorrow: 'Você tem pendências para amanhã. Organize-se no app.',
+  weekly_summary: 'Seu resumo semanal está disponível no app.',
+  xp_badge: 'Você recebeu uma atualização de progresso no app.',
   generic: 'Abra o app para ver os detalhes.',
 };
 
@@ -306,7 +306,7 @@ export const initializeNotificationLayer = () => {
   try {
     if (Platform.OS === 'android' && typeof Notifications.setNotificationChannelAsync === 'function') {
       Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
-        name: 'NotificaÃ§Ãµes',
+        name: 'Notificações',
         importance: Notifications.AndroidImportance?.DEFAULT ?? 3,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#f48c25',
@@ -502,8 +502,8 @@ export const sendManualNotification = async ({
 export const sendLocalTestNotification = async (): Promise<NotificationSendResult> =>
   sendManualNotification({
     kind: 'test',
-    title: 'DÃ­vida Zero',
-    body: 'NotificaÃ§Ãµes no celular ativadas com sucesso.',
+    title: 'Dívida Zero',
+    body: 'Notificações no celular ativadas com sucesso.',
     requestPermissionIfNeeded: true,
   });
 
@@ -559,7 +559,7 @@ export const buildManualNotificationScenario = ({
   prefs: AppPreferences;
   userName?: string;
 }): ManualNotificationScenarioStep[] => {
-  const displayName = sanitizeText(userName) || 'UsuÃ¡rio';
+  const displayName = sanitizeText(userName) || 'Usuário';
   const overview = getRecordsOverview(records);
   const todayTotal = sumAmount(overview.dueToday);
   const tomorrowTotal = sumAmount(overview.dueTomorrow);
@@ -571,7 +571,7 @@ export const buildManualNotificationScenario = ({
         id: 'alerts-due-today',
         kind: 'due_today',
         title: 'Vencimentos de hoje',
-        body: `${displayName}, vocÃª tem ${overview.dueToday.length} pendÃªncia(s) para hoje somando ${formatCurrency(
+        body: `${displayName}, você tem ${overview.dueToday.length} pendência(s) para hoje somando ${formatCurrency(
           todayTotal
         )}. Ex.: ${formatTopRecordSnippet(overview.dueToday)}.`,
         data: {
@@ -585,7 +585,7 @@ export const buildManualNotificationScenario = ({
         id: 'alerts-due-today',
         kind: 'due_today',
         title: 'Vencimentos de hoje',
-        body: `${displayName}, hoje nÃ£o hÃ¡ pendÃªncias com vencimento. Sua conta estÃ¡ em dia.`,
+        body: `${displayName}, hoje não há pendências com vencimento. Sua conta está em dia.`,
         data: {
           source: 'mobile_alerts',
           context: 'account_notifications',
@@ -598,8 +598,8 @@ export const buildManualNotificationScenario = ({
     ? {
         id: 'alerts-due-tomorrow',
         kind: 'due_tomorrow',
-        title: 'Lembrete para amanhÃ£',
-        body: `AmanhÃ£ vocÃª terÃ¡ ${overview.dueTomorrow.length} pendÃªncia(s) (${formatCurrency(
+        title: 'Lembrete para amanhã',
+        body: `Amanhã você terá ${overview.dueTomorrow.length} pendência(s) (${formatCurrency(
           tomorrowTotal
         )}). Ex.: ${formatTopRecordSnippet(overview.dueTomorrow)}.`,
         data: {
@@ -612,8 +612,8 @@ export const buildManualNotificationScenario = ({
     : {
         id: 'alerts-due-tomorrow',
         kind: 'due_tomorrow',
-        title: 'Lembrete para amanhÃ£',
-        body: 'Nenhuma pendÃªncia para amanhÃ£ na sua conta.',
+        title: 'Lembrete para amanhã',
+        body: 'Nenhuma pendência para amanhã na sua conta.',
         data: {
           source: 'mobile_alerts',
           context: 'account_notifications',
@@ -626,9 +626,9 @@ export const buildManualNotificationScenario = ({
     id: 'alerts-weekly-summary',
     kind: 'weekly_summary',
     title: 'Resumo semanal da conta',
-    body: `PendÃªncias: ${overview.pendingRecords.length}. Entradas pendentes ${formatCurrency(
+    body: `Pendências: ${overview.pendingRecords.length}. Entradas pendentes ${formatCurrency(
       overview.pendingIncomeTotal
-    )} e saÃ­das pendentes ${formatCurrency(overview.pendingExpenseTotal)}. Saldo previsto ${formatCurrency(
+    )} e saídas pendentes ${formatCurrency(overview.pendingExpenseTotal)}. Saldo previsto ${formatCurrency(
       weeklyBalance
     )}.`,
     data: {
@@ -648,8 +648,8 @@ export const buildManualNotificationScenario = ({
     title: 'Progresso da jornada',
     body:
       overview.pendingRecords.length === 0
-        ? `Conta organizada! VocÃª pode receber +${mockedXp} XP por manter zero pendÃªncias.`
-        : `Ao regularizar pendÃªncias, vocÃª pode ganhar cerca de +${mockedXp} XP nesta etapa.`,
+        ? `Conta organizada! Você pode receber +${mockedXp} XP por manter zero pendências.`
+        : `Ao regularizar pendências, você pode ganhar cerca de +${mockedXp} XP nesta etapa.`,
     data: {
       source: 'mobile_alerts',
       context: 'account_notifications',
@@ -662,9 +662,9 @@ export const buildManualNotificationScenario = ({
     id: 'alerts-account-header',
     kind: 'test',
     title: 'Alertas da conta atualizados',
-    body: `Dados da conta de ${displayName} atualizados. PreferÃªncias ativas: ${
-      prefs.notifications_enabled ? 'sim' : 'nÃ£o'
-    }, push no dispositivo: ${prefs.device_push_enabled ? 'sim' : 'nÃ£o'}.`,
+    body: `Dados da conta de ${displayName} atualizados. Preferências ativas: ${
+      prefs.notifications_enabled ? 'sim' : 'não'
+    }, push no dispositivo: ${prefs.device_push_enabled ? 'sim' : 'não'}.`,
     data: {
       source: 'mobile_alerts',
       context: 'account_notifications',
@@ -812,7 +812,7 @@ export const syncScheduledLocalNotifications = async ({
           content: buildSchedulePayload({
             kind: 'due_today',
             title: 'Vencimentos de hoje',
-            body: `VocÃª tem ${dueTodayCount} lanÃ§amento(s) pendente(s) para hoje.`,
+            body: `Você tem ${dueTodayCount} lançamento(s) pendente(s) para hoje.`,
           }),
           trigger: safeFutureDate(atNineAM(now)),
         });
@@ -827,8 +827,8 @@ export const syncScheduledLocalNotifications = async ({
         await Notifications.scheduleNotificationAsync({
           content: buildSchedulePayload({
             kind: 'due_tomorrow',
-            title: 'Lembrete para amanhÃ£',
-            body: `VocÃª tem ${dueTomorrowCount} lanÃ§amento(s) pendente(s) para amanhÃ£.`,
+            title: 'Lembrete para amanhã',
+            body: `Você tem ${dueTomorrowCount} lançamento(s) pendente(s) para amanhã.`,
           }),
           trigger: atNineAM(tomorrow),
         });
@@ -843,8 +843,8 @@ export const syncScheduledLocalNotifications = async ({
           title: 'Resumo semanal',
           body:
             pendingCount > 0
-              ? `Semana iniciando: vocÃª tem ${pendingCount} lanÃ§amento(s) pendente(s).`
-              : 'Semana iniciando: sem pendÃªncias no momento. Continue assim.',
+              ? `Semana iniciando: você tem ${pendingCount} lançamento(s) pendente(s).`
+              : 'Semana iniciando: sem pendências no momento. Continue assim.',
         }),
         trigger: nextMondayAtNine(),
       });
@@ -877,5 +877,6 @@ export const sendXpAndBadgeNotification = async ({
     body,
   });
 };
+
 
 

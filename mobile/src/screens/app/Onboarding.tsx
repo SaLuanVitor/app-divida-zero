@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity } from 'react-native';
 import { Lightbulb, Rocket, ShieldCheck } from 'lucide-react-native';
@@ -64,7 +64,7 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
           <ShieldCheck size={28} color="#f48c25" />
         </View>
         <AppText className="text-slate-900 dark:text-slate-100 text-3xl font-extrabold">Bem-vindo ao Dívida Zero</AppText>
-        <AppText className="text-slate-600 dark:text-slate-300 text-sm mt-2">
+        <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2">
           Escolha um perfil para iniciar. Você pode pular agora e reabrir o tutorial depois em Configurações do app.
         </AppText>
       </View>
@@ -82,7 +82,7 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
             <Lightbulb size={18} color={selectedMode === 'beginner' ? '#f48c25' : '#64748b'} />
             <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Iniciante em finanças</AppText>
           </View>
-          <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-2">
+          <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-2">
             Passos guiados, linguagem mais simples e foco nas primeiras ações.
           </AppText>
         </TouchableOpacity>
@@ -99,7 +99,7 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
             <Rocket size={18} color={selectedMode === 'advanced' ? '#f48c25' : '#64748b'} />
             <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Usuário experiente</AppText>
           </View>
-          <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-2">
+          <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-2">
             Fluxo mais direto e foco em produtividade para controlar metas e lançamentos.
           </AppText>
         </TouchableOpacity>
@@ -108,7 +108,7 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
       <View className="px-5 pb-10">
         <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
           <AppText className="text-slate-900 dark:text-slate-100 font-bold">{modeTitle}</AppText>
-          <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-1">
+          <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1">
             O app vai usar esse perfil para priorizar dicas e orientar sua evolução.
           </AppText>
         </View>
@@ -121,3 +121,5 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
 };
 
 export default Onboarding;
+
+

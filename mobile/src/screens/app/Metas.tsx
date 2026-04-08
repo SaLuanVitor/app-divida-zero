@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -173,24 +173,24 @@ const Metas = () => {
                         <AppText className="text-white font-bold text-sm">Nova meta</AppText>
                     </TouchableOpacity>
                 </View>
-                <AppText className="text-slate-500 dark:text-slate-300 mb-5">Acompanhe sua evolução e ajuste suas metas.</AppText>
+                <AppText className="text-slate-500 dark:text-slate-200 mb-5">Acompanhe sua evolução e ajuste suas metas.</AppText>
 
                 <View className="flex-row gap-3 mb-4">
                     <Card className="flex-1" noPadding>
                         <View className="p-4">
-                            <AppText className="text-slate-500 dark:text-slate-300 text-xs font-bold uppercase">Ativas</AppText>
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs font-bold uppercase">Ativas</AppText>
                             <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-black mt-2">{stats.active}</AppText>
                         </View>
                     </Card>
                     <Card className="flex-1" noPadding>
                         <View className="p-4">
-                            <AppText className="text-slate-500 dark:text-slate-300 text-xs font-bold uppercase">Concluídas</AppText>
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs font-bold uppercase">Concluídas</AppText>
                             <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-black mt-2">{stats.completed}</AppText>
                         </View>
                     </Card>
                     <Card className="flex-1" noPadding>
                         <View className="p-4">
-                            <AppText className="text-slate-500 dark:text-slate-300 text-xs font-bold uppercase">Média</AppText>
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs font-bold uppercase">Média</AppText>
                             <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-black mt-2">{stats.avgProgress}%</AppText>
                         </View>
                     </Card>
@@ -202,7 +202,7 @@ const Metas = () => {
                             <Sparkles size={18} color="#f48c25" />
                             <AppText className="text-slate-900 dark:text-slate-100 font-bold">Progresso gamificado</AppText>
                         </View>
-                        <AppText className="text-slate-600 dark:text-slate-300 text-sm">
+                        <AppText className="text-slate-600 dark:text-slate-200 text-sm">
                             Ao avançar suas metas, o sistema libera XP automaticamente nos marcos de 25%, 50%, 75% e 100%.
                         </AppText>
                     </View>
@@ -211,7 +211,7 @@ const Metas = () => {
                 {loading ? (
                     <View className="items-center py-10">
                         <ActivityIndicator color="#f48c25" />
-                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">Carregando metas...</AppText>
+                        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">Carregando metas...</AppText>
                     </View>
                 ) : null}
 
@@ -219,7 +219,7 @@ const Metas = () => {
                     <Card noPadding>
                         <View className="p-5">
                             <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base mb-1">Nenhuma meta cadastrada</AppText>
-                            <AppText className="text-slate-500 dark:text-slate-300 text-sm mb-4">
+                            <AppText className="text-slate-500 dark:text-slate-200 text-sm mb-4">
                                 Crie sua primeira meta para acompanhar o progresso com base nos seus lançamentos.
                             </AppText>
                             <Button title="Criar primeira meta" onPress={openCreateScreen} className="h-11" />
@@ -241,7 +241,7 @@ const Metas = () => {
                                         </View>
                                         <View className="flex-1">
                                             <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">{goal.title}</AppText>
-                                            <AppText className="text-slate-500 dark:text-slate-300 text-xs">
+                                            <AppText className="text-slate-500 dark:text-slate-200 text-xs">
                                                 {typeOption?.label || 'Meta'} - {goal.status === 'completed' ? 'Concluída' : 'Em andamento'}
                                             </AppText>
                                         </View>
@@ -261,11 +261,11 @@ const Metas = () => {
                                     </View>
 
                                     {goal.description ? (
-                                        <AppText className="text-slate-600 dark:text-slate-300 text-sm mb-3">{goal.description}</AppText>
+                                        <AppText className="text-slate-600 dark:text-slate-200 text-sm mb-3">{goal.description}</AppText>
                                     ) : null}
 
                                     <View className="flex-row justify-between mb-2">
-                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs font-bold uppercase">Progresso</AppText>
+                                        <AppText className="text-slate-500 dark:text-slate-200 text-xs font-bold uppercase">Progresso</AppText>
                                         <AppText className="text-primary text-xs font-bold">{goal.progress_pct}%</AppText>
                                     </View>
 
@@ -275,28 +275,28 @@ const Metas = () => {
 
                                     <View className="flex-row justify-between items-end mb-3">
                                         <View>
-                                            <AppText className="text-slate-400 dark:text-slate-300 text-xs">Já alcançado</AppText>
+                                            <AppText className="text-slate-400 dark:text-slate-200 text-xs">Já alcançado</AppText>
                                             <AppText className="text-slate-900 dark:text-slate-100 font-bold">{formatCurrency(goal.current_amount)}</AppText>
                                         </View>
                                         <View className="items-end">
-                                            <AppText className="text-slate-400 dark:text-slate-300 text-xs">Meta</AppText>
+                                            <AppText className="text-slate-400 dark:text-slate-200 text-xs">Meta</AppText>
                                             <AppText className="text-slate-900 dark:text-slate-100 font-bold">{formatCurrency(goal.target_amount)}</AppText>
                                         </View>
                                     </View>
 
                                     <View className="bg-slate-50 dark:bg-[#1a1a1a] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
-                                        <AppText className="text-slate-600 dark:text-slate-300 text-sm">
+                                        <AppText className="text-slate-600 dark:text-slate-200 text-sm">
                                             {goal.status === 'completed'
                                                 ? 'Meta concluída com sucesso.'
                                                 : `Faltam ${formatCurrency(goal.remaining_amount)} para concluir.`}
                                         </AppText>
                                         <View className="flex-row items-center gap-2 mt-2">
                                             <CalendarDays size={14} color="#94a3b8" />
-                                            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Início: {formatDateBR(goal.start_date)}</AppText>
+                                            <AppText className="text-slate-500 dark:text-slate-200 text-xs">Início: {formatDateBR(goal.start_date)}</AppText>
                                         </View>
                                         <View className="flex-row items-center gap-2 mt-2">
                                             <CalendarDays size={14} color="#94a3b8" />
-                                            <AppText className="text-slate-500 dark:text-slate-300 text-xs">{formatDateBR(goal.target_date)}</AppText>
+                                            <AppText className="text-slate-500 dark:text-slate-200 text-xs">{formatDateBR(goal.target_date)}</AppText>
                                         </View>
                                     </View>
                                 </View>
@@ -308,7 +308,7 @@ const Metas = () => {
                 {!loading && hasMoreGoals ? (
                     <View className="items-center pb-2">
                         <ActivityIndicator color="#f48c25" />
-                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
                             Carregando mais metas...
                         </AppText>
                     </View>
@@ -351,7 +351,7 @@ const Metas = () => {
                     <Pressable className="absolute inset-0 bg-black/30" onPress={() => !deleteLoading && setGoalPendingDelete(null)} />
                     <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Excluir meta</AppText>
-                        <AppText className="text-slate-600 dark:text-slate-300 text-sm mt-2 mb-4">
+                        <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2 mb-4">
                             Deseja remover a meta "{goalPendingDelete.title}"? Essa ação atualiza o progresso e o histórico de XP vinculado.
                         </AppText>
 
@@ -378,5 +378,7 @@ const Metas = () => {
 };
 
 export default Metas;
+
+
 
 

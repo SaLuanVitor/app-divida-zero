@@ -21,9 +21,14 @@ const defaultApiBaseUrl =
     Platform.OS === 'android'
         ? 'http://10.0.2.2:3000/api/v1'
         : 'http://localhost:3000/api/v1';
+const envApiBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+const normalizedApiBaseUrl =
+    Platform.OS === 'android' && envApiBaseUrl?.includes('localhost')
+        ? envApiBaseUrl.replace('localhost', '10.0.2.2')
+        : envApiBaseUrl;
 
 const api = axios.create({
-    baseURL: process.env.EXPO_PUBLIC_API_URL ?? defaultApiBaseUrl,
+    baseURL: normalizedApiBaseUrl || defaultApiBaseUrl,
     timeout: 10000,
     headers: {
         Accept: 'application/json; charset=utf-8',
