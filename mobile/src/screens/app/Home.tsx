@@ -706,7 +706,7 @@ const Home = () => {
                             <View>
                                 <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Olá, {user?.name || 'Usuário'}</AppText>
                                 <AppText className="text-slate-500 dark:text-slate-200 text-xs font-medium">
-                                    {gamificationSummary.level_title} •?• XP {gamificationSummary.xp_in_level}/{gamificationSummary.xp_in_level + gamificationSummary.xp_to_next_level}
+                                    {gamificationSummary.level_title} • XP {gamificationSummary.xp_in_level}/{gamificationSummary.xp_in_level + gamificationSummary.xp_to_next_level}
                                 </AppText>
                             </View>
                         </View>
@@ -893,7 +893,7 @@ const Home = () => {
                                         </View>
                                         <View className="ml-3">
                                             <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.title}</AppText>
-                                            <AppText className="text-slate-500 dark:text-slate-200 text-xs">{item.subtitle} •?• {formatDateBRFromISO(item.date)}</AppText>
+                                            <AppText className="text-slate-500 dark:text-slate-200 text-xs">{item.subtitle} • {formatDateBRFromISO(item.date)}</AppText>
                                         </View>
                                     </View>
                                     <View className="items-end">
@@ -1137,7 +1137,7 @@ const Home = () => {
                                     {(xpPopup?.points ?? 0) > 0 ? `+${xpPopup?.points}` : xpPopup?.points} XP
                                 </AppText>
                                 <AppText className="text-slate-600 dark:text-slate-200 text-sm text-center mt-1">
-                                    Nível {xpPopup?.level} •?• {xpPopup?.levelTitle}
+                                    Nível {xpPopup?.level} • {xpPopup?.levelTitle}
                                 </AppText>
                                 <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                     <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup?.levelProgressPct ?? 0}%` }} />
@@ -1243,6 +1243,7 @@ const Home = () => {
 };
 
 export default Home;
+
 
 
 

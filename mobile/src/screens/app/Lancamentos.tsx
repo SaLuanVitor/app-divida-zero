@@ -86,7 +86,7 @@ const buildSuggestedTitle = (tab: RegisterTab, category: string) => {
         return tab === 'debt' ? 'Nova dívida' : 'Novo ganho';
     }
 
-    return tab === 'debt' ? `Dívida •?• ${category}` : `Ganho •?• ${category}`;
+    return tab === 'debt' ? `Dívida • ${category}` : `Ganho • ${category}`;
 };
 
 const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
@@ -829,7 +829,7 @@ const Lancamentos = () => {
                                     {xpPopup.points > 0 ? `+${xpPopup.points}` : xpPopup.points} XP
                                 </AppText>
                                 <AppText className="text-slate-600 dark:text-slate-200 text-sm text-center mt-1">
-                                    Nível {xpPopup.summary.level} •?• {xpPopup.summary.level_title}
+                                    Nível {xpPopup.summary.level} • {xpPopup.summary.level_title}
                                 </AppText>
                                 <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                     <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup.summary.level_progress_pct}%` }} />
@@ -846,6 +846,7 @@ const Lancamentos = () => {
 };
 
 export default Lancamentos;
+
 
 
 

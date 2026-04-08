@@ -31,7 +31,7 @@ module Api
 
         render_auth_payload(user)
       rescue JWT::DecodeError, ActiveRecord::RecordNotFound
-        render json: { error: "Refresh token invalido." }, status: :unauthorized
+        render json: { error: "Refresh token inválido." }, status: :unauthorized
       end
 
       def forgot_password
@@ -58,14 +58,14 @@ module Api
         password = params.require(:password).to_s
 
         unless user&.reset_password_token_digest.present?
-          return render json: { error: "Token invalido ou expirado." }, status: :unprocessable_entity
+          return render json: { error: "Token inválido ou expirado." }, status: :unprocessable_entity
         end
 
         token_digest = Digest::SHA256.hexdigest(token)
         expired = user.reset_password_sent_at.nil? || user.reset_password_sent_at < 30.minutes.ago
 
         if user.reset_password_token_digest != token_digest || expired
-          return render json: { error: "Token invalido ou expirado." }, status: :unprocessable_entity
+          return render json: { error: "Token inválido ou expirado." }, status: :unprocessable_entity
         end
 
         user.password = password

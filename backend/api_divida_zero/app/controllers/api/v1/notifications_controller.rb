@@ -23,9 +23,8 @@ module Api
         payload = JsonWebToken.decode(token, expected_type: "access")
         @current_user = User.find(payload["sub"])
       rescue JWT::DecodeError, ActiveRecord::RecordNotFound
-        render json: { error: "Nao autorizado." }, status: :unauthorized
+        render json: { error: "Não autorizado." }, status: :unauthorized
       end
     end
   end
 end
-
