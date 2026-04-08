@@ -23,7 +23,7 @@ class NotificationAlertsService
         due_count: overdue_count,
         window_key: window_key,
         title: "Existem contas em atraso",
-        message: "Existem contas em atraso, verifique os lancamentos pendentes."
+        message: "Existem contas em atraso, verifique os lançamentos pendentes."
       )
 
       create_alert_once!(
@@ -31,8 +31,8 @@ class NotificationAlertsService
         alert_type: "due_today",
         due_count: due_today_count,
         window_key: window_key,
-        title: "Ha contas para vencimento hoje",
-        message: "Ha contas para vencimento hoje, revise os pagamentos."
+        title: "Há contas para vencimento hoje",
+        message: "Há contas para vencimento hoje, revise os pagamentos."
       )
 
       create_alert_once!(
@@ -41,7 +41,7 @@ class NotificationAlertsService
         due_count: near_due_count,
         window_key: window_key,
         title: "Existem contas perto do vencimento",
-        message: "Existem contas perto do vencimento, verifique os proximos dias."
+        message: "Existem contas perto do vencimento, verifique os próximos dias."
       )
     end
 
@@ -72,4 +72,3 @@ class NotificationAlertsService
     end
   end
 end
-

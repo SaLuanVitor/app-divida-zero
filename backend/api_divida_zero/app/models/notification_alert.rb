@@ -3,11 +3,11 @@ class NotificationAlert < ApplicationRecord
 
   belongs_to :user
 
-  validates :alert_type, inclusion: { in: ALERT_TYPES, message: "Tipo de alerta invalido." }
-  validates :title, presence: { message: "Titulo e obrigatorio." }
-  validates :message, presence: { message: "Mensagem e obrigatoria." }
-  validates :window_key, presence: { message: "Janela do alerta e obrigatoria." }
-  validates :due_count, numericality: { only_integer: true, greater_than_or_equal_to: 0, message: "Quantidade invalida." }
+  validates :alert_type, inclusion: { in: ALERT_TYPES, message: "Tipo de alerta inválido." }
+  validates :title, presence: { message: "Título é obrigatório." }
+  validates :message, presence: { message: "Mensagem é obrigatória." }
+  validates :window_key, presence: { message: "Janela do alerta é obrigatória." }
+  validates :due_count, numericality: { only_integer: true, greater_than_or_equal_to: 0, message: "Quantidade inválida." }
 
   scope :recent_first, -> { order(created_at: :desc) }
   scope :unread, -> { where(read_at: nil) }
@@ -26,4 +26,3 @@ class NotificationAlert < ApplicationRecord
     }
   end
 end
-

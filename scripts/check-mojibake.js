@@ -8,13 +8,22 @@ const TARGETS = [
   path.join(ROOT, 'mobile', 'src'),
   path.join(ROOT, 'mobile', 'App.tsx'),
   path.join(ROOT, 'backend', 'api_divida_zero', 'app'),
+  path.join(ROOT, 'backend', 'api_divida_zero', 'config'),
 ];
 
-const IGNORE_DIRS = new Set(['node_modules', '.git', 'tmp', 'log', 'vendor']);
-const FILE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.rb', '.yml', '.yaml', '.md']);
-const SUSPICIOUS_PATTERNS = [/Ã./, /�/];
+const IGNORE_DIRS = new Set(['node_modules', '.git', 'tmp', 'log', 'vendor', 'coverage', 'dist']);
+const FILE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.rb', '.yml', '.yaml', '.md', '.json']);
+const SUSPICIOUS_PATTERNS = [
+  /Ã./,
+  /Â./,
+  /�/,
+  /•\?•/,
+  /\?•/,
+  /•\?/,
+];
 const SAFE_LINE_PATTERNS = [
   /LEGACY_MOJIBAKE_/,
+  /SUSPICIOUS_PATTERNS/,
 ];
 
 const findings = [];
@@ -24,49 +33,39 @@ const shouldSkipFile = (filePath) => {
   return !FILE_EXTENSIONS.has(ext);
 };
 
-const walk = (dirPath) => {
-  if (fs.statSync(dirPath).isFile()) {
-    if (shouldSkipFile(dirPath)) return;
-    const content = fs.readFileSync(dirPath, 'utf8');
-    const lines = content.split(/\r?\n/);
+const inspectFile = (filePath) => {
+  if (shouldSkipFile(filePath)) return;
+  const content = fs.readFileSync(filePath, 'utf8');
+  const lines = content.split(/\r?\n/);
 
-    lines.forEach((line, index) => {
-      if (SAFE_LINE_PATTERNS.some((pattern) => pattern.test(line))) return;
-      if (SUSPICIOUS_PATTERNS.some((pattern) => pattern.test(line))) {
-        findings.push({
-          file: path.relative(ROOT, dirPath),
-          line: index + 1,
-          sample: line.trim(),
-        });
-      }
-    });
+  lines.forEach((line, index) => {
+    if (SAFE_LINE_PATTERNS.some((pattern) => pattern.test(line))) return;
+    if (SUSPICIOUS_PATTERNS.some((pattern) => pattern.test(line))) {
+      findings.push({
+        file: path.relative(ROOT, filePath),
+        line: index + 1,
+        sample: line.trim(),
+      });
+    }
+  });
+};
+
+const walk = (targetPath) => {
+  const stats = fs.statSync(targetPath);
+  if (stats.isFile()) {
+    inspectFile(targetPath);
     return;
   }
 
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-
+  const entries = fs.readdirSync(targetPath, { withFileTypes: true });
   for (const entry of entries) {
-    const fullPath = path.join(dirPath, entry.name);
+    const fullPath = path.join(targetPath, entry.name);
     if (entry.isDirectory()) {
       if (IGNORE_DIRS.has(entry.name)) continue;
       walk(fullPath);
       continue;
     }
-
-    if (shouldSkipFile(fullPath)) continue;
-    const content = fs.readFileSync(fullPath, 'utf8');
-    const lines = content.split(/\r?\n/);
-
-    lines.forEach((line, index) => {
-      if (SAFE_LINE_PATTERNS.some((pattern) => pattern.test(line))) return;
-      if (SUSPICIOUS_PATTERNS.some((pattern) => pattern.test(line))) {
-        findings.push({
-          file: path.relative(ROOT, fullPath),
-          line: index + 1,
-          sample: line.trim(),
-        });
-      }
-    });
+    inspectFile(fullPath);
   }
 };
 

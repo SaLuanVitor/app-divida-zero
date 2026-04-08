@@ -786,7 +786,7 @@ const Profile = () => {
                                 <View className="ml-3 flex-1">
                                     <AppText className="text-slate-900 dark:text-slate-100 font-bold">{selectedIconOption.label} + {selectedFrameOption.label}</AppText>
                                     <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">Nível atual: {summary.level}</AppText>
-                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs">Ícones liberados: {getUnlockedIconsCount(summary.level)} de 30 •?• Bordas liberadas: {getUnlockedFramesCount(summary.level)} de 10</AppText>
+                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs">Ícones liberados: {getUnlockedIconsCount(summary.level)} de 30 • Bordas liberadas: {getUnlockedFramesCount(summary.level)} de 10</AppText>
                                 </View>
                             </View>
                         </View>
@@ -960,6 +960,7 @@ const Profile = () => {
 };
 
 export default Profile;
+
 
 
 
