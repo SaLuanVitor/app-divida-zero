@@ -21,6 +21,7 @@ import { OverlayProvider } from './src/context/OverlayContext';
 import { ThemeProvider, useThemeMode } from './src/context/ThemeContext';
 import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import { RootNavigator } from './src/navigation';
+import { navigationRef } from './src/navigation/navigationRef';
 import { StatusBar } from 'expo-status-bar';
 import { AppState, LogBox, View } from 'react-native';
 import {
@@ -33,6 +34,7 @@ import { useAuth } from './src/context/AuthContext';
 import { getAppPreferences } from './src/services/preferences';
 import { listFinancialRecords } from './src/services/financialRecords';
 import { trackAnalyticsEvent } from './src/services/analytics';
+import { TutorialProvider } from './src/context/TutorialContext';
 
 if (__DEV__) {
   LogBox.ignoreLogs([
@@ -44,6 +46,7 @@ if (__DEV__) {
 function AppContent() {
   const { darkMode, loadingTheme } = useThemeMode();
   const { signed } = useAuth();
+  const [currentRouteName, setCurrentRouteName] = React.useState<string | undefined>(undefined);
 
   React.useEffect(() => {
     initializeNotificationLayer();
@@ -101,10 +104,16 @@ function AppContent() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => setCurrentRouteName(navigationRef.getCurrentRoute()?.name)}
+      onStateChange={() => setCurrentRouteName(navigationRef.getCurrentRoute()?.name)}
+    >
       <OverlayProvider>
-        <RootNavigator />
-        <StatusBar style={darkMode ? 'light' : 'dark'} />
+        <TutorialProvider currentRouteName={currentRouteName}>
+          <RootNavigator />
+          <StatusBar style={darkMode ? 'light' : 'dark'} />
+        </TutorialProvider>
       </OverlayProvider>
     </NavigationContainer>
   );

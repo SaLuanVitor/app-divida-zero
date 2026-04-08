@@ -23,6 +23,10 @@ export const defaultAppPreferences: AppPreferences = {
   onboarding_seen: false,
   onboarding_mode: null,
   tutorial_reopen_enabled: true,
+  tutorial_beginner_completed: false,
+  tutorial_advanced_completed: false,
+  tutorial_last_step: null,
+  tutorial_advanced_tasks_done: [],
 };
 
 const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): AppPreferences => {
@@ -43,6 +47,17 @@ const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): 
       raw?.onboarding_mode === 'beginner' || raw?.onboarding_mode === 'advanced'
         ? raw.onboarding_mode
         : null,
+    tutorial_beginner_completed:
+      typeof raw?.tutorial_beginner_completed === 'boolean' ? raw.tutorial_beginner_completed : false,
+    tutorial_advanced_completed:
+      typeof raw?.tutorial_advanced_completed === 'boolean' ? raw.tutorial_advanced_completed : false,
+    tutorial_last_step:
+      typeof raw?.tutorial_last_step === 'string' || raw?.tutorial_last_step === null
+        ? raw.tutorial_last_step
+        : null,
+    tutorial_advanced_tasks_done: Array.isArray(raw?.tutorial_advanced_tasks_done)
+      ? raw.tutorial_advanced_tasks_done.filter((item): item is string => typeof item === 'string')
+      : [],
   };
 };
 
