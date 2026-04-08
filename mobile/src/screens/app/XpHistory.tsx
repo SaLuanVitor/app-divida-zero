@@ -291,7 +291,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
         <Layout
             scrollable
             formMode
-            contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black pb-24"
+            contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black"
             scrollViewProps={{
                 onScroll: handleEventsScroll,
                 scrollEventThrottle: 16,

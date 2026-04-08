@@ -21,6 +21,7 @@ import {
 } from '../../services/notificationCenter';
 import { NotificationHistoryItem } from '../../types/notificationCenter';
 import { useThemeMode } from '../../context/ThemeContext';
+import { useBottomInset } from '../../context/BottomInsetContext';
 
 type NotificationHistoryProps = {
   navigation: any;
@@ -49,6 +50,7 @@ const kindColorMap: Record<NotificationHistoryItem['kind'], string> = {
 
 const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
   const { darkMode } = useThemeMode();
+  const { contentBottomInset } = useBottomInset();
   const [items, setItems] = useState<NotificationHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<HistoryFilter>('all');
@@ -90,7 +92,10 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
 
   return (
     <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-24">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: contentBottomInset }}
+      >
         <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-4 border-b border-slate-100 dark:border-slate-800">
           <View className="flex-row items-center mb-3">
             <TouchableOpacity
@@ -107,10 +112,10 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
             </TouchableOpacity>
             <View className="flex-1">
               <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">
-                Historico de notificacoes
+                Histórico de notificações
               </AppText>
               <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-                Atualizacoes importantes da sua jornada no app.
+                Atualizações importantes da sua jornada no app.
               </AppText>
             </View>
             <View className="w-9 h-9 rounded-full bg-primary/10 items-center justify-center">
@@ -148,7 +153,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
                   filter === 'unread' ? 'text-white' : 'text-slate-600 dark:text-slate-200'
                 }`}
               >
-                Nao lidas
+                Não lidas
               </AppText>
             </TouchableOpacity>
             <TouchableOpacity
@@ -173,7 +178,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
             <View className="items-center py-10">
               <ActivityIndicator color="#f48c25" />
               <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
-                Carregando notificacoes...
+                Carregando notificações...
               </AppText>
             </View>
           ) : null}
@@ -182,7 +187,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
             <Card noPadding>
               <View className="p-4">
                 <AppText className="text-slate-600 dark:text-slate-200 text-sm">
-                  Nao existem notificacoes.
+                  Não existem notificações.
                 </AppText>
               </View>
             </Card>

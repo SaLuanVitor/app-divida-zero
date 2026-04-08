@@ -6,6 +6,7 @@ import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import { useBottomInset } from '../../context/BottomInsetContext';
 import { deleteFinancialGoal, listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto, FinancialGoalType } from '../../types/financialGoal';
 
@@ -38,6 +39,7 @@ const CARD_PAGE_SIZE = 10;
 const Metas = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const { overlayBottomInset } = useBottomInset();
 
     const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
     const [loading, setLoading] = useState(false);
@@ -160,7 +162,7 @@ const Metas = () => {
         <>
             <Layout
                 scrollable
-                contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black pb-28"
+                contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black"
                 scrollViewProps={{
                     onScroll: handleGoalsScroll,
                     scrollEventThrottle: 16,
@@ -318,7 +320,7 @@ const Metas = () => {
             </Layout>
 
             {feedback ? (
-                <View pointerEvents="box-none" className="absolute left-4 right-4 bottom-6 z-[70]">
+                <View pointerEvents="box-none" className="absolute left-4 right-4 z-[70]" style={{ bottom: overlayBottomInset }}>
                     <View
                         className={`rounded-xl border px-4 py-3 ${
                             feedback.kind === 'success'

@@ -337,7 +337,7 @@ const Relatorios = () => {
 
   return (
     <>
-      <Layout scrollable contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black pb-28">
+      <Layout scrollable contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black">
         <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold mb-1">Relatórios</AppText>
         <AppText className="text-slate-500 dark:text-slate-200 mb-3">Indicadores gerais, filtros rápidos e detalhamento mensal.</AppText>
 

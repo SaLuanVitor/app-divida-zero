@@ -14,6 +14,7 @@ import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { useAccessibility } from '../../context/AccessibilityContext';
+import { useBottomInset } from '../../context/BottomInsetContext';
 
 type RegisterTab = 'income' | 'debt';
 
@@ -101,6 +102,7 @@ const Lancamentos = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { darkMode } = useThemeMode();
+    const { overlayBottomInset } = useBottomInset();
     const { fontScale, largerTouchTargets } = useAccessibility();
 
     const [activeTab, setActiveTab] = useState<RegisterTab>('income');
@@ -389,7 +391,7 @@ const Lancamentos = () => {
                 scrollable
                 formMode
                 className="bg-[#f8f7f5] dark:bg-black"
-                contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black pb-28"
+                contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black"
                 scrollViewProps={{
                     keyboardShouldPersistTaps: 'always',
                 }}
@@ -574,7 +576,7 @@ const Lancamentos = () => {
                                         <AppText className="text-slate-800 dark:text-slate-100 font-bold">Recorrência</AppText>
                                     </View>
                                     <TouchableOpacity onPress={() => setRecurring((prev) => !prev)} className={chipClass(recurring)}>
-                                        <AppText className={chipTextClass(recurring)}>{recurring ? 'Recorrente' : '?nico'}</AppText>
+                                        <AppText className={chipTextClass(recurring)}>{recurring ? 'Recorrente' : 'Único'}</AppText>
                                     </TouchableOpacity>
                                 </View>
 
@@ -667,9 +669,12 @@ const Lancamentos = () => {
             </Layout>
 
             {showDatePicker ? (
-                <View className="absolute inset-0 z-40">
+                <View className="absolute inset-0 z-[120]">
                     <Pressable className="absolute inset-0 bg-black/20" onPress={closeDatePicker} />
-                    <View className="absolute bottom-24 left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3">
+                    <View
+                        className="absolute left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3"
+                        style={{ bottom: overlayBottomInset }}
+                    >
                         <View className="flex-row items-center justify-between mb-3">
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
                                 <ChevronLeft size={16} color={iconColor} />
