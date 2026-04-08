@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Pressable, ScrollView } from 'react-native';
+import { View, TouchableOpacity, Pressable } from 'react-native';
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Landmark, PiggyBank, Target, Trophy, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -235,7 +235,13 @@ const MetaForm = () => {
 
     return (
         <>
-            <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
+            <Layout
+                scrollable
+                contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black pb-32"
+                scrollViewProps={{
+                    keyboardShouldPersistTaps: 'always',
+                }}
+            >
                 <View className="bg-[#f8f7f5] dark:bg-black px-4 pt-4 pb-2">
                     <View className="flex-row items-center gap-4">
                         <TouchableOpacity className="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors" onPress={goBackToGoals}>
@@ -250,7 +256,7 @@ const MetaForm = () => {
                     </AppText>
                 </View>
 
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="px-4 py-4 pb-32">
+                <View className="px-4 py-4">
                     <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Título da meta</AppText>
                     <AppTextInput
                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 mb-3 text-slate-900 dark:text-slate-100"
@@ -319,11 +325,12 @@ const MetaForm = () => {
                         className="h-12 mb-2"
                     />
                     <Button title="Cancelar" variant="outline" disabled={submitting} onPress={goBackToGoals} className="h-11" />
-                </ScrollView>
+                </View>
             </Layout>
 
             {showDatePicker ? (
-                <Pressable className="absolute inset-0 bg-black/20 z-[55]" onPress={closeDatePicker}>
+                <View className="absolute inset-0 z-[55]">
+                    <Pressable className="absolute inset-0 bg-black/20" onPress={closeDatePicker} />
                     <View className="absolute bottom-24 left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3">
                         <View className="flex-row items-center justify-between mb-3">
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
@@ -407,7 +414,7 @@ const MetaForm = () => {
                             <Button title="Fechar" onPress={closeDatePicker} className="h-11 flex-1" />
                         </View>
                     </View>
-                </Pressable>
+                </View>
             ) : null}
 
             {showDatePicker && showPeriodPicker ? (

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Alert, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import { View, TouchableOpacity, Alert, ActivityIndicator, Pressable } from 'react-native';
 import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, ChevronRight, Trophy, Target, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -385,8 +385,15 @@ const Lancamentos = () => {
 
     return (
         <>
-            <Layout className="bg-[#f8f7f5] dark:bg-black" contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
-                <ScrollView className="flex-1" contentContainerClassName="px-4 pb-28" showsVerticalScrollIndicator={false}>
+            <Layout
+                scrollable
+                className="bg-[#f8f7f5] dark:bg-black"
+                contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black pb-28"
+                scrollViewProps={{
+                    keyboardShouldPersistTaps: 'always',
+                }}
+            >
+                <View className="px-4">
                     <View className="flex-row items-center mt-4 mb-4">
                         <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-1">
                             <ArrowLeft size={22} color={iconColor} />
@@ -655,11 +662,12 @@ const Lancamentos = () => {
                             <ActivityIndicator color="#f48c25" />
                         </View>
                     ) : null}
-                </ScrollView>
+                </View>
             </Layout>
 
             {showDatePicker ? (
-                <Pressable className="absolute inset-0 bg-black/20 z-40" onPress={closeDatePicker}>
+                <View className="absolute inset-0 z-40">
+                    <Pressable className="absolute inset-0 bg-black/20" onPress={closeDatePicker} />
                     <View className="absolute bottom-24 left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3">
                         <View className="flex-row items-center justify-between mb-3">
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
@@ -716,7 +724,7 @@ const Lancamentos = () => {
                             <Button title="Fechar" variant="outline" onPress={closeDatePicker} className="h-11 flex-1" />
                         </View>
                     </View>
-                </Pressable>
+                </View>
             ) : null}
 
             {showDatePicker && showPeriodPicker ? (

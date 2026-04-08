@@ -134,7 +134,10 @@ const NotificationSettings = () => {
           return;
         }
 
-        const granted = await requestDeviceNotificationPermission();
+        const granted = await requestDeviceNotificationPermission({
+          markPrompted: true,
+          enablePushWhenGranted: true,
+        });
         const refreshedStatus = await getDeviceNotificationPermissionStatus();
         const runtimeStatus = await getDeviceNotificationRuntimeStatus();
         const effectiveStatus = granted ? 'granted' : refreshedStatus;
@@ -174,7 +177,7 @@ const NotificationSettings = () => {
   };
 
   const sendTest = async () => {
-    if (!runtimeAvailable) {
+    if (!runtimeAvailable && runtimeReason !== 'permission_denied') {
       setMessageKind('error');
       setMessage(
         runtimeReason === 'native_module_mismatch'
@@ -318,7 +321,7 @@ const NotificationSettings = () => {
             className="mt-3 rounded-xl border border-primary/30 bg-primary/10 items-center justify-center"
             style={{ minHeight: rowHeight, height: rowHeight }}
             onPress={sendTest}
-            disabled={!runtimeAvailable || !prefs.notifications_enabled || !prefs.device_push_enabled}
+            disabled={(!runtimeAvailable && runtimeReason !== 'permission_denied') || !prefs.notifications_enabled}
           >
             <AppText className="text-primary font-bold">Enviar notificação de teste</AppText>
           </TouchableOpacity>

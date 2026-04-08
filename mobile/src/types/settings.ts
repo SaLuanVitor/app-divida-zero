@@ -1,6 +1,7 @@
 export interface AppPreferences {
   notifications_enabled: boolean;
   device_push_enabled: boolean;
+  notification_permission_prompted: boolean;
   notify_due_today: boolean;
   notify_due_tomorrow: boolean;
   notify_weekly_summary: boolean;

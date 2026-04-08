@@ -24,6 +24,7 @@ import { RootNavigator } from './src/navigation';
 import { StatusBar } from 'expo-status-bar';
 import { AppState, LogBox, View } from 'react-native';
 import {
+  ensurePostLoginNotificationPermission,
   getDeviceNotificationRuntimeStatus,
   initializeNotificationLayer,
   syncScheduledLocalNotifications,
@@ -59,6 +60,7 @@ function AppContent() {
 
     const syncNotifications = async () => {
       try {
+        await ensurePostLoginNotificationPermission();
         await trackAnalyticsEvent({
           event_name: 'app_opened',
           screen: 'AppRoot',

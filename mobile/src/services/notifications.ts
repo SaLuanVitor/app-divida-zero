@@ -1,8 +1,8 @@
-import { Platform } from 'react-native';
+﻿import { Platform } from 'react-native';
 import { AppPreferences } from '../types/settings';
 import { FinancialRecordDto } from '../types/financialRecord';
 import { listFinancialRecords } from './financialRecords';
-import { getAppPreferences } from './preferences';
+import { getAppPreferences, updateAppPreferences } from './preferences';
 
 type NotificationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable';
 export type ManualNotificationKind = 'test' | 'due_today' | 'due_tomorrow' | 'weekly_summary' | 'xp_badge' | 'generic';
@@ -16,6 +16,10 @@ export type NotificationRuntimeReason =
 export type NotificationRuntimeStatus = {
   available: boolean;
   reason: NotificationRuntimeReason;
+};
+type SyncPermissionOptions = {
+  markPrompted?: boolean;
+  enablePushWhenGranted?: boolean;
 };
 
 export type NotificationSendResult =
@@ -44,14 +48,14 @@ let handlerConfigured = false;
 const APP_NOTIFICATION_SOURCE = 'divida_zero_mobile';
 const DEVICE_XP_NOTIFICATIONS_ENABLED = false;
 const NOTIFICATION_CHANNEL_ID = 'default';
-const FALLBACK_NOTIFICATION_TITLE = 'Dívida Zero';
+const FALLBACK_NOTIFICATION_TITLE = 'DÃ­vida Zero';
 
 const NOTIFICATION_BODY_FALLBACKS: Record<ManualNotificationKind, string> = {
-  test: 'Atualização da conta disponível no dispositivo.',
-  due_today: 'Você tem pendências para hoje. Abra o app para revisar.',
-  due_tomorrow: 'Você tem pendências para amanhã. Organize-se no app.',
-  weekly_summary: 'Seu resumo semanal está disponível no app.',
-  xp_badge: 'Você recebeu uma atualização de progresso no app.',
+  test: 'AtualizaÃ§Ã£o da conta disponÃ­vel no dispositivo.',
+  due_today: 'VocÃª tem pendÃªncias para hoje. Abra o app para revisar.',
+  due_tomorrow: 'VocÃª tem pendÃªncias para amanhÃ£. Organize-se no app.',
+  weekly_summary: 'Seu resumo semanal estÃ¡ disponÃ­vel no app.',
+  xp_badge: 'VocÃª recebeu uma atualizaÃ§Ã£o de progresso no app.',
   generic: 'Abra o app para ver os detalhes.',
 };
 
@@ -182,6 +186,34 @@ const runtimeUnavailable = (reason: NotificationRuntimeReason): NotificationRunt
   reason,
 });
 
+const syncPermissionStatusWithPreferences = async (
+  status: NotificationPermissionStatus,
+  options: SyncPermissionOptions = {}
+) => {
+  const { markPrompted = false, enablePushWhenGranted = false } = options;
+  const currentPrefs = await getAppPreferences();
+  const updates: Partial<AppPreferences> = {};
+
+  if (markPrompted && !currentPrefs.notification_permission_prompted) {
+    updates.notification_permission_prompted = true;
+  }
+
+  if (status === 'granted') {
+    if (enablePushWhenGranted && !currentPrefs.device_push_enabled) {
+      updates.device_push_enabled = true;
+    }
+    if (enablePushWhenGranted && !currentPrefs.notifications_enabled) {
+      updates.notifications_enabled = true;
+    }
+  } else if ((status === 'denied' || status === 'unavailable') && currentPrefs.device_push_enabled) {
+    updates.device_push_enabled = false;
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await updateAppPreferences(updates);
+  }
+};
+
 export const getDeviceNotificationRuntimeStatus = async (): Promise<NotificationRuntimeStatus> => {
   if (cachedRuntimeStatus && cachedRuntimeStatus.reason !== 'permission_denied') {
     return cachedRuntimeStatus;
@@ -274,7 +306,7 @@ export const initializeNotificationLayer = () => {
   try {
     if (Platform.OS === 'android' && typeof Notifications.setNotificationChannelAsync === 'function') {
       Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
-        name: 'Notificações',
+        name: 'NotificaÃ§Ãµes',
         importance: Notifications.AndroidImportance?.DEFAULT ?? 3,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#f48c25',
@@ -320,13 +352,19 @@ export const getDeviceNotificationPermissionStatus = async (): Promise<Notificat
   }
 };
 
-export const requestDeviceNotificationPermission = async (): Promise<boolean> => {
+export const requestDeviceNotificationPermission = async (
+  options: SyncPermissionOptions = {}
+): Promise<boolean> => {
   const Notifications = getNotificationsModule();
-  if (!Notifications) return false;
+  if (!Notifications) {
+    await syncPermissionStatusWithPreferences('unavailable', options);
+    return false;
+  }
   if (
     typeof Notifications.getPermissionsAsync !== 'function' ||
     typeof Notifications.requestPermissionsAsync !== 'function'
   ) {
+    await syncPermissionStatusWithPreferences('unavailable', options);
     return false;
   }
 
@@ -334,16 +372,76 @@ export const requestDeviceNotificationPermission = async (): Promise<boolean> =>
     const current = await Notifications.getPermissionsAsync();
     if (current?.status === 'granted' || current?.granted === true) {
       cachedRuntimeStatus = { available: true, reason: 'available' };
+      await syncPermissionStatusWithPreferences('granted', options);
       return true;
     }
     const requested = await Notifications.requestPermissionsAsync();
     const granted = requested?.status === 'granted' || requested?.granted === true;
     cachedRuntimeStatus = granted ? { available: true, reason: 'available' } : runtimeUnavailable('permission_denied');
+    await syncPermissionStatusWithPreferences(granted ? 'granted' : 'denied', options);
     return granted;
   } catch {
     cachedRuntimeStatus = runtimeUnavailable('unavailable');
+    await syncPermissionStatusWithPreferences('unavailable', options);
     return false;
   }
+};
+
+export const ensurePostLoginNotificationPermission = async () => {
+  const runtime = await getDeviceNotificationRuntimeStatus();
+  const statusBeforePrompt = await getDeviceNotificationPermissionStatus();
+  const prefs = await getAppPreferences();
+
+  if (!runtime.available && runtime.reason !== 'permission_denied') {
+    await syncPermissionStatusWithPreferences(statusBeforePrompt, {
+      markPrompted: true,
+      enablePushWhenGranted: false,
+    });
+    return {
+      prompted: false as const,
+      status: statusBeforePrompt,
+      runtime: runtime.reason,
+    };
+  }
+
+  if (prefs.notification_permission_prompted) {
+    await syncPermissionStatusWithPreferences(statusBeforePrompt, {
+      markPrompted: false,
+      enablePushWhenGranted: false,
+    });
+    return {
+      prompted: false as const,
+      status: statusBeforePrompt,
+      runtime: runtime.reason,
+    };
+  }
+
+  if (statusBeforePrompt === 'undetermined') {
+    await requestDeviceNotificationPermission({
+      markPrompted: true,
+      enablePushWhenGranted: true,
+    });
+    const statusAfterPrompt = await getDeviceNotificationPermissionStatus();
+    await syncPermissionStatusWithPreferences(statusAfterPrompt, {
+      markPrompted: true,
+      enablePushWhenGranted: true,
+    });
+    return {
+      prompted: true as const,
+      status: statusAfterPrompt,
+      runtime: runtime.reason,
+    };
+  }
+
+  await syncPermissionStatusWithPreferences(statusBeforePrompt, {
+    markPrompted: true,
+    enablePushWhenGranted: statusBeforePrompt === 'granted',
+  });
+  return {
+    prompted: false as const,
+    status: statusBeforePrompt,
+    runtime: runtime.reason,
+  };
 };
 
 export const sendManualNotification = async ({
@@ -351,18 +449,24 @@ export const sendManualNotification = async ({
   title,
   body,
   data,
+  requestPermissionIfNeeded = true,
 }: {
   kind: ManualNotificationKind;
   title?: string;
   body?: string;
   data?: NotificationData;
+  requestPermissionIfNeeded?: boolean;
 }): Promise<NotificationSendResult> => {
   const runtime = await getDeviceNotificationRuntimeStatus();
   if (!runtime.available) {
-    if (runtime.reason === 'permission_denied') return { sent: false, reason: 'permission_denied' };
-    if (runtime.reason === 'native_module_mismatch') return { sent: false, reason: 'native_module_mismatch' };
-    if (runtime.reason === 'expo_go_limited') return { sent: false, reason: 'expo_go_limited' };
-    return { sent: false, reason: 'unavailable' };
+    if (runtime.reason === 'permission_denied' && requestPermissionIfNeeded) {
+      // Continue to permission prompt flow below.
+    } else {
+      if (runtime.reason === 'permission_denied') return { sent: false, reason: 'permission_denied' };
+      if (runtime.reason === 'native_module_mismatch') return { sent: false, reason: 'native_module_mismatch' };
+      if (runtime.reason === 'expo_go_limited') return { sent: false, reason: 'expo_go_limited' };
+      return { sent: false, reason: 'unavailable' };
+    }
   }
 
   const Notifications = getNotificationsModule();
@@ -370,7 +474,18 @@ export const sendManualNotification = async ({
     return { sent: false, reason: 'unavailable' };
   }
 
-  const status = await getDeviceNotificationPermissionStatus();
+  let status = await getDeviceNotificationPermissionStatus();
+  if (status !== 'granted' && requestPermissionIfNeeded) {
+    await requestDeviceNotificationPermission({
+      markPrompted: true,
+      enablePushWhenGranted: true,
+    });
+    status = await getDeviceNotificationPermissionStatus();
+  }
+  await syncPermissionStatusWithPreferences(status, {
+    markPrompted: true,
+    enablePushWhenGranted: status === 'granted',
+  });
   if (status !== 'granted') return { sent: false, reason: 'permission_denied' };
 
   try {
@@ -387,8 +502,9 @@ export const sendManualNotification = async ({
 export const sendLocalTestNotification = async (): Promise<NotificationSendResult> =>
   sendManualNotification({
     kind: 'test',
-    title: 'Dívida Zero',
-    body: 'Notificações no celular ativadas com sucesso.',
+    title: 'DÃ­vida Zero',
+    body: 'NotificaÃ§Ãµes no celular ativadas com sucesso.',
+    requestPermissionIfNeeded: true,
   });
 
 const getPendingRecordsForDate = (records: FinancialRecordDto[], targetDate: Date) =>
@@ -443,7 +559,7 @@ export const buildManualNotificationScenario = ({
   prefs: AppPreferences;
   userName?: string;
 }): ManualNotificationScenarioStep[] => {
-  const displayName = sanitizeText(userName) || 'Usuário';
+  const displayName = sanitizeText(userName) || 'UsuÃ¡rio';
   const overview = getRecordsOverview(records);
   const todayTotal = sumAmount(overview.dueToday);
   const tomorrowTotal = sumAmount(overview.dueTomorrow);
@@ -455,7 +571,7 @@ export const buildManualNotificationScenario = ({
         id: 'alerts-due-today',
         kind: 'due_today',
         title: 'Vencimentos de hoje',
-        body: `${displayName}, você tem ${overview.dueToday.length} pendência(s) para hoje somando ${formatCurrency(
+        body: `${displayName}, vocÃª tem ${overview.dueToday.length} pendÃªncia(s) para hoje somando ${formatCurrency(
           todayTotal
         )}. Ex.: ${formatTopRecordSnippet(overview.dueToday)}.`,
         data: {
@@ -469,7 +585,7 @@ export const buildManualNotificationScenario = ({
         id: 'alerts-due-today',
         kind: 'due_today',
         title: 'Vencimentos de hoje',
-        body: `${displayName}, hoje não há pendências com vencimento. Sua conta está em dia.`,
+        body: `${displayName}, hoje nÃ£o hÃ¡ pendÃªncias com vencimento. Sua conta estÃ¡ em dia.`,
         data: {
           source: 'mobile_alerts',
           context: 'account_notifications',
@@ -482,8 +598,8 @@ export const buildManualNotificationScenario = ({
     ? {
         id: 'alerts-due-tomorrow',
         kind: 'due_tomorrow',
-        title: 'Lembrete para amanhã',
-        body: `Amanhã você terá ${overview.dueTomorrow.length} pendência(s) (${formatCurrency(
+        title: 'Lembrete para amanhÃ£',
+        body: `AmanhÃ£ vocÃª terÃ¡ ${overview.dueTomorrow.length} pendÃªncia(s) (${formatCurrency(
           tomorrowTotal
         )}). Ex.: ${formatTopRecordSnippet(overview.dueTomorrow)}.`,
         data: {
@@ -496,8 +612,8 @@ export const buildManualNotificationScenario = ({
     : {
         id: 'alerts-due-tomorrow',
         kind: 'due_tomorrow',
-        title: 'Lembrete para amanhã',
-        body: 'Nenhuma pendência para amanhã na sua conta.',
+        title: 'Lembrete para amanhÃ£',
+        body: 'Nenhuma pendÃªncia para amanhÃ£ na sua conta.',
         data: {
           source: 'mobile_alerts',
           context: 'account_notifications',
@@ -510,9 +626,9 @@ export const buildManualNotificationScenario = ({
     id: 'alerts-weekly-summary',
     kind: 'weekly_summary',
     title: 'Resumo semanal da conta',
-    body: `Pendências: ${overview.pendingRecords.length}. Entradas pendentes ${formatCurrency(
+    body: `PendÃªncias: ${overview.pendingRecords.length}. Entradas pendentes ${formatCurrency(
       overview.pendingIncomeTotal
-    )} e saídas pendentes ${formatCurrency(overview.pendingExpenseTotal)}. Saldo previsto ${formatCurrency(
+    )} e saÃ­das pendentes ${formatCurrency(overview.pendingExpenseTotal)}. Saldo previsto ${formatCurrency(
       weeklyBalance
     )}.`,
     data: {
@@ -532,8 +648,8 @@ export const buildManualNotificationScenario = ({
     title: 'Progresso da jornada',
     body:
       overview.pendingRecords.length === 0
-        ? `Conta organizada! Você pode receber +${mockedXp} XP por manter zero pendências.`
-        : `Ao regularizar pendências, você pode ganhar cerca de +${mockedXp} XP nesta etapa.`,
+        ? `Conta organizada! VocÃª pode receber +${mockedXp} XP por manter zero pendÃªncias.`
+        : `Ao regularizar pendÃªncias, vocÃª pode ganhar cerca de +${mockedXp} XP nesta etapa.`,
     data: {
       source: 'mobile_alerts',
       context: 'account_notifications',
@@ -546,9 +662,9 @@ export const buildManualNotificationScenario = ({
     id: 'alerts-account-header',
     kind: 'test',
     title: 'Alertas da conta atualizados',
-    body: `Dados da conta de ${displayName} atualizados. Preferências ativas: ${
-      prefs.notifications_enabled ? 'sim' : 'não'
-    }, push no dispositivo: ${prefs.device_push_enabled ? 'sim' : 'não'}.`,
+    body: `Dados da conta de ${displayName} atualizados. PreferÃªncias ativas: ${
+      prefs.notifications_enabled ? 'sim' : 'nÃ£o'
+    }, push no dispositivo: ${prefs.device_push_enabled ? 'sim' : 'nÃ£o'}.`,
     data: {
       source: 'mobile_alerts',
       context: 'account_notifications',
@@ -671,6 +787,10 @@ export const syncScheduledLocalNotifications = async ({
   }
 
   const status = await getDeviceNotificationPermissionStatus();
+  await syncPermissionStatusWithPreferences(status, {
+    markPrompted: true,
+    enablePushWhenGranted: false,
+  });
   if (status !== 'granted') {
     await clearScheduledAppNotifications(Notifications);
     return { synced: false as const, reason: 'permission_denied' as const };
@@ -692,7 +812,7 @@ export const syncScheduledLocalNotifications = async ({
           content: buildSchedulePayload({
             kind: 'due_today',
             title: 'Vencimentos de hoje',
-            body: `Você tem ${dueTodayCount} lançamento(s) pendente(s) para hoje.`,
+            body: `VocÃª tem ${dueTodayCount} lanÃ§amento(s) pendente(s) para hoje.`,
           }),
           trigger: safeFutureDate(atNineAM(now)),
         });
@@ -707,8 +827,8 @@ export const syncScheduledLocalNotifications = async ({
         await Notifications.scheduleNotificationAsync({
           content: buildSchedulePayload({
             kind: 'due_tomorrow',
-            title: 'Lembrete para amanhã',
-            body: `Você tem ${dueTomorrowCount} lançamento(s) pendente(s) para amanhã.`,
+            title: 'Lembrete para amanhÃ£',
+            body: `VocÃª tem ${dueTomorrowCount} lanÃ§amento(s) pendente(s) para amanhÃ£.`,
           }),
           trigger: atNineAM(tomorrow),
         });
@@ -723,8 +843,8 @@ export const syncScheduledLocalNotifications = async ({
           title: 'Resumo semanal',
           body:
             pendingCount > 0
-              ? `Semana iniciando: você tem ${pendingCount} lançamento(s) pendente(s).`
-              : 'Semana iniciando: sem pendências no momento. Continue assim.',
+              ? `Semana iniciando: vocÃª tem ${pendingCount} lanÃ§amento(s) pendente(s).`
+              : 'Semana iniciando: sem pendÃªncias no momento. Continue assim.',
         }),
         trigger: nextMondayAtNine(),
       });
@@ -757,3 +877,5 @@ export const sendXpAndBadgeNotification = async ({
     body,
   });
 };
+
+
