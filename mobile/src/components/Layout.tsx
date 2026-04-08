@@ -46,8 +46,8 @@ const Layout: React.FC<LayoutProps> = ({
             className={cn('flex-1 bg-white dark:bg-black', className)}
         >
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 16}
                 className="flex-1"
             >
                 {scrollable ? (
@@ -59,7 +59,8 @@ const Layout: React.FC<LayoutProps> = ({
                             bottomScrollPadding !== undefined ? { paddingBottom: bottomScrollPadding } : null,
                             userContentContainerStyle,
                         ]}
-                        keyboardShouldPersistTaps="handled"
+                        keyboardShouldPersistTaps="always"
+                        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
                         showsVerticalScrollIndicator={false}
                         {...restScrollViewProps}
                     >

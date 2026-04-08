@@ -10,6 +10,7 @@ const listeners = new Set<PreferencesListener>();
 export const defaultAppPreferences: AppPreferences = {
   notifications_enabled: true,
   device_push_enabled: false,
+  notification_permission_prompted: false,
   notify_due_today: true,
   notify_due_tomorrow: true,
   notify_weekly_summary: true,

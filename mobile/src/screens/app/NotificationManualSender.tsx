@@ -183,7 +183,10 @@ const NotificationManualSender = () => {
     }
     setRequestingPermission(true);
     try {
-      const granted = await requestDeviceNotificationPermission();
+      const granted = await requestDeviceNotificationPermission({
+        markPrompted: true,
+        enablePushWhenGranted: true,
+      });
       const refreshed = await getDeviceNotificationPermissionStatus();
       const runtimeStatus = await getDeviceNotificationRuntimeStatus();
       setPermissionStatus(refreshed);
@@ -210,7 +213,7 @@ const NotificationManualSender = () => {
   };
 
   const runScenario = async () => {
-    if (!runtimeAvailable) {
+    if (!runtimeAvailable && runtimeReason !== 'permission_denied') {
       setMessageKind('error');
       setMessage(runtimeBlockedMessage());
       return;
@@ -245,7 +248,7 @@ const NotificationManualSender = () => {
   };
 
   const sendNow = async (kind: ManualNotificationKind, title: string, body: string) => {
-    if (!runtimeAvailable) {
+    if (!runtimeAvailable && runtimeReason !== 'permission_denied') {
       setMessageKind('error');
       setMessage(runtimeBlockedMessage());
       return;
@@ -355,7 +358,7 @@ const NotificationManualSender = () => {
 
           <TouchableOpacity
             onPress={() => void runScenario()}
-            disabled={scenarioRunning || scenarioLoading || !runtimeAvailable}
+            disabled={scenarioRunning || scenarioLoading || (!runtimeAvailable && runtimeReason !== 'permission_denied')}
             className="h-11 rounded-xl border border-primary/30 bg-primary/10 items-center justify-center"
           >
             {scenarioRunning ? (
