@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Alert } from 'react-native';
 import { Mail, ArrowLeft, KeyRound } from 'lucide-react-native';
@@ -7,12 +7,14 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
+import { useThemeMode } from '../../context/ThemeContext';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const ForgotPassword = () => {
     const navigation = useNavigation<any>();
     const { requestPasswordReset } = useAuth();
+    const { darkMode } = useThemeMode();
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [infoMessage, setInfoMessage] = useState('');
@@ -55,7 +57,7 @@ const ForgotPassword = () => {
                     onPress={() => navigation.goBack()}
                     className="p-2 -ml-2 self-start"
                 >
-                    <ArrowLeft size={24} color="#0f172a" />
+                    <ArrowLeft size={24} color={darkMode ? '#e2e8f0' : '#0f172a'} />
                 </TouchableOpacity>
                 <AppText className="text-slate-900 dark:text-slate-100 text-lg font-bold ml-2">Recuperar Senha</AppText>
             </View>
@@ -67,7 +69,7 @@ const ForgotPassword = () => {
                 <AppText className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 text-center mb-3">
                     Esqueceu sua senha?
                 </AppText>
-                <AppText className="text-base text-slate-600 dark:text-slate-300 text-center px-2">
+                <AppText className="text-base text-slate-600 dark:text-slate-200 text-center px-2">
                     Informe seu usuário e siga as instruções para redefinir seu acesso.
                 </AppText>
             </View>
@@ -107,7 +109,7 @@ const ForgotPassword = () => {
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <AppText className="text-slate-500 dark:text-slate-300 font-medium">
+                    <AppText className="text-slate-500 dark:text-slate-200 font-medium">
                         Lembrou sua senha? <AppText className="text-primary font-bold">Voltar ao login</AppText>
                     </AppText>
                 </TouchableOpacity>
@@ -119,6 +121,8 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
+
+
 
 
 

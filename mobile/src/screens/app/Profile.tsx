@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions, Modal } from 'react-native';
 import {
@@ -427,7 +427,7 @@ const Profile = () => {
                         </TouchableOpacity>
 
                         <AppText className="text-slate-900 dark:text-slate-100 text-3xl font-extrabold mt-4">{user?.name || 'Usuário'}</AppText>
-                        <AppText className="text-slate-500 dark:text-slate-300 text-sm mt-0.5">{publicHandle}</AppText>
+                        <AppText className="text-slate-500 dark:text-slate-200 text-sm mt-0.5">{publicHandle}</AppText>
 
                         <View className="mt-3 bg-primary/10 px-4 py-1.5 rounded-full">
                             <AppText className="text-primary text-xs font-extrabold">MEMBRO ATIVO DESDE {memberSinceLabel}</AppText>
@@ -448,13 +448,13 @@ const Profile = () => {
                             <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-black mt-1">
                                 Nível {summary.level} - {summary.level_title}
                             </AppText>
-                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
                                 {summary.xp_in_level}/{summary.xp_in_level + summary.xp_to_next_level} XP
                             </AppText>
                             <View className="h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                 <View className="h-full bg-primary rounded-full" style={{ width: `${summary.level_progress_pct}%` }} />
                             </View>
-                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
                                 Faltam {summary.xp_to_next_level} XP para o nível {summary.level + 1}
                             </AppText>
                         </Card>
@@ -473,7 +473,7 @@ const Profile = () => {
                                 <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
                                     {gamification.badges.filter((badge) => badge.unlocked).length}/{gamification.badges.length} brasões coletados
                                 </AppText>
-                                <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
                                     Toque em "Ver todas" para abrir a coleção completa.
                                 </AppText>
                             </Card>
@@ -490,8 +490,8 @@ const Profile = () => {
                                                 <View className={`w-10 h-10 rounded-full items-center justify-center mb-2 ${badge.unlocked ? 'bg-primary/15' : 'bg-slate-100 dark:bg-slate-800'}`}>
                                                     <Icon size={19} color={badge.unlocked ? '#f48c25' : '#94a3b8'} />
                                                 </View>
-                                                <AppText className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-300'}`}>{badge.title}</AppText>
-                                                <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">{badge.description}</AppText>
+                                                <AppText className={`font-bold text-sm ${badge.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-200'}`}>{badge.title}</AppText>
+                                                <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">{badge.description}</AppText>
                                             </View>
                                         );
                                     })}
@@ -512,7 +512,7 @@ const Profile = () => {
                                         <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold">
                                             {gamification.unlockedCount}/{gamification.achievements.length} desbloqueadas - Total XP {summary.total_xp}
                                         </AppText>
-                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
                                             {achievementsExpanded ? 'Toque para recolher a lista.' : 'Toque para expandir a lista de conquistas.'}
                                         </AppText>
                                     </View>
@@ -529,14 +529,14 @@ const Profile = () => {
                                     {gamification.achievements.map((achievement, index) => (
                                         <View key={achievement.id} className={`p-4 ${index !== gamification.achievements.length - 1 ? 'border-b border-slate-50 dark:border-slate-800' : ''}`}>
                                             <View className="flex-row items-center justify-between mb-1">
-                                                <AppText className={`font-bold ${achievement.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'}`}>
+                                                <AppText className={`font-bold ${achievement.unlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-200'}`}>
                                                     {achievement.title}
                                                 </AppText>
-                                                <AppText className={`text-xs font-bold ${achievement.unlocked ? 'text-emerald-600' : 'text-slate-400 dark:text-slate-300'}`}>
+                                                <AppText className={`text-xs font-bold ${achievement.unlocked ? 'text-emerald-600' : 'text-slate-400 dark:text-slate-200'}`}>
                                                     {achievement.unlocked ? `+${achievement.rewardXp} XP` : formatAchievementProgress(achievement.progress, achievement.target)}
                                                 </AppText>
                                             </View>
-                                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mb-2">{achievement.description}</AppText>
+                                            <AppText className="text-slate-500 dark:text-slate-200 text-xs mb-2">{achievement.description}</AppText>
                                             <View className="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                                                 <View
                                                     className={`h-full rounded-full ${achievement.unlocked ? 'bg-emerald-500' : 'bg-primary'}`}
@@ -555,14 +555,14 @@ const Profile = () => {
                         <Card className="mb-6" noPadding>
                             {dailyAchievements.length === 0 ? (
                                 <View className="p-4">
-                                    <AppText className="text-slate-500 dark:text-slate-300 text-sm">
+                                    <AppText className="text-slate-500 dark:text-slate-200 text-sm">
                                         As conquistas diárias aparecerão aqui assim que forem carregadas.
                                     </AppText>
                                 </View>
                             ) : (
                                 <>
                                     <View className="px-4 pt-4 pb-2 border-b border-slate-100 dark:border-slate-800">
-                                        <AppText className="text-slate-600 dark:text-slate-300 text-xs font-semibold">
+                                        <AppText className="text-slate-600 dark:text-slate-200 text-xs font-semibold">
                                             {dailyDateLabel ? `Progresso de hoje (${dailyDateLabel})` : 'Progresso de hoje'}
                                         </AppText>
                                     </View>
@@ -580,13 +580,13 @@ const Profile = () => {
                                                         <AppText className={`font-bold ${completed ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-900 dark:text-slate-100'}`}>
                                                             {daily.title}
                                                         </AppText>
-                                                        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                                                        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
                                                             {daily.description}
                                                         </AppText>
                                                     </View>
                                                     <View className="items-end">
                                                         <AppText className="text-primary text-xs font-bold">+{daily.reward_xp} XP</AppText>
-                                                        <AppText className={`text-[11px] font-semibold mt-1 ${completed ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-300'}`}>
+                                                        <AppText className={`text-[11px] font-semibold mt-1 ${completed ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-200'}`}>
                                                             {completed ? 'Concluída' : progressText}
                                                         </AppText>
                                                     </View>
@@ -616,7 +616,7 @@ const Profile = () => {
                     <View className="px-4" onLayout={(event) => setHistorySectionY(event.nativeEvent.layout.y)}>
                         <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-3">Histórico de XP</AppText>
                         <Card className="mb-6 p-4">
-                            <AppText className="text-slate-600 dark:text-slate-300 text-sm mb-3">
+                            <AppText className="text-slate-600 dark:text-slate-200 text-sm mb-3">
                                 Acesse uma visão detalhada de todos os eventos de ganho e perda de XP.
                             </AppText>
                             <Button
@@ -659,7 +659,7 @@ const Profile = () => {
                     </View>
 
                     <View className="items-center pb-10 pt-6">
-                        <AppText className="text-slate-400 dark:text-slate-300 text-xs text-center">Dívida Zero App - v1.0.0</AppText>
+                        <AppText className="text-slate-400 dark:text-slate-200 text-xs text-center">Dívida Zero App - v1.0.0</AppText>
                     </View>
                 </ScrollView>
             </Layout>
@@ -695,13 +695,13 @@ const Profile = () => {
                             {notificationsPopupLoading ? (
                                 <View className="items-center py-6">
                                     <ActivityIndicator color="#f48c25" />
-                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">
+                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
                                         Carregando notificações...
                                     </AppText>
                                 </View>
                             ) : notificationItems.length === 0 ? (
                                 <View className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] p-3">
-                                    <AppText className="text-slate-600 dark:text-slate-300 text-sm">
+                                    <AppText className="text-slate-600 dark:text-slate-200 text-sm">
                                         Não existem notificações.
                                     </AppText>
                                 </View>
@@ -731,10 +731,10 @@ const Profile = () => {
                                                             </AppText>
                                                             {!item.read ? <View className="w-2 h-2 rounded-full bg-primary mt-1" /> : null}
                                                         </View>
-                                                        <AppText className="text-slate-600 dark:text-slate-300 text-[11px] mt-1">
+                                                        <AppText className="text-slate-600 dark:text-slate-200 text-[11px] mt-1">
                                                             {item.message}
                                                         </AppText>
-                                                        <AppText className="text-slate-400 dark:text-slate-300 text-[10px] mt-1">
+                                                        <AppText className="text-slate-400 dark:text-slate-200 text-[10px] mt-1">
                                                             {new Date(item.created_at).toLocaleString('pt-BR')}
                                                         </AppText>
                                                     </View>
@@ -785,8 +785,8 @@ const Profile = () => {
                                 <ProfileAvatar iconKey={pendingIconKey} frameKey={pendingFrameKey} size={68} iconSize={30} />
                                 <View className="ml-3 flex-1">
                                     <AppText className="text-slate-900 dark:text-slate-100 font-bold">{selectedIconOption.label} + {selectedFrameOption.label}</AppText>
-                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">Nível atual: {summary.level}</AppText>
-                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs">Ícones liberados: {getUnlockedIconsCount(summary.level)} de 30 • Bordas liberadas: {getUnlockedFramesCount(summary.level)} de 10</AppText>
+                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">Nível atual: {summary.level}</AppText>
+                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs">Ícones liberados: {getUnlockedIconsCount(summary.level)} de 30 •?• Bordas liberadas: {getUnlockedFramesCount(summary.level)} de 10</AppText>
                                 </View>
                             </View>
                         </View>
@@ -841,7 +841,7 @@ const Profile = () => {
                                                 {!unlocked ? (
                                                     <View className="flex-row items-center mt-0.5">
                                                         <Lock size={10} color="#64748b" />
-                                                        <AppText className="text-[10px] text-slate-500 ml-1">Nível {requiredLevel}</AppText>
+                                                        <AppText className="text-[10px] text-slate-500 dark:text-slate-200 ml-1">Nível {requiredLevel}</AppText>
                                                     </View>
                                                 ) : null}
                                             </TouchableOpacity>
@@ -885,7 +885,7 @@ const Profile = () => {
                                                 {!unlocked ? (
                                                     <View className="flex-row items-center mt-0.5">
                                                         <Lock size={10} color="#64748b" />
-                                                        <AppText className="text-[10px] text-slate-500 ml-1">Nível {requiredLevel}</AppText>
+                                                        <AppText className="text-[10px] text-slate-500 dark:text-slate-200 ml-1">Nível {requiredLevel}</AppText>
                                                     </View>
                                                 ) : null}
                                             </TouchableOpacity>
@@ -926,7 +926,7 @@ const Profile = () => {
                     <Pressable className="absolute inset-0 bg-black/30" onPress={() => !logoutLoading && setShowLogoutConfirm(false)} />
                     <View className="absolute left-4 right-4 top-[38%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Sair da conta</AppText>
-                        <AppText className="text-slate-600 dark:text-slate-300 text-sm mt-2 mb-4">
+                        <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2 mb-4">
                             Deseja realmente sair do aplicativo?
                         </AppText>
 
@@ -960,4 +960,8 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
+
+
 

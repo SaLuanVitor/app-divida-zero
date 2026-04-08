@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Alert, ActivityIndicator, Pressable } from 'react-native';
@@ -76,7 +76,7 @@ const chipClass = (active: boolean) =>
     `px-3 py-2 rounded-full border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`;
 
 const chipTextClass = (active: boolean) =>
-    `text-xs font-bold ${active ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`;
+    `text-xs font-bold ${active ? 'text-white' : 'text-slate-600 dark:text-slate-200'}`;
 const MAX_AMOUNT_CENTS = 999_999_999;
 
 const getDefaultCategory = (tab: RegisterTab) => (tab === 'debt' ? debtCategories[0] : launchIncomeCategories[0]);
@@ -86,7 +86,7 @@ const buildSuggestedTitle = (tab: RegisterTab, category: string) => {
         return tab === 'debt' ? 'Nova dívida' : 'Novo ganho';
     }
 
-    return tab === 'debt' ? `Dívida • ${category}` : `Ganho • ${category}`;
+    return tab === 'debt' ? `Dívida •?• ${category}` : `Ganho •?• ${category}`;
 };
 
 const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
@@ -400,7 +400,7 @@ const Lancamentos = () => {
                         </TouchableOpacity>
                         <View>
                             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">{formTitle}</AppText>
-                            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Preencha os dados para registrar no sistema.</AppText>
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs">Preencha os dados para registrar no sistema.</AppText>
                         </View>
                     </View>
 
@@ -440,7 +440,7 @@ const Lancamentos = () => {
                     <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
                         <AppText className="text-slate-800 dark:text-slate-100 font-bold mb-3">Dados principais</AppText>
 
-                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Título</AppText>
+                        <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Título</AppText>
                         <AppTextInput
                             className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                             placeholder={activeTab === 'debt' ? 'Ex: Cartão Nubank' : 'Ex: Salário'}
@@ -452,12 +452,12 @@ const Lancamentos = () => {
                             }}
                         />
                         {!titleTouched ? (
-                            <AppText className="text-[11px] text-slate-500 dark:text-slate-300 mb-3">
+                            <AppText className="text-[11px] text-slate-500 dark:text-slate-200 mb-3">
                                 Título automático ativo. Edite apenas se quiser personalizar.
                             </AppText>
                         ) : null}
 
-                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Valor (R$)</AppText>
+                        <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Valor (R$)</AppText>
                         <AppTextInput
                             className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                             placeholder="R$ 0,00"
@@ -481,11 +481,11 @@ const Lancamentos = () => {
                                 <AppText className="text-xs font-bold text-red-600 dark:text-red-300">Limpar</AppText>
                             </TouchableOpacity>
                         </View>
-                        <AppText className="text-[11px] text-slate-500 dark:text-slate-300 mb-3 -mt-1">
+                        <AppText className="text-[11px] text-slate-500 dark:text-slate-200 mb-3 -mt-1">
                             Atalhos cumulativos: +10, +100, +1000 e Limpar.
                         </AppText>
 
-                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Data inicial</AppText>
+                        <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Data inicial</AppText>
                         <TouchableOpacity
                             className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 flex-row items-center justify-between bg-white dark:bg-[#121212]"
                             style={{ minHeight: fieldControlHeight, height: fieldControlHeight }}
@@ -495,7 +495,7 @@ const Lancamentos = () => {
                             <CalendarDays size={18} color="#64748b" />
                         </TouchableOpacity>
 
-                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-2">Categoria ({activeTab === 'debt' ? 'dívida' : 'ganho'})</AppText>
+                        <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-2">Categoria ({activeTab === 'debt' ? 'dívida' : 'ganho'})</AppText>
                         <View className="flex-row flex-wrap gap-2 mb-3">
                             {categoryOptions.map((option) => {
                                 const active = category === option;
@@ -509,7 +509,7 @@ const Lancamentos = () => {
 
                         {category === 'Outro' ? (
                             <>
-                                <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Informe a categoria</AppText>
+                                <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Informe a categoria</AppText>
                                 <AppTextInput
                                     className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                                     placeholder="Ex: Assinaturas"
@@ -521,7 +521,7 @@ const Lancamentos = () => {
                         ) : null}
 
                         <View className="flex-row flex-wrap items-center justify-between gap-2 mt-1">
-                            <AppText className="text-[11px] text-slate-500 dark:text-slate-300 flex-1">Modo rápido: só valor, data e categoria.</AppText>
+                            <AppText className="text-[11px] text-slate-500 dark:text-slate-200 flex-1">Modo rápido: só valor, data e categoria.</AppText>
                             <TouchableOpacity onPress={() => setShowAdvanced((prev) => !prev)} className={chipClass(showAdvanced)}>
                                 <AppText className={chipTextClass(showAdvanced)}>{showAdvanced ? 'Ocultar extras' : 'Mais opções'}</AppText>
                             </TouchableOpacity>
@@ -529,7 +529,7 @@ const Lancamentos = () => {
 
                         {showAdvanced ? (
                             <View className="mt-3">
-                                <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-2">Prioridade</AppText>
+                                <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-2">Prioridade</AppText>
                                 <View className="flex-row gap-2 mb-3">
                                     {priorityOptions.map((option) => {
                                         const active = priority === option.value;
@@ -541,7 +541,7 @@ const Lancamentos = () => {
                                     })}
                                 </View>
 
-                                <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Descrição (opcional)</AppText>
+                                <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Descrição (opcional)</AppText>
                                 <AppTextInput
                                     className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 mb-3 text-slate-900 dark:text-slate-100"
                                     placeholder="Detalhes úteis para esse registro"
@@ -551,7 +551,7 @@ const Lancamentos = () => {
                                     onChangeText={setDescription}
                                 />
 
-                                <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Observações extras (opcional)</AppText>
+                                <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Observações extras (opcional)</AppText>
                                 <AppTextInput
                                     className="min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-slate-900 dark:text-slate-100"
                                     placeholder="Ex: débito automático, lembrete, conta compartilhada..."
@@ -579,7 +579,7 @@ const Lancamentos = () => {
 
                                 {recurring ? (
                                     <>
-                                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-2">Frequência</AppText>
+                                        <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-2">Frequência</AppText>
                                         <View className="flex-row gap-2 mb-3 flex-wrap">
                                             {recurrenceOptions.map((option) => {
                                                 const active = recurrenceType === option.value;
@@ -591,7 +591,7 @@ const Lancamentos = () => {
                                             })}
                                         </View>
 
-                                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">
+                                        <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">
                                             {recurrenceType === 'daily'
                                                 ? 'Quantidade de dias (máx. 365)'
                                                 : 'Quantidade de ocorrências (máx. 36)'}
@@ -606,7 +606,7 @@ const Lancamentos = () => {
                                         />
                                     </>
                                 ) : (
-                                    <AppText className="text-slate-500 dark:text-slate-300 text-xs">Registro único: será criado apenas um lançamento.</AppText>
+                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs">Registro único: será criado apenas um lançamento.</AppText>
                                 )}
                             </View>
 
@@ -614,7 +614,7 @@ const Lancamentos = () => {
                                 <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
                                     <AppText className="text-slate-800 dark:text-slate-100 font-bold mb-3">Parcelamento</AppText>
 
-                                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Número de parcelas</AppText>
+                                    <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Número de parcelas</AppText>
                                     <AppTextInput
                                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100"
                                         keyboardType="number-pad"
@@ -624,7 +624,7 @@ const Lancamentos = () => {
                                         onChangeText={handleInstallmentsChange}
                                     />
 
-                                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mb-1">Dia preferencial de pagamento (1 a 28)</AppText>
+                                    <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Dia preferencial de pagamento (1 a 28)</AppText>
                                     <AppTextInput
                                         className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 text-slate-900 dark:text-slate-100"
                                         keyboardType="number-pad"
@@ -639,7 +639,7 @@ const Lancamentos = () => {
                     ) : (
                         <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">
                             <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold">Resumo do modo rápido</AppText>
-                            <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
                                 Registro único, prioridade normal e campos extras ocultos para reduzir cliques.
                             </AppText>
                         </View>
@@ -652,7 +652,7 @@ const Lancamentos = () => {
                         className="h-14 mb-4"
                     />
                     {!canSubmit ? (
-                        <AppText className="text-center text-xs text-slate-500 dark:text-slate-300 -mt-1 mb-4">
+                        <AppText className="text-center text-xs text-slate-500 dark:text-slate-200 -mt-1 mb-4">
                             Informe o valor para habilitar o salvamento.
                         </AppText>
                     ) : null}
@@ -695,7 +695,7 @@ const Lancamentos = () => {
 
                         <View className="flex-row justify-between mb-2 px-1">
                             {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
-                                <AppText key={`${day}-${idx}`} className="w-8 text-center text-xs font-bold text-[#8a7560] dark:text-slate-300">{day}</AppText>
+                                <AppText key={`${day}-${idx}`} className="w-8 text-center text-xs font-bold text-[#8a7560] dark:text-slate-200">{day}</AppText>
                             ))}
                         </View>
 
@@ -817,7 +817,7 @@ const Lancamentos = () => {
                             <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-extrabold text-center">
                                 {xpPopup.leveled_up ? 'Subiu de nível!' : 'Lançamento realizado!'}
                             </AppText>
-                            <AppText className="text-slate-500 dark:text-slate-300 text-sm text-center mt-1">
+                            <AppText className="text-slate-500 dark:text-slate-200 text-sm text-center mt-1">
                                 {xpPopup.leveled_up
                                     ? `Você chegou ao nível ${xpPopup.summary.level} (${xpPopup.summary.level_title}).`
                                     : 'Você ganhou pontos por manter o controle financeiro.'}
@@ -828,8 +828,8 @@ const Lancamentos = () => {
                                 <AppText className="text-slate-900 dark:text-slate-100 text-3xl font-black text-center mt-1">
                                     {xpPopup.points > 0 ? `+${xpPopup.points}` : xpPopup.points} XP
                                 </AppText>
-                                <AppText className="text-slate-600 dark:text-slate-300 text-sm text-center mt-1">
-                                    Nível {xpPopup.summary.level} • {xpPopup.summary.level_title}
+                                <AppText className="text-slate-600 dark:text-slate-200 text-sm text-center mt-1">
+                                    Nível {xpPopup.summary.level} •?• {xpPopup.summary.level_title}
                                 </AppText>
                                 <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
                                     <View className="h-full bg-primary rounded-full" style={{ width: `${xpPopup.summary.level_progress_pct}%` }} />
@@ -846,3 +846,6 @@ const Lancamentos = () => {
 };
 
 export default Lancamentos;
+
+
+

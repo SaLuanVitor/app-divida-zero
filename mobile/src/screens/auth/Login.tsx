@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, Image, TouchableOpacity, Alert, useWindowDimensions } from 'react-native';
 import { Mail, Lock } from 'lucide-react-native';
@@ -107,7 +107,7 @@ const Login = () => {
         <AppText className="text-slate-900 dark:text-slate-100 text-3xl font-bold text-center">
           Bem-vindo de volta!
         </AppText>
-        <AppText className="text-slate-500 dark:text-slate-300 text-center mt-2 mb-5">
+        <AppText className="text-slate-500 dark:text-slate-200 text-center mt-2 mb-5">
           Digite suas credenciais para continuar sua jornada.
         </AppText>
 
@@ -168,16 +168,16 @@ const Login = () => {
         />
 
         <View className="mt-10 items-center">
-          <AppText className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest">
+          <AppText className="text-slate-400 dark:text-slate-200 text-[10px] font-bold uppercase tracking-widest">
             Motivação do dia
           </AppText>
-          <AppText className="text-slate-600 dark:text-slate-300 italic text-center text-sm mt-2 px-4">
+          <AppText className="text-slate-600 dark:text-slate-200 italic text-center text-sm mt-2 px-4">
             "Pequenos passos todos os dias levam a grandes conquistas financeiras."
           </AppText>
         </View>
 
         <View className="mt-8 flex-row justify-center items-center pb-8">
-          <AppText className="text-slate-500 dark:text-slate-300 text-sm">Não tem uma conta? </AppText>
+          <AppText className="text-slate-500 dark:text-slate-200 text-sm">Não tem uma conta? </AppText>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
             <AppText className="text-primary font-bold text-sm">Cadastre-se</AppText>
           </TouchableOpacity>
@@ -190,4 +190,6 @@ const Login = () => {
 };
 
 export default Login;
+
+
 

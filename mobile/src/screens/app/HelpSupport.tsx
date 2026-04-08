@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Linking } from 'react-native';
 import { ArrowLeft, CircleHelp, Mail, MessageCircle } from 'lucide-react-native';
@@ -45,7 +45,7 @@ const HelpSupport = () => {
           </TouchableOpacity>
           <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Ajuda e suporte</AppText>
-            <AppText className="text-slate-500 dark:text-slate-300 text-xs">Dúvidas comuns e contato com o suporte.</AppText>
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs">Dúvidas comuns e contato com o suporte.</AppText>
           </View>
         </View>
       </View>
@@ -60,7 +60,7 @@ const HelpSupport = () => {
           {faqs.map((faq, index) => (
             <View key={faq.question} className={`${index !== faqs.length - 1 ? 'border-b border-slate-100 dark:border-slate-800' : ''} py-3`}>
               <AppText className="text-slate-900 dark:text-slate-100 font-semibold">{faq.question}</AppText>
-              <AppText className="text-slate-500 dark:text-slate-300 text-sm mt-1">{faq.answer}</AppText>
+              <AppText className="text-slate-500 dark:text-slate-200 text-sm mt-1">{faq.answer}</AppText>
             </View>
           ))}
         </Card>
@@ -91,3 +91,5 @@ const HelpSupport = () => {
 };
 
 export default HelpSupport;
+
+

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { View, ViewProps } from 'react-native';
 import AppText from './AppText';
 
@@ -30,7 +30,7 @@ const Card: React.FC<CardProps> = ({
                         </AppText>
                     )}
                     {subtitle && (
-                        <AppText className="text-slate-500 dark:text-slate-300 text-sm mt-1">
+                        <AppText className="text-slate-500 dark:text-slate-200 text-sm mt-1">
                             {subtitle}
                         </AppText>
                     )}
@@ -44,4 +44,5 @@ const Card: React.FC<CardProps> = ({
 };
 
 export default Card;
+
 

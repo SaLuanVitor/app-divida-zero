@@ -37,6 +37,7 @@ Definir limites de privacidade e padrao Android para tarefas do App Divida Zero.
 1. Escrever textos neutros e orientados a acao.
 2. Evitar termos que parecam expor historico pessoal real.
 3. Preferir labels de usuario do app em vez de nomes civis.
+4. Manter todos os arquivos textuais em UTF-8 (sem mojibake), incluindo telas, mensagens, fixtures e docs.
 
 ## Padrao Android no Projeto
 

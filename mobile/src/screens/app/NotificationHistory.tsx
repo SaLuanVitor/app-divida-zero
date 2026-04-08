@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -109,7 +109,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
               <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">
                 Historico de notificacoes
               </AppText>
-              <AppText className="text-slate-500 dark:text-slate-300 text-xs">
+              <AppText className="text-slate-500 dark:text-slate-200 text-xs">
                 Atualizacoes importantes da sua jornada no app.
               </AppText>
             </View>
@@ -129,7 +129,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
             >
               <AppText
                 className={`text-xs font-bold ${
-                  filter === 'all' ? 'text-white' : 'text-slate-600 dark:text-slate-300'
+                  filter === 'all' ? 'text-white' : 'text-slate-600 dark:text-slate-200'
                 }`}
               >
                 Todas
@@ -145,7 +145,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
             >
               <AppText
                 className={`text-xs font-bold ${
-                  filter === 'unread' ? 'text-white' : 'text-slate-600 dark:text-slate-300'
+                  filter === 'unread' ? 'text-white' : 'text-slate-600 dark:text-slate-200'
                 }`}
               >
                 Nao lidas
@@ -160,7 +160,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
             >
               <View className="flex-row items-center">
                 <CheckCheck size={12} color={darkMode ? '#cbd5e1' : '#475569'} />
-                <AppText className="text-xs font-bold text-slate-600 dark:text-slate-300 ml-1">
+                <AppText className="text-xs font-bold text-slate-600 dark:text-slate-200 ml-1">
                   Marcar lidas
                 </AppText>
               </View>
@@ -172,7 +172,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
           {loading ? (
             <View className="items-center py-10">
               <ActivityIndicator color="#f48c25" />
-              <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-2">
+              <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
                 Carregando notificacoes...
               </AppText>
             </View>
@@ -181,7 +181,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
           {!loading && visibleItems.length === 0 ? (
             <Card noPadding>
               <View className="p-4">
-                <AppText className="text-slate-600 dark:text-slate-300 text-sm">
+                <AppText className="text-slate-600 dark:text-slate-200 text-sm">
                   Nao existem notificacoes.
                 </AppText>
               </View>
@@ -205,10 +205,10 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
                         <AppText className="text-slate-900 dark:text-slate-100 font-bold">
                           {item.title}
                         </AppText>
-                        <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-1">
+                        <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1">
                           {item.message}
                         </AppText>
-                        <AppText className="text-slate-400 dark:text-slate-300 text-[11px] mt-2">
+                        <AppText className="text-slate-400 dark:text-slate-200 text-[11px] mt-2">
                           {createdLabel}
                         </AppText>
                       </View>
@@ -228,3 +228,4 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
 };
 
 export default NotificationHistory;
+

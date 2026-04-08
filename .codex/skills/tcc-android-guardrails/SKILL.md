@@ -16,7 +16,8 @@ Executar este checklist antes de propor implementacao, textos de interface, exem
 2. Bloquear qualquer dado sensivel ou identificavel de pessoa real.
 3. Substituir exemplos por dados ficticios de usuario.
 4. Ajustar UI/UX e componentes para padrao Android.
-5. Entregar com um resumo curto de conformidade.
+5. Garantir charset UTF-8 em arquivos de codigo, copy, fixtures, seeds e documentacao.
+6. Entregar com um resumo curto de conformidade.
 
 ## Regras de Dados para TCC
 
@@ -50,6 +51,7 @@ Ao concluir uma tarefa com esta skill, incluir um bloco curto:
 - `Dados sensiveis`: nao usados
 - `Dados reais`: nao usados
 - `Padrao Android`: aplicado
+- `Charset UTF-8`: aplicado
 
 ## Recursos
 

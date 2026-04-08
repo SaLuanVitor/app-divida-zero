@@ -7,6 +7,7 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
+import { useThemeMode } from '../../context/ThemeContext';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -14,6 +15,7 @@ const ResetPassword = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { resetPassword } = useAuth();
+    const { darkMode } = useThemeMode();
 
     const [email, setEmail] = useState('');
     const [token, setToken] = useState('');
@@ -89,7 +91,7 @@ const ResetPassword = () => {
         <Layout scrollable className="bg-[#f8f7f5] dark:bg-black" contentContainerClassName="bg-[#f8f7f5] dark:bg-black pb-10">
             <View className="flex-row items-center mb-6">
                 <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 self-start">
-                    <ArrowLeft size={24} color="#0f172a" />
+                    <ArrowLeft size={24} color={darkMode ? '#e2e8f0' : '#0f172a'} />
                 </TouchableOpacity>
                 <AppText className="text-slate-900 dark:text-slate-100 text-lg font-bold ml-2">Redefinir Senha</AppText>
             </View>
@@ -99,7 +101,7 @@ const ResetPassword = () => {
                     <KeyRound size={38} color="#f48c25" />
                 </View>
                 <AppText className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 text-center mb-2">Informe o token de recuperação</AppText>
-                <AppText className="text-sm text-slate-600 dark:text-slate-300 text-center">Use o token recebido para concluir a redefinição da senha.</AppText>
+                <AppText className="text-sm text-slate-600 dark:text-slate-200 text-center">Use o token recebido para concluir a redefinição da senha.</AppText>
             </View>
 
             <Input
@@ -155,6 +157,7 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
+
 
 
 
