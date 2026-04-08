@@ -47,6 +47,7 @@ import {
 } from '../../services/notificationCenter';
 import { NotificationHistoryItem } from '../../types/notificationCenter';
 import { useThemeMode } from '../../context/ThemeContext';
+import { useBottomInset } from '../../context/BottomInsetContext';
 import {
     getFrameRequiredLevel,
     getUnlockedFramesCount,
@@ -85,6 +86,7 @@ const Profile = () => {
     const route = useRoute<any>();
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const insets = useSafeAreaInsets();
+    const { contentBottomInset } = useBottomInset();
     const { reduceMotion, fontScale, largerTouchTargets } = useAccessibility();
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -381,7 +383,11 @@ const Profile = () => {
     return (
         <>
             <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
-                <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false}>
+                <ScrollView
+                    ref={scrollRef}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: contentBottomInset + 24 }}
+                >
                     <View className="px-6 pt-8 pb-2 items-center">
                         <View className="w-full flex-row items-center justify-between mb-4">
                             <TouchableOpacity
@@ -658,7 +664,7 @@ const Profile = () => {
                         />
                     </View>
 
-                    <View className="items-center pb-10 pt-6">
+                    <View className="items-center pt-6">
                         <AppText className="text-slate-400 dark:text-slate-200 text-xs text-center">Dívida Zero App - v1.0.0</AppText>
                     </View>
                 </ScrollView>

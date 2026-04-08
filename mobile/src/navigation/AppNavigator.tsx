@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, TouchableOpacity, Pressable, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, TouchableOpacity, Pressable, StyleSheet, LayoutChangeEvent, Modal } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Home from '../screens/app/Home';
@@ -102,9 +102,15 @@ const CustomTabBar = ({
 
     return (
         <>
-            {showActions ? (
-                <View style={styles.overlay}>
-                    <Pressable style={StyleSheet.absoluteFill} onPress={closeOverlay} />
+            <Modal
+                visible={showActions}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+                onRequestClose={closeOverlay}
+            >
+                <View style={styles.overlayModalRoot}>
+                    <Pressable style={styles.overlayBackdrop} onPress={closeOverlay} />
                     <View style={[styles.actionsContainer, darkMode && styles.actionsContainerDark, { bottom: actionsBottom }]}>
                         <TouchableOpacity
                             style={[styles.actionButton, darkMode && styles.actionButtonDark, largerTouchTargets && styles.actionButtonLarge]}
@@ -123,7 +129,7 @@ const CustomTabBar = ({
                         </TouchableOpacity>
                     </View>
                 </View>
-            ) : null}
+            </Modal>
 
             <View
                 onLayout={handleTabBarLayout}
@@ -253,11 +259,14 @@ const styles = StyleSheet.create({
     navTextActive: {
         color: '#f48c25',
     },
-    overlay: {
+    overlayModalRoot: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.2)',
         zIndex: 120,
         elevation: 120,
+    },
+    overlayBackdrop: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
     },
     actionsContainer: {
         position: 'absolute',
