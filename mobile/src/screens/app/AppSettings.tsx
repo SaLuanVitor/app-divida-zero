@@ -72,15 +72,12 @@ const AppSettings = () => {
     setSaving(true);
     setMessage('');
     try {
-      await updateAppPreferences({
-        onboarding_seen: false,
-        tutorial_reopen_enabled: true,
-      });
+      await updateAppPreferences({ tutorial_reopen_enabled: true });
       trackAnalyticsEventDeferred({
         event_name: 'tutorial_reopened',
         screen: 'AppSettings',
       });
-      setMessage('Tutorial reaberto. Você pode revisar as instruções.');
+      setMessage('Tutorial aberto. Escolha o módulo iniciante ou avançado.');
       navigation.navigate('Tutorial');
     } finally {
       setSaving(false);

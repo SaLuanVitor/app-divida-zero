@@ -62,6 +62,7 @@ import {
     PROFILE_FRAME_OPTIONS,
     PROFILE_ICON_OPTIONS,
 } from '../../utils/profileAppearance';
+import TutorialTarget from '../../components/tutorial/TutorialTarget';
 
 const notificationKindIconMap: Record<NotificationHistoryItem['kind'], React.ComponentType<{ size?: number; color?: string }>> = {
     achievement: Trophy,
@@ -635,6 +636,7 @@ const Profile = () => {
 
                     <View className="px-4">
                         <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-4">Conta</AppText>
+                        <TutorialTarget targetId="perfil-account-card">
                         <Card className="mb-6 overflow-hidden" noPadding>
                             {menuItems.map((item, i) => (
                                 <TouchableOpacity
@@ -653,6 +655,7 @@ const Profile = () => {
                                 </TouchableOpacity>
                             ))}
                         </Card>
+                        </TutorialTarget>
 
                         <Button
                             title="Sair da conta"

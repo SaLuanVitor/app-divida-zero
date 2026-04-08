@@ -6,6 +6,7 @@ import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import { useBottomInset } from '../../context/BottomInsetContext';
 import { deleteFinancialGoal, listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto, FinancialGoalType } from '../../types/financialGoal';
@@ -170,10 +171,12 @@ const Metas = () => {
             >
                 <View className="flex-row items-center justify-between mb-1">
                     <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold">Metas</AppText>
-                    <TouchableOpacity className="bg-primary rounded-full px-4 py-2 flex-row items-center gap-2" onPress={openCreateScreen}>
-                        <PlusCircle size={16} color="#fff" />
-                        <AppText className="text-white font-bold text-sm">Nova meta</AppText>
-                    </TouchableOpacity>
+                    <TutorialTarget targetId="metas-create-button">
+                        <TouchableOpacity className="bg-primary rounded-full px-4 py-2 flex-row items-center gap-2" onPress={openCreateScreen}>
+                            <PlusCircle size={16} color="#fff" />
+                            <AppText className="text-white font-bold text-sm">Nova meta</AppText>
+                        </TouchableOpacity>
+                    </TutorialTarget>
                 </View>
                 <AppText className="text-slate-500 dark:text-slate-200 mb-5">Acompanhe sua evolução e ajuste suas metas.</AppText>
 

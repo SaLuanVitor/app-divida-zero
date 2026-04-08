@@ -23,6 +23,7 @@ import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import ProfileAvatar from '../../components/ProfileAvatar';
+import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import { useAuth } from '../../context/AuthContext';
 import { useOverlay } from '../../context/OverlayContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
@@ -728,7 +729,8 @@ const Home = () => {
                         </TouchableOpacity>
                     </View>
 
-                    <View className="flex-row gap-3">
+                    <TutorialTarget targetId="home-summary-card">
+                        <View className="flex-row gap-3">
                         <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
                             <View className="flex-row items-center mb-1">
                                 <CircleDollarSign size={14} color="#16a34a" />
@@ -743,7 +745,8 @@ const Home = () => {
                             </View>
                             <AppText className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyBalanceValue)}</AppText>
                         </View>
-                    </View>
+                        </View>
+                    </TutorialTarget>
 
                     <View className="mt-4 bg-[#f8f7f5] dark:bg-black rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
                         <AppText className="text-[11px] text-slate-500 dark:text-slate-200 font-bold uppercase mb-1">Próxima melhor ação</AppText>
@@ -761,6 +764,7 @@ const Home = () => {
                 </View>
 
                 <View className="pt-4" style={{ paddingBottom: contentBottomInset }}>
+                    <TutorialTarget targetId="home-calendar-card">
                     <Card className="mb-5" noPadding>
                         <View className="p-4">
                             <View className="flex-row items-center justify-between mb-4">
@@ -843,6 +847,7 @@ const Home = () => {
                             </View>
                         </View>
                     </Card>
+                    </TutorialTarget>
 
                     <View className="flex-row items-center justify-between mb-3">
                         <AppText className="text-slate-900 dark:text-slate-100 font-bold text-xl">Lançamentos do mês</AppText>

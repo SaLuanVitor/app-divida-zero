@@ -7,6 +7,7 @@ import Layout from '../../components/Layout';
 import AppText from '../../components/AppText';
 import Card from '../../components/Card';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import {
   getCachedReportsSummary,
   getReportsSummary,
@@ -357,9 +358,11 @@ const Relatorios = () => {
         <Card className="mb-3" noPadding><View className="p-4">
           <View className="flex-row items-center justify-between mb-1">
             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(-1)}><ChevronLeft size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} /></TouchableOpacity>
-            <TouchableOpacity className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" onPress={() => { setPickerYear(monthRef.getFullYear()); setPickerMode('month'); setShowPeriodPicker(true); }}>
-              <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{monthLabel(monthRef)}</AppText>
-            </TouchableOpacity>
+            <TutorialTarget targetId="relatorios-period-picker">
+              <TouchableOpacity className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" onPress={() => { setPickerYear(monthRef.getFullYear()); setPickerMode('month'); setShowPeriodPicker(true); }}>
+                <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{monthLabel(monthRef)}</AppText>
+              </TouchableOpacity>
+            </TutorialTarget>
             <View className="flex-row items-center gap-2">
               <TouchableOpacity className="px-3 py-2 rounded-full bg-primary/10 border border-primary/20" onPress={today}><AppText className="text-primary text-xs font-bold">Hoje</AppText></TouchableOpacity>
               <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(1)}><ChevronRight size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} /></TouchableOpacity>

@@ -24,6 +24,7 @@ import { useAuth } from '../context/AuthContext';
 import AppText from '../components/AppText';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { BottomInsetProvider } from '../context/BottomInsetContext';
+import TutorialTarget from '../components/tutorial/TutorialTarget';
 
 const Tab = createBottomTabNavigator();
 
@@ -145,16 +146,18 @@ const CustomTabBar = ({
                         largerTouchTargets={largerTouchTargets}
                     />
 
-                    <NavItem
-                        label="Metas"
-                        darkMode={darkMode}
-                        active={activeRouteName === 'Metas'}
-                        onPress={() => goTo('Metas')}
-                        icon={<Trophy size={20} color={activeRouteName === 'Metas' ? '#f48c25' : inactiveIcon} />}
-                        largerTouchTargets={largerTouchTargets}
-                    />
+                    <TutorialTarget targetId="tab-metas">
+                        <NavItem
+                            label="Metas"
+                            darkMode={darkMode}
+                            active={activeRouteName === 'Metas'}
+                            onPress={() => goTo('Metas')}
+                            icon={<Trophy size={20} color={activeRouteName === 'Metas' ? '#f48c25' : inactiveIcon} />}
+                            largerTouchTargets={largerTouchTargets}
+                        />
+                    </TutorialTarget>
 
-                    <View style={styles.centerButtonContainer}>
+                    <TutorialTarget targetId="tab-lancamentos" style={styles.centerButtonContainer}>
                         <TouchableOpacity
                             onPress={toggleActions}
                             style={[styles.centerButton, darkMode && styles.centerButtonDark, largerTouchTargets && styles.centerButtonLarge]}
@@ -170,25 +173,29 @@ const CustomTabBar = ({
                         >
                             Lançamentos
                         </AppText>
-                    </View>
+                    </TutorialTarget>
 
-                    <NavItem
-                        label="Relatórios"
-                        darkMode={darkMode}
-                        active={activeRouteName === 'Relatorios'}
-                        onPress={() => goTo('Relatorios')}
-                        icon={<ChartColumnIncreasing size={20} color={activeRouteName === 'Relatorios' ? '#f48c25' : inactiveIcon} />}
-                        largerTouchTargets={largerTouchTargets}
-                    />
+                    <TutorialTarget targetId="tab-relatorios">
+                        <NavItem
+                            label="Relatórios"
+                            darkMode={darkMode}
+                            active={activeRouteName === 'Relatorios'}
+                            onPress={() => goTo('Relatorios')}
+                            icon={<ChartColumnIncreasing size={20} color={activeRouteName === 'Relatorios' ? '#f48c25' : inactiveIcon} />}
+                            largerTouchTargets={largerTouchTargets}
+                        />
+                    </TutorialTarget>
 
-                    <NavItem
-                        label="Perfil"
-                        darkMode={darkMode}
-                        active={activeRouteName === 'Perfil'}
-                        onPress={() => goTo('Perfil')}
-                        icon={<User size={20} color={activeRouteName === 'Perfil' ? '#f48c25' : inactiveIcon} />}
-                        largerTouchTargets={largerTouchTargets}
-                    />
+                    <TutorialTarget targetId="tab-perfil">
+                        <NavItem
+                            label="Perfil"
+                            darkMode={darkMode}
+                            active={activeRouteName === 'Perfil'}
+                            onPress={() => goTo('Perfil')}
+                            icon={<User size={20} color={activeRouteName === 'Perfil' ? '#f48c25' : inactiveIcon} />}
+                            largerTouchTargets={largerTouchTargets}
+                        />
+                    </TutorialTarget>
                 </View>
             </View>
         </>

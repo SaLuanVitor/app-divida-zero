@@ -18,6 +18,8 @@ const EVENT_ALLOWLIST = [
 ] as const;
 
 export type AnalyticsEventName = (typeof EVENT_ALLOWLIST)[number];
+type AnalyticsListener = (eventName: AnalyticsEventName) => void;
+const listeners = new Set<AnalyticsListener>();
 
 type AnalyticsPayload = {
   event_name: AnalyticsEventName;
@@ -61,5 +63,19 @@ export const trackAnalyticsEvent = async ({ event_name, screen, metadata = {} }:
 };
 
 export const trackAnalyticsEventDeferred = (payload: AnalyticsPayload) => {
+  listeners.forEach((listener) => {
+    try {
+      listener(payload.event_name);
+    } catch {
+      // Ignore listener failures to preserve app flow.
+    }
+  });
   void trackAnalyticsEvent(payload);
+};
+
+export const subscribeAnalyticsEvents = (listener: AnalyticsListener) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 };
