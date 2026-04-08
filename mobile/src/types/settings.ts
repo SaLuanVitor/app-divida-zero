@@ -14,6 +14,7 @@ export interface AppPreferences {
   onboarding_seen: boolean;
   onboarding_mode: 'beginner' | 'advanced' | null;
   tutorial_reopen_enabled: boolean;
+  tutorial_active_mode: 'beginner' | 'advanced' | null;
   tutorial_beginner_completed: boolean;
   tutorial_advanced_completed: boolean;
   tutorial_last_step: string | null;

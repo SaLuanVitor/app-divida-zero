@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, TouchableOpacity, Pressable, StyleSheet, LayoutChangeEvent, Modal } from 'react-native';
+import { View, TouchableOpacity, Pressable, StyleSheet, LayoutChangeEvent, Modal, useWindowDimensions, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Home from '../screens/app/Home';
@@ -35,6 +35,8 @@ const NavItem = ({
     icon,
     darkMode,
     largerTouchTargets,
+    slotStyle,
+    labelStyle,
 }: {
     label: string;
     active: boolean;
@@ -42,13 +44,15 @@ const NavItem = ({
     icon: React.ReactNode;
     darkMode: boolean;
     largerTouchTargets: boolean;
+    slotStyle?: StyleProp<ViewStyle>;
+    labelStyle?: StyleProp<TextStyle>;
 }) => (
-    <TouchableOpacity onPress={onPress} style={[styles.navItem, largerTouchTargets && styles.navItemLarge]}>
+    <TouchableOpacity onPress={onPress} style={[styles.navItem, largerTouchTargets && styles.navItemLarge, slotStyle]}>
         {icon}
         <AppText
             numberOfLines={1}
             maxUserFontScale={1.15}
-            style={[styles.navText, darkMode && styles.navTextDark, active && styles.navTextActive]}
+            style={[styles.navText, darkMode && styles.navTextDark, active && styles.navTextActive, labelStyle]}
         >
             {label}
         </AppText>
@@ -64,6 +68,7 @@ const CustomTabBar = ({
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
     const { darkMode } = useThemeMode();
     const { largerTouchTargets } = useAccessibility();
+    const { width: screenWidth } = useWindowDimensions();
 
     const showActions = isOverlayOpen('actions');
     const inactiveIcon = darkMode ? '#94a3b8' : '#8a7560';
@@ -100,6 +105,15 @@ const CustomTabBar = ({
     );
 
     const actionsBottom = Math.max(96, insets.bottom + 88);
+    const compact = screenWidth < 380;
+    const roomy = screenWidth >= 430;
+    const slotMinWidth = Math.max(60, Math.floor((screenWidth - 16) / 5));
+    const iconSize = compact ? 18 : 20;
+    const centerButtonSize = compact ? 52 : roomy ? 58 : 56;
+    const centerLift = compact ? -22 : roomy ? -30 : -26;
+    const labelFontSize = compact ? 9 : 10;
+    const centerLabelWidth = compact ? 78 : 90;
+    const baseSlotHeight = Math.max(largerTouchTargets ? 62 : 56, compact ? 56 : 58);
 
     return (
         <>
@@ -136,14 +150,16 @@ const CustomTabBar = ({
                 onLayout={handleTabBarLayout}
                 style={[styles.tabBar, darkMode && styles.tabBarDark, { paddingBottom: Math.max(10, insets.bottom) }]}
             >
-                <View style={styles.tabBarContent}>
+                <View style={[styles.tabBarContent, { minHeight: baseSlotHeight, paddingHorizontal: compact ? 4 : 8 }]}>
                     <NavItem
                         label="Início"
                         darkMode={darkMode}
                         active={activeRouteName === 'Inicio'}
                         onPress={() => goTo('Inicio')}
-                        icon={<House size={20} color={activeRouteName === 'Inicio' ? '#f48c25' : inactiveIcon} />}
+                        icon={<House size={iconSize} color={activeRouteName === 'Inicio' ? '#f48c25' : inactiveIcon} />}
                         largerTouchTargets={largerTouchTargets}
+                        slotStyle={{ minWidth: slotMinWidth, minHeight: baseSlotHeight }}
+                        labelStyle={{ fontSize: labelFontSize }}
                     />
 
                     <TutorialTarget targetId="tab-metas">
@@ -152,24 +168,38 @@ const CustomTabBar = ({
                             darkMode={darkMode}
                             active={activeRouteName === 'Metas'}
                             onPress={() => goTo('Metas')}
-                            icon={<Trophy size={20} color={activeRouteName === 'Metas' ? '#f48c25' : inactiveIcon} />}
+                            icon={<Trophy size={iconSize} color={activeRouteName === 'Metas' ? '#f48c25' : inactiveIcon} />}
                             largerTouchTargets={largerTouchTargets}
+                            slotStyle={{ minWidth: slotMinWidth, minHeight: baseSlotHeight }}
+                            labelStyle={{ fontSize: labelFontSize }}
                         />
                     </TutorialTarget>
 
-                    <TutorialTarget targetId="tab-lancamentos" style={styles.centerButtonContainer}>
+                    <TutorialTarget
+                        targetId="tab-lancamentos"
+                        style={[styles.centerButtonContainer, { marginTop: centerLift, minWidth: slotMinWidth, minHeight: baseSlotHeight }]}
+                    >
                         <TouchableOpacity
                             onPress={toggleActions}
-                            style={[styles.centerButton, darkMode && styles.centerButtonDark, largerTouchTargets && styles.centerButtonLarge]}
+                            style={[
+                                styles.centerButton,
+                                darkMode && styles.centerButtonDark,
+                                largerTouchTargets && styles.centerButtonLarge,
+                                { width: centerButtonSize, height: centerButtonSize, borderRadius: centerButtonSize / 2 },
+                            ]}
                         >
-                            {showActions ? <CirclePlus size={22} color="#fff" /> : <Plus size={24} color="#fff" />}
+                            {showActions ? <CirclePlus size={compact ? 20 : 22} color="#fff" /> : <Plus size={compact ? 22 : 24} color="#fff" />}
                         </TouchableOpacity>
                         <AppText
                             numberOfLines={1}
                             adjustsFontSizeToFit
                             minimumFontScale={0.9}
                             maxUserFontScale={1.1}
-                            style={[styles.centerButtonText, darkMode && styles.centerButtonTextDark]}
+                            style={[
+                                styles.centerButtonText,
+                                darkMode && styles.centerButtonTextDark,
+                                { width: centerLabelWidth, fontSize: labelFontSize, lineHeight: compact ? 11 : 12 },
+                            ]}
                         >
                             Lançamentos
                         </AppText>
@@ -181,8 +211,10 @@ const CustomTabBar = ({
                             darkMode={darkMode}
                             active={activeRouteName === 'Relatorios'}
                             onPress={() => goTo('Relatorios')}
-                            icon={<ChartColumnIncreasing size={20} color={activeRouteName === 'Relatorios' ? '#f48c25' : inactiveIcon} />}
+                            icon={<ChartColumnIncreasing size={iconSize} color={activeRouteName === 'Relatorios' ? '#f48c25' : inactiveIcon} />}
                             largerTouchTargets={largerTouchTargets}
+                            slotStyle={{ minWidth: slotMinWidth, minHeight: baseSlotHeight }}
+                            labelStyle={{ fontSize: labelFontSize }}
                         />
                     </TutorialTarget>
 
@@ -192,8 +224,10 @@ const CustomTabBar = ({
                             darkMode={darkMode}
                             active={activeRouteName === 'Perfil'}
                             onPress={() => goTo('Perfil')}
-                            icon={<User size={20} color={activeRouteName === 'Perfil' ? '#f48c25' : inactiveIcon} />}
+                            icon={<User size={iconSize} color={activeRouteName === 'Perfil' ? '#f48c25' : inactiveIcon} />}
                             largerTouchTargets={largerTouchTargets}
+                            slotStyle={{ minWidth: slotMinWidth, minHeight: baseSlotHeight }}
+                            labelStyle={{ fontSize: labelFontSize }}
                         />
                     </TutorialTarget>
                 </View>
@@ -249,7 +283,8 @@ const styles = StyleSheet.create({
     navItem: {
         flex: 1,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-end',
+        paddingBottom: 2,
     },
     navItemLarge: {
         minHeight: 52,
@@ -328,7 +363,7 @@ const styles = StyleSheet.create({
     },
     tabBarContent: {
         flexDirection: 'row',
-        alignItems: 'flex-end',
+        alignItems: 'stretch',
         paddingHorizontal: 8,
     },
     centerButtonContainer: {
@@ -336,6 +371,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: -28,
         minWidth: 88,
+        justifyContent: 'flex-end',
+        paddingBottom: 2,
     },
     centerButton: {
         width: 56,

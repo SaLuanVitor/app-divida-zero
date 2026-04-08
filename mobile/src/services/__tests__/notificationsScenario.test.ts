@@ -18,6 +18,11 @@ const basePrefs: AppPreferences = {
   onboarding_seen: true,
   onboarding_mode: null,
   tutorial_reopen_enabled: true,
+  tutorial_active_mode: null,
+  tutorial_beginner_completed: false,
+  tutorial_advanced_completed: false,
+  tutorial_last_step: null,
+  tutorial_advanced_tasks_done: [],
 };
 
 const record = (overrides: Partial<FinancialRecordDto>): FinancialRecordDto => ({
