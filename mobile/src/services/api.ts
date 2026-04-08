@@ -8,6 +8,7 @@ const USER_KEY = '@DividaZero:user';
 
 let onUnauthorized: (() => void | Promise<void>) | null = null;
 let refreshPromise: Promise<{ access_token: string; refresh_token: string }> | null = null;
+let invalidateSessionPromise: Promise<void> | null = null;
 
 const getLocalDateHeader = () => {
     const now = new Date();
@@ -17,20 +18,44 @@ const getLocalDateHeader = () => {
     return `${year}-${month}-${day}`;
 };
 
-const defaultDevApiBaseUrl =
-    Platform.OS === 'android'
-        ? 'http://10.0.2.2:3000/api/v1'
-        : 'http://localhost:3000/api/v1';
+const getDefaultDevApiBaseUrl = (platform: string) =>
+    platform === 'android' ? 'http://10.0.2.2:3000/api/v1' : 'http://localhost:3000/api/v1';
 const defaultReleaseApiBaseUrl = 'https://app-divida-zero-production-5333.up.railway.app/api/v1';
-const defaultApiBaseUrl = __DEV__ ? defaultDevApiBaseUrl : defaultReleaseApiBaseUrl;
-const envApiBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
-const normalizedApiBaseUrl =
-    Platform.OS === 'android' && envApiBaseUrl?.includes('localhost')
-        ? envApiBaseUrl.replace('localhost', '10.0.2.2')
-        : envApiBaseUrl;
+
+const normalizeAndroidLocalhost = (url: string, platform: string) =>
+    platform === 'android' && url.includes('localhost') ? url.replace('localhost', '10.0.2.2') : url;
+
+export const resolveApiBaseUrl = ({
+    isDev,
+    platform,
+    envApiBaseUrl,
+}: {
+    isDev: boolean;
+    platform: string;
+    envApiBaseUrl?: string;
+}) => {
+    const envUrl = envApiBaseUrl?.trim();
+
+    if (!isDev) {
+        // Release builds must always target Railway.
+        return defaultReleaseApiBaseUrl;
+    }
+
+    if (envUrl) {
+        return normalizeAndroidLocalhost(envUrl, platform);
+    }
+
+    return getDefaultDevApiBaseUrl(platform);
+};
+
+const resolvedApiBaseUrl = resolveApiBaseUrl({
+    isDev: __DEV__,
+    platform: Platform.OS,
+    envApiBaseUrl: process.env.EXPO_PUBLIC_API_URL,
+});
 
 const api = axios.create({
-    baseURL: normalizedApiBaseUrl || defaultApiBaseUrl,
+    baseURL: resolvedApiBaseUrl,
     timeout: 10000,
     headers: {
         Accept: 'application/json; charset=utf-8',
@@ -98,12 +123,18 @@ api.interceptors.response.use(
 
             return api(originalRequest);
         } catch (refreshError) {
-            await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY]);
-            delete api.defaults.headers.common.Authorization;
-
-            if (onUnauthorized) {
-                await onUnauthorized();
+            if (!invalidateSessionPromise) {
+                invalidateSessionPromise = (async () => {
+                    await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY]);
+                    delete api.defaults.headers.common.Authorization;
+                    if (onUnauthorized) {
+                        await onUnauthorized();
+                    }
+                })().finally(() => {
+                    invalidateSessionPromise = null;
+                });
             }
+            await invalidateSessionPromise;
 
             return Promise.reject(refreshError);
         }

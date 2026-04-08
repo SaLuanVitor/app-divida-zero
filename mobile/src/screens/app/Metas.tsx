@@ -236,14 +236,16 @@ const Metas = () => {
                             <TouchableOpacity activeOpacity={0.88} onPress={() => openEditScreen(goal)}>
                                 <View className="p-4">
                                     <View className="flex-row items-start justify-between mb-3">
-                                        <View className="w-11 h-11 rounded-xl bg-primary/10 items-center justify-center">
-                                            <Icon size={20} color="#f48c25" />
-                                        </View>
-                                        <View className="flex-1">
-                                            <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">{goal.title}</AppText>
-                                            <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-                                                {typeOption?.label || 'Meta'} - {goal.status === 'completed' ? 'Concluída' : 'Em andamento'}
-                                            </AppText>
+                                        <View className="flex-1 flex-row items-start">
+                                            <View className="w-11 h-11 rounded-xl bg-primary/10 items-center justify-center mr-3">
+                                                <Icon size={20} color="#f48c25" />
+                                            </View>
+                                            <View className="flex-1 pt-0.5 pr-1">
+                                                <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">{goal.title}</AppText>
+                                                <AppText className="text-slate-500 dark:text-slate-200 text-xs">
+                                                    {typeOption?.label || 'Meta'} - {goal.status === 'completed' ? 'Concluída' : 'Em andamento'}
+                                                </AppText>
+                                            </View>
                                         </View>
                                         <ChevronRight size={16} color="#94a3b8" />
                                     </View>
