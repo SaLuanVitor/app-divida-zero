@@ -9,8 +9,8 @@ import {
     useWindowDimensions
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
 import { FormKeyboardProvider } from '../context/FormKeyboardContext';
+import { useBottomInset } from '../context/BottomInsetContext';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -34,12 +34,12 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
     const { width } = useWindowDimensions();
     const insets = useSafeAreaInsets();
-    const bottomTabBarHeight = React.useContext(BottomTabBarHeightContext) ?? 0;
+    const { contentBottomInset } = useBottomInset();
     const scrollViewRef = React.useRef<ScrollView>(null);
     const [keyboardHeight, setKeyboardHeight] = React.useState(0);
     const shouldConstrain = width >= 768;
     const { contentContainerStyle: userContentContainerStyle, ...restScrollViewProps } = scrollViewProps ?? {};
-    const baseBottomPadding = bottomTabBarHeight > 0 ? bottomTabBarHeight + 32 : 32;
+    const baseBottomPadding = Math.max(32, contentBottomInset);
     const keyboardPadding = formMode ? Math.max(0, keyboardHeight - insets.bottom) : 0;
     const bottomScrollPadding = baseBottomPadding + keyboardPadding;
 

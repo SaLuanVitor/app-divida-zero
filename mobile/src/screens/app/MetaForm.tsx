@@ -14,6 +14,7 @@ import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { useAccessibility } from '../../context/AccessibilityContext';
+import { useBottomInset } from '../../context/BottomInsetContext';
 
 type GoalDateField = 'start' | 'target';
 type FeedbackState = {
@@ -74,6 +75,7 @@ const MetaForm = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { darkMode } = useThemeMode();
+    const { overlayBottomInset } = useBottomInset();
     const { fontScale, largerTouchTargets } = useAccessibility();
     const goal = route.params?.goal as FinancialGoalDto | undefined;
 
@@ -238,7 +240,7 @@ const MetaForm = () => {
             <Layout
                 scrollable
                 formMode
-                contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black pb-32"
+                contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black"
                 scrollViewProps={{
                     keyboardShouldPersistTaps: 'always',
                 }}
@@ -330,9 +332,12 @@ const MetaForm = () => {
             </Layout>
 
             {showDatePicker ? (
-                <View className="absolute inset-0 z-[55]">
+                <View className="absolute inset-0 z-[120]">
                     <Pressable className="absolute inset-0 bg-black/20" onPress={closeDatePicker} />
-                    <View className="absolute bottom-24 left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3">
+                    <View
+                        className="absolute left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3"
+                        style={{ bottom: overlayBottomInset }}
+                    >
                         <View className="flex-row items-center justify-between mb-3">
                             <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}>
                                 <ChevronLeft size={16} color={iconColor} />
@@ -495,7 +500,7 @@ const MetaForm = () => {
             ) : null}
 
             {feedback ? (
-                <View pointerEvents="box-none" className="absolute left-4 right-4 bottom-6 z-[70]">
+                <View pointerEvents="box-none" className="absolute left-4 right-4 z-[70]" style={{ bottom: overlayBottomInset }}>
                     <View
                         className={`rounded-xl border px-4 py-3 ${
                             feedback.kind === 'success'

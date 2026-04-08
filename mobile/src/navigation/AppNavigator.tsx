@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useMemo } from 'react';
-import { View, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, TouchableOpacity, Pressable, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Home from '../screens/app/Home';
@@ -23,6 +23,7 @@ import { useThemeMode } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import AppText from '../components/AppText';
 import { useAccessibility } from '../context/AccessibilityContext';
+import { BottomInsetProvider } from '../context/BottomInsetContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -53,7 +54,11 @@ const NavItem = ({
     </TouchableOpacity>
 );
 
-const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
+const CustomTabBar = ({
+    state,
+    navigation,
+    onHeightChange,
+}: BottomTabBarProps & { onHeightChange: (height: number) => void }) => {
     const insets = useSafeAreaInsets();
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
     const { darkMode } = useThemeMode();
@@ -86,12 +91,21 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
         openOverlay('actions');
     };
 
+    const handleTabBarLayout = useCallback(
+        (event: LayoutChangeEvent) => {
+            onHeightChange(Math.round(event.nativeEvent.layout.height));
+        },
+        [onHeightChange]
+    );
+
+    const actionsBottom = Math.max(96, insets.bottom + 88);
+
     return (
         <>
             {showActions ? (
                 <View style={styles.overlay}>
                     <Pressable style={StyleSheet.absoluteFill} onPress={closeOverlay} />
-                    <View style={[styles.actionsContainer, darkMode && styles.actionsContainerDark]}>
+                    <View style={[styles.actionsContainer, darkMode && styles.actionsContainerDark, { bottom: actionsBottom }]}>
                         <TouchableOpacity
                             style={[styles.actionButton, darkMode && styles.actionButtonDark, largerTouchTargets && styles.actionButtonLarge]}
                             onPress={() => goTo('Lancamentos', { mode: 'income' })}
@@ -111,7 +125,10 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                 </View>
             ) : null}
 
-            <View style={[styles.tabBar, darkMode && styles.tabBarDark, { paddingBottom: Math.max(10, insets.bottom) }]}>
+            <View
+                onLayout={handleTabBarLayout}
+                style={[styles.tabBar, darkMode && styles.tabBarDark, { paddingBottom: Math.max(10, insets.bottom) }]}
+            >
                 <View style={styles.tabBarContent}>
                     <NavItem
                         label="Início"
@@ -174,36 +191,44 @@ const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 
 export const AppNavigator = () => {
     const { signed } = useAuth();
+    const [tabBarHeight, setTabBarHeight] = useState(84);
+
+    const handleTabBarHeightChange = useCallback((nextHeight: number) => {
+        if (!nextHeight) return;
+        setTabBarHeight((current) => (Math.abs(current - nextHeight) > 1 ? nextHeight : current));
+    }, []);
 
     if (!signed) {
         return null;
     }
 
     return (
-        <Tab.Navigator
-            tabBar={(props) => <CustomTabBar {...props} />}
-            screenOptions={{
-                headerShown: false,
-                lazy: true,
-                freezeOnBlur: true,
-            }}
-        >
-            <Tab.Screen name="Inicio" component={Home} />
-            <Tab.Screen name="Metas" component={Metas} />
-            <Tab.Screen name="MetaForm" component={MetaForm} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Relatorios" component={Relatorios} />
-            <Tab.Screen name="Perfil" component={Profile} />
-            <Tab.Screen name="Lancamentos" component={Lancamentos} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Historico XP" component={XpHistory} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Historico Notificacoes" component={NotificationHistory} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Dados Pessoais" component={PersonalData} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Configuracoes App" component={AppSettings} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Notificacoes" component={NotificationSettings} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Envio Notificacoes" component={NotificationManualSender} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Seguranca" component={SecuritySettings} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Ajuda e Suporte" component={HelpSupport} options={{ tabBarButton: () => null }} />
-            <Tab.Screen name="Tutorial" component={Tutorial} options={{ tabBarButton: () => null }} />
-        </Tab.Navigator>
+        <BottomInsetProvider tabBarHeight={tabBarHeight}>
+            <Tab.Navigator
+                tabBar={(props) => <CustomTabBar {...props} onHeightChange={handleTabBarHeightChange} />}
+                screenOptions={{
+                    headerShown: false,
+                    lazy: true,
+                    freezeOnBlur: true,
+                }}
+            >
+                <Tab.Screen name="Inicio" component={Home} />
+                <Tab.Screen name="Metas" component={Metas} />
+                <Tab.Screen name="MetaForm" component={MetaForm} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Relatorios" component={Relatorios} />
+                <Tab.Screen name="Perfil" component={Profile} />
+                <Tab.Screen name="Lancamentos" component={Lancamentos} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Historico XP" component={XpHistory} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Historico Notificacoes" component={NotificationHistory} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Dados Pessoais" component={PersonalData} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Configuracoes App" component={AppSettings} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Notificacoes" component={NotificationSettings} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Envio Notificacoes" component={NotificationManualSender} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Seguranca" component={SecuritySettings} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Ajuda e Suporte" component={HelpSupport} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Tutorial" component={Tutorial} options={{ tabBarButton: () => null }} />
+            </Tab.Navigator>
+        </BottomInsetProvider>
     );
 };
 
@@ -231,11 +256,11 @@ const styles = StyleSheet.create({
     overlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(0, 0, 0, 0.2)',
-        zIndex: 40,
+        zIndex: 120,
+        elevation: 120,
     },
     actionsContainer: {
         position: 'absolute',
-        bottom: 96,
         left: 16,
         right: 16,
         backgroundColor: '#ffffff',

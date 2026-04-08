@@ -31,3 +31,13 @@ Para qualquer tela que tenha digitacao, validar antes de concluir:
 - garantir que o teclado Android nao sobreponha o campo focado
 - usar `keyboardShouldPersistTaps="handled"` em fluxos de formulario
 - garantir que toques no conteudo do overlay/modal nao fechem o popup indevidamente
+
+## Checklist tecnico para navegacao e overlays (Android)
+
+Para qualquer tela com popup, menu contextual ou acao fixa no rodape:
+
+- garantir area rolavel com `paddingBottom` baseado no inset real da navegacao inferior
+- impedir sobreposicao da bottom bar em CTAs, cards e campos no fim da tela
+- renderizar popup/modal acima da navegacao inferior e da barra do sistema Android
+- posicionar bottom sheets com inset dinamico, nunca com `bottom` fixo
+- validar copy em UTF-8/pt-BR sem mojibake antes do merge

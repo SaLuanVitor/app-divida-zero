@@ -55,7 +55,7 @@ const PersonalData = () => {
   };
 
   return (
-    <Layout scrollable formMode contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0 pb-28">
+    <Layout scrollable formMode contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
       <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <View className="flex-row items-center">
           <TouchableOpacity onPress={goBackToProfile} className="p-2 -ml-2 mr-2">

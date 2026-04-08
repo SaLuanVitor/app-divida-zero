@@ -25,6 +25,7 @@ import Button from '../../components/Button';
 import ProfileAvatar from '../../components/ProfileAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { useOverlay } from '../../context/OverlayContext';
+import { useBottomInset } from '../../context/BottomInsetContext';
 import { deleteFinancialRecord, listFinancialRecords, payFinancialRecord } from '../../services/financialRecords';
 import { FinancialRecordDto } from '../../types/financialRecord';
 import {
@@ -202,6 +203,7 @@ const Home = () => {
     const { user } = useAuth();
     const navigation = useNavigation<any>();
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
+    const { contentBottomInset, overlayBottomInset } = useBottomInset();
     const { darkMode } = useThemeMode();
     const { fontScale, largerTouchTargets } = useAccessibility();
     const insets = useSafeAreaInsets();
@@ -758,7 +760,7 @@ const Home = () => {
 
                 </View>
 
-                <View className="pt-4 pb-28">
+                <View className="pt-4" style={{ paddingBottom: contentBottomInset }}>
                     <Card className="mb-5" noPadding>
                         <View className="p-4">
                             <View className="flex-row items-center justify-between mb-4">
@@ -1042,9 +1044,12 @@ const Home = () => {
             </Modal>
 
             {showDayDetails ? (
-                <View className="absolute inset-0 z-40">
+                <View className="absolute inset-0 z-[120]">
                     <Pressable className="absolute inset-0 bg-black/20" onPress={closeOverlay} />
-                    <View className="absolute bottom-24 left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3 max-h-[70%]">
+                    <View
+                        className="absolute left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3 max-h-[70%]"
+                        style={{ bottom: overlayBottomInset }}
+                    >
                         <View className="flex-row items-center justify-between mb-2 px-1">
                             <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">Detalhes do dia</AppText>
                             <TouchableOpacity onPress={closeOverlay} className="p-1">
