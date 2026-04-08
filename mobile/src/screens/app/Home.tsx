@@ -682,6 +682,7 @@ const Home = () => {
             <Layout
                 contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black"
                 scrollable
+                formMode
                 scrollViewProps={{
                     onScroll: handleMonthListScroll,
                     scrollEventThrottle: 16,

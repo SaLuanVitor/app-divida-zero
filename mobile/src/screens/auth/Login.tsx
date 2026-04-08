@@ -83,7 +83,7 @@ const Login = () => {
   };
 
   return (
-    <Layout scrollable contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
+    <Layout scrollable formMode contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
       <View className="px-4 pt-4 pb-2 bg-[#f8f7f5] dark:bg-black">
         <AppText className="text-slate-900 dark:text-slate-100 text-center text-lg font-bold">Dívida Zero</AppText>
       </View>

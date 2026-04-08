@@ -29,6 +29,8 @@ const Input: React.FC<InputProps> = ({
     rightIcon: RightIcon,
     onRightIconPress,
     secureTextEntry,
+    onFocus,
+    onBlur,
     className,
     containerClassName,
     ...rest
@@ -46,6 +48,16 @@ const Input: React.FC<InputProps> = ({
     const actualSecureTextEntry = isPassword && !isPasswordVisible;
     const inputHeight = Math.max(Math.round(56 * Math.max(fontScale, 1)), largerTouchTargets ? 60 : 0);
     const iconSize = Math.max(20, Math.round(20 * Math.min(fontScale, 1.2)));
+
+    const handleFocus: TextInputProps['onFocus'] = (event) => {
+        setIsFocused(true);
+        onFocus?.(event);
+    };
+
+    const handleBlur: TextInputProps['onBlur'] = (event) => {
+        setIsFocused(false);
+        onBlur?.(event);
+    };
 
     return (
         <View className={cn('w-full mb-4', containerClassName)}>
@@ -75,8 +87,8 @@ const Input: React.FC<InputProps> = ({
                     className={cn('flex-1 h-full text-slate-900 dark:text-slate-100 text-base font-normal', className)}
                     placeholderTextColor={darkMode ? '#cbd5e1' : '#94a3b8'}
                     accessibilityLabel={label || rest.placeholder || 'Campo de texto'}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                     secureTextEntry={actualSecureTextEntry}
                     {...rest}
                 />

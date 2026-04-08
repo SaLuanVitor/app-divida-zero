@@ -387,6 +387,7 @@ const Lancamentos = () => {
         <>
             <Layout
                 scrollable
+                formMode
                 className="bg-[#f8f7f5] dark:bg-black"
                 contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black pb-28"
                 scrollViewProps={{

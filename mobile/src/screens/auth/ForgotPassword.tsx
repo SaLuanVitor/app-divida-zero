@@ -51,7 +51,7 @@ const ForgotPassword = () => {
     };
 
     return (
-        <Layout scrollable className="bg-[#f8f7f5] dark:bg-black" contentContainerClassName="bg-[#f8f7f5] dark:bg-black pb-10">
+        <Layout scrollable formMode className="bg-[#f8f7f5] dark:bg-black" contentContainerClassName="bg-[#f8f7f5] dark:bg-black pb-10">
             <View className="flex-row items-center mb-6">
                 <TouchableOpacity
                     onPress={() => navigation.goBack()}

@@ -1,7 +1,7 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, ActivityIndicator, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { ArrowLeft, Clock3, Filter, Search, Sparkles } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useThemeMode } from '../../context/ThemeContext';
@@ -288,14 +288,16 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
     );
 
     return (
-        <Layout contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black">
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerClassName="pb-24"
-                onScroll={handleEventsScroll}
-                scrollEventThrottle={16}
-            >
-                <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <Layout
+            scrollable
+            formMode
+            contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black pb-24"
+            scrollViewProps={{
+                onScroll: handleEventsScroll,
+                scrollEventThrottle: 16,
+            }}
+        >
+            <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                     <View className="flex-row items-center mb-3">
                         <TouchableOpacity
                             onPress={() => {
@@ -351,7 +353,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                     </View>
                 </View>
 
-                <View className="p-4">
+            <View className="p-4">
                     {loading ? (
                         <View className="py-4">
                             <Card noPadding>
@@ -442,8 +444,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
                             <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">Carregando mais eventos...</AppText>
                         </View>
                     ) : null}
-                </View>
-            </ScrollView>
+            </View>
         </Layout>
     );
 };

@@ -1,18 +1,21 @@
 import React from 'react';
 import {
     KeyboardAvoidingView,
+    Keyboard,
     Platform,
     ScrollView,
     ScrollViewProps,
     View,
     useWindowDimensions
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
+import { FormKeyboardProvider } from '../context/FormKeyboardContext';
 
 interface LayoutProps {
     children: React.ReactNode;
     scrollable?: boolean;
+    formMode?: boolean;
     className?: string;
     contentContainerClassName?: string;
     scrollViewProps?: ScrollViewProps;
@@ -24,15 +27,47 @@ const cn = (...classes: Array<string | undefined | null | false>) =>
 const Layout: React.FC<LayoutProps> = ({
     children,
     scrollable = false,
+    formMode = false,
     className,
     contentContainerClassName,
     scrollViewProps,
 }) => {
     const { width } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
     const bottomTabBarHeight = React.useContext(BottomTabBarHeightContext) ?? 0;
+    const scrollViewRef = React.useRef<ScrollView>(null);
+    const [keyboardHeight, setKeyboardHeight] = React.useState(0);
     const shouldConstrain = width >= 768;
     const { contentContainerStyle: userContentContainerStyle, ...restScrollViewProps } = scrollViewProps ?? {};
-    const bottomScrollPadding = bottomTabBarHeight > 0 ? bottomTabBarHeight + 32 : undefined;
+    const baseBottomPadding = bottomTabBarHeight > 0 ? bottomTabBarHeight + 32 : 32;
+    const keyboardPadding = formMode ? Math.max(0, keyboardHeight - insets.bottom) : 0;
+    const bottomScrollPadding = baseBottomPadding + keyboardPadding;
+
+    React.useEffect(() => {
+        if (!formMode) return undefined;
+
+        const showSub = Keyboard.addListener('keyboardDidShow', (event) => {
+            setKeyboardHeight(event.endCoordinates?.height ?? 0);
+        });
+        const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+            setKeyboardHeight(0);
+        });
+
+        return () => {
+            showSub.remove();
+            hideSub.remove();
+        };
+    }, [formMode]);
+
+    const handleInputFocus = React.useCallback((target?: number | null) => {
+        if (!formMode || !scrollable || !target || !scrollViewRef.current) return;
+
+        // Keep some top context (label + field) visible above keyboard on Android.
+        const extraOffset = 96;
+        requestAnimationFrame(() => {
+            (scrollViewRef.current as any)?.scrollResponderScrollNativeHandleToKeyboard?.(target, extraOffset, true);
+        });
+    }, [formMode, scrollable]);
 
     const contentWrapperStyle = {
         width: '100%' as const,
@@ -41,40 +76,43 @@ const Layout: React.FC<LayoutProps> = ({
     };
 
     return (
-        <SafeAreaView
-            edges={['top', 'left', 'right']}
-            className={cn('flex-1 bg-white dark:bg-black', className)}
-        >
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 16}
-                className="flex-1"
+        <FormKeyboardProvider value={{ onInputFocus: handleInputFocus }}>
+            <SafeAreaView
+                edges={['top', 'left', 'right']}
+                className={cn('flex-1 bg-white dark:bg-black', className)}
             >
-                {scrollable ? (
-                    <ScrollView
-                        className="flex-1"
-                        contentContainerClassName={cn('p-6 pb-8', contentContainerClassName)}
-                        contentContainerStyle={[
-                            { flexGrow: 1 },
-                            bottomScrollPadding !== undefined ? { paddingBottom: bottomScrollPadding } : null,
-                            userContentContainerStyle,
-                        ]}
-                        keyboardShouldPersistTaps="always"
-                        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-                        showsVerticalScrollIndicator={false}
-                        {...restScrollViewProps}
-                    >
-                        <View style={contentWrapperStyle}>{children}</View>
-                    </ScrollView>
-                ) : (
-                    <View className={cn('flex-1 p-6 pb-8', contentContainerClassName)}>
-                        <View style={contentWrapperStyle} className="flex-1">
-                            {children}
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : formMode ? 'padding' : 'height'}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : formMode ? 8 : 16}
+                    className="flex-1"
+                >
+                    {scrollable ? (
+                        <ScrollView
+                            ref={scrollViewRef}
+                            className="flex-1"
+                            contentContainerClassName={cn('p-6 pb-8', contentContainerClassName)}
+                            contentContainerStyle={[
+                                { flexGrow: 1 },
+                                bottomScrollPadding !== undefined ? { paddingBottom: bottomScrollPadding } : null,
+                                userContentContainerStyle,
+                            ]}
+                            keyboardShouldPersistTaps={formMode ? 'handled' : 'always'}
+                            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+                            showsVerticalScrollIndicator={false}
+                            {...restScrollViewProps}
+                        >
+                            <View style={contentWrapperStyle}>{children}</View>
+                        </ScrollView>
+                    ) : (
+                        <View className={cn('flex-1 p-6 pb-8', contentContainerClassName)}>
+                            <View style={contentWrapperStyle} className="flex-1">
+                                {children}
+                            </View>
                         </View>
-                    </View>
-                )}
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+                    )}
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </FormKeyboardProvider>
     );
 };
 

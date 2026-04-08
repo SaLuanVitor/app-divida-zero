@@ -237,6 +237,7 @@ const MetaForm = () => {
         <>
             <Layout
                 scrollable
+                formMode
                 contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black pb-32"
                 scrollViewProps={{
                     keyboardShouldPersistTaps: 'always',

@@ -2,13 +2,15 @@ import React from 'react';
 import { StyleSheet, TextInput, TextInputProps, TextStyle } from 'react-native';
 import { cssInterop } from 'nativewind';
 import { useAccessibility } from '../context/AccessibilityContext';
+import { useFormKeyboard } from '../context/FormKeyboardContext';
 
 const DEFAULT_INPUT_FONT_SIZE = 16;
 
 type AppTextInputProps = TextInputProps & { className?: string };
 
-const AppTextInputBase: React.FC<AppTextInputProps> = ({ style, ...rest }) => {
+const AppTextInputBase: React.FC<AppTextInputProps> = ({ style, onFocus, ...rest }) => {
   const { fontScale, largerTouchTargets } = useAccessibility();
+  const { onInputFocus } = useFormKeyboard();
   const flattened = StyleSheet.flatten(style) as TextStyle | undefined;
   const baseFontSize = typeof flattened?.fontSize === 'number' ? flattened.fontSize : DEFAULT_INPUT_FONT_SIZE;
   const baseLineHeight = typeof flattened?.lineHeight === 'number' ? flattened.lineHeight : undefined;
@@ -32,9 +34,15 @@ const AppTextInputBase: React.FC<AppTextInputProps> = ({ style, ...rest }) => {
           ...(typeof flattened?.height === 'number' ? { height: targetHeight } : {}),
         };
 
+  const handleFocus: TextInputProps['onFocus'] = (event) => {
+    onInputFocus?.((event as any)?.nativeEvent?.target);
+    onFocus?.(event);
+  };
+
   return (
     <TextInput
       {...rest}
+      onFocus={handleFocus}
       allowFontScaling={false}
       maxFontSizeMultiplier={1}
       style={[style, scaledStyle, scaledFieldStyle]}
