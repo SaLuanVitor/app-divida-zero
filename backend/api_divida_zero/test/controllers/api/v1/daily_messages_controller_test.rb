@@ -32,8 +32,13 @@ class Api::V1::DailyMessagesControllerTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
-  test "dispatch requires internal token" do
+  test "dispatch requires authentication" do
     post "/api/v1/daily_message/dispatch"
+    assert_response :unauthorized
+  end
+
+  test "dispatch requires internal token even when authenticated" do
+    post "/api/v1/daily_message/dispatch", headers: auth_header(@tokens[:access_token])
     assert_response :forbidden
   end
 
@@ -48,7 +53,8 @@ class Api::V1::DailyMessagesControllerTest < ActionDispatch::IntegrationTest
 
     ENV.stub(:[], "dispatch-secret") do
       assert_difference("NotificationAlert.count", 1) do
-        post "/api/v1/daily_message/dispatch", headers: { "X-Internal-Dispatch-Token" => "dispatch-secret" }
+        post "/api/v1/daily_message/dispatch",
+             headers: auth_header(@tokens[:access_token]).merge("X-Internal-Dispatch-Token" => "dispatch-secret")
       end
     end
 
