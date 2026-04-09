@@ -1,7 +1,7 @@
 module Api
   module V1
     class DailyMessagesController < ApplicationController
-      before_action :authenticate_access_token!, only: [:today]
+      before_action :authenticate_access_token!, only: [:today, :dispatch]
       before_action :authenticate_internal_dispatch!, only: [:dispatch]
 
       def today
