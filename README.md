@@ -170,6 +170,21 @@ RAILS_MASTER_KEY=<valor de backend/api_divida_zero/config/master.key>
 DATABASE_URL=<fornecida pelo Postgres do Railway>
 ```
 
+Variaveis de IA (opcionais, sem custo se chave vazia):
+
+```env
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4.1-mini
+AI_DAILY_REQUEST_LIMIT=20
+AI_MONTHLY_REQUEST_LIMIT=200
+DAILY_MESSAGE_DISPATCH_TOKEN=<token-interno-forte>
+```
+
+Observacao importante:
+- Assinatura ChatGPT (Free/Plus/Team) nao inclui credito da API automaticamente.
+- Para chamadas reais ao provedor, e necessario usar chave da OpenAI API com billing proprio.
+- Com `OPENAI_API_KEY` vazio, o app continua funcionando com fallback local (sem custo externo).
+
 Comando de start/release do servico:
 
 ```bash
