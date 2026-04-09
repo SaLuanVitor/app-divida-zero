@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Alert } from 'react-native';
-import { CreditCard, Lock, ArrowLeft, Quote } from 'lucide-react-native';
+import { User, Lock, ArrowLeft, Sparkles } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -114,41 +114,33 @@ const Register = () => {
   return (
     <Layout scrollable formMode contentContainerClassName="p-0 bg-[#f5eee6] dark:bg-black">
       <View className="px-6 pt-8 pb-4">
-        <View className="flex-row items-center mb-8">
+        <View className="flex-row items-center mb-4">
           <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
             <ArrowLeft size={24} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
-          <View className="flex-row items-center gap-3">
-            <View className="w-10 h-10 rounded-xl bg-primary items-center justify-center">
-              <CreditCard size={18} color="#fff" />
-            </View>
-            <AppText className="text-[34px] leading-[38px] font-extrabold text-[#4a2a0a] dark:text-slate-100">
-              Dívida Zero
-            </AppText>
-          </View>
+          <AppText className="text-slate-900 dark:text-slate-100 text-lg font-bold">Cadastro</AppText>
         </View>
 
-        <View className="mb-8">
-          <View className="flex-row items-start">
-            <View className="w-14 h-14 rounded-full bg-[#f1dca6] items-center justify-center mr-3 mt-1">
-              <Quote size={24} color="#8a5a24" />
-            </View>
-            <AppText className="flex-1 text-[22px] leading-[32px] font-bold text-[#7a4c1e] dark:text-slate-100">
-              Cadastre-se agora e dê o primeiro passo para uma jornada financeira mais organizada.
-            </AppText>
+        <View className="mb-5 items-center">
+          <View className="rounded-full px-3 py-1 bg-[#f6d870] border border-[#f0c94f] flex-row items-center">
+            <Sparkles size={11} color="#7a4c1e" />
+            <AppText className="text-[10px] ml-1 font-bold text-[#7a4c1e] uppercase">O primeiro passo é hoje</AppText>
           </View>
+          <AppText className="text-center text-[#3b2c20] dark:text-slate-100 text-[32px] leading-[38px] font-extrabold mt-3">
+            Crie sua conta e comece sua jornada
+          </AppText>
         </View>
 
         <View className="rounded-[34px] bg-white dark:bg-[#121212] border border-[#efe6dd] dark:border-slate-700 px-6 py-6">
           <Input
-            label="Login do Usuário"
-            placeholder="seu@login"
+            label="Nome do usuário"
+            placeholder="Como deseja ser chamado?"
             value={login}
             onChangeText={(value) => {
               setLogin(value);
               if (loginError) setLoginError('');
             }}
-            icon={CreditCard}
+            icon={User}
             keyboardType="default"
             autoCapitalize="none"
             autoCorrect={false}
