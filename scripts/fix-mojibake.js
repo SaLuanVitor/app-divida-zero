@@ -12,7 +12,7 @@ const TARGETS = [
 ];
 const IGNORE_DIRS = new Set(['node_modules', '.git', 'tmp', 'log', 'vendor', 'coverage', 'dist']);
 const FILE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.rb', '.yml', '.yaml', '.md', '.json']);
-const PATTERNS = [/Ã./, /Â./, /�/, /•\?•/, /\?•/, /•\?/];
+const PATTERNS = [/Ã[\u00A0-\u00BF]/, /Â[\u00A0-\u00BF]/, /�/, /•\?•/, /\?•/, /•\?/];
 
 const isApply = process.argv.includes('--apply');
 
@@ -33,8 +33,8 @@ const normalizeText = (text) => {
   if (containsSuspicious(next)) {
     const candidate = Buffer.from(next, 'latin1').toString('utf8');
     if (candidate && candidate.length > 0) {
-      const originalScore = (next.match(/Ã|Â|�/g) || []).length;
-      const candidateScore = (candidate.match(/Ã|Â|�/g) || []).length;
+      const originalScore = (next.match(/Ã[\u00A0-\u00BF]|Â[\u00A0-\u00BF]|�/g) || []).length;
+      const candidateScore = (candidate.match(/Ã[\u00A0-\u00BF]|Â[\u00A0-\u00BF]|�/g) || []).length;
       if (candidateScore < originalScore) {
         next = candidate;
       }

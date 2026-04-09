@@ -14,6 +14,7 @@ import {
     Trophy,
     CheckCircle2,
     Crown,
+    Star,
     X,
     Pencil,
 } from 'lucide-react-native';
@@ -122,6 +123,7 @@ const Profile = () => {
         { label: 'Configurações do app', icon: Settings, color: '#64748b', route: 'Configuracoes App' },
         { label: 'Notificações', icon: Bell, color: '#f59e0b', route: 'Notificacoes' },
         { label: 'Envio de notificações', icon: Bell, color: '#f97316', route: 'Envio Notificacoes' },
+        { label: 'Avaliar aplicativo', icon: Star, color: '#f48c25', route: 'Avaliacao App' },
         { label: 'Segurança', icon: Shield, color: '#10b981', route: 'Seguranca' },
         { label: 'Ajuda e suporte', icon: HelpCircle, color: '#8b5cf6', route: 'Ajuda e Suporte' },
     ];

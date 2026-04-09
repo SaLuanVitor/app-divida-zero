@@ -15,6 +15,9 @@
       get "gamification/events", to: "gamification#events"
       get "notifications/history", to: "notifications#history"
       patch "notifications/read_all", to: "notifications#read_all"
+      post "app_ratings", to: "app_ratings#create"
+      get "app_ratings/me", to: "app_ratings#me"
+      get "app_ratings/summary", to: "app_ratings#summary"
       get "reports/summary", to: "reports#summary"
       post "analytics/events", to: "analytics#create"
 

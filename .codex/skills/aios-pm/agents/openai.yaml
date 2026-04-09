@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Product Manager"
+  short_description: "Ativar AIOS Product Manager para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-pm para ativar AIOS Product Manager neste contexto."

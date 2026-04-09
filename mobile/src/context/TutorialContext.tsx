@@ -146,7 +146,16 @@ type TutorialProviderProps = {
 };
 
 const STEP_MARGIN = 12;
-const STEP_PADDING = 8;
+const DEFAULT_SPOTLIGHT_PADDING = 14;
+const TARGET_SPOTLIGHT_PADDING: Record<string, number> = {
+  'home-summary-card': 18,
+  'home-calendar-card': 14,
+  'tab-lancamentos': 24,
+  'tab-metas': 18,
+  'tab-relatorios': 18,
+  'tab-perfil': 18,
+  'metas-create-button': 16,
+};
 
 export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, currentRouteName }) => {
   const { signed } = useAuth();
@@ -167,6 +176,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   const [targetUnavailable, setTargetUnavailable] = useState(false);
   const [tooltipHeight, setTooltipHeight] = useState(228);
   const targetRefs = useRef<Record<string, View | null>>({});
+  const hasBootstrappedRef = useRef(false);
 
   const isTutorialActive = beginnerActive || advancedActive;
   const isBeginnerTutorialActive = beginnerActive;
@@ -198,6 +208,12 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     });
   }, []);
 
+  const resolveBeginnerIndex = useCallback((stepId?: string | null) => {
+    if (!stepId) return 0;
+    const index = BEGINNER_STEPS.findIndex((step) => step.id === stepId);
+    return index >= 0 ? index : 0;
+  }, []);
+
   const measureCurrentStep = useCallback(() => {
     if (!beginnerActive || !currentStep) {
       setSpotlightRect(null);
@@ -216,17 +232,19 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
         return;
       }
 
+      const spotlightPadding = TARGET_SPOTLIGHT_PADDING[currentStep.targetId] ?? DEFAULT_SPOTLIGHT_PADDING;
+
       const safeTop = insets.top + 4;
       const safeBottom = windowHeight - insets.bottom - 4;
       const maxAllowedWidth = Math.max(40, windowWidth - STEP_MARGIN * 2);
 
-      const nextWidth = Math.min(width + STEP_PADDING * 2, maxAllowedWidth);
+      const nextWidth = Math.min(width + spotlightPadding * 2, maxAllowedWidth);
       const maxX = Math.max(STEP_MARGIN, windowWidth - STEP_MARGIN - nextWidth);
-      const nextX = Math.min(Math.max(STEP_MARGIN, x - STEP_PADDING), maxX);
+      const nextX = Math.min(Math.max(STEP_MARGIN, x - spotlightPadding), maxX);
 
-      const rawY = y - STEP_PADDING;
+      const rawY = y - spotlightPadding;
       const nextY = Math.max(safeTop, rawY);
-      const rawHeight = height + STEP_PADDING * 2;
+      const rawHeight = height + spotlightPadding * 2;
       const boundedHeight = Math.min(rawHeight, Math.max(40, safeBottom - nextY));
 
       if (boundedHeight <= 0) {
@@ -296,12 +314,14 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   );
 
   const startBeginnerTutorial = useCallback(
-    async (options?: { replay?: boolean; source?: 'auto' | 'manual' }) => {
+    async (options?: { replay?: boolean; source?: 'auto' | 'manual'; initialStepId?: string | null }) => {
       const replay = Boolean(options?.replay);
       const source = options?.source ?? 'manual';
+      const initialIndex = replay ? 0 : resolveBeginnerIndex(options?.initialStepId);
+      const initialStep = BEGINNER_STEPS[initialIndex] ?? BEGINNER_STEPS[0];
       closeOverlay();
       setAdvancedActive(false);
-      setBeginnerIndex(0);
+      setBeginnerIndex(initialIndex);
       setSpotlightRect(null);
       setTargetUnavailable(false);
       setMeasureFailCount(0);
@@ -313,7 +333,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
         tutorial_reopen_enabled: true,
         tutorial_active_mode: 'beginner',
         tutorial_beginner_completed: replay ? false : undefined,
-        tutorial_last_step: BEGINNER_STEPS[0]?.id ?? null,
+        tutorial_last_step: initialStep?.id ?? null,
       });
       if (source !== 'auto') {
         trackAnalyticsEventDeferred({
@@ -322,9 +342,9 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
           metadata: { mode: 'beginner' },
         });
       }
-      navigateSafely(BEGINNER_STEPS[0].screen);
+      navigateSafely(initialStep.screen);
     },
-    [closeOverlay, persistState]
+    [closeOverlay, persistState, resolveBeginnerIndex]
   );
 
   const startAdvancedTutorial = useCallback(
@@ -446,7 +466,12 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   }, [beginnerActive, closeOverlay, setOverlayBlocked]);
 
   useEffect(() => {
-    if (!signed) return;
+    if (!signed) {
+      hasBootstrappedRef.current = false;
+      return;
+    }
+    if (hasBootstrappedRef.current) return;
+    hasBootstrappedRef.current = true;
     let mounted = true;
 
     const bootstrapTutorial = async () => {
@@ -485,8 +510,10 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       const preferredMode = prefs.tutorial_active_mode ?? prefs.onboarding_mode;
       if (!preferredMode) return;
 
+      if (beginnerActive || advancedActive) return;
+
       if (preferredMode === 'beginner' && !beginnerDone) {
-        await startBeginnerTutorial({ source: 'auto' });
+        await startBeginnerTutorial({ source: 'auto', initialStepId: prefs.tutorial_last_step });
       }
 
       if (preferredMode === 'advanced' && !effectiveAdvancedDone) {
@@ -499,7 +526,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     return () => {
       mounted = false;
     };
-  }, [persistState, rebuildAdvancedDoneTasks, signed, startAdvancedTutorial, startBeginnerTutorial]);
+  }, [advancedActive, beginnerActive, persistState, rebuildAdvancedDoneTasks, signed, startAdvancedTutorial, startBeginnerTutorial]);
 
   useEffect(() => {
     if (!beginnerActive || !currentStep) return;

@@ -10,9 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_04_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_09_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "app_ratings", force: :cascade do |t|
+    t.integer "alerts_rating", null: false
+    t.integer "calendar_rating", null: false
+    t.datetime "created_at", null: false
+    t.integer "goals_rating", null: false
+    t.integer "helpfulness_rating", null: false
+    t.integer "records_rating", null: false
+    t.integer "reports_rating", null: false
+    t.text "suggestions"
+    t.datetime "updated_at", null: false
+    t.integer "usability_rating", null: false
+    t.bigint "user_id", null: false
+    t.index ["created_at"], name: "index_app_ratings_on_created_at"
+    t.index ["user_id", "created_at"], name: "index_app_ratings_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_app_ratings_on_user_id"
+  end
 
   create_table "analytics_events", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -125,6 +142,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_04_000100) do
     t.index ["reset_password_token_digest"], name: "index_users_on_reset_password_token_digest"
   end
 
+  add_foreign_key "app_ratings", "users"
   add_foreign_key "analytics_events", "users"
   add_foreign_key "financial_goals", "users"
   add_foreign_key "financial_records", "users"

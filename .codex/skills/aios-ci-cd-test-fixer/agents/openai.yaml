@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS CI/CD Test Fixer"
+  short_description: "Ativar AIOS CI/CD Test Fixer para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-ci-cd-test-fixer para ativar AIOS CI/CD Test Fixer neste contexto."

@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS UX Design Expert"
+  short_description: "Ativar AIOS UX Design Expert para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-ux-design-expert para ativar AIOS UX Design Expert neste contexto."

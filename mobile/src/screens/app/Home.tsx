@@ -830,20 +830,20 @@ const Home = () => {
                             <AppText className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(monthlyBalanceValue)}</AppText>
                         </View>
                         </View>
-                    </TutorialTarget>
 
-                    <View className="mt-4 bg-[#f8f7f5] dark:bg-black rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
-                        <AppText className="text-[11px] text-slate-500 dark:text-slate-200 font-bold uppercase mb-1">Próxima melhor ação</AppText>
-                        <AppText className="text-slate-900 dark:text-slate-100 font-bold">{nextBestAction.title}</AppText>
-                        <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1">{nextBestAction.description}</AppText>
-                        <TouchableOpacity
-                            className="mt-3 px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center self-start"
-                            style={{ minHeight: compactPillHeight, height: compactPillHeight }}
-                            onPress={nextBestAction.onPress}
-                        >
-                            <AppText className="text-primary text-xs font-bold">{nextBestAction.cta}</AppText>
-                        </TouchableOpacity>
-                    </View>
+                        <View className="mt-4 bg-[#f8f7f5] dark:bg-black rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
+                            <AppText className="text-[11px] text-slate-500 dark:text-slate-200 font-bold uppercase mb-1">Próxima melhor ação</AppText>
+                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">{nextBestAction.title}</AppText>
+                            <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1">{nextBestAction.description}</AppText>
+                            <TouchableOpacity
+                                className="mt-3 px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center self-start"
+                                style={{ minHeight: compactPillHeight, height: compactPillHeight }}
+                                onPress={nextBestAction.onPress}
+                            >
+                                <AppText className="text-primary text-xs font-bold">{nextBestAction.cta}</AppText>
+                            </TouchableOpacity>
+                        </View>
+                    </TutorialTarget>
 
                 </View>
 
