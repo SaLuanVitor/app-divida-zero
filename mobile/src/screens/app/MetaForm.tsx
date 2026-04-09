@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Pressable } from 'react-native';
@@ -78,13 +78,15 @@ const MetaForm = () => {
     const { overlayBottomInset } = useBottomInset();
     const { fontScale, largerTouchTargets } = useAccessibility();
     const goal = route.params?.goal as FinancialGoalDto | undefined;
+    const formMode = route.params?.mode as 'create' | 'edit' | undefined;
+    const formNonce = route.params?.nonce as number | undefined;
 
-    const [title, setTitle] = useState(goal?.title || '');
-    const [description, setDescription] = useState(goal?.description || '');
-    const [targetAmountDigits, setTargetAmountDigits] = useState(goal ? String(Math.round(Number(goal.target_amount || '0') * 100)) : '');
-    const [startDate, setStartDate] = useState<Date>(goal?.start_date ? new Date(`${goal.start_date}T00:00:00`) : new Date());
-    const [targetDate, setTargetDate] = useState<Date | null>(goal?.target_date ? new Date(`${goal.target_date}T00:00:00`) : null);
-    const [goalType, setGoalType] = useState<FinancialGoalType>(goal?.goal_type || 'save');
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [targetAmountDigits, setTargetAmountDigits] = useState('');
+    const [startDate, setStartDate] = useState<Date>(new Date());
+    const [targetDate, setTargetDate] = useState<Date | null>(null);
+    const [goalType, setGoalType] = useState<FinancialGoalType>('save');
     const [activeDateField, setActiveDateField] = useState<GoalDateField>('start');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [pickerMonth, setPickerMonth] = useState(() => {
@@ -93,16 +95,46 @@ const MetaForm = () => {
     });
     const [showPeriodPicker, setShowPeriodPicker] = useState(false);
     const [pickerMode, setPickerMode] = useState<'month' | 'year'>('month');
-    const [pickerYear, setPickerYear] = useState(() => {
-        const baseDate = goal?.start_date ? new Date(`${goal.start_date}T00:00:00`) : new Date();
-        return baseDate.getFullYear();
-    });
+    const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
     const [submitting, setSubmitting] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
     const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
+
+    const applyGoalState = useCallback((selectedGoal?: FinancialGoalDto) => {
+        if (selectedGoal) {
+            const nextStartDate = selectedGoal.start_date ? new Date(`${selectedGoal.start_date}T00:00:00`) : new Date();
+            setTitle(selectedGoal.title || '');
+            setDescription(selectedGoal.description || '');
+            setTargetAmountDigits(String(Math.round(Number(selectedGoal.target_amount || '0') * 100)));
+            setStartDate(nextStartDate);
+            setTargetDate(selectedGoal.target_date ? new Date(`${selectedGoal.target_date}T00:00:00`) : null);
+            setGoalType(selectedGoal.goal_type || 'save');
+            setPickerMonth(new Date(nextStartDate.getFullYear(), nextStartDate.getMonth(), 1));
+            setPickerYear(nextStartDate.getFullYear());
+            return;
+        }
+
+        const today = new Date();
+        setTitle('');
+        setDescription('');
+        setTargetAmountDigits('');
+        setStartDate(today);
+        setTargetDate(null);
+        setGoalType('save');
+        setPickerMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+        setPickerYear(today.getFullYear());
+    }, []);
+
+    useEffect(() => {
+        if (formMode === 'create') {
+            applyGoalState(undefined);
+            return;
+        }
+        applyGoalState(goal);
+    }, [applyGoalState, formMode, formNonce, goal?.id]);
 
     const goBackToGoals = () => {
         if (navigation?.canGoBack?.()) {
@@ -582,5 +614,6 @@ const MetaForm = () => {
 };
 
 export default MetaForm;
+
 
 

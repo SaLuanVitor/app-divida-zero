@@ -23,7 +23,11 @@
           patch :pay
         end
       end
-      resources :financial_goals, only: [:index, :create, :update, :destroy]
+      resources :financial_goals, only: [:index, :create, :update, :destroy] do
+        resources :contributions,
+                  only: [:index, :create, :destroy],
+                  controller: "financial_goal_contributions"
+      end
     end
   end
 end

@@ -3,6 +3,7 @@
 
   has_many :financial_records, dependent: :destroy
   has_many :financial_goals, dependent: :destroy
+  has_many :financial_goal_contributions, through: :financial_goals
   has_many :gamification_events, dependent: :destroy
   has_many :analytics_events, dependent: :destroy
   has_many :notification_alerts, dependent: :destroy

@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
@@ -237,7 +237,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
     );
 
     const filteredEvents = useMemo(() => {
-        let base = events;
+        let base = events.filter((event) => event.points !== 0);
 
         if (filter === 'gain') {
             base = base.filter((event) => event.points > 0);

@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -22,10 +22,7 @@ import {
 import { NotificationHistoryItem } from '../../types/notificationCenter';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
-
-type NotificationHistoryProps = {
-  navigation: any;
-};
+import useBackToProfile from '../../hooks/useBackToProfile';
 
 type HistoryFilter = 'all' | 'unread';
 
@@ -48,9 +45,10 @@ const kindColorMap: Record<NotificationHistoryItem['kind'], string> = {
   system: '#64748b',
 };
 
-const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
+const NotificationHistory = () => {
   const { darkMode } = useThemeMode();
   const { contentBottomInset } = useBottomInset();
+  const goBackToProfile = useBackToProfile();
   const [items, setItems] = useState<NotificationHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<HistoryFilter>('all');
@@ -99,13 +97,7 @@ const NotificationHistory = ({ navigation }: NotificationHistoryProps) => {
         <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-4 border-b border-slate-100 dark:border-slate-800">
           <View className="flex-row items-center mb-3">
             <TouchableOpacity
-              onPress={() => {
-                if (navigation?.canGoBack?.()) {
-                  navigation.goBack();
-                  return;
-                }
-                navigation?.navigate?.('Perfil');
-              }}
+              onPress={goBackToProfile}
               className="p-2 -ml-2 mr-1"
             >
               <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#334155'} />
