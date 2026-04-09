@@ -7,6 +7,7 @@
   has_many :gamification_events, dependent: :destroy
   has_many :analytics_events, dependent: :destroy
   has_many :notification_alerts, dependent: :destroy
+  has_many :app_ratings, dependent: :destroy
 
   before_validation :normalize_email
 

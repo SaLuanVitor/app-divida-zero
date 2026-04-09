@@ -16,6 +16,7 @@ import NotificationSettings from '../screens/app/NotificationSettings';
 import NotificationManualSender from '../screens/app/NotificationManualSender';
 import SecuritySettings from '../screens/app/SecuritySettings';
 import HelpSupport from '../screens/app/HelpSupport';
+import AppRating from '../screens/app/AppRating';
 import Tutorial from '../screens/app/Tutorial';
 import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, Landmark } from 'lucide-react-native';
 import { useOverlay } from '../context/OverlayContext';
@@ -273,6 +274,7 @@ export const AppNavigator = () => {
                 <Tab.Screen name="Envio Notificacoes" component={NotificationManualSender} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Seguranca" component={SecuritySettings} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Ajuda e Suporte" component={HelpSupport} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Avaliacao App" component={AppRating} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Tutorial" component={Tutorial} options={{ tabBarButton: () => null }} />
             </Tab.Navigator>
         </BottomInsetProvider>

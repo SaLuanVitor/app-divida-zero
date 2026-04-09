@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Scrum Master"
+  short_description: "Ativar AIOS Scrum Master para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-sm para ativar AIOS Scrum Master neste contexto."

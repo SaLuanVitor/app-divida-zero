@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Squad Creator"
+  short_description: "Ativar AIOS Squad Creator para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-squad-creator para ativar AIOS Squad Creator neste contexto."

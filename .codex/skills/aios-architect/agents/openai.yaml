@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Architect"
+  short_description: "Ativar AIOS Architect para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-architect para ativar AIOS Architect neste contexto."

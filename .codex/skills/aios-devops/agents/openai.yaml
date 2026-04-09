@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS DevOps"
+  short_description: "Ativar AIOS DevOps para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-devops para ativar AIOS DevOps neste contexto."

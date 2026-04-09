@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Mobile Usability QA"
+  short_description: "Ativar AIOS Mobile Usability QA para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-mobile-usability-qa para ativar AIOS Mobile Usability QA neste contexto."

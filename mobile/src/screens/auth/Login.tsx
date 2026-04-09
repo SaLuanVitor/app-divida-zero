@@ -41,7 +41,7 @@ const Login = () => {
     let valid = true;
 
     if (!login.trim()) {
-      setLoginError('Informe seu login do usuÃ¡rio.');
+      setLoginError('Informe seu login do usuário.');
       valid = false;
     } else {
       setLoginError('');
@@ -68,10 +68,10 @@ const Login = () => {
     try {
       await signIn(login.trim(), password);
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Falha na autenticaÃ§Ã£o. Verifique suas credenciais e tente novamente.';
+      const message = error?.response?.data?.error ?? 'Falha na autenticação. Verifique suas credenciais e tente novamente.';
       setAuthError(message);
       setPasswordError('Verifique sua senha e tente novamente.');
-      Alert.alert('NÃ£o foi possÃ­vel entrar', message);
+      Alert.alert('Não foi possível entrar', message);
     }
   };
 
@@ -83,7 +83,7 @@ const Login = () => {
             <CreditCard size={22} color="#fff" />
           </View>
           <AppText className="text-[44px] leading-[48px] font-extrabold text-[#4a2a0a] dark:text-slate-100">
-            DÃ­vida Zero
+            Dívida Zero
           </AppText>
         </View>
 
@@ -93,7 +93,7 @@ const Login = () => {
               <Quote size={30} color="#8a5a24" />
             </View>
             <AppText className="flex-1 text-[20px] leading-[30px] font-bold text-[#7a4c1e] dark:text-slate-100">
-              O primeiro passo para o <AppText className="text-primary">sucesso financeiro</AppText> Ã© decidir que vocÃª nÃ£o vai mais ser um passageiro da sua prÃ³pria vida.
+              O primeiro passo para o <AppText className="text-primary">sucesso financeiro</AppText> é decidir que você não vai mais ser um passageiro da sua própria vida.
             </AppText>
           </View>
         </View>
@@ -112,7 +112,7 @@ const Login = () => {
           ) : null}
 
           <Input
-            label="Login do UsuÃ¡rio"
+            label="Login do Usuário"
             placeholder="seu@login"
             value={login}
             onChangeText={(value) => {
@@ -155,7 +155,7 @@ const Login = () => {
         </View>
 
         <View className="mt-8 flex-row justify-center items-center pb-10">
-          <AppText className="text-[#7a4c1e] dark:text-slate-200 text-lg">NÃ£o tem uma conta? </AppText>
+          <AppText className="text-[#7a4c1e] dark:text-slate-200 text-lg">Não tem uma conta? </AppText>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
             <AppText className="text-[#8a4c00] dark:text-primary font-bold text-lg">Cadastre-se</AppText>
           </TouchableOpacity>

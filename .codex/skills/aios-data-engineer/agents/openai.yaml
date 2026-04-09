@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Data Engineer"
+  short_description: "Ativar AIOS Data Engineer para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-data-engineer para ativar AIOS Data Engineer neste contexto."

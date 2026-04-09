@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Analyst"
+  short_description: "Ativar AIOS Analyst para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-analyst para ativar AIOS Analyst neste contexto."

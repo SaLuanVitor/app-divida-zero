@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Backend Specialist"
+  short_description: "Ativar AIOS Backend Specialist para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-backend-specialist para ativar AIOS Backend Specialist neste contexto."

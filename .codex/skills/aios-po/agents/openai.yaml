@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Product Owner"
+  short_description: "Ativar AIOS Product Owner para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-po para ativar AIOS Product Owner neste contexto."

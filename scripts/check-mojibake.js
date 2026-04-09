@@ -14,8 +14,8 @@ const TARGETS = [
 const IGNORE_DIRS = new Set(['node_modules', '.git', 'tmp', 'log', 'vendor', 'coverage', 'dist']);
 const FILE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.rb', '.yml', '.yaml', '.md', '.json']);
 const SUSPICIOUS_PATTERNS = [
-  /Ã./,
-  /Â./,
+  /Ã[\u00A0-\u00BF]/,
+  /Â[\u00A0-\u00BF]/,
   /�/,
   /•\?•/,
   /\?•/,
