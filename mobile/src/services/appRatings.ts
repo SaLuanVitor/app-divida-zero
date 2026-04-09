@@ -17,11 +17,10 @@ export const createAppRating = async (payload: CreateAppRatingPayload) => {
   } as CreateAppRatingResponse;
 };
 
-export const listMyAppRatings = async (options: { limit?: number } = {}) => {
-  const limit = typeof options.limit === 'number' ? options.limit : 20;
-  const { data } = await api.get('/app_ratings/me', { params: { limit } });
-  const parsed = data as { ratings?: AppRatingDto[] };
-  return Array.isArray(parsed.ratings) ? parsed.ratings : [];
+export const getMyAppRating = async () => {
+  const { data } = await api.get('/app_ratings/me');
+  const parsed = data as { rating?: AppRatingDto | null };
+  return parsed.rating ?? null;
 };
 
 export const getAppRatingsSummary = async () => {

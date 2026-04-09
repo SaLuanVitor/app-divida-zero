@@ -19,6 +19,7 @@ import {
 } from '../../services/notifications';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { getAppPreferences } from '../../services/preferences';
 
 type MessageKind = 'success' | 'error' | '';
 
@@ -48,6 +49,8 @@ const NotificationManualSender = () => {
   const [scenarioRunning, setScenarioRunning] = useState(false);
   const [scenarioSteps, setScenarioSteps] = useState<ManualNotificationScenarioStep[]>([]);
   const [scenarioResults, setScenarioResults] = useState<ManualNotificationScenarioResultStep[]>([]);
+  const [appNotificationsEnabled, setAppNotificationsEnabled] = useState(true);
+  const [devicePushEnabled, setDevicePushEnabled] = useState(false);
 
   React.useEffect(() => {
     let active = true;
@@ -56,16 +59,19 @@ const NotificationManualSender = () => {
       setCheckingPermission(true);
       setScenarioLoading(true);
       try {
-        const [status, runtimeOk, builtScenario] = await Promise.all([
+        const [status, runtimeOk, builtScenario, prefs] = await Promise.all([
           getDeviceNotificationPermissionStatus(),
           getDeviceNotificationRuntimeStatus(),
           buildManualNotificationScenarioFromAccount({ userName: user?.name }),
+          getAppPreferences(),
         ]);
         if (!active) return;
         setPermissionStatus(status);
         setRuntimeAvailable(runtimeOk.available);
         setRuntimeReason(runtimeOk.reason);
         setScenarioSteps(builtScenario);
+        setAppNotificationsEnabled(Boolean(prefs.notifications_enabled));
+        setDevicePushEnabled(Boolean(prefs.device_push_enabled));
       } finally {
         if (!active) return;
         setCheckingPermission(false);
@@ -162,9 +168,14 @@ const NotificationManualSender = () => {
   const refreshScenario = async () => {
     setScenarioLoading(true);
     try {
-      const steps = await buildManualNotificationScenarioFromAccount({ userName: user?.name });
+      const [steps, prefs] = await Promise.all([
+        buildManualNotificationScenarioFromAccount({ userName: user?.name }),
+        getAppPreferences(),
+      ]);
       setScenarioSteps(steps);
       setScenarioResults([]);
+      setAppNotificationsEnabled(Boolean(prefs.notifications_enabled));
+      setDevicePushEnabled(Boolean(prefs.device_push_enabled));
       setMessageKind('success');
       setMessage('Alertas atualizados com os dados atuais da conta.');
     } catch {
@@ -187,11 +198,14 @@ const NotificationManualSender = () => {
         markPrompted: true,
         enablePushWhenGranted: true,
       });
-      const refreshed = await getDeviceNotificationPermissionStatus();
-      const runtimeStatus = await getDeviceNotificationRuntimeStatus();
-      setPermissionStatus(refreshed);
-      setRuntimeAvailable(runtimeStatus.available);
-      setRuntimeReason(runtimeStatus.reason);
+        const refreshed = await getDeviceNotificationPermissionStatus();
+        const runtimeStatus = await getDeviceNotificationRuntimeStatus();
+        const prefs = await getAppPreferences();
+        setPermissionStatus(refreshed);
+        setRuntimeAvailable(runtimeStatus.available);
+        setRuntimeReason(runtimeStatus.reason);
+        setAppNotificationsEnabled(Boolean(prefs.notifications_enabled));
+        setDevicePushEnabled(Boolean(prefs.device_push_enabled));
 
       if (granted || refreshed === 'granted') {
         setMessageKind('success');
@@ -213,6 +227,15 @@ const NotificationManualSender = () => {
   };
 
   const runScenario = async () => {
+    const prefs = await getAppPreferences();
+    setAppNotificationsEnabled(Boolean(prefs.notifications_enabled));
+    setDevicePushEnabled(Boolean(prefs.device_push_enabled));
+    if (!prefs.notifications_enabled || !prefs.device_push_enabled) {
+      setMessageKind('error');
+      setMessage('Notificações desativadas nas configurações. Reative e confirme permissão para enviar.');
+      return;
+    }
+
     if (!runtimeAvailable && runtimeReason !== 'permission_denied') {
       setMessageKind('error');
       setMessage(runtimeBlockedMessage());
@@ -248,6 +271,15 @@ const NotificationManualSender = () => {
   };
 
   const sendNow = async (kind: ManualNotificationKind, title: string, body: string) => {
+    const prefs = await getAppPreferences();
+    setAppNotificationsEnabled(Boolean(prefs.notifications_enabled));
+    setDevicePushEnabled(Boolean(prefs.device_push_enabled));
+    if (!prefs.notifications_enabled || !prefs.device_push_enabled) {
+      setMessageKind('error');
+      setMessage('Notificações desativadas nas configurações. Reative e confirme permissão para enviar.');
+      return;
+    }
+
     if (!runtimeAvailable && runtimeReason !== 'permission_denied') {
       setMessageKind('error');
       setMessage(runtimeBlockedMessage());
@@ -276,6 +308,8 @@ const NotificationManualSender = () => {
     setMessage(
       result.reason === 'permission_denied'
         ? 'Não foi possível enviar: permita notificações no dispositivo.'
+        : result.reason === 'disabled'
+        ? 'Envio bloqueado: notificações desativadas nas configurações.'
         : result.reason === 'native_module_mismatch'
         ? 'Runtime nativo de notificações desatualizado. Rode: expo run:android e depois expo start --dev-client.'
         : result.reason === 'expo_go_limited'
@@ -324,6 +358,12 @@ const NotificationManualSender = () => {
               <AppText className="text-primary font-bold text-sm">Solicitar permissão no dispositivo</AppText>
             )}
           </TouchableOpacity>
+
+          <View className="mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a1a1a] p-3">
+            <AppText className="text-slate-600 dark:text-slate-200 text-xs">
+              App: {appNotificationsEnabled ? 'ativado' : 'desativado'} • Dispositivo: {devicePushEnabled ? 'ativado' : 'desativado'}
+            </AppText>
+          </View>
         </Card>
 
         <Card className="p-4 mb-3">

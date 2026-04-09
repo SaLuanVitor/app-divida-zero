@@ -87,12 +87,12 @@ const Login = () => {
           </AppText>
         </View>
 
-        <View className="mb-8">
+        <View className="mb-6">
           <View className="flex-row items-start">
-            <View className="w-16 h-16 rounded-full bg-[#f1dca6] items-center justify-center mr-3 mt-1">
-              <Quote size={30} color="#8a5a24" />
+            <View className="w-8 h-8 rounded-full bg-[#f1dca6] items-center justify-center mr-2 mt-1">
+              <Quote size={13} color="#8a5a24" />
             </View>
-            <AppText className="flex-1 text-[20px] leading-[30px] font-bold text-[#7a4c1e] dark:text-slate-100">
+            <AppText className="flex-1 text-[15px] leading-[22px] font-semibold text-[#7a4c1e] dark:text-slate-100">
               O primeiro passo para o <AppText className="text-primary">sucesso financeiro</AppText> é decidir que você não vai mais ser um passageiro da sua própria vida.
             </AppText>
           </View>

@@ -1,6 +1,8 @@
 class AppRating < ApplicationRecord
   belongs_to :user
 
+  validates :user_id, uniqueness: { message: "já possui uma avaliação cadastrada." }
+
   validates :usability_rating, :helpfulness_rating, :calendar_rating, :alerts_rating,
             :goals_rating, :reports_rating, :records_rating,
             numericality: {

@@ -457,6 +457,23 @@ export const sendManualNotification = async ({
   data?: NotificationData;
   requestPermissionIfNeeded?: boolean;
 }): Promise<NotificationSendResult> => {
+  const prefs = await getAppPreferences();
+  if (!prefs.notifications_enabled || !prefs.device_push_enabled) {
+    return { sent: false, reason: 'disabled' };
+  }
+
+  if (kind === 'due_today' && !prefs.notify_due_today) {
+    return { sent: false, reason: 'disabled' };
+  }
+
+  if (kind === 'due_tomorrow' && !prefs.notify_due_tomorrow) {
+    return { sent: false, reason: 'disabled' };
+  }
+
+  if (kind === 'weekly_summary' && !prefs.notify_weekly_summary) {
+    return { sent: false, reason: 'disabled' };
+  }
+
   const runtime = await getDeviceNotificationRuntimeStatus();
   if (!runtime.available) {
     if (runtime.reason === 'permission_denied' && requestPermissionIfNeeded) {

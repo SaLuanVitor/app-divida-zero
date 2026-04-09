@@ -28,13 +28,30 @@ class Api::V1::AppRatingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Avaliação enviada com sucesso.", body["message"]
   end
 
+  test "create updates existing app rating for authenticated user" do
+    existing = @user.app_ratings.create!(valid_payload.merge(suggestions: "Texto original"))
+
+    assert_no_difference("AppRating.count") do
+      post "/api/v1/app_ratings",
+           params: valid_payload.merge(suggestions: "Texto atualizado", usability_rating: 3),
+           headers: auth_header(@tokens[:access_token])
+    end
+
+    assert_response :ok
+    body = JSON.parse(response.body)
+    assert_equal "Avaliação atualizada com sucesso.", body["message"]
+    assert_equal existing.id, body["id"]
+    assert_equal "Texto atualizado", existing.reload.suggestions
+    assert_equal 3, existing.usability_rating
+  end
+
   test "create rejects invalid payload" do
     post "/api/v1/app_ratings", params: valid_payload.merge(usability_rating: 6), headers: auth_header(@tokens[:access_token])
 
     assert_response :unprocessable_entity
   end
 
-  test "me returns only ratings from authenticated user" do
+  test "me returns rating from authenticated user" do
     @user.app_ratings.create!(valid_payload)
     @other_user.app_ratings.create!(valid_payload.merge(suggestions: "Outro usuário"))
 
@@ -42,9 +59,9 @@ class Api::V1::AppRatingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :ok
     body = JSON.parse(response.body)
-    ratings = body["ratings"]
-    assert_equal 1, ratings.length
-    assert_equal "Fluxo de metas ajudou muito.", ratings.first["suggestions"]
+    rating = body["rating"]
+    assert_not_nil rating
+    assert_equal "Fluxo de metas ajudou muito.", rating["suggestions"]
   end
 
   test "summary returns aggregated metrics" do

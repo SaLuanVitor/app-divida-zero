@@ -1,5 +1,5 @@
 import api from '../api';
-import { createAppRating, getAppRatingsSummary, listMyAppRatings } from '../appRatings';
+import { createAppRating, getAppRatingsSummary, getMyAppRating } from '../appRatings';
 
 jest.mock('../api', () => ({
   __esModule: true,
@@ -38,17 +38,17 @@ describe('appRatings service', () => {
     });
   });
 
-  it('lists my app ratings with default limit', async () => {
+  it('gets current user app rating', async () => {
     (api.get as jest.Mock).mockResolvedValueOnce({
       data: {
-        ratings: [{ id: 1, usability_rating: 5 }],
+        rating: { id: 1, usability_rating: 5 },
       },
     });
 
-    const result = await listMyAppRatings();
+    const result = await getMyAppRating();
 
-    expect(api.get).toHaveBeenCalledWith('/app_ratings/me', { params: { limit: 20 } });
-    expect(result).toHaveLength(1);
+    expect(api.get).toHaveBeenCalledWith('/app_ratings/me');
+    expect(result?.id).toBe(1);
   });
 
   it('returns normalized summary values', async () => {

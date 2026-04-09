@@ -3,10 +3,12 @@ describe('notifications permission orchestration', () => {
     initialStatus = 'undetermined',
     requestOutcome = 'granted',
     moduleLoadError,
+    prefsOverrides = {},
   }: {
     initialStatus?: 'granted' | 'denied' | 'undetermined';
     requestOutcome?: 'granted' | 'denied';
     moduleLoadError?: Error;
+    prefsOverrides?: Record<string, unknown>;
   } = {}) => {
     jest.resetModules();
 
@@ -27,6 +29,7 @@ describe('notifications permission orchestration', () => {
       onboarding_seen: false,
       onboarding_mode: null as 'beginner' | 'advanced' | null,
       tutorial_reopen_enabled: true,
+      ...prefsOverrides,
     };
 
     const updateAppPreferences = jest.fn(async (partial: Record<string, unknown>) => {
@@ -113,6 +116,10 @@ describe('notifications permission orchestration', () => {
     const { notifications, requestPermissionsAsync, scheduleNotificationAsync, readPrefs } = await loadWithMocks({
       initialStatus: 'denied',
       requestOutcome: 'granted',
+      prefsOverrides: {
+        notifications_enabled: true,
+        device_push_enabled: true,
+      },
     });
 
     const result = await notifications.sendLocalTestNotification();
@@ -127,6 +134,10 @@ describe('notifications permission orchestration', () => {
   it('returns native_module_mismatch when native notification runtime is outdated', async () => {
     const { notifications } = await loadWithMocks({
       moduleLoadError: new Error('Cannot find native module ExpoNotificationsHandlerModule'),
+      prefsOverrides: {
+        notifications_enabled: true,
+        device_push_enabled: true,
+      },
     });
 
     const result = await notifications.sendLocalTestNotification();
