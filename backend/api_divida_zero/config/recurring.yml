@@ -10,6 +10,9 @@
 #     schedule: at 5am every day
 
 development:
+  generate_daily_ai_message:
+    class: GenerateDailyAiMessageJob
+    schedule: "0 7 * * *"
   generate_due_alerts:
     class: GenerateDueAlertsJob
     schedule: "0 */6 * * *"
@@ -18,6 +21,9 @@ development:
     schedule: "0 9 * * 5"
 
 production:
+  generate_daily_ai_message:
+    class: GenerateDailyAiMessageJob
+    schedule: "0 7 * * *"
   generate_due_alerts:
     class: GenerateDueAlertsJob
     schedule: "0 */6 * * *"

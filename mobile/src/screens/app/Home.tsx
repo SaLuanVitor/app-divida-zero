@@ -1,9 +1,11 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal, FlatList } from 'react-native';
 import {
     Bell,
+    Bot,
     CheckCircle2,
     CircleDollarSign,
     Landmark,
@@ -16,6 +18,8 @@ import {
     Target,
     Shield,
     Crown,
+    ThumbsDown,
+    ThumbsUp,
 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,7 +46,7 @@ import { listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto } from '../../types/financialGoal';
 import { runWhenIdle } from '../../utils/idle';
 import { getAppPreferences } from '../../services/preferences';
-import { sendXpAndBadgeNotification } from '../../services/notifications';
+import { sendManualNotification, sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { markPerf, measurePerf } from '../../services/perf';
 import {
@@ -51,6 +55,8 @@ import {
     markNotificationHistorySeen,
 } from '../../services/notificationCenter';
 import { NotificationHistoryItem } from '../../types/notificationCenter';
+import { getAiNextAction, getDailyMessageToday, sendAiFeedback } from '../../services/ai';
+import { DailyMessageDto } from '../../types/ai';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
 
@@ -98,10 +104,19 @@ type UndoState = {
 };
 
 type MonthListFilter = 'all' | 'pending' | 'completed';
+type NextActionCard = {
+    title: string;
+    description: string;
+    cta: string;
+    onPress: () => void;
+    interactionId?: number;
+    source: 'local' | 'llm' | 'fallback';
+};
 
 const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 const CARD_PAGE_SIZE = 10;
 const YEAR_BLOCK_SIZE = 24;
+const DAILY_MESSAGE_LAST_PUSH_KEY = '@DividaZero:dailyMessageLastPush';
 
 const formatDateKey = (date: Date) => {
     const y = date.getFullYear();
@@ -246,6 +261,10 @@ const Home = () => {
     const [showNotificationsPopup, setShowNotificationsPopup] = useState(false);
     const [notificationsPopupLoading, setNotificationsPopupLoading] = useState(false);
     const [notificationItems, setNotificationItems] = useState<NotificationHistoryItem[]>([]);
+    const [aiEnabled, setAiEnabled] = useState(true);
+    const [aiNextAction, setAiNextAction] = useState<NextActionCard | null>(null);
+    const [dailyMessage, setDailyMessage] = useState<DailyMessageDto | null>(null);
+    const [aiFeedbackSending, setAiFeedbackSending] = useState(false);
     const compactPillHeight = Math.max(Math.round(36 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 36);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
 
@@ -337,6 +356,79 @@ const Home = () => {
         }
     }, []);
 
+    const loadAiCards = useCallback(async () => {
+        try {
+            const prefs = await getAppPreferences();
+            setAiEnabled(Boolean(prefs.ai_assistant_enabled));
+            if (!prefs.ai_assistant_enabled) {
+                setAiNextAction(null);
+                setDailyMessage(null);
+                return;
+            }
+
+            const [nextActionResult, dailyMessageResult] = await Promise.allSettled([
+                getAiNextAction(),
+                getDailyMessageToday(),
+            ]);
+
+            if (nextActionResult.status === 'fulfilled') {
+                const result = nextActionResult.value;
+                setAiNextAction({
+                    title: result.action.title,
+                    description: result.action.description,
+                    cta: result.action.cta,
+                    onPress: () => setMonthListFilter('pending'),
+                    interactionId: result.meta.interaction_id,
+                    source: result.meta.source,
+                });
+            } else {
+                setAiNextAction(null);
+            }
+
+            if (dailyMessageResult.status === 'fulfilled') {
+                const daily = dailyMessageResult.value;
+                setDailyMessage(daily);
+                if (prefs.notify_daily_ai_message && prefs.notifications_enabled && prefs.device_push_enabled) {
+                    const lastPushedDate = await AsyncStorage.getItem(DAILY_MESSAGE_LAST_PUSH_KEY);
+                    if (lastPushedDate !== daily.date) {
+                        const notificationResult = await sendManualNotification({
+                            kind: 'daily_ai_message',
+                            title: daily.title,
+                            body: daily.body,
+                            data: { source: 'daily_ai_message', date: daily.date },
+                            requestPermissionIfNeeded: false,
+                        });
+                        if (notificationResult.sent) {
+                            await AsyncStorage.setItem(DAILY_MESSAGE_LAST_PUSH_KEY, daily.date);
+                        }
+                    }
+                }
+            } else {
+                setDailyMessage(null);
+            }
+        } catch {
+            setAiNextAction(null);
+            setDailyMessage(null);
+        }
+    }, []);
+
+    const sendNextActionFeedback = useCallback(async (vote: 'like' | 'dislike') => {
+        if (!aiNextAction?.interactionId || aiFeedbackSending) return;
+        setAiFeedbackSending(true);
+        try {
+            await sendAiFeedback({
+                interaction_id: aiNextAction.interactionId,
+                vote,
+                useful: vote === 'like',
+            });
+            pushFeedback('success', 'Feedback enviado', 'Sua avaliação da recomendação foi registrada.');
+        } catch {
+            pushFeedback('error', 'Falha no feedback', 'Não foi possível registrar seu feedback agora.');
+        } finally {
+            setAiFeedbackSending(false);
+        }
+    }, [aiFeedbackSending, aiNextAction, pushFeedback]);
+
     const closeNotificationsPopup = useCallback(() => {
         setShowNotificationsPopup(false);
     }, []);
@@ -416,6 +508,16 @@ const Home = () => {
         }, [loadNotificationBadge])
     );
 
+    useFocusEffect(
+        useCallback(() => {
+            const cancel = runWhenIdle(() => {
+                void loadAiCards();
+            });
+
+            return cancel;
+        }, [loadAiCards])
+    );
+
     const entries = useMemo(() => records.map(toCalendarEntry), [records]);
     const notificationModalWidth = useMemo(() => Math.min(windowWidth - 24, 420), [windowWidth]);
     const notificationModalMaxHeight = useMemo(
@@ -425,13 +527,14 @@ const Home = () => {
     const pendingEntriesCount = useMemo(() => entries.filter((item) => item.status === 'pending').length, [entries]);
     const monthlyBalanceValue = useMemo(() => calculateSettledBalance(records), [records]);
     const totalBalanceValue = useMemo(() => calculateSettledBalance(allRecords), [allRecords]);
-    const nextBestAction = useMemo(() => {
+    const localNextBestAction = useMemo<NextActionCard>(() => {
         if (pendingEntriesCount > 0) {
             return {
                 title: 'Priorize os vencimentos pendentes',
                 description: `Você tem ${pendingEntriesCount} registro(s) pendente(s) neste mês.`,
                 cta: 'Ver pendentes',
                 onPress: () => setMonthListFilter('pending'),
+                source: 'local',
             };
         }
 
@@ -441,6 +544,7 @@ const Home = () => {
                 description: 'Marque pagamentos/recebimentos para avançar seus marcos de XP.',
                 cta: 'Registrar lançamento',
                 onPress: () => navigation.navigate('Lancamentos'),
+                source: 'local',
             };
         }
 
@@ -449,8 +553,11 @@ const Home = () => {
             description: 'Defina um objetivo para manter seu ritmo de evolução.',
             cta: 'Nova meta',
             onPress: () => navigation.navigate('MetaForm'),
+            source: 'local',
         };
     }, [goals, navigation, pendingEntriesCount]);
+
+    const nextBestAction = aiNextAction || localNextBestAction;
 
     const visibleEntries = useMemo(() => {
         let base = entries;
@@ -842,6 +949,43 @@ const Home = () => {
                             >
                                 <AppText className="text-primary text-xs font-bold">{nextBestAction.cta}</AppText>
                             </TouchableOpacity>
+                            {aiEnabled && nextBestAction.interactionId ? (
+                                <View className="flex-row items-center mt-3">
+                                    <AppText className="text-[11px] text-slate-500 dark:text-slate-200 mr-2">Essa dica ajudou?</AppText>
+                                    <TouchableOpacity
+                                        className="px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700 mr-2"
+                                        disabled={aiFeedbackSending}
+                                        onPress={() => void sendNextActionFeedback('like')}
+                                    >
+                                        <ThumbsUp size={14} color="#16a34a" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        className="px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700"
+                                        disabled={aiFeedbackSending}
+                                        onPress={() => void sendNextActionFeedback('dislike')}
+                                    >
+                                        <ThumbsDown size={14} color="#ef4444" />
+                                    </TouchableOpacity>
+                                    <View className="ml-auto">
+                                        <AppText className="text-[10px] text-slate-400 dark:text-slate-300 uppercase">
+                                            {nextBestAction.source === 'llm' ? 'IA' : 'Fallback'}
+                                        </AppText>
+                                    </View>
+                                </View>
+                            ) : null}
+                        </View>
+
+                        <View className="mt-3 bg-[#f8f7f5] dark:bg-black rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
+                            <View className="flex-row items-center mb-1">
+                                <Bot size={14} color="#f48c25" />
+                                <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-200 font-bold uppercase">Mensagem de hoje</AppText>
+                            </View>
+                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">
+                                {dailyMessage?.title || 'Um passo por vez'}
+                            </AppText>
+                            <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1">
+                                {dailyMessage?.body || 'Mantenha constância no registro para melhorar sua visão financeira.'}
+                            </AppText>
                         </View>
                     </TutorialTarget>
 

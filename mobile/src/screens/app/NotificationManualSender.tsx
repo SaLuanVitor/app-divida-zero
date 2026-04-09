@@ -28,6 +28,7 @@ const FALLBACK_MANUAL_PAYLOADS: Record<ManualNotificationKind, { title: string; 
   due_today: { title: 'Vencimentos de hoje', body: 'Você tem pendências para hoje.' },
   due_tomorrow: { title: 'Lembrete para amanhã', body: 'Você tem pendências para amanhã.' },
   weekly_summary: { title: 'Resumo semanal', body: 'Seu resumo semanal está disponível.' },
+  daily_ai_message: { title: 'Mensagem do dia', body: 'A mensagem diária de incentivo já está disponível.' },
   xp_badge: { title: 'Nova conquista desbloqueada', body: 'Você ganhou +20 XP. Continue evoluindo.' },
   generic: { title: '', body: '' },
 };

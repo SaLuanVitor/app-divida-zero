@@ -14,7 +14,9 @@ export const defaultAppPreferences: AppPreferences = {
   notify_due_today: true,
   notify_due_tomorrow: true,
   notify_weekly_summary: true,
+  notify_daily_ai_message: true,
   notify_xp_and_badges: true,
+  ai_assistant_enabled: true,
   dark_mode: false,
   large_text: false,
   font_scale: 1,
@@ -40,6 +42,10 @@ const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): 
   return {
     ...defaultAppPreferences,
     ...raw,
+    notify_daily_ai_message:
+      typeof raw?.notify_daily_ai_message === 'boolean' ? raw.notify_daily_ai_message : true,
+    ai_assistant_enabled:
+      typeof raw?.ai_assistant_enabled === 'boolean' ? raw.ai_assistant_enabled : true,
     font_scale: normalizedScale,
     large_text: largeText,
     reduce_motion: typeof raw?.reduce_motion === 'boolean' ? raw.reduce_motion : false,

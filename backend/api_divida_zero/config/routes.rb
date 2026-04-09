@@ -20,6 +20,13 @@
       get "app_ratings/summary", to: "app_ratings#summary"
       get "reports/summary", to: "reports#summary"
       post "analytics/events", to: "analytics#create"
+      post "ai/next_action", to: "ai#next_action"
+      post "ai/alerts", to: "ai#alerts"
+      post "ai/categorize_record", to: "ai#categorize_record"
+      post "ai/reports_briefing", to: "ai#reports_briefing"
+      post "ai/feedback", to: "ai#feedback"
+      get "daily_message/today", to: "daily_messages#today"
+      post "daily_message/dispatch", to: "daily_messages#dispatch"
 
       resources :financial_records, only: [:index, :create, :destroy] do
         member do
