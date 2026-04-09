@@ -18,6 +18,17 @@ export interface FinancialGoalDto {
   completed_at?: string | null;
 }
 
+export type FinancialGoalContributionKind = 'deposit' | 'withdraw';
+
+export interface FinancialGoalContributionDto {
+  id: number;
+  financial_goal_id: number;
+  kind: FinancialGoalContributionKind;
+  amount: string;
+  notes?: string | null;
+  created_at: string;
+}
+
 export interface CreateFinancialGoalPayload {
   title: string;
   description?: string;
@@ -33,4 +44,10 @@ export interface CreateFinancialGoalResponse {
   message: string;
   goal: FinancialGoalDto;
   xp_feedback?: XpFeedbackDto | null;
+}
+
+export interface CreateFinancialGoalContributionPayload {
+  kind: FinancialGoalContributionKind;
+  amount: number;
+  notes?: string;
 }

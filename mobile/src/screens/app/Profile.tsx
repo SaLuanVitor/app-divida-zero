@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions, Modal } from 'react-native';
 import {
@@ -209,6 +209,13 @@ const Profile = () => {
         if (Number.isNaN(parsed.getTime())) return '';
         return parsed.toLocaleDateString('pt-BR');
     }, [dailyAchievements]);
+    const tomorrowLabel = useMemo(() => {
+        const firstDate = dailyAchievements[0]?.date_key;
+        const baseDate = firstDate ? new Date(`${firstDate}T00:00:00`) : new Date();
+        if (Number.isNaN(baseDate.getTime())) return '';
+        baseDate.setDate(baseDate.getDate() + 1);
+        return baseDate.toLocaleDateString('pt-BR');
+    }, [dailyAchievements]);
     const publicHandle = useMemo(() => {
         const base = user?.email?.split('@')[0]?.trim();
         if (!base) return '@usuario_divida_zero';
@@ -387,7 +394,7 @@ const Profile = () => {
                 <ScrollView
                     ref={scrollRef}
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingBottom: contentBottomInset + 24 }}
+                    contentContainerStyle={{ paddingBottom: contentBottomInset + (largerTouchTargets ? 128 : 112) }}
                 >
                     <View className="px-6 pt-8 pb-2 items-center">
                         <View className="w-full flex-row items-center justify-between mb-4">
@@ -615,6 +622,26 @@ const Profile = () => {
                                             </View>
                                         );
                                     })}
+                                    <View className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/30">
+                                        <View className="flex-row items-start justify-between">
+                                            <View className="flex-1 pr-3">
+                                                <View className="flex-row items-center">
+                                                    <Lock size={13} color="#94a3b8" />
+                                                    <AppText className="text-slate-700 dark:text-slate-200 font-semibold ml-1">
+                                                        Próximo dia bloqueado
+                                                    </AppText>
+                                                </View>
+                                                <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
+                                                    {tomorrowLabel
+                                                        ? `As conquistas de ${tomorrowLabel} serão liberadas automaticamente no próximo dia.`
+                                                        : 'As conquistas do próximo dia serão liberadas automaticamente amanhã.'}
+                                                </AppText>
+                                            </View>
+                                            <AppText className="text-[11px] font-bold text-slate-400 dark:text-slate-300">
+                                                Amanhã
+                                            </AppText>
+                                        </View>
+                                    </View>
                                 </>
                             )}
                         </Card>

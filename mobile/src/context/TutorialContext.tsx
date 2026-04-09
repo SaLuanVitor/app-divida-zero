@@ -4,6 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppText from '../components/AppText';
 import Button from '../components/Button';
 import { AnalyticsEventName, subscribeAnalyticsEvents, trackAnalyticsEventDeferred } from '../services/analytics';
+import { listFinancialGoals } from '../services/financialGoals';
+import { listFinancialRecords } from '../services/financialRecords';
 import { getAppPreferences, updateAppPreferences } from '../services/preferences';
 import { AppPreferences } from '../types/settings';
 import { navigateSafely } from '../navigation/navigationRef';
@@ -259,6 +261,40 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     [persistState]
   );
 
+  const rebuildAdvancedDoneTasks = useCallback(
+    async (storedTasks: string[]) => {
+      const next = new Set(storedTasks);
+
+      try {
+        const [recordsResult, goalsResult] = await Promise.all([
+          listFinancialRecords(undefined, undefined, { force: true }),
+          listFinancialGoals({ force: true }),
+        ]);
+
+        if (recordsResult.records.length > 0) {
+          next.add('record_created');
+        }
+
+        if (goalsResult.goals.length > 0) {
+          next.add('goal_created');
+        }
+      } catch {
+        // Keep tutorial stable if account data is temporarily unavailable.
+      }
+
+      if (currentRouteName === 'Inicio') {
+        next.add('visit_home');
+      }
+
+      if (currentRouteName === 'Relatorios') {
+        next.add('reports_viewed');
+      }
+
+      return ADVANCED_TASKS.map((task) => task.id).filter((taskId) => next.has(taskId));
+    },
+    [currentRouteName]
+  );
+
   const startBeginnerTutorial = useCallback(
     async (options?: { replay?: boolean; source?: 'auto' | 'manual' }) => {
       const replay = Boolean(options?.replay);
@@ -422,10 +458,27 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       const advancedDoneList = Array.isArray(prefs.tutorial_advanced_tasks_done)
         ? prefs.tutorial_advanced_tasks_done.filter((item) => typeof item === 'string')
         : [];
+      const rebuiltAdvancedDoneList = await rebuildAdvancedDoneTasks(advancedDoneList);
+      if (!mounted) return;
 
       setBeginnerCompleted(beginnerDone);
-      setAdvancedCompleted(advancedDone);
-      setAdvancedDoneTasks(advancedDoneList);
+      const allAdvancedTasksDone = ADVANCED_TASKS.every((task) => rebuiltAdvancedDoneList.includes(task.id));
+      const effectiveAdvancedDone = advancedDone || allAdvancedTasksDone;
+
+      setAdvancedCompleted(effectiveAdvancedDone);
+      setAdvancedDoneTasks(rebuiltAdvancedDoneList);
+
+      if (
+        rebuiltAdvancedDoneList.length !== advancedDoneList.length ||
+        rebuiltAdvancedDoneList.some((taskId) => !advancedDoneList.includes(taskId)) ||
+        effectiveAdvancedDone !== advancedDone
+      ) {
+        await persistState({
+          tutorial_advanced_tasks_done: rebuiltAdvancedDoneList,
+          tutorial_advanced_completed: effectiveAdvancedDone ? true : undefined,
+        });
+        if (!mounted) return;
+      }
 
       if (!prefs.onboarding_seen || !prefs.tutorial_reopen_enabled) return;
 
@@ -436,7 +489,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
         await startBeginnerTutorial({ source: 'auto' });
       }
 
-      if (preferredMode === 'advanced' && !advancedDone) {
+      if (preferredMode === 'advanced' && !effectiveAdvancedDone) {
         await startAdvancedTutorial({ source: 'auto' });
       }
     };
@@ -446,7 +499,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     return () => {
       mounted = false;
     };
-  }, [signed, startAdvancedTutorial, startBeginnerTutorial]);
+  }, [persistState, rebuildAdvancedDoneTasks, signed, startAdvancedTutorial, startBeginnerTutorial]);
 
   useEffect(() => {
     if (!beginnerActive || !currentStep) return;
@@ -482,6 +535,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   useEffect(() => {
     if (!advancedActive || !currentRouteName) return;
     if (currentRouteName === 'Inicio') markAdvancedTaskDone('visit_home');
+    if (currentRouteName === 'Relatorios') markAdvancedTaskDone('reports_viewed');
   }, [advancedActive, currentRouteName, markAdvancedTaskDone]);
 
   useEffect(() => {
@@ -786,3 +840,4 @@ export const useTutorial = () => {
   }
   return context;
 };
+

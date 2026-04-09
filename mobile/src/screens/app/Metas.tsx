@@ -1,5 +1,6 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
+import AppTextInput from '../../components/AppTextInput';
 import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2, ChevronRight } from 'lucide-react-native';
@@ -8,8 +9,18 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import { useBottomInset } from '../../context/BottomInsetContext';
-import { deleteFinancialGoal, listFinancialGoals } from '../../services/financialGoals';
-import { FinancialGoalDto, FinancialGoalType } from '../../types/financialGoal';
+import {
+    createFinancialGoalContribution,
+    deleteFinancialGoal,
+    listFinancialGoalContributions,
+    listFinancialGoals,
+} from '../../services/financialGoals';
+import {
+    FinancialGoalContributionDto,
+    FinancialGoalContributionKind,
+    FinancialGoalDto,
+    FinancialGoalType,
+} from '../../types/financialGoal';
 
 type FeedbackState = {
     kind: 'success' | 'error';
@@ -27,6 +38,8 @@ const formatCurrency = (value: string | number) => {
     const amount = Number(value || 0);
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
 };
+
+const onlyDigits = (value: string) => value.replace(/\D/g, '');
 
 const formatDateBR = (iso?: string | null) => {
     if (!iso) return 'Sem prazo definido';
@@ -47,6 +60,12 @@ const Metas = () => {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [goalPendingDelete, setGoalPendingDelete] = useState<FinancialGoalDto | null>(null);
+    const [goalPendingContribution, setGoalPendingContribution] = useState<FinancialGoalDto | null>(null);
+    const [contributionKind, setContributionKind] = useState<FinancialGoalContributionKind>('deposit');
+    const [contributionAmountDigits, setContributionAmountDigits] = useState('');
+    const [contributionNotes, setContributionNotes] = useState('');
+    const [contributionLoading, setContributionLoading] = useState(false);
+    const [contributionsByGoal, setContributionsByGoal] = useState<Record<number, FinancialGoalContributionDto[]>>({});
     const [visibleGoalsCount, setVisibleGoalsCount] = useState(CARD_PAGE_SIZE);
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastGoalsLoadAtRef = useRef(0);
@@ -85,6 +104,21 @@ const Metas = () => {
         try {
             const result = await listFinancialGoals();
             setGoals(result.goals);
+            if (result.goals.length > 0) {
+                const contributionPairs = await Promise.all(
+                    result.goals.map(async (goalItem) => {
+                        try {
+                            const data = await listFinancialGoalContributions(goalItem.id);
+                            return [goalItem.id, data.contributions] as const;
+                        } catch {
+                            return [goalItem.id, []] as const;
+                        }
+                    })
+                );
+                setContributionsByGoal(Object.fromEntries(contributionPairs));
+            } else {
+                setContributionsByGoal({});
+            }
             setVisibleGoalsCount(CARD_PAGE_SIZE);
             lastGoalsLoadAtRef.current = 0;
         } catch (error: any) {
@@ -131,11 +165,19 @@ const Metas = () => {
     );
 
     const openCreateScreen = () => {
-        navigation.navigate('MetaForm');
+        navigation.navigate('MetaForm', {
+            mode: 'create',
+            goal: undefined,
+            nonce: Date.now(),
+        });
     };
 
     const openEditScreen = (goal: FinancialGoalDto) => {
-        navigation.navigate('MetaForm', { goal });
+        navigation.navigate('MetaForm', {
+            mode: 'edit',
+            goal,
+            nonce: Date.now(),
+        });
     };
 
     const requestDeleteGoal = (goal: FinancialGoalDto) => {
@@ -156,6 +198,52 @@ const Metas = () => {
             pushFeedback('error', 'Erro ao remover', message);
         } finally {
             setDeleteLoading(false);
+        }
+    };
+
+    const openContributionModal = (goal: FinancialGoalDto, kind: FinancialGoalContributionKind) => {
+        setGoalPendingContribution(goal);
+        setContributionKind(kind);
+        setContributionAmountDigits('');
+        setContributionNotes('');
+    };
+
+    const closeContributionModal = (options?: { force?: boolean }) => {
+        if (contributionLoading && !options?.force) return;
+        setGoalPendingContribution(null);
+        setContributionAmountDigits('');
+        setContributionNotes('');
+    };
+
+    const submitContribution = async () => {
+        if (!goalPendingContribution) return;
+
+        const amount = Number(contributionAmountDigits || '0') / 100;
+        if (amount <= 0) {
+            pushFeedback('error', 'Valor inválido', 'Informe um valor maior que zero para continuar.');
+            return;
+        }
+
+        setContributionLoading(true);
+        try {
+            const result = await createFinancialGoalContribution(goalPendingContribution.id, {
+                kind: contributionKind,
+                amount,
+                notes: contributionNotes.trim() || undefined,
+            });
+
+            await loadGoals();
+            pushFeedback(
+                'success',
+                contributionKind === 'deposit' ? 'Valor adicionado' : 'Valor retirado',
+                result.message
+            );
+            closeContributionModal({ force: true });
+        } catch (error: any) {
+            const message = error?.response?.data?.error ?? 'Não foi possível registrar o valor agora.';
+            pushFeedback('error', 'Falha no aporte', message);
+        } finally {
+            setContributionLoading(false);
         }
     };
 
@@ -225,7 +313,7 @@ const Metas = () => {
                         <View className="p-5">
                             <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base mb-1">Nenhuma meta cadastrada</AppText>
                             <AppText className="text-slate-500 dark:text-slate-200 text-sm mb-4">
-                                Crie sua primeira meta para acompanhar o progresso com base nos seus lançamentos.
+                                Crie sua primeira meta e gerencie o saldo dela com aportes manuais.
                             </AppText>
                             <Button title="Criar primeira meta" onPress={openCreateScreen} className="h-11" />
                         </View>
@@ -291,11 +379,35 @@ const Metas = () => {
                                         </View>
                                     </View>
 
+                                    <View className="flex-row gap-2 mb-3">
+                                        <TouchableOpacity
+                                            className="flex-1 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 items-center"
+                                            onPress={(event) => {
+                                                event.stopPropagation();
+                                                openContributionModal(goal, 'deposit');
+                                            }}
+                                        >
+                                            <AppText className="text-primary text-xs font-bold">Adicionar valor</AppText>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 items-center"
+                                            onPress={(event) => {
+                                                event.stopPropagation();
+                                                openContributionModal(goal, 'withdraw');
+                                            }}
+                                        >
+                                            <AppText className="text-slate-700 dark:text-slate-200 text-xs font-bold">Retirar valor</AppText>
+                                        </TouchableOpacity>
+                                    </View>
+
                                     <View className="bg-slate-50 dark:bg-[#1a1a1a] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                                         <AppText className="text-slate-600 dark:text-slate-200 text-sm">
                                             {goal.status === 'completed'
                                                 ? 'Meta concluída com sucesso.'
                                                 : `Faltam ${formatCurrency(goal.remaining_amount)} para concluir.`}
+                                        </AppText>
+                                        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
+                                            {`${contributionsByGoal[goal.id]?.length ?? 0} aporte(s) registrado(s) nesta meta`}
                                         </AppText>
                                         <View className="flex-row items-center gap-2 mt-2">
                                             <CalendarDays size={14} color="#94a3b8" />
@@ -349,6 +461,55 @@ const Metas = () => {
                         >
                             {feedback.message}
                         </AppText>
+                    </View>
+                </View>
+            ) : null}
+
+            {goalPendingContribution ? (
+                <View className="absolute inset-0 z-[66]">
+                    <Pressable className="absolute inset-0 bg-black/30" onPress={() => closeContributionModal()} />
+                    <View className="absolute left-4 right-4 top-[26%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
+                        <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">
+                            {contributionKind === 'deposit' ? 'Adicionar valor' : 'Retirar valor'}
+                        </AppText>
+                        <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-1 mb-3">
+                            {goalPendingContribution.title}
+                        </AppText>
+
+                        <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Valor</AppText>
+                        <AppTextInput
+                            className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-3 mb-3 text-slate-900 dark:text-slate-100 bg-white dark:bg-[#121212]"
+                            keyboardType="number-pad"
+                            placeholder="R$ 0,00"
+                            placeholderTextColor="#94a3b8"
+                            value={formatCurrency(Number(contributionAmountDigits || '0') / 100)}
+                            onChangeText={(value) => setContributionAmountDigits(onlyDigits(value).slice(0, 10))}
+                        />
+
+                        <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Observação (opcional)</AppText>
+                        <AppTextInput
+                            className="min-h-[64px] rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 mb-3 text-slate-900 dark:text-slate-100 bg-white dark:bg-[#121212]"
+                            placeholder="Ex: transferência para reserva"
+                            placeholderTextColor="#94a3b8"
+                            multiline
+                            value={contributionNotes}
+                            onChangeText={setContributionNotes}
+                        />
+
+                        <Button
+                            title={contributionLoading ? 'Salvando...' : contributionKind === 'deposit' ? 'Confirmar aporte' : 'Confirmar retirada'}
+                            loading={contributionLoading}
+                            disabled={contributionLoading}
+                            onPress={submitContribution}
+                            className="h-12 mb-2"
+                        />
+                        <Button
+                            title="Cancelar"
+                            variant="outline"
+                            disabled={contributionLoading}
+                            onPress={() => closeContributionModal()}
+                            className="h-11"
+                        />
                     </View>
                 </View>
             ) : null}

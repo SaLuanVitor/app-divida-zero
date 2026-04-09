@@ -3,6 +3,7 @@
   STATUSES = %w[active completed].freeze
 
   belongs_to :user
+  has_many :financial_goal_contributions, dependent: :destroy
 
   validates :title,
             presence: { message: "Título é obrigatório." },

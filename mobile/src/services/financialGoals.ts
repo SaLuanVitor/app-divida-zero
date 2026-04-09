@@ -1,5 +1,12 @@
 import api from './api';
-import { CreateFinancialGoalPayload, CreateFinancialGoalResponse, FinancialGoalDto, UpdateFinancialGoalPayload } from '../types/financialGoal';
+import {
+  CreateFinancialGoalContributionPayload,
+  CreateFinancialGoalPayload,
+  CreateFinancialGoalResponse,
+  FinancialGoalContributionDto,
+  FinancialGoalDto,
+  UpdateFinancialGoalPayload,
+} from '../types/financialGoal';
 import { invalidateGamificationCache } from './gamification';
 
 const DEFAULT_TTL_MS = 12000;
@@ -83,6 +90,44 @@ export const updateFinancialGoal = async (id: number, payload: UpdateFinancialGo
 
   return {
     message: parsed.message ?? 'Meta atualizada com sucesso.',
+    goal: parsed.goal as FinancialGoalDto,
+  };
+};
+
+export const listFinancialGoalContributions = async (goalId: number) => {
+  const { data } = await api.get(`/financial_goals/${goalId}/contributions`);
+  const payload = data as { contributions?: FinancialGoalContributionDto[] };
+  return {
+    contributions: Array.isArray(payload.contributions) ? payload.contributions : [],
+  };
+};
+
+export const createFinancialGoalContribution = async (
+  goalId: number,
+  payload: CreateFinancialGoalContributionPayload
+) => {
+  const { data } = await api.post(`/financial_goals/${goalId}/contributions`, payload);
+  const parsed = data as {
+    message?: string;
+    contribution?: FinancialGoalContributionDto;
+    goal?: FinancialGoalDto;
+  };
+  invalidateFinancialGoalsCache();
+  invalidateGamificationCache();
+  return {
+    message: parsed.message ?? 'Aporte registrado com sucesso.',
+    contribution: parsed.contribution as FinancialGoalContributionDto,
+    goal: parsed.goal as FinancialGoalDto,
+  };
+};
+
+export const deleteFinancialGoalContribution = async (goalId: number, contributionId: number) => {
+  const { data } = await api.delete(`/financial_goals/${goalId}/contributions/${contributionId}`);
+  const parsed = data as { message?: string; goal?: FinancialGoalDto };
+  invalidateFinancialGoalsCache();
+  invalidateGamificationCache();
+  return {
+    message: parsed.message ?? 'Aporte removido com sucesso.',
     goal: parsed.goal as FinancialGoalDto,
   };
 };
