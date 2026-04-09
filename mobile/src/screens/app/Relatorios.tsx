@@ -2,7 +2,7 @@
 import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
-import { ArrowDownCircle, ArrowUpCircle, Calendar, ChevronLeft, ChevronRight, FileDown, Filter, Scale, Wallet, X } from 'lucide-react-native';
+import { ArrowDownCircle, ArrowUpCircle, Bot, Calendar, ChevronLeft, ChevronRight, FileDown, Filter, Scale, ThumbsDown, ThumbsUp, Wallet, X } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import AppText from '../../components/AppText';
 import Card from '../../components/Card';
@@ -20,6 +20,9 @@ import { ReportFlowFilter, ReportsSummaryDto, ReportStatusFilter } from '../../t
 import { useThemeMode } from '../../context/ThemeContext';
 import { useTutorial } from '../../context/TutorialContext';
 import { exportReportsPdf } from '../../services/reportsExport';
+import { getAiReportsBriefing, sendAiFeedback } from '../../services/ai';
+import { AiReportsBriefing } from '../../types/ai';
+import { getAppPreferences } from '../../services/preferences';
 
 type DetailsTab = 'records' | 'categories';
 type PickerMode = 'month' | 'year';
@@ -193,6 +196,11 @@ const Relatorios = () => {
   const [selectedTrendKey, setSelectedTrendKey] = useState<string | null>(null);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportFeedback, setExportFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [aiBriefing, setAiBriefing] = useState<AiReportsBriefing | null>(null);
+  const [aiInteractionId, setAiInteractionId] = useState<number | null>(null);
+  const [aiSource, setAiSource] = useState<'llm' | 'fallback'>('fallback');
+  const [sendingAiFeedback, setSendingAiFeedback] = useState(false);
   const hasVisibleDataRef = useRef(false);
 
   const yearOptions = useMemo(() => Array.from({ length: 9 }, (_, idx) => monthRef.getFullYear() - 4 + idx), [monthRef]);
@@ -266,6 +274,39 @@ const Relatorios = () => {
     }
   }, [activeFilters, category, flowType, status]);
 
+  const loadAiBriefing = useCallback(async () => {
+    try {
+      const prefs = await getAppPreferences();
+      setAiEnabled(Boolean(prefs.ai_assistant_enabled));
+      if (!prefs.ai_assistant_enabled) {
+        setAiBriefing(null);
+        setAiInteractionId(null);
+        return;
+      }
+
+      const result = await getAiReportsBriefing();
+      setAiBriefing(result.briefing);
+      setAiInteractionId(result.meta.interaction_id);
+      setAiSource(result.meta.source);
+    } catch {
+      setAiBriefing(null);
+      setAiInteractionId(null);
+    }
+  }, []);
+
+  const sendReportsFeedback = useCallback(async (vote: 'like' | 'dislike') => {
+    if (!aiInteractionId || sendingAiFeedback) return;
+    setSendingAiFeedback(true);
+    try {
+      await sendAiFeedback({ interaction_id: aiInteractionId, vote, useful: vote === 'like' });
+      setExportFeedback({ type: 'success', text: 'Feedback do insight registrado.' });
+    } catch {
+      setExportFeedback({ type: 'error', text: 'Nao foi possivel enviar feedback do insight.' });
+    } finally {
+      setSendingAiFeedback(false);
+    }
+  }, [aiInteractionId, sendingAiFeedback]);
+
   useFocusEffect(
     useCallback(() => {
       const cached = getCachedReportsSummary(activeFilters);
@@ -292,6 +333,13 @@ const Relatorios = () => {
         setExportFeedback(null);
       };
     }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadAiBriefing();
+      return undefined;
+    }, [loadAiBriefing])
   );
 
   useEffect(() => {
@@ -392,6 +440,55 @@ const Relatorios = () => {
               <AppText className={`text-sm ${exportFeedback.type === 'error' ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
                 {exportFeedback.text}
               </AppText>
+            </View>
+          </Card>
+        ) : null}
+
+        {aiEnabled ? (
+          <Card className="mb-3" noPadding>
+            <View className="p-4">
+              <View className="flex-row items-center mb-1">
+                <Bot size={16} color="#f48c25" />
+                <AppText className="ml-2 text-slate-900 dark:text-slate-100 font-bold">
+                  {aiBriefing?.title || 'Resumo inteligente'}
+                </AppText>
+                <View className="ml-auto">
+                  <AppText className="text-[10px] text-slate-400 dark:text-slate-300 uppercase">
+                    {aiSource === 'llm' ? 'IA' : 'Fallback'}
+                  </AppText>
+                </View>
+              </View>
+              <AppText className="text-slate-600 dark:text-slate-200 text-xs">
+                {aiBriefing?.summary || 'Continue registrando e concluindo pendencias para evoluir no periodo.'}
+              </AppText>
+              {aiBriefing?.actions?.length ? (
+                <View className="mt-2">
+                  {aiBriefing.actions.map((item, index) => (
+                    <AppText key={`${item}-${index}`} className="text-slate-700 dark:text-slate-200 text-xs mt-1">
+                      • {item}
+                    </AppText>
+                  ))}
+                </View>
+              ) : null}
+              {aiInteractionId ? (
+                <View className="flex-row items-center mt-3">
+                  <AppText className="text-[11px] text-slate-500 dark:text-slate-200 mr-2">Esse resumo foi útil?</AppText>
+                  <TouchableOpacity
+                    className="px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700 mr-2"
+                    disabled={sendingAiFeedback}
+                    onPress={() => void sendReportsFeedback('like')}
+                  >
+                    <ThumbsUp size={14} color="#16a34a" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700"
+                    disabled={sendingAiFeedback}
+                    onPress={() => void sendReportsFeedback('dislike')}
+                  >
+                    <ThumbsDown size={14} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
           </Card>
         ) : null}

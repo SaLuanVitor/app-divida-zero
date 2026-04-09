@@ -5,7 +5,9 @@ export interface AppPreferences {
   notify_due_today: boolean;
   notify_due_tomorrow: boolean;
   notify_weekly_summary: boolean;
+  notify_daily_ai_message: boolean;
   notify_xp_and_badges: boolean;
+  ai_assistant_enabled: boolean;
   dark_mode: boolean;
   large_text: boolean;
   font_scale: 0.9 | 1 | 1.15 | 1.3;

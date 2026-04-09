@@ -85,7 +85,7 @@ const AppSettings = () => {
   };
 
   const updateAccessibilityToggle = async (
-    key: 'larger_touch_targets',
+    key: 'larger_touch_targets' | 'ai_assistant_enabled',
     value: boolean,
     successMessage: string
   ) => {
@@ -161,6 +161,15 @@ const AppSettings = () => {
             subtitle="Aumenta áreas de toque para facilitar a navegação."
             value={prefs.larger_touch_targets}
             onChange={(value) => updateAccessibilityToggle('larger_touch_targets', value, 'Tamanho dos botões atualizado.')}
+          />
+
+          <Item
+            title="Assistente IA"
+            subtitle="Habilita próximas ações e insights inteligentes no aplicativo."
+            value={prefs.ai_assistant_enabled}
+            onChange={(value) =>
+              updateAccessibilityToggle('ai_assistant_enabled', value, 'Preferência do assistente IA atualizada.')
+            }
           />
 
           <View className="pt-3">

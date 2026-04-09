@@ -8,6 +8,9 @@
   has_many :analytics_events, dependent: :destroy
   has_many :notification_alerts, dependent: :destroy
   has_many :app_ratings, dependent: :destroy
+  has_many :ai_interactions, dependent: :destroy
+  has_many :ai_feedbacks, dependent: :destroy
+  has_many :ai_usage_counters, dependent: :destroy
 
   before_validation :normalize_email
 
