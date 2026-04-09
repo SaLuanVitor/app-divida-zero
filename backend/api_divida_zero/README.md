@@ -41,6 +41,14 @@ Variaveis minimas:
 - `RAILS_LOG_LEVEL=info`
 - `DATABASE_URL`
 
+Variaveis de IA (opcionais):
+
+- `OPENAI_API_KEY` (se vazio, backend opera em fallback sem custo externo)
+- `OPENAI_MODEL` (default: `gpt-4.1-mini`)
+- `AI_DAILY_REQUEST_LIMIT` (default: `20`)
+- `AI_MONTHLY_REQUEST_LIMIT` (default: `200`)
+- `DAILY_MESSAGE_DISPATCH_TOKEN` (necessario apenas para endpoint interno de dispatch diario)
+
 URLs opcionais para separar conexoes:
 
 - `DATABASE_CACHE_URL`
