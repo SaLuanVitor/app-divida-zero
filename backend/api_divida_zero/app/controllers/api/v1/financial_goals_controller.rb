@@ -5,11 +5,15 @@
 
       def index
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
+        funding = FinancialGoalsProgressService.funding_snapshot_for_user(@current_user)
 
         goals = @current_user.financial_goals.order(Arel.sql("CASE WHEN status = 'active' THEN 0 ELSE 1 END"), :target_date, :created_at)
 
         render json: {
-          goals: goals.map(&:serialize)
+          goals: goals.map(&:serialize),
+          settled_global_balance: funding[:settled_global_balance].to_s("F"),
+          allocated_to_goals: funding[:allocated_to_goals].to_s("F"),
+          available_for_goal_funding: funding[:available_for_goal_funding].to_s("F")
         }, status: :ok
       end
 
