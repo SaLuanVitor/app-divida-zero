@@ -11,7 +11,6 @@ import {
   getDeviceNotificationPermissionStatus,
   NotificationRuntimeReason,
   requestDeviceNotificationPermission,
-  sendLocalTestNotification,
   syncScheduledLocalNotifications,
 } from '../../services/notifications';
 import { useThemeMode } from '../../context/ThemeContext';
@@ -25,8 +24,7 @@ type NotificationPreferenceKey =
   | 'device_push_enabled'
   | 'notify_due_today'
   | 'notify_due_tomorrow'
-  | 'notify_weekly_summary'
-  | 'notify_xp_and_badges';
+  | 'notify_weekly_summary';
 
 const NotificationSettings = () => {
   const { darkMode } = useThemeMode();
@@ -119,10 +117,10 @@ const NotificationSettings = () => {
 
       if (key === 'notifications_enabled' && !value) {
         next.device_push_enabled = false;
+        next.notification_permission_prompted = false;
         next.notify_due_today = false;
         next.notify_due_tomorrow = false;
         next.notify_weekly_summary = false;
-        next.notify_xp_and_badges = false;
         await persist(next, 'success', 'Notificações desativadas.');
         return;
       }
@@ -130,7 +128,8 @@ const NotificationSettings = () => {
       if (key === 'device_push_enabled') {
         if (!value) {
           next.device_push_enabled = false;
-          await persist(next, 'success', 'Notificação no celular desativada.');
+          next.notification_permission_prompted = false;
+          await persist(next, 'success', 'Notificação no celular desativada. Será preciso confirmar novamente ao reativar.');
           return;
         }
 
@@ -174,47 +173,6 @@ const NotificationSettings = () => {
       setMessageKind('error');
       setMessage('Não foi possível salvar a preferência agora. Tente novamente.');
     }
-  };
-
-  const sendTest = async () => {
-    if (!runtimeAvailable && runtimeReason !== 'permission_denied') {
-      setMessageKind('error');
-      setMessage(
-        runtimeReason === 'native_module_mismatch'
-          ? 'Dev Client desatualizado para notificações. Recompile: expo run:android e abra com expo start --dev-client.'
-          : runtimeReason === 'expo_go_limited'
-          ? 'No Expo Go, use Dev Build para testar notificação local no dispositivo.'
-          : 'Notificação local indisponível neste ambiente de execução.'
-      );
-      return;
-    }
-    const result = await sendLocalTestNotification();
-    if (result.sent) {
-      setMessageKind('success');
-      setMessage('Notificação de teste enviada para o celular.');
-      return;
-    }
-
-    if (result.reason === 'permission_denied') {
-      setMessageKind('error');
-      setMessage('Não foi possível enviar teste: permita notificações no dispositivo.');
-      return;
-    }
-
-    if (result.reason === 'native_module_mismatch') {
-      setMessageKind('error');
-      setMessage('Runtime nativo de notificações desatualizado. Rode: expo run:android e depois expo start --dev-client.');
-      return;
-    }
-
-    if (result.reason === 'expo_go_limited') {
-      setMessageKind('error');
-      setMessage('No Expo Go, use Dev Build para testar notificação local no dispositivo.');
-      return;
-    }
-
-    setMessageKind('error');
-    setMessage('Notificação local indisponível neste ambiente de execução.');
   };
 
   const Item = ({
@@ -309,22 +267,6 @@ const NotificationSettings = () => {
             onChange={(value) => update('notify_weekly_summary', value)}
             disabled={!prefs.notifications_enabled}
           />
-          <Item
-            title="XP e badges"
-            subtitle="XP e medalhas aparecem só dentro do app (sem push no celular)."
-            value={false}
-            onChange={() => {}}
-            disabled
-          />
-
-          <TouchableOpacity
-            className="mt-3 rounded-xl border border-primary/30 bg-primary/10 items-center justify-center"
-            style={{ minHeight: rowHeight, height: rowHeight }}
-            onPress={sendTest}
-            disabled={(!runtimeAvailable && runtimeReason !== 'permission_denied') || !prefs.notifications_enabled}
-          >
-            <AppText className="text-primary font-bold">Enviar notificação de teste</AppText>
-          </TouchableOpacity>
         </Card>
 
         {loading ? <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">Carregando preferências...</AppText> : null}

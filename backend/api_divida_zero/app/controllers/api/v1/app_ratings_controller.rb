@@ -3,25 +3,22 @@ module Api
     class AppRatingsController < ApplicationController
       before_action :authenticate_access_token!
 
-      MAX_LIMIT = 100
-      DEFAULT_LIMIT = 20
-
       def create
-        rating = @current_user.app_ratings.create!(create_params)
+        rating = @current_user.app_ratings.find_or_initialize_by(user_id: @current_user.id)
+        is_new = rating.new_record?
+        rating.assign_attributes(create_params)
+        rating.save!
 
         render json: {
           id: rating.id,
-          message: "Avaliação enviada com sucesso.",
+          message: is_new ? "Avaliação enviada com sucesso." : "Avaliação atualizada com sucesso.",
           created_at: rating.created_at
-        }, status: :created
+        }, status: is_new ? :created : :ok
       end
 
       def me
-        ratings = @current_user.app_ratings
-                               .recent_first
-                               .limit(normalized_limit)
-
-        render json: { ratings: ratings.map(&:serialize) }, status: :ok
+        rating = @current_user.app_ratings.first
+        render json: { rating: rating&.serialize }, status: :ok
       end
 
       def summary
@@ -55,16 +52,6 @@ module Api
           :records_rating,
           :suggestions
         )
-      end
-
-      def normalized_limit
-        raw = params[:limit].presence
-        return DEFAULT_LIMIT if raw.blank?
-
-        value = raw.to_i
-        return DEFAULT_LIMIT if value <= 0
-
-        [value, MAX_LIMIT].min
       end
 
       def average_for(scope, column)

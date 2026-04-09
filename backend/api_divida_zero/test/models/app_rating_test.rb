@@ -74,4 +74,30 @@ class AppRatingTest < ActiveSupport::TestCase
     assert_not rating.valid?
     assert_includes rating.errors[:suggestions], "deve ter no máximo 1000 caracteres."
   end
+
+  test "is invalid when user tries to create more than one rating" do
+    @user.app_ratings.create!(
+      usability_rating: 5,
+      helpfulness_rating: 4,
+      calendar_rating: 5,
+      alerts_rating: 4,
+      goals_rating: 5,
+      reports_rating: 4,
+      records_rating: 5
+    )
+
+    duplicate = AppRating.new(
+      user: @user,
+      usability_rating: 4,
+      helpfulness_rating: 4,
+      calendar_rating: 4,
+      alerts_rating: 4,
+      goals_rating: 4,
+      reports_rating: 4,
+      records_rating: 4
+    )
+
+    assert_not duplicate.valid?
+    assert_includes duplicate.errors[:user_id], "já possui uma avaliação cadastrada."
+  end
 end
