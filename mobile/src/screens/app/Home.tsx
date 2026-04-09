@@ -1,7 +1,7 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal } from 'react-native';
+import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal, FlatList } from 'react-native';
 import {
     Bell,
     CheckCircle2,
@@ -27,7 +27,7 @@ import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import { useAuth } from '../../context/AuthContext';
 import { useOverlay } from '../../context/OverlayContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
-import { deleteFinancialRecord, listFinancialRecords, payFinancialRecord } from '../../services/financialRecords';
+import { deleteFinancialRecord, listFinancialRecords, payFinancialRecord, updateFinancialRecordStatus } from '../../services/financialRecords';
 import { FinancialRecordDto } from '../../types/financialRecord';
 import {
     DEFAULT_GAMIFICATION_SUMMARY,
@@ -92,10 +92,16 @@ type XpPopupState = {
     levelIcon: string;
 };
 
+type UndoState = {
+    entry: CalendarEntry;
+    expiresAt: number;
+};
+
 type MonthListFilter = 'all' | 'pending' | 'completed';
 
 const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 const CARD_PAGE_SIZE = 10;
+const YEAR_BLOCK_SIZE = 24;
 
 const formatDateKey = (date: Date) => {
     const y = date.getFullYear();
@@ -222,11 +228,17 @@ const Home = () => {
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
+    const [undoState, setUndoState] = useState<UndoState | null>(null);
+    const [undoLoading, setUndoLoading] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpPopupState | null>(null);
     const [gamificationSummary, setGamificationSummary] = useState<GamificationSummaryDto>(DEFAULT_GAMIFICATION_SUMMARY);
     const [showPeriodPicker, setShowPeriodPicker] = useState(false);
     const [pickerMode, setPickerMode] = useState<'month' | 'year'>('month');
     const [pickerYear, setPickerYear] = useState(currentMonth.getFullYear());
+    const [yearRange, setYearRange] = useState(() => ({
+        start: currentMonth.getFullYear() - YEAR_BLOCK_SIZE,
+        end: currentMonth.getFullYear() + YEAR_BLOCK_SIZE,
+    }));
     const [monthListFilter, setMonthListFilter] = useState<MonthListFilter>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [visibleMonthItemsCount, setVisibleMonthItemsCount] = useState(CARD_PAGE_SIZE);
@@ -238,6 +250,7 @@ const Home = () => {
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
 
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastMonthLoadAtRef = useRef(0);
 
     const showDayDetails = isOverlayOpen('dayDetails');
@@ -262,6 +275,9 @@ const Home = () => {
         return () => {
             if (feedbackTimer.current) {
                 clearTimeout(feedbackTimer.current);
+            }
+            if (undoTimer.current) {
+                clearTimeout(undoTimer.current);
             }
         };
     }, []);
@@ -333,6 +349,7 @@ const Home = () => {
                 setShowPeriodPicker(false);
                 setConfirmState(null);
                 setXpPopup(null);
+                setUndoState(null);
             };
         }, [closeOverlay])
     );
@@ -586,7 +603,12 @@ const Home = () => {
     };
 
     const openPeriodPicker = () => {
-        setPickerYear(currentMonth.getFullYear());
+        const baseYear = currentMonth.getFullYear();
+        setPickerYear(baseYear);
+        setYearRange({
+            start: baseYear - YEAR_BLOCK_SIZE,
+            end: baseYear + YEAR_BLOCK_SIZE,
+        });
         setPickerMode('month');
         setShowPeriodPicker(true);
     };
@@ -607,8 +629,20 @@ const Home = () => {
     };
 
     const yearOptions = useMemo(() => {
-        return Array.from({ length: 16 }, (_, index) => pickerYear - 8 + index);
-    }, [pickerYear]);
+        const options: number[] = [];
+        for (let year = yearRange.start; year <= yearRange.end; year += 1) {
+            options.push(year);
+        }
+        return options;
+    }, [yearRange.end, yearRange.start]);
+
+    const loadMoreYearsUp = useCallback(() => {
+        setYearRange((current) => ({ ...current, start: current.start - YEAR_BLOCK_SIZE }));
+    }, []);
+
+    const loadMoreYearsDown = useCallback(() => {
+        setYearRange((current) => ({ ...current, end: current.end + YEAR_BLOCK_SIZE }));
+    }, []);
 
     const executePay = async (entry: CalendarEntry) => {
         const result = await payFinancialRecord(entry.id);
@@ -629,6 +663,57 @@ const Home = () => {
         });
         openXpFeedback(result.xp_feedback, 'Ação concluída');
     };
+
+    const queueUndoForPay = useCallback((entry: CalendarEntry) => {
+        if (undoTimer.current) {
+            clearTimeout(undoTimer.current);
+        }
+        const nextUndoState: UndoState = {
+            entry,
+            expiresAt: Date.now() + 5000,
+        };
+        setUndoState(nextUndoState);
+        undoTimer.current = setTimeout(() => {
+            setUndoState((current) => (current?.entry.id === entry.id ? null : current));
+            undoTimer.current = null;
+        }, 5000);
+    }, []);
+
+    const undoPay = useCallback(async () => {
+        if (!undoState || undoLoading) return;
+
+        setUndoLoading(true);
+        try {
+            const result = await updateFinancialRecordStatus(undoState.entry.id, 'pending');
+            await Promise.all([
+                loadMonthlyRecords({ force: true }),
+                loadGlobalGamification({ force: true }),
+                loadTotalBalanceRecords({ force: true }),
+            ]);
+            pushFeedback('success', 'Ação desfeita', result.message);
+            await maybeNotifyXp(result.xp_feedback, 'XP ajustado');
+            openXpFeedback(result.xp_feedback, 'Ação desfeita');
+            setUndoState(null);
+            if (undoTimer.current) {
+                clearTimeout(undoTimer.current);
+                undoTimer.current = null;
+            }
+        } catch (error: any) {
+            const message = error?.response?.data?.error ?? 'Não foi possível desfazer a ação.';
+            pushFeedback('error', 'Falha ao desfazer', message);
+        } finally {
+            setUndoLoading(false);
+        }
+    }, [
+        loadGlobalGamification,
+        loadMonthlyRecords,
+        loadTotalBalanceRecords,
+        maybeNotifyXp,
+        openXpFeedback,
+        pushFeedback,
+        undoLoading,
+        undoState,
+    ]);
 
     const executeDelete = async (entry: CalendarEntry, scope: 'single' | 'group') => {
         const result = await deleteFinancialRecord(entry.id, scope);
@@ -659,15 +744,14 @@ const Home = () => {
         }
     };
 
-    const requestPay = (entry: CalendarEntry) => {
-        const actionLabel = entry.icon === CircleDollarSign ? 'recebido' : 'pago';
-        openConfirm({
-            title: 'Confirmar alteração',
-            message: `Deseja marcar "${entry.title}" como ${actionLabel}?`,
-            confirmLabel: entry.icon === CircleDollarSign ? 'Marcar recebido' : 'Marcar pago',
-            variant: 'primary',
-            onConfirm: () => executePay(entry),
-        });
+    const requestPay = async (entry: CalendarEntry) => {
+        try {
+            await executePay(entry);
+            queueUndoForPay(entry);
+        } catch (error: any) {
+            const message = error?.response?.data?.error ?? 'Não foi possível atualizar o status.';
+            pushFeedback('error', 'Falha na ação', message);
+        }
     };
 
     const requestDeleteSingle = (entry: CalendarEntry) => {
@@ -1217,12 +1301,24 @@ const Home = () => {
                                 </View>
                             </>
                         ) : (
-                            <View className="flex-row flex-wrap justify-between">
-                                {yearOptions.map((year) => {
+                            <FlatList
+                                data={yearOptions}
+                                keyExtractor={(item) => `year-${item}`}
+                                numColumns={3}
+                                style={{ maxHeight: 260 }}
+                                contentContainerStyle={{ paddingBottom: 4 }}
+                                columnWrapperStyle={{ justifyContent: 'space-between' }}
+                                onEndReachedThreshold={0.35}
+                                onEndReached={loadMoreYearsDown}
+                                onScroll={({ nativeEvent }) => {
+                                    if (nativeEvent.contentOffset.y <= 24) {
+                                        loadMoreYearsUp();
+                                    }
+                                }}
+                                renderItem={({ item: year }) => {
                                     const active = currentMonth.getFullYear() === year;
                                     return (
                                         <TouchableOpacity
-                                            key={year}
                                             className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                                             style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
                                             onPress={() => selectYear(year)}
@@ -1230,8 +1326,8 @@ const Home = () => {
                                             <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText>
                                         </TouchableOpacity>
                                     );
-                                })}
-                            </View>
+                                }}
+                            />
                         )}
                     </View>
                 </View>
@@ -1246,6 +1342,28 @@ const Home = () => {
                         <AppText className={`text-xs mt-1 ${feedback.kind === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
                             {feedback.message}
                         </AppText>
+                    </View>
+                </View>
+            ) : null}
+
+            {undoState ? (
+                <View pointerEvents="box-none" className="absolute left-4 right-4 z-[72]" style={{ bottom: overlayBottomInset }}>
+                    <View className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-4 py-3 flex-row items-center justify-between">
+                        <View className="flex-1 pr-3">
+                            <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">
+                                {undoState.entry.icon === CircleDollarSign ? 'Marcado como recebido' : 'Marcado como pago'}
+                            </AppText>
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
+                                Toque em desfazer para voltar este registro para pendente.
+                            </AppText>
+                        </View>
+                        <TouchableOpacity
+                            className="px-3 py-2 rounded-lg bg-primary"
+                            disabled={undoLoading}
+                            onPress={undoPay}
+                        >
+                            <AppText className="text-white text-xs font-bold">{undoLoading ? '...' : 'Desfazer'}</AppText>
+                        </TouchableOpacity>
                     </View>
                 </View>
             ) : null}

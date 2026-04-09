@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Alert, ActivityIndicator, Pressable } from 'react-native';
+import { View, TouchableOpacity, Alert, ActivityIndicator, Pressable, Keyboard, FlatList } from 'react-native';
 import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, ChevronRight, Trophy, Target, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -97,6 +97,7 @@ const levelIconMap: Record<string, React.ComponentType<{ size?: number; color?: 
     crown: Crown,
 };
 const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+const YEAR_BLOCK_SIZE = 24;
 
 const Lancamentos = () => {
     const navigation = useNavigation<any>();
@@ -130,6 +131,10 @@ const Lancamentos = () => {
     const [showPeriodPicker, setShowPeriodPicker] = useState(false);
     const [pickerMode, setPickerMode] = useState<'month' | 'year'>('month');
     const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
+    const [yearRange, setYearRange] = useState(() => ({
+        start: new Date().getFullYear() - YEAR_BLOCK_SIZE,
+        end: new Date().getFullYear() + YEAR_BLOCK_SIZE,
+    }));
 
     const [loading, setLoading] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
@@ -226,9 +231,10 @@ const Lancamentos = () => {
     }, [pickerMonth]);
 
     const openDatePicker = () => {
+        Keyboard.dismiss();
         setPickerMonth(new Date(startDate.getFullYear(), startDate.getMonth(), 1));
         setShowPeriodPicker(false);
-        setShowDatePicker(true);
+        requestAnimationFrame(() => setShowDatePicker(true));
     };
 
     const closeDatePicker = () => {
@@ -237,9 +243,15 @@ const Lancamentos = () => {
     };
 
     const openPeriodPicker = () => {
-        setPickerYear(pickerMonth.getFullYear());
+        Keyboard.dismiss();
+        const baseYear = pickerMonth.getFullYear();
+        setPickerYear(baseYear);
+        setYearRange({
+            start: baseYear - YEAR_BLOCK_SIZE,
+            end: baseYear + YEAR_BLOCK_SIZE,
+        });
         setPickerMode('month');
-        setShowPeriodPicker(true);
+        requestAnimationFrame(() => setShowPeriodPicker(true));
     };
 
     const closePeriodPicker = () => setShowPeriodPicker(false);
@@ -261,8 +273,20 @@ const Lancamentos = () => {
     };
 
     const yearOptions = useMemo(() => {
-        return Array.from({ length: 16 }, (_, index) => pickerYear - 8 + index);
-    }, [pickerYear]);
+        const options: number[] = [];
+        for (let year = yearRange.start; year <= yearRange.end; year += 1) {
+            options.push(year);
+        }
+        return options;
+    }, [yearRange.end, yearRange.start]);
+
+    const loadMoreYearsUp = () => {
+        setYearRange((current) => ({ ...current, start: current.start - YEAR_BLOCK_SIZE }));
+    };
+
+    const loadMoreYearsDown = () => {
+        setYearRange((current) => ({ ...current, end: current.end + YEAR_BLOCK_SIZE }));
+    };
 
     const handleAmountChange = (value: string) => {
         const digits = onlyDigits(value).slice(0, 9);
@@ -789,12 +813,24 @@ const Lancamentos = () => {
                                 </View>
                             </>
                         ) : (
-                            <View className="flex-row flex-wrap justify-between">
-                                {yearOptions.map((year) => {
+                            <FlatList
+                                data={yearOptions}
+                                keyExtractor={(item) => `year-${item}`}
+                                numColumns={3}
+                                style={{ maxHeight: 260 }}
+                                contentContainerStyle={{ paddingBottom: 4 }}
+                                columnWrapperStyle={{ justifyContent: 'space-between' }}
+                                onEndReachedThreshold={0.35}
+                                onEndReached={loadMoreYearsDown}
+                                onScroll={({ nativeEvent }) => {
+                                    if (nativeEvent.contentOffset.y <= 24) {
+                                        loadMoreYearsUp();
+                                    }
+                                }}
+                                renderItem={({ item: year }) => {
                                     const active = pickerMonth.getFullYear() === year;
                                     return (
                                         <TouchableOpacity
-                                            key={year}
                                             className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
                                             style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
                                             onPress={() => selectYear(year)}
@@ -802,8 +838,8 @@ const Lancamentos = () => {
                                             <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText>
                                         </TouchableOpacity>
                                     );
-                                })}
-                            </View>
+                                }}
+                            />
                         )}
                     </View>
                 </View>

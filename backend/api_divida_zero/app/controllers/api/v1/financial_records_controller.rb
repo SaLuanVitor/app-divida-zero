@@ -2,6 +2,16 @@
   module V1
     class FinancialRecordsController < ApplicationController
       before_action :authenticate_access_token!
+      STATUS_TRANSITIONS = {
+        "income" => {
+          "pending" => "received",
+          "received" => "pending"
+        },
+        "expense" => {
+          "pending" => "paid",
+          "paid" => "pending"
+        }
+      }.freeze
 
       def index
         records = @current_user.financial_records.order(:due_date)
@@ -57,31 +67,23 @@
           }, status: :ok
         end
 
-        new_status = record.flow_type == "income" ? "received" : "paid"
-        message = record.flow_type == "income" ? "Registro marcado como recebido." : "Registro marcado como pago."
-        record.update!(status: new_status, paid_at: Time.current)
-        xp_feedback = GamificationService.award!(
-          user: @current_user,
-          event_type: record.flow_type == "income" ? "income_received" : "expense_paid",
-          points: 20,
-          source: record,
-          metadata: {
-            flow_type: record.flow_type,
-            record_type: record.record_type,
-            record_title: record.title,
-            category: record.category
-          }
-        )
-        FinancialGoalsProgressService.recalculate_for_user!(@current_user)
-        GamificationService.sync_record_achievements!(@current_user, source: record)
-        DailyAchievementsService.sync_for_user!(@current_user)
-        xp_feedback = refresh_feedback_summary(xp_feedback)
+        result = apply_record_status_transition(record: record, next_status: transition_target_for(record, "pending"))
+        render json: result, status: :ok
+      end
 
-        render json: {
-          message: message,
-          record: serialize_record(record),
-          xp_feedback: xp_feedback
-        }, status: :ok
+      def update_status
+        record = @current_user.financial_records.find(params[:id])
+        next_status = params[:status].to_s
+        allowed = STATUS_TRANSITIONS.fetch(record.flow_type, {})
+
+        unless allowed[record.status] == next_status
+          return render json: {
+            error: "Transição de status inválida para este registro."
+          }, status: :unprocessable_entity
+        end
+
+        result = apply_record_status_transition(record: record, next_status: next_status)
+        render json: result, status: :ok
       end
 
       def destroy
@@ -340,6 +342,69 @@
         return "Nova dívida" if mode == "debt"
 
         flow_type == "income" ? "Novo ganho" : "Novo lançamento"
+      end
+
+      def transition_target_for(record, from_status)
+        STATUS_TRANSITIONS.fetch(record.flow_type, {}).fetch(from_status)
+      end
+
+      def apply_record_status_transition(record:, next_status:)
+        previous_status = record.status
+        message = transition_message(record: record, next_status: next_status)
+        record.update!(
+          status: next_status,
+          paid_at: next_status == "pending" ? nil : Time.current
+        )
+
+        xp_feedback = award_status_transition_xp(record: record, previous_status: previous_status, next_status: next_status)
+        FinancialGoalsProgressService.recalculate_for_user!(@current_user)
+        GamificationService.sync_record_achievements!(@current_user, source: record)
+        DailyAchievementsService.sync_for_user!(@current_user)
+        xp_feedback = refresh_feedback_summary(xp_feedback)
+
+        {
+          message: message,
+          record: serialize_record(record),
+          xp_feedback: xp_feedback
+        }
+      end
+
+      def award_status_transition_xp(record:, previous_status:, next_status:)
+        metadata = {
+          flow_type: record.flow_type,
+          record_type: record.record_type,
+          record_title: record.title,
+          category: record.category
+        }
+
+        if previous_status == "pending" && next_status != "pending"
+          event_type = record.flow_type == "income" ? "income_received" : "expense_paid"
+          return GamificationService.award!(
+            user: @current_user,
+            event_type: event_type,
+            points: 20,
+            source: record,
+            metadata: metadata
+          )
+        end
+
+        if previous_status != "pending" && next_status == "pending"
+          return GamificationService.award!(
+            user: @current_user,
+            event_type: "record_reopened",
+            points: -20,
+            source: record,
+            metadata: metadata
+          )
+        end
+
+        nil
+      end
+
+      def transition_message(record:, next_status:)
+        return record.flow_type == "income" ? "Registro marcado como recebido." : "Registro marcado como pago." if next_status != "pending"
+
+        "Registro voltou para pendente."
       end
 
       def serialize_record(record)

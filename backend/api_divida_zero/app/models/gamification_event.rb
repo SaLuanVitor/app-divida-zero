@@ -11,6 +11,7 @@
     goal_progress_milestone
     goal_completed
     goal_deleted
+    record_reopened
     daily_achievement_completed
   ].freeze
 

@@ -18,6 +18,12 @@ export interface FinancialGoalDto {
   completed_at?: string | null;
 }
 
+export interface FinancialGoalFundingSnapshotDto {
+  settled_global_balance: string;
+  allocated_to_goals: string;
+  available_for_goal_funding: string;
+}
+
 export type FinancialGoalContributionKind = 'deposit' | 'withdraw';
 
 export interface FinancialGoalContributionDto {

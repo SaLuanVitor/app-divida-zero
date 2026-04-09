@@ -14,6 +14,18 @@
       feedbacks
     end
 
+    def funding_snapshot_for_user(user)
+      settled_global_balance = settled_global_balance_for_user(user)
+      allocated_to_goals = allocated_to_goals_for_user(user)
+      available_for_goal_funding = settled_global_balance - allocated_to_goals
+
+      {
+        settled_global_balance: settled_global_balance,
+        allocated_to_goals: allocated_to_goals,
+        available_for_goal_funding: available_for_goal_funding
+      }
+    end
+
     def recalculate_goal!(goal)
       current_amount = relevant_amount_for(goal)
       progress_pct = progress_for(goal.target_amount, current_amount)
@@ -90,6 +102,21 @@
     end
 
     private
+
+    def settled_global_balance_for_user(user)
+      totals = user.financial_records
+                   .where.not(status: "pending")
+                   .group(:flow_type)
+                   .sum(:amount)
+
+      income = totals.fetch("income", 0).to_d
+      expense = totals.fetch("expense", 0).to_d
+      income - expense
+    end
+
+    def allocated_to_goals_for_user(user)
+      user.financial_goals.sum(:current_amount).to_d
+    end
 
     def sync_progress_events!(goal, reached_milestones)
       xp_feedbacks = []

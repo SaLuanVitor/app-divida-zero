@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import AppTextInput from '../../components/AppTextInput';
 import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
@@ -66,6 +66,11 @@ const Metas = () => {
     const [contributionNotes, setContributionNotes] = useState('');
     const [contributionLoading, setContributionLoading] = useState(false);
     const [contributionsByGoal, setContributionsByGoal] = useState<Record<number, FinancialGoalContributionDto[]>>({});
+    const [fundingSnapshot, setFundingSnapshot] = useState({
+        settled_global_balance: '0',
+        allocated_to_goals: '0',
+        available_for_goal_funding: '0',
+    });
     const [visibleGoalsCount, setVisibleGoalsCount] = useState(CARD_PAGE_SIZE);
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastGoalsLoadAtRef = useRef(0);
@@ -104,6 +109,11 @@ const Metas = () => {
         try {
             const result = await listFinancialGoals();
             setGoals(result.goals);
+            setFundingSnapshot({
+                settled_global_balance: result.settled_global_balance,
+                allocated_to_goals: result.allocated_to_goals,
+                available_for_goal_funding: result.available_for_goal_funding,
+            });
             if (result.goals.length > 0) {
                 const contributionPairs = await Promise.all(
                     result.goals.map(async (goalItem) => {
@@ -219,8 +229,17 @@ const Metas = () => {
         if (!goalPendingContribution) return;
 
         const amount = Number(contributionAmountDigits || '0') / 100;
+        const availableToFund = Number(fundingSnapshot.available_for_goal_funding || '0');
         if (amount <= 0) {
             pushFeedback('error', 'Valor inválido', 'Informe um valor maior que zero para continuar.');
+            return;
+        }
+        if (contributionKind === 'deposit' && amount > availableToFund) {
+            pushFeedback(
+                'error',
+                'Saldo insuficiente',
+                `Você só pode aportar até ${formatCurrency(availableToFund)} no momento.`
+            );
             return;
         }
 
@@ -238,6 +257,11 @@ const Metas = () => {
                 contributionKind === 'deposit' ? 'Valor adicionado' : 'Valor retirado',
                 result.message
             );
+            setFundingSnapshot({
+                settled_global_balance: result.settled_global_balance,
+                allocated_to_goals: result.allocated_to_goals,
+                available_for_goal_funding: result.available_for_goal_funding,
+            });
             closeContributionModal({ force: true });
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível registrar o valor agora.';
@@ -288,6 +312,20 @@ const Metas = () => {
                         </View>
                     </Card>
                 </View>
+
+                <Card className="mb-4" noPadding>
+                    <View className="p-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <AppText className="text-slate-500 dark:text-slate-200 text-xs font-bold uppercase">
+                            Saldo disponível para metas
+                        </AppText>
+                        <AppText className="text-slate-900 dark:text-slate-100 text-xl font-black mt-1">
+                            {formatCurrency(fundingSnapshot.available_for_goal_funding)}
+                        </AppText>
+                        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
+                            Quitado global: {formatCurrency(fundingSnapshot.settled_global_balance)} • Alocado em metas: {formatCurrency(fundingSnapshot.allocated_to_goals)}
+                        </AppText>
+                    </View>
+                </Card>
 
                 <Card className="mb-4" noPadding>
                     <View className="p-4 bg-primary/10 border border-primary/10 rounded-2xl">
@@ -475,6 +513,16 @@ const Metas = () => {
                         <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-1 mb-3">
                             {goalPendingContribution.title}
                         </AppText>
+                        {contributionKind === 'deposit' ? (
+                            <View className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a1a1a] px-3 py-2 mb-3">
+                                <AppText className="text-slate-600 dark:text-slate-200 text-xs">
+                                    Disponível para aporte agora:{' '}
+                                    <AppText className="font-bold text-slate-900 dark:text-slate-100">
+                                        {formatCurrency(fundingSnapshot.available_for_goal_funding)}
+                                    </AppText>
+                                </AppText>
+                            </View>
+                        ) : null}
 
                         <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Valor</AppText>
                         <AppTextInput
@@ -499,7 +547,12 @@ const Metas = () => {
                         <Button
                             title={contributionLoading ? 'Salvando...' : contributionKind === 'deposit' ? 'Confirmar aporte' : 'Confirmar retirada'}
                             loading={contributionLoading}
-                            disabled={contributionLoading}
+                            disabled={
+                                contributionLoading ||
+                                (contributionKind === 'deposit' &&
+                                    Number(contributionAmountDigits || '0') / 100 >
+                                        Number(fundingSnapshot.available_for_goal_funding || '0'))
+                            }
                             onPress={submitContribution}
                             className="h-12 mb-2"
                         />
@@ -546,6 +599,9 @@ const Metas = () => {
 };
 
 export default Metas;
+
+
+
 
 
 

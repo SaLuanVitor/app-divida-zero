@@ -21,6 +21,7 @@
       resources :financial_records, only: [:index, :create, :destroy] do
         member do
           patch :pay
+          patch :status, action: :update_status
         end
       end
       resources :financial_goals, only: [:index, :create, :update, :destroy] do

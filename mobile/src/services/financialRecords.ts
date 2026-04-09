@@ -110,6 +110,28 @@ export const payFinancialRecord = async (id: number) => {
   };
 };
 
+export const updateFinancialRecordStatus = async (
+  id: number,
+  status: FinancialRecordDto['status']
+) => {
+  const { data } = await api.patch(`/financial_records/${id}/status`, { status });
+  const payload = data as {
+    message: string;
+    record?: FinancialRecordDto;
+    xp_feedback?: XpFeedbackDto | null;
+  };
+  invalidateFinancialRecordsCache();
+  invalidateFinancialGoalsCache();
+  invalidateGamificationCache();
+  invalidateReportsCache();
+
+  return {
+    message: payload?.message ?? 'Registro atualizado com sucesso.',
+    record: payload.record as FinancialRecordDto,
+    xp_feedback: payload?.xp_feedback ?? null,
+  };
+};
+
 export const deleteFinancialRecord = async (id: number, scope: 'single' | 'group' = 'single') => {
   const { data } = await api.delete(`/financial_records/${id}`, {
     params: {
