@@ -4,10 +4,10 @@
     "slug": "DividaZero",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/brand/app-icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/brand/splash-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -20,15 +20,21 @@
         "POST_NOTIFICATIONS"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#E97800",
+        "foregroundImage": "./assets/brand/android-adaptive-foreground.png",
+        "backgroundImage": "./assets/brand/android-adaptive-background.png",
+        "monochromeImage": "./assets/brand/android-adaptive-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "plugins": [
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/brand/notification-icon-monochrome.png",
+          "color": "#F48C25"
+        }
+      ],
       "expo-sharing"
     ],
     "web": {
