@@ -280,6 +280,20 @@ npm run build:apk:download
 O comando `build:apk:download` salva o arquivo local como `Dívida Zero.apk`.
 Ele baixa o ultimo build Android finalizado do perfil `preview`.
 
+### 8.4.1 Build local estavel (Android)
+
+Para reduzir falhas do Gradle em ambiente local, use o atalho estavel no `mobile/`:
+
+```powershell
+npm run build:apk:local:stable
+```
+
+Esse comando executa:
+- geracao/sincronia de assets de marca;
+- `gradlew --stop`;
+- `gradlew assembleRelease`;
+- copia final para `mobile/Dívida Zero.apk`.
+
 ## 9) Pre-release checklist (Fase 1)
 
 Antes da banca, executar:
