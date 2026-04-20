@@ -810,6 +810,8 @@ const Home = () => {
                         <TouchableOpacity
                             className="bg-[#f8f7f5] dark:bg-black p-2 rounded-full relative"
                             onPress={openNotificationsPopup}
+                            accessibilityRole="button"
+                            accessibilityLabel="Abrir notificações"
                         >
                             <Bell size={20} color={darkMode ? '#cbd5e1' : '#8a7560'} />
                             {notificationUnreadCount > 0 ? (
@@ -824,14 +826,14 @@ const Home = () => {
 
                     <TutorialTarget targetId="home-summary-card">
                         <View className="flex-row gap-3">
-                        <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
+                        <View className="flex-1 bg-white/90 dark:bg-[#121212] rounded-xl p-3 border border-stone-200/60 dark:border-slate-800 items-center">
                             <View className="flex-row items-center mb-1">
                                 <CircleDollarSign size={14} color="#16a34a" />
                                 <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-200 font-bold uppercase">Saldo Total</AppText>
                             </View>
                             <AppText className="text-xl font-bold text-slate-900 dark:text-slate-100 text-center">{formatMoney(totalBalanceValue)}</AppText>
                         </View>
-                        <View className="flex-1 bg-[#f8f7f5] dark:bg-black rounded-xl p-3 border border-stone-200/50 items-center">
+                        <View className="flex-1 bg-white/90 dark:bg-[#121212] rounded-xl p-3 border border-stone-200/60 dark:border-slate-800 items-center">
                             <View className="flex-row items-center mb-1">
                                 <Landmark size={14} color="#f59e0b" />
                                 <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-200 font-bold uppercase">Saldo Mensal</AppText>
@@ -840,28 +842,30 @@ const Home = () => {
                         </View>
                         </View>
 
-                        <View className="mt-4 bg-[#f8f7f5] dark:bg-black rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
-                            <AppText className="text-[11px] text-slate-500 dark:text-slate-200 font-bold uppercase mb-1">Próxima melhor ação</AppText>
-                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">{localNextBestAction.title}</AppText>
-                            <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1">{localNextBestAction.description}</AppText>
+                        <View className="mt-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/25 p-4">
+                            <AppText className="text-[11px] text-primary font-extrabold uppercase mb-1">Próxima ação recomendada</AppText>
+                            <AppText className="text-slate-900 dark:text-slate-100 text-[15px] font-extrabold">{localNextBestAction.title}</AppText>
+                            <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1 leading-5">{localNextBestAction.description}</AppText>
                             <TouchableOpacity
                                 className="mt-3 px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center self-start"
                                 style={{ minHeight: compactPillHeight, height: compactPillHeight }}
                                 onPress={localNextBestAction.onPress}
+                                accessibilityRole="button"
+                                accessibilityLabel={localNextBestAction.cta}
                             >
                                 <AppText className="text-primary text-xs font-bold">{localNextBestAction.cta}</AppText>
                             </TouchableOpacity>
                         </View>
 
-                        <View className="mt-3 bg-[#f8f7f5] dark:bg-black rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
+                        <View className="mt-3 bg-white/90 dark:bg-[#121212] rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
                             <View className="flex-row items-center mb-1">
                                 <Bot size={14} color="#f48c25" />
                                 <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-200 font-bold uppercase">Mensagem de hoje</AppText>
                             </View>
-                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">
+                            <AppText className="text-slate-900 dark:text-slate-100 font-bold text-[15px]">
                                 {dailyMessage.title}
                             </AppText>
-                            <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1">
+                            <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1 leading-5">
                                 {dailyMessage.body}
                             </AppText>
                         </View>

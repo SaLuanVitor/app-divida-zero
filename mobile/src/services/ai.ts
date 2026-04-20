@@ -1,4 +1,5 @@
 import api from './api';
+import { featurePhaseConfig } from '../config/featurePhase';
 import {
   AiAlert,
   AiCategorizeSuggestion,
@@ -19,7 +20,14 @@ const toMeta = (data: any): AiResponseMeta => ({
   source: data?.source === 'llm' ? 'llm' : 'fallback',
 });
 
+const assertAiMobileCallsEnabled = () => {
+  if (!featurePhaseConfig.aiEnabledInMobileCalls) {
+    throw new Error('AI mobile calls are disabled in phase 1.');
+  }
+};
+
 export const getAiNextAction = async () => {
+  assertAiMobileCallsEnabled();
   const { data } = await api.post('/ai/next_action');
   const action: AiNextAction = {
     title: String(data?.next_action?.title || 'Proximo passo'),
@@ -31,6 +39,7 @@ export const getAiNextAction = async () => {
 };
 
 export const getAiAlerts = async () => {
+  assertAiMobileCallsEnabled();
   const { data } = await api.post('/ai/alerts');
   const alerts = Array.isArray(data?.alerts)
     ? data.alerts.map((item: any): AiAlert => ({
@@ -44,6 +53,7 @@ export const getAiAlerts = async () => {
 };
 
 export const getAiCategorizeRecord = async (payload: { title: string; amount: number | string; note?: string }) => {
+  assertAiMobileCallsEnabled();
   const { data } = await api.post('/ai/categorize_record', payload);
   const suggestion: AiCategorizeSuggestion = {
     suggested_category: String(data?.suggestion?.suggested_category || 'Sem categoria'),
@@ -55,6 +65,7 @@ export const getAiCategorizeRecord = async (payload: { title: string; amount: nu
 };
 
 export const getAiReportsBriefing = async () => {
+  assertAiMobileCallsEnabled();
   const { data } = await api.post('/ai/reports_briefing');
   const actions =
     Array.isArray(data?.briefing?.actions) && data.briefing.actions.length
@@ -75,6 +86,7 @@ export const sendAiFeedback = async (payload: {
   useful?: boolean;
   comment?: string;
 }) => {
+  assertAiMobileCallsEnabled();
   const { data } = await api.post('/ai/feedback', payload);
   return {
     id: Number(data?.id || 0),
@@ -83,6 +95,7 @@ export const sendAiFeedback = async (payload: {
 };
 
 export const getDailyMessageToday = async () => {
+  assertAiMobileCallsEnabled();
   const { data } = await api.get('/daily_message/today');
   const parsed: DailyMessageDto = {
     id: Number(data?.id || 0),
