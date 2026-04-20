@@ -10,9 +10,70 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_09_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_09_030000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "ai_feedbacks", force: :cascade do |t|
+    t.bigint "ai_interaction_id", null: false
+    t.text "comment"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "useful"
+    t.bigint "user_id", null: false
+    t.string "vote", null: false
+    t.index ["ai_interaction_id"], name: "index_ai_feedbacks_on_ai_interaction_id"
+    t.index ["user_id", "created_at"], name: "index_ai_feedbacks_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_ai_feedbacks_on_user_id"
+  end
+
+  create_table "ai_interactions", force: :cascade do |t|
+    t.integer "completion_tokens", default: 0, null: false
+    t.decimal "confidence", precision: 4, scale: 3
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.string "feature", null: false
+    t.jsonb "input_payload", default: {}, null: false
+    t.integer "latency_ms"
+    t.string "model"
+    t.jsonb "output_payload", default: {}, null: false
+    t.integer "prompt_tokens", default: 0, null: false
+    t.string "prompt_version", default: "v1", null: false
+    t.string "provider"
+    t.string "status", default: "success", null: false
+    t.integer "total_tokens", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["feature", "created_at"], name: "index_ai_interactions_on_feature_and_created_at"
+    t.index ["user_id", "created_at"], name: "index_ai_interactions_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_ai_interactions_on_user_id"
+  end
+
+  create_table "ai_usage_counters", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "period_start", null: false
+    t.string "period_type", null: false
+    t.integer "requests_count", default: 0, null: false
+    t.integer "tokens_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "period_type", "period_start"], name: "idx_on_user_id_period_type_period_start_c66aec3a88", unique: true
+    t.index ["user_id"], name: "index_ai_usage_counters_on_user_id"
+  end
+
+  create_table "analytics_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "event_name", null: false
+    t.json "metadata", default: {}, null: false
+    t.string "screen"
+    t.string "session_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["session_id"], name: "index_analytics_events_on_session_id"
+    t.index ["user_id", "created_at"], name: "index_analytics_events_on_user_id_and_created_at"
+    t.index ["user_id", "event_name"], name: "index_analytics_events_on_user_id_and_event_name"
+    t.index ["user_id"], name: "index_analytics_events_on_user_id"
+  end
 
   create_table "app_ratings", force: :cascade do |t|
     t.integer "alerts_rating", null: false
@@ -31,18 +92,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_000200) do
     t.index ["user_id"], name: "index_app_ratings_on_user_id", unique: true
   end
 
-  create_table "analytics_events", force: :cascade do |t|
+  create_table "daily_ai_messages", force: :cascade do |t|
+    t.text "body", null: false
     t.datetime "created_at", null: false
-    t.string "event_name", null: false
-    t.json "metadata", default: {}, null: false
-    t.string "screen"
-    t.string "session_id", null: false
+    t.date "date", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "model"
+    t.string "provider"
+    t.string "source_version", default: "v1", null: false
+    t.string "theme", default: "constancia", null: false
+    t.string "title", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["session_id"], name: "index_analytics_events_on_session_id"
-    t.index ["user_id", "created_at"], name: "index_analytics_events_on_user_id_and_created_at"
-    t.index ["user_id", "event_name"], name: "index_analytics_events_on_user_id_and_event_name"
-    t.index ["user_id"], name: "index_analytics_events_on_user_id"
+    t.index ["date"], name: "index_daily_ai_messages_on_date", unique: true
   end
 
   create_table "financial_goals", force: :cascade do |t|
@@ -142,8 +203,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_000200) do
     t.index ["reset_password_token_digest"], name: "index_users_on_reset_password_token_digest"
   end
 
-  add_foreign_key "app_ratings", "users"
+  add_foreign_key "ai_feedbacks", "ai_interactions"
+  add_foreign_key "ai_feedbacks", "users"
+  add_foreign_key "ai_interactions", "users"
+  add_foreign_key "ai_usage_counters", "users"
   add_foreign_key "analytics_events", "users"
+  add_foreign_key "app_ratings", "users"
   add_foreign_key "financial_goals", "users"
   add_foreign_key "financial_records", "users"
   add_foreign_key "gamification_events", "users"
