@@ -24,8 +24,7 @@ type NotificationPreferenceKey =
   | 'device_push_enabled'
   | 'notify_due_today'
   | 'notify_due_tomorrow'
-  | 'notify_weekly_summary'
-  | 'notify_daily_ai_message';
+  | 'notify_weekly_summary';
 
 const NotificationSettings = () => {
   const { darkMode } = useThemeMode();
@@ -267,13 +266,6 @@ const NotificationSettings = () => {
             subtitle="Resumo dos principais movimentos financeiros da semana."
             value={prefs.notify_weekly_summary}
             onChange={(value) => update('notify_weekly_summary', value)}
-            disabled={!prefs.notifications_enabled}
-          />
-          <Item
-            title="Mensagem diaria de incentivo"
-            subtitle="Receba a mensagem global do dia na Home e no celular (opcional)."
-            value={prefs.notify_daily_ai_message}
-            onChange={(value) => update('notify_daily_ai_message', value)}
             disabled={!prefs.notifications_enabled}
           />
         </Card>

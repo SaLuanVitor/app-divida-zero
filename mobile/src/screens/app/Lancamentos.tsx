@@ -15,7 +15,6 @@ import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
-import { getAiCategorizeRecord, sendAiFeedback } from '../../services/ai';
 
 type RegisterTab = 'income' | 'debt';
 
@@ -139,9 +138,6 @@ const Lancamentos = () => {
 
     const [loading, setLoading] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
-    const [aiEnabled, setAiEnabled] = useState(true);
-    const [aiSuggestLoading, setAiSuggestLoading] = useState(false);
-    const [aiSuggestionHint, setAiSuggestionHint] = useState('');
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
     const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
@@ -157,14 +153,6 @@ const Lancamentos = () => {
             setActiveTab('income');
         }
     }, [route.params?.mode]);
-
-    useEffect(() => {
-        const loadPrefs = async () => {
-            const prefs = await getAppPreferences();
-            setAiEnabled(Boolean(prefs.ai_assistant_enabled));
-        };
-        void loadPrefs();
-    }, []);
 
     useEffect(() => {
         const today = new Date();
@@ -358,49 +346,6 @@ const Lancamentos = () => {
         setShowAdvanced(false);
     };
 
-    const applyAiSuggestion = async () => {
-        if (aiSuggestLoading || !title.trim() || amountValue <= 0) return;
-        setAiSuggestLoading(true);
-        setAiSuggestionHint('');
-        try {
-            const result = await getAiCategorizeRecord({
-                title: title.trim(),
-                amount: amountValue,
-                note: notes.trim() || undefined,
-            });
-
-            const suggestedCategory = result.suggestion.suggested_category?.trim();
-            if (suggestedCategory) {
-                if (categoryOptions.includes(suggestedCategory)) {
-                    setCategory(suggestedCategory);
-                    setCustomCategory('');
-                } else {
-                    setCategory('Outro');
-                    setCustomCategory(suggestedCategory);
-                }
-            }
-
-            const nextTab = result.suggestion.suggested_flow_type === 'income' ? 'income' : 'debt';
-            if (nextTab !== activeTab) {
-                setActiveTab(nextTab);
-            }
-
-            setAiSuggestionHint(`Sugestão IA aplicada (${Math.round(result.suggestion.confidence * 100)}%).`);
-            if (result.meta.interaction_id) {
-                void sendAiFeedback({
-                    interaction_id: result.meta.interaction_id,
-                    vote: 'like',
-                    useful: true,
-                    comment: 'Sugestao aplicada no formulario',
-                });
-            }
-        } catch {
-            setAiSuggestionHint('Não foi possível sugerir categoria agora.');
-        } finally {
-            setAiSuggestLoading(false);
-        }
-    };
-
     const onSubmit = async () => {
         if (!canSubmit) {
             Alert.alert('Dados inválidos', 'Revise os campos obrigatórios: valor, categoria e configurações de periodicidade/parcelas.');
@@ -537,22 +482,6 @@ const Lancamentos = () => {
                             <AppText className="text-[11px] text-slate-500 dark:text-slate-200 mb-3">
                                 Título automático ativo. Edite apenas se quiser personalizar.
                             </AppText>
-                        ) : null}
-                        {aiEnabled ? (
-                            <View className="flex-row items-center mb-3">
-                                <TouchableOpacity
-                                    className="px-3 h-10 rounded-full bg-primary/10 border border-primary/20 items-center justify-center"
-                                    onPress={() => void applyAiSuggestion()}
-                                    disabled={aiSuggestLoading || loading || amountValue <= 0 || !title.trim()}
-                                >
-                                    <AppText className="text-primary text-xs font-bold">
-                                        {aiSuggestLoading ? 'Sugerindo...' : 'Sugerir com IA'}
-                                    </AppText>
-                                </TouchableOpacity>
-                                {aiSuggestionHint ? (
-                                    <AppText className="text-[11px] text-slate-500 dark:text-slate-200 ml-2 flex-1">{aiSuggestionHint}</AppText>
-                                ) : null}
-                            </View>
                         ) : null}
 
                         <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Valor (R$)</AppText>
