@@ -6,6 +6,7 @@
     "start": "expo start",
     "android": "expo run:android",
     "build:apk": "eas build -p android --profile preview",
+    "build:apk:download": "eas build:download --platform android --latest --path \"./Dívida Zero.apk\"",
     "build:aab": "eas build -p android --profile production",
     "ios": "expo run:ios",
     "web": "expo start --web",

@@ -237,9 +237,10 @@ No diretorio `mobile/`:
 npx eas login
 npx eas build:configure
 npm run build:apk
+npm run build:apk:download
 ```
 
-Compartilhe o link/arquivo APK gerado pelo EAS com os testers.
+O comando `build:apk:download` salva o arquivo local como `Dívida Zero.apk`.
 
 ## 9) Pre-release checklist (Fase 1)
 
