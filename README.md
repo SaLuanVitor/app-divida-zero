@@ -1,4 +1,4 @@
-# App Divida Zero - Guia de Ambiente Local
+﻿# App Divida Zero - Guia de Ambiente Local
 
 Este guia centraliza os comandos para:
 
@@ -20,6 +20,43 @@ Limitacoes esperadas:
 Criterio de reativacao:
 - definir `EXPO_PUBLIC_PHASE_1_MODE=false`
 - revalidar UX, notificacoes e testes automatizados antes de liberar em producao
+
+## Brand assets (mobile)
+
+Origem oficial da marca:
+
+- `mobile/assets/brand/source/logo-master.svg`
+
+Fluxo recomendado antes de build/release:
+
+```powershell
+cd C:\Users\luanv\Projetos\app-divida-zero\mobile
+npm run brand:generate
+```
+
+Os arquivos gerados ficam em `mobile/assets/brand/` e sao a fonte unica para splash, icone do app e notificacoes Android:
+
+- `app-icon.png`
+- `splash-logo.png`
+- `android-adaptive-foreground.png`
+- `android-adaptive-background.png`
+- `android-adaptive-monochrome.png`
+- `notification-icon-monochrome.png`
+
+Checklist rapido de validacao visual:
+
+- Splash exibe a nova logo sem distorcao.
+- Login exibe a nova identidade visual.
+- Icone instalado no launcher aparece com a nova marca.
+- Notificacao Android usa icone monocromatico legivel na barra de status.
+
+Comandos para refletir alteracoes nativas (icone/splash/notificacao):
+
+```powershell
+cd C:\Users\luanv\Projetos\app-divida-zero\mobile
+npm run brand:generate
+npx expo run:android
+```
 
 ## Pre-requisitos
 
@@ -123,7 +160,7 @@ docker compose exec api bash -lc "RAILS_ENV=test bundle exec rails db:prepare &&
 
 ## 6) Regra obrigatoria de charset (UTF-8)
 
-Todo texto do projeto deve permanecer em UTF-8 (sem caracteres corrompidos, por exemplo sequencias como `Ã` e `�`).
+Todo texto do projeto deve permanecer em UTF-8 (sem caracteres corrompidos, por exemplo sequencias como `Ãƒ` e `ï¿½`).
 
 Validar manualmente:
 
@@ -241,7 +278,7 @@ npm run build:apk:download
 ```
 
 O comando `build:apk:download` salva o arquivo local como `Dívida Zero.apk`.
-Ele baixa o último build Android finalizado do perfil `preview`.
+Ele baixa o ultimo build Android finalizado do perfil `preview`.
 
 ## 9) Pre-release checklist (Fase 1)
 
@@ -263,7 +300,7 @@ cd C:\Users\luanv\Projetos\app-divida-zero
 docker compose exec api bash -lc "RAILS_ENV=test bundle exec rails db:prepare && bundle exec rails test"
 ```
 
-Checklist de execução manual Android (QA):
+Checklist de execucao manual Android (QA):
 
 - `docs/qa/checklist-manual-android-fase1.md`
 
@@ -272,9 +309,9 @@ Checklist de execução manual Android (QA):
 Itens recomendados:
 
 - APK de teste instalada/validada em device real Android
-- credencial fictícia de demonstração
-- roteiro de demo de 5 a 7 minutos cobrindo Auth -> Home -> Lançamentos -> Relatórios -> Configurações -> Notificações
-- evidências de QA (capturas por fluxo e log de defeitos)
+- credencial ficticia de demonstracao
+- roteiro de demo de 5 a 7 minutos cobrindo Auth -> Home -> Lancamentos -> Relatorios -> Configuracoes -> Notificacoes
+- evidencias de QA (capturas por fluxo e log de defeitos)
 
 ### 8.5 Operacao segura (nao perder dados)
 

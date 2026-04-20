@@ -1,12 +1,14 @@
-﻿import React, { useEffect, useState } from 'react';
-import AppText from '../../components/AppText';
+import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { CreditCard, Lock, Quote } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import AppText from '../../components/AppText';
 import Layout from '../../components/Layout';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import BrandLogo from '../../components/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
+import { useThemeMode } from '../../context/ThemeContext';
 
 type LoginRouteParams = {
   prefillEmail?: string;
@@ -16,6 +18,7 @@ type LoginRouteParams = {
 const Login = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { darkMode } = useThemeMode();
 
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
@@ -41,7 +44,7 @@ const Login = () => {
     let valid = true;
 
     if (!login.trim()) {
-      setLoginError('Informe seu login do usuário.');
+      setLoginError('Informe seu login do usu\u00E1rio.');
       valid = false;
     } else {
       setLoginError('');
@@ -68,7 +71,7 @@ const Login = () => {
     try {
       await signIn(login.trim(), password);
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Falha na autenticação. Verifique suas credenciais e tente novamente.';
+      const message = error?.response?.data?.error ?? 'Falha na autentica\u00E7\u00E3o. Verifique suas credenciais e tente novamente.';
       setAuthError(message);
       setPasswordError('Verifique sua senha e tente novamente.');
     }
@@ -77,13 +80,13 @@ const Login = () => {
   return (
     <Layout scrollable formMode contentContainerClassName="p-0 bg-[#f5eee6] dark:bg-black">
       <View className="px-6 pt-8 pb-4">
-        <View className="flex-row items-center justify-center gap-3 mb-8">
-          <View className="w-12 h-12 rounded-xl bg-primary items-center justify-center">
-            <CreditCard size={22} color="#fff" />
-          </View>
-          <AppText className="text-[44px] leading-[48px] font-extrabold text-[#4a2a0a] dark:text-slate-100">
-            Dívida Zero
-          </AppText>
+        <View className="items-center justify-center mb-8">
+          <BrandLogo
+            variant="lockup"
+            size={64}
+            titleColor={darkMode ? '#e2e8f0' : '#4a2a0a'}
+            subtitleColor={darkMode ? '#94a3b8' : '#8a5a24'}
+          />
         </View>
 
         <View className="mb-6">
@@ -92,7 +95,9 @@ const Login = () => {
               <Quote size={13} color="#8a5a24" />
             </View>
             <AppText className="flex-1 text-[15px] leading-[22px] font-semibold text-[#7a4c1e] dark:text-slate-100">
-              O primeiro passo para o <AppText className="text-primary">sucesso financeiro</AppText> é decidir que você não vai mais ser um passageiro da sua própria vida.
+              {'O primeiro passo para o '}
+              <AppText className="text-primary">sucesso financeiro</AppText>
+              {' \u00E9 decidir que voc\u00EA n\u00E3o vai mais ser um passageiro da sua pr\u00F3pria vida.'}
             </AppText>
           </View>
         </View>
@@ -111,7 +116,7 @@ const Login = () => {
           ) : null}
 
           <Input
-            label="Login do Usuário"
+            label={'Login do Usu\u00E1rio'}
             placeholder="seu@login"
             value={login}
             onChangeText={(value) => {
@@ -144,17 +149,11 @@ const Login = () => {
             className="text-[#7a5a35] dark:text-slate-100"
           />
 
-          <Button
-            title="Entrar"
-            onPress={handleLogin}
-            loading={authLoading}
-            disabled={authLoading}
-            className="h-14"
-          />
+          <Button title="Entrar" onPress={handleLogin} loading={authLoading} disabled={authLoading} className="h-14" />
         </View>
 
         <View className="mt-8 flex-row justify-center items-center pb-10">
-          <AppText className="text-[#7a4c1e] dark:text-slate-200 text-lg">Não tem uma conta? </AppText>
+          <AppText className="text-[#7a4c1e] dark:text-slate-200 text-lg">{'N\u00E3o tem uma conta? '}</AppText>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
             <AppText className="text-[#8a4c00] dark:text-primary font-bold text-lg">Cadastre-se</AppText>
           </TouchableOpacity>
@@ -165,4 +164,3 @@ const Login = () => {
 };
 
 export default Login;
-
