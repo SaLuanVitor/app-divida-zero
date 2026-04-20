@@ -234,13 +234,14 @@ Arquivo de referencia:
 No diretorio `mobile/`:
 
 ```powershell
-npx eas login
-npx eas build:configure
+npx eas-cli login
+npx eas-cli build:configure
 npm run build:apk
 npm run build:apk:download
 ```
 
 O comando `build:apk:download` salva o arquivo local como `Dívida Zero.apk`.
+Ele baixa o último build Android finalizado do perfil `preview`.
 
 ## 9) Pre-release checklist (Fase 1)
 
