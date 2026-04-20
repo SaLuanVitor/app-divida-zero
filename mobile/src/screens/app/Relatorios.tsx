@@ -382,7 +382,12 @@ const Relatorios = () => {
 
         <Card className="mb-3" noPadding><View className="p-4">
           <View className="flex-row items-center justify-between mb-1">
-              <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(-1)}><ChevronLeft size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} /></TouchableOpacity>
+              <TouchableOpacity
+                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800"
+                onPress={() => changeMonth(-1)}
+                accessibilityRole="button"
+                accessibilityLabel="Mês anterior dos relatórios"
+              ><ChevronLeft size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} /></TouchableOpacity>
             <TutorialTarget targetId="relatorios-period-picker">
               <TouchableOpacity
                 className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
@@ -394,8 +399,18 @@ const Relatorios = () => {
               </TouchableOpacity>
             </TutorialTarget>
             <View className="flex-row items-center gap-2">
-              <TouchableOpacity className="px-3 py-2 rounded-full bg-primary/10 border border-primary/20" onPress={today}><AppText className="text-primary text-xs font-bold">Hoje</AppText></TouchableOpacity>
-              <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(1)}><ChevronRight size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} /></TouchableOpacity>
+              <TouchableOpacity
+                className="px-3 py-2 rounded-full bg-primary/10 border border-primary/20"
+                onPress={today}
+                accessibilityRole="button"
+                accessibilityLabel="Ir para o mês atual nos relatórios"
+              ><AppText className="text-primary text-xs font-bold">Hoje</AppText></TouchableOpacity>
+              <TouchableOpacity
+                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800"
+                onPress={() => changeMonth(1)}
+                accessibilityRole="button"
+                accessibilityLabel="Próximo mês dos relatórios"
+              ><ChevronRight size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} /></TouchableOpacity>
             </View>
           </View>
           <View className="flex-row items-center justify-between">
