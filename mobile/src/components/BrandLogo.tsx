@@ -23,11 +23,13 @@ const BrandLogo = ({
   subtitleColor = '#94a3b8',
   subtitleSize = 12,
 }: BrandLogoProps) => {
+  const imageStyle = { width: size, height: size };
+
   if (variant === 'mark') {
     return (
       <Image
         source={BRAND_SYMBOL}
-        style={{ width: size, height: size, borderRadius: Math.max(8, Math.round(size * 0.22)) }}
+        style={imageStyle}
         resizeMode="contain"
         accessibilityIgnoresInvertColors
       />
@@ -38,8 +40,8 @@ const BrandLogo = ({
     <View style={{ alignItems: 'center' }}>
       <Image
         source={BRAND_MARK}
-        style={{ width: size, height: size, borderRadius: Math.max(8, Math.round(size * 0.22)) }}
-        resizeMode="cover"
+        style={imageStyle}
+        resizeMode="contain"
         accessibilityIgnoresInvertColors
       />
       <Text
