@@ -51,6 +51,15 @@ Validar estabilidade da entrega Fase 1 com IA oculta no mobile, sem regressão n
 4. Reativar notificações e validar comportamento esperado.
 5. Validar ausência de opção de mensagem diária IA na UI.
 
+## Fluxo 7 - Tutorial adaptativo (trilha única)
+1. Em onboarding, validar entrada no modo "tutorial adaptativo" (sem escolha iniciante/avançado).
+2. Validar etapa essencial em dispositivo compacto, padrão e grande.
+3. Validar fallback de layout quando alvo não puder ser medido (card com CTA de navegação).
+4. Concluir etapa essencial e validar transição para missões contextuais.
+5. Concluir ao menos 2 missões reais (criar lançamento, abrir relatórios ou criar meta).
+6. Validar pausa e retomada do tutorial em Configurações.
+7. Validar conclusão final da trilha sem travar navegação.
+
 ## Acessibilidade
 1. Verificar contraste mínimo aceitável em textos e botões (claro/escuro).
 2. Validar alvos de toque em ações principais (>= 44dp).

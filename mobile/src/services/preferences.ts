@@ -30,6 +30,9 @@ export const defaultAppPreferences: AppPreferences = {
   tutorial_advanced_completed: false,
   tutorial_last_step: null,
   tutorial_advanced_tasks_done: [],
+  tutorial_version: 2,
+  tutorial_track_state: 'idle',
+  tutorial_missions_done: [],
 };
 
 const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): AppPreferences => {
@@ -68,6 +71,18 @@ const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): 
         : null,
     tutorial_advanced_tasks_done: Array.isArray(raw?.tutorial_advanced_tasks_done)
       ? raw.tutorial_advanced_tasks_done.filter((item): item is string => typeof item === 'string')
+      : [],
+    tutorial_version: typeof raw?.tutorial_version === 'number' ? raw.tutorial_version : 2,
+    tutorial_track_state:
+      raw?.tutorial_track_state === 'idle' ||
+      raw?.tutorial_track_state === 'essential' ||
+      raw?.tutorial_track_state === 'contextual' ||
+      raw?.tutorial_track_state === 'paused' ||
+      raw?.tutorial_track_state === 'completed'
+        ? raw.tutorial_track_state
+        : 'idle',
+    tutorial_missions_done: Array.isArray(raw?.tutorial_missions_done)
+      ? raw.tutorial_missions_done.filter((item): item is string => typeof item === 'string')
       : [],
   };
 };

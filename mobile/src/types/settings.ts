@@ -21,5 +21,8 @@ export interface AppPreferences {
   tutorial_advanced_completed: boolean;
   tutorial_last_step: string | null;
   tutorial_advanced_tasks_done: string[];
+  tutorial_version: number;
+  tutorial_track_state: 'idle' | 'essential' | 'contextual' | 'paused' | 'completed';
+  tutorial_missions_done: string[];
 }
 

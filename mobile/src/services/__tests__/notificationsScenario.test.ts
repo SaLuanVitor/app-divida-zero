@@ -25,6 +25,9 @@ const basePrefs: AppPreferences = {
   tutorial_advanced_completed: false,
   tutorial_last_step: null,
   tutorial_advanced_tasks_done: [],
+  tutorial_version: 2,
+  tutorial_track_state: 'idle',
+  tutorial_missions_done: [],
 };
 
 const record = (overrides: Partial<FinancialRecordDto>): FinancialRecordDto => ({
