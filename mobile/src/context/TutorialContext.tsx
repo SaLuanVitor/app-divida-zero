@@ -4,8 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppText from '../components/AppText';
 import Button from '../components/Button';
 import { AnalyticsEventName, subscribeAnalyticsEvents, trackAnalyticsEventDeferred } from '../services/analytics';
-import { listFinancialGoals } from '../services/financialGoals';
-import { listFinancialRecords } from '../services/financialRecords';
 import { getAppPreferences, updateAppPreferences } from '../services/preferences';
 import { AppPreferences } from '../types/settings';
 import { navigateSafely } from '../navigation/navigationRef';
@@ -13,116 +11,22 @@ import { useAccessibility } from './AccessibilityContext';
 import { useAuth } from './AuthContext';
 import { useOverlay } from './OverlayContext';
 import { useThemeMode } from './ThemeContext';
-
-type SpotlightRect = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
-type BeginnerStep = {
-  id: string;
-  title: string;
-  description: string;
-  screen: string;
-  targetId: string;
-};
-
-type AdvancedTask = {
-  id: string;
-  label: string;
-  description: string;
-};
-
-const BEGINNER_STEPS: BeginnerStep[] = [
-  {
-    id: 'home_summary',
-    title: 'Resumo inicial',
-    description: 'Aqui você acompanha saldos e a próxima melhor ação para evoluir no app.',
-    screen: 'Inicio',
-    targetId: 'home-summary-card',
-  },
-  {
-    id: 'home_calendar',
-    title: 'Calendário do mês',
-    description: 'Use o calendário para ver lançamentos por dia e abrir detalhes rapidamente.',
-    screen: 'Inicio',
-    targetId: 'home-calendar-card',
-  },
-  {
-    id: 'tab_lancamentos',
-    title: 'Atalho de lançamentos',
-    description: 'Esse botão abre o menu para cadastrar ganho ou dívida com poucos toques.',
-    screen: 'Inicio',
-    targetId: 'tab-lancamentos',
-  },
-  {
-    id: 'tab_metas',
-    title: 'Aba Metas',
-    description: 'Agora vamos para Metas para criar e acompanhar objetivos financeiros.',
-    screen: 'Inicio',
-    targetId: 'tab-metas',
-  },
-  {
-    id: 'metas_create',
-    title: 'Criar meta',
-    description: 'Toque aqui para criar sua primeira meta e acompanhar progresso com XP.',
-    screen: 'Metas',
-    targetId: 'metas-create-button',
-  },
-  {
-    id: 'tab_relatorios',
-    title: 'Aba Relatórios',
-    description: 'Nesta aba você consulta visão consolidada de entradas, saídas e projeções.',
-    screen: 'Metas',
-    targetId: 'tab-relatorios',
-  },
-  {
-    id: 'relatorios_period',
-    title: 'Período do relatório',
-    description: 'Troque mês e ano para analisar o desempenho por período.',
-    screen: 'Relatorios',
-    targetId: 'relatorios-period-picker',
-  },
-  {
-    id: 'tab_perfil',
-    title: 'Aba Perfil',
-    description: 'No Perfil você ajusta preferências, notificações e segurança da conta.',
-    screen: 'Relatorios',
-    targetId: 'tab-perfil',
-  },
-  {
-    id: 'perfil_conta',
-    title: 'Menu da conta',
-    description: 'Aqui ficam configurações principais, notificações e ajuda.',
-    screen: 'Perfil',
-    targetId: 'perfil-account-card',
-  },
-];
-
-const ADVANCED_TASKS: AdvancedTask[] = [
-  {
-    id: 'visit_home',
-    label: 'Abrir Início',
-    description: 'Confirme os indicadores iniciais no dashboard principal.',
-  },
-  {
-    id: 'record_created',
-    label: 'Criar 1 lançamento',
-    description: 'Cadastre um ganho ou uma dívida para validar seu fluxo rápido.',
-  },
-  {
-    id: 'goal_created',
-    label: 'Criar 1 meta',
-    description: 'Cadastre uma meta para acompanhar evolução e marcos de XP.',
-  },
-  {
-    id: 'reports_viewed',
-    label: 'Abrir relatório',
-    description: 'Acesse Relatórios e visualize o mês atual.',
-  },
-];
+import {
+  CONTEXTUAL_MISSIONS,
+  CURRENT_TUTORIAL_VERSION,
+  ESSENTIAL_STEPS,
+  TutorialDeviceClass,
+  TutorialInset,
+  TutorialMission,
+  TutorialSpotlightRect,
+  TutorialTrackState,
+  computeSpotlightRect,
+  getFirstPendingMission,
+  getTooltipMetrics,
+  migrateLegacyTutorialState,
+  resolveTutorialDeviceClass,
+  resolveTutorialStepIndex,
+} from './tutorialEngine';
 
 type TutorialContextData = {
   registerTarget: (id: string, ref: View | null) => void;
@@ -136,6 +40,9 @@ type TutorialContextData = {
   advancedDoneTasks: string[];
   isTutorialActive: boolean;
   isBeginnerTutorialActive: boolean;
+  tutorialTrackState: TutorialTrackState;
+  tutorialMissionsDone: string[];
+  tutorialDeviceClass: TutorialDeviceClass;
 };
 
 const TutorialContext = createContext<TutorialContextData>({} as TutorialContextData);
@@ -145,8 +52,6 @@ type TutorialProviderProps = {
   currentRouteName?: string;
 };
 
-const STEP_MARGIN = 12;
-const DEFAULT_SPOTLIGHT_PADDING = 14;
 const TARGET_SPOTLIGHT_PADDING: Record<string, number> = {
   'home-summary-card': 18,
   'home-calendar-card': 14,
@@ -155,7 +60,11 @@ const TARGET_SPOTLIGHT_PADDING: Record<string, number> = {
   'tab-relatorios': 18,
   'tab-perfil': 18,
   'metas-create-button': 16,
+  'relatorios-period-picker': 14,
+  'perfil-account-card': 16,
 };
+
+const MEASURE_FAILURE_THRESHOLD = 2;
 
 export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, currentRouteName }) => {
   const { signed } = useAuth();
@@ -165,28 +74,39 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
-  const [beginnerActive, setBeginnerActive] = useState(false);
-  const [advancedActive, setAdvancedActive] = useState(false);
-  const [beginnerIndex, setBeginnerIndex] = useState(0);
-  const [spotlightRect, setSpotlightRect] = useState<SpotlightRect | null>(null);
-  const [beginnerCompleted, setBeginnerCompleted] = useState(false);
-  const [advancedCompleted, setAdvancedCompleted] = useState(false);
-  const [advancedDoneTasks, setAdvancedDoneTasks] = useState<string[]>([]);
+  const [trackState, setTrackState] = useState<TutorialTrackState>('idle');
+  const [essentialStepIndex, setEssentialStepIndex] = useState(0);
+  const [missionsDone, setMissionsDone] = useState<string[]>([]);
+  const [spotlightRect, setSpotlightRect] = useState<TutorialSpotlightRect | null>(null);
   const [measureFailCount, setMeasureFailCount] = useState(0);
   const [targetUnavailable, setTargetUnavailable] = useState(false);
-  const [tooltipHeight, setTooltipHeight] = useState(228);
+  const [tooltipHeight, setTooltipHeight] = useState(196);
   const targetRefs = useRef<Record<string, View | null>>({});
   const hasBootstrappedRef = useRef(false);
 
-  const isTutorialActive = beginnerActive || advancedActive;
-  const isBeginnerTutorialActive = beginnerActive;
-  const currentStep = BEGINNER_STEPS[beginnerIndex] ?? null;
+  const deviceClass = useMemo(() => resolveTutorialDeviceClass(windowWidth), [windowWidth]);
+  const tooltipMetrics = useMemo(() => getTooltipMetrics(deviceClass), [deviceClass]);
+  const isEssentialActive = trackState === 'essential';
+  const isContextualActive = trackState === 'contextual';
+  const isTutorialActive = isEssentialActive || isContextualActive;
+  const isBeginnerTutorialActive = isEssentialActive;
+  const currentStep = ESSENTIAL_STEPS[essentialStepIndex] ?? null;
+  const currentMission = useMemo(() => getFirstPendingMission(missionsDone), [missionsDone]);
+  const advancedCompleted = missionsDone.length >= CONTEXTUAL_MISSIONS.length;
+  const beginnerCompleted = trackState === 'contextual' || trackState === 'completed' || trackState === 'paused';
 
-  const persistState = useCallback(
+  const persistState = useCallback(async (partial: Partial<AppPreferences>) => {
+    await updateAppPreferences(partial);
+  }, []);
+
+  const persistTutorialState = useCallback(
     async (partial: Partial<AppPreferences>) => {
-      await updateAppPreferences(partial);
+      await persistState({
+        tutorial_version: CURRENT_TUTORIAL_VERSION,
+        ...partial,
+      });
     },
-    []
+    [persistState]
   );
 
   const registerTarget = useCallback((id: string, ref: View | null) => {
@@ -201,24 +121,192 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     setSpotlightRect(null);
     setMeasureFailCount((previous) => {
       const next = previous + 1;
-      if (next >= 3) {
+      if (next >= MEASURE_FAILURE_THRESHOLD) {
         setTargetUnavailable(true);
       }
       return next;
     });
   }, []);
 
-  const resolveBeginnerIndex = useCallback((stepId?: string | null) => {
-    if (!stepId) return 0;
-    const index = BEGINNER_STEPS.findIndex((step) => step.id === stepId);
-    return index >= 0 ? index : 0;
-  }, []);
+  const markMissionDone = useCallback(
+    async (missionId: string) => {
+      setMissionsDone((previous) => {
+        if (previous.includes(missionId)) return previous;
+        const next = [...previous, missionId];
+        void persistTutorialState({ tutorial_missions_done: next });
+        trackAnalyticsEventDeferred({
+          event_name: 'tutorial_mission_completed',
+          screen: currentRouteName ?? 'Tutorial',
+          metadata: { mission_id: missionId, done_count: next.length },
+        });
+        return next;
+      });
+    },
+    [currentRouteName, persistTutorialState]
+  );
 
-  const measureCurrentStep = useCallback(() => {
-    if (!beginnerActive || !currentStep) {
+  const startEssentialTutorial = useCallback(
+    async (options?: { replay?: boolean; source?: 'auto' | 'manual'; initialStepId?: string | null }) => {
+      const replay = Boolean(options?.replay);
+      const source = options?.source ?? 'manual';
+      const nextIndex = replay ? 0 : resolveTutorialStepIndex(options?.initialStepId);
+      const firstStep = ESSENTIAL_STEPS[nextIndex] ?? ESSENTIAL_STEPS[0];
+
+      closeOverlay();
+      setTrackState('essential');
+      setEssentialStepIndex(nextIndex);
       setSpotlightRect(null);
+      setTargetUnavailable(false);
+      setMeasureFailCount(0);
+
+      await persistTutorialState({
+        tutorial_track_state: 'essential',
+        tutorial_reopen_enabled: true,
+        tutorial_active_mode: 'beginner',
+        tutorial_last_step: firstStep.id,
+        tutorial_beginner_completed: false,
+        ...(replay ? { tutorial_advanced_completed: false, tutorial_missions_done: [] } : {}),
+      });
+
+      if (replay) {
+        setMissionsDone([]);
+      }
+
+      if (source !== 'auto') {
+        trackAnalyticsEventDeferred({
+          event_name: 'tutorial_reopened',
+          screen: 'Tutorial',
+          metadata: { track: 'essential' },
+        });
+      }
+
+      trackAnalyticsEventDeferred({
+        event_name: 'tutorial_step_seen',
+        screen: firstStep.screen,
+        metadata: { step_id: firstStep.id, step_index: nextIndex + 1, step_total: ESSENTIAL_STEPS.length },
+      });
+
+      navigateSafely(firstStep.screen);
+    },
+    [closeOverlay, persistTutorialState]
+  );
+
+  const startContextualTutorial = useCallback(
+    async (options?: { replay?: boolean; source?: 'auto' | 'manual' }) => {
+      const replay = Boolean(options?.replay);
+      const source = options?.source ?? 'manual';
+
+      closeOverlay();
+      setTrackState('contextual');
+      setSpotlightRect(null);
+      setTargetUnavailable(false);
+      setMeasureFailCount(0);
+
+      if (replay) {
+        setMissionsDone([]);
+      }
+
+      await persistTutorialState({
+        tutorial_track_state: 'contextual',
+        tutorial_reopen_enabled: true,
+        tutorial_active_mode: 'advanced',
+        tutorial_beginner_completed: true,
+        tutorial_last_step: null,
+        ...(replay ? { tutorial_missions_done: [], tutorial_advanced_completed: false } : {}),
+      });
+
+      if (source !== 'auto') {
+        trackAnalyticsEventDeferred({
+          event_name: 'tutorial_reopened',
+          screen: 'Tutorial',
+          metadata: { track: 'contextual' },
+        });
+      }
+    },
+    [closeOverlay, persistTutorialState]
+  );
+
+  const completeTutorial = useCallback(async () => {
+    setTrackState('completed');
+    setSpotlightRect(null);
+    await persistTutorialState({
+      tutorial_track_state: 'completed',
+      tutorial_reopen_enabled: false,
+      tutorial_active_mode: null,
+      tutorial_beginner_completed: true,
+      tutorial_advanced_completed: true,
+      tutorial_last_step: null,
+      tutorial_missions_done: CONTEXTUAL_MISSIONS.map((item) => item.id),
+      tutorial_advanced_tasks_done: CONTEXTUAL_MISSIONS.map((item) => item.id),
+    });
+    trackAnalyticsEventDeferred({
+      event_name: 'onboarding_completed',
+      screen: 'Tutorial',
+      metadata: { track: 'adaptive' },
+    });
+  }, [persistTutorialState]);
+
+  const stopTutorial = useCallback(async () => {
+    setTrackState('paused');
+    setSpotlightRect(null);
+    await persistTutorialState({
+      tutorial_track_state: 'paused',
+      tutorial_reopen_enabled: false,
+      tutorial_active_mode: null,
+    });
+  }, [persistTutorialState]);
+
+  const goToEssentialStep = useCallback(
+    async (stepIndex: number) => {
+      const step = ESSENTIAL_STEPS[stepIndex];
+      if (!step) return;
+      closeOverlay();
+      setSpotlightRect(null);
+      setTargetUnavailable(false);
+      setMeasureFailCount(0);
+      setEssentialStepIndex(stepIndex);
+      await persistTutorialState({
+        tutorial_track_state: 'essential',
+        tutorial_last_step: step.id,
+        tutorial_reopen_enabled: true,
+      });
+      trackAnalyticsEventDeferred({
+        event_name: 'tutorial_step_seen',
+        screen: step.screen,
+        metadata: { step_id: step.id, step_index: stepIndex + 1, step_total: ESSENTIAL_STEPS.length },
+      });
+      navigateSafely(step.screen);
+    },
+    [closeOverlay, persistTutorialState]
+  );
+
+  const handleNextEssentialStep = useCallback(async () => {
+    if (!currentStep) return;
+
+    trackAnalyticsEventDeferred({
+      event_name: 'tutorial_step_completed',
+      screen: currentStep.screen,
+      metadata: { step_id: currentStep.id, step_index: essentialStepIndex + 1, step_total: ESSENTIAL_STEPS.length },
+    });
+
+    const nextIndex = essentialStepIndex + 1;
+    if (nextIndex >= ESSENTIAL_STEPS.length) {
+      await startContextualTutorial({ source: 'manual' });
       return;
     }
+
+    await goToEssentialStep(nextIndex);
+  }, [currentStep, essentialStepIndex, goToEssentialStep, startContextualTutorial]);
+
+  const handlePrevEssentialStep = useCallback(async () => {
+    const prevIndex = essentialStepIndex - 1;
+    if (prevIndex < 0) return;
+    await goToEssentialStep(prevIndex);
+  }, [essentialStepIndex, goToEssentialStep]);
+
+  const refreshTargetMeasure = useCallback(() => {
+    if (!isEssentialActive || !currentStep) return;
+    if (!currentRouteName || currentRouteName !== currentStep.screen) return;
 
     const target = targetRefs.current[currentStep.targetId];
     if (!target || typeof target.measureInWindow !== 'function') {
@@ -232,242 +320,50 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
         return;
       }
 
-      const spotlightPadding = TARGET_SPOTLIGHT_PADDING[currentStep.targetId] ?? DEFAULT_SPOTLIGHT_PADDING;
+      const insetData: TutorialInset = {
+        top: insets.top,
+        bottom: insets.bottom,
+      };
+      const computed = computeSpotlightRect({
+        rect: { x, y, width, height },
+        windowWidth,
+        windowHeight,
+        insets: insetData,
+        padding: TARGET_SPOTLIGHT_PADDING[currentStep.targetId] ?? 14,
+      });
 
-      const safeTop = insets.top + 4;
-      const safeBottom = windowHeight - insets.bottom - 4;
-      const maxAllowedWidth = Math.max(40, windowWidth - STEP_MARGIN * 2);
-
-      const nextWidth = Math.min(width + spotlightPadding * 2, maxAllowedWidth);
-      const maxX = Math.max(STEP_MARGIN, windowWidth - STEP_MARGIN - nextWidth);
-      const nextX = Math.min(Math.max(STEP_MARGIN, x - spotlightPadding), maxX);
-
-      const rawY = y - spotlightPadding;
-      const nextY = Math.max(safeTop, rawY);
-      const rawHeight = height + spotlightPadding * 2;
-      const boundedHeight = Math.min(rawHeight, Math.max(40, safeBottom - nextY));
-
-      if (boundedHeight <= 0) {
+      if (!computed) {
         markMeasureFailure();
         return;
       }
 
-      setSpotlightRect({
-        x: nextX,
-        y: nextY,
-        width: nextWidth,
-        height: boundedHeight,
-      });
-      setMeasureFailCount(0);
-      setTargetUnavailable(false);
-    });
-  }, [beginnerActive, currentStep, insets.bottom, insets.top, markMeasureFailure, windowHeight, windowWidth]);
-
-  const refreshTargetMeasure = useCallback(() => {
-    measureCurrentStep();
-  }, [measureCurrentStep]);
-
-  const markAdvancedTaskDone = useCallback(
-    (taskId: string) => {
-      setAdvancedDoneTasks((prev) => {
-        if (prev.includes(taskId)) return prev;
-        const next = [...prev, taskId];
-        void persistState({ tutorial_advanced_tasks_done: next });
-        return next;
-      });
-    },
-    [persistState]
-  );
-
-  const rebuildAdvancedDoneTasks = useCallback(
-    async (storedTasks: string[]) => {
-      const next = new Set(storedTasks);
-
-      try {
-        const [recordsResult, goalsResult] = await Promise.all([
-          listFinancialRecords(undefined, undefined, { force: true }),
-          listFinancialGoals({ force: true }),
-        ]);
-
-        if (recordsResult.records.length > 0) {
-          next.add('record_created');
-        }
-
-        if (goalsResult.goals.length > 0) {
-          next.add('goal_created');
-        }
-      } catch {
-        // Keep tutorial stable if account data is temporarily unavailable.
-      }
-
-      if (currentRouteName === 'Inicio') {
-        next.add('visit_home');
-      }
-
-      if (currentRouteName === 'Relatorios') {
-        next.add('reports_viewed');
-      }
-
-      return ADVANCED_TASKS.map((task) => task.id).filter((taskId) => next.has(taskId));
-    },
-    [currentRouteName]
-  );
-
-  const startBeginnerTutorial = useCallback(
-    async (options?: { replay?: boolean; source?: 'auto' | 'manual'; initialStepId?: string | null }) => {
-      const replay = Boolean(options?.replay);
-      const source = options?.source ?? 'manual';
-      const initialIndex = replay ? 0 : resolveBeginnerIndex(options?.initialStepId);
-      const initialStep = BEGINNER_STEPS[initialIndex] ?? BEGINNER_STEPS[0];
-      closeOverlay();
-      setAdvancedActive(false);
-      setBeginnerIndex(initialIndex);
-      setSpotlightRect(null);
+      setSpotlightRect(computed);
       setTargetUnavailable(false);
       setMeasureFailCount(0);
-      setBeginnerActive(true);
-      if (replay) {
-        setBeginnerCompleted(false);
-      }
-      await persistState({
-        tutorial_reopen_enabled: true,
-        tutorial_active_mode: 'beginner',
-        tutorial_beginner_completed: replay ? false : undefined,
-        tutorial_last_step: initialStep?.id ?? null,
-      });
-      if (source !== 'auto') {
-        trackAnalyticsEventDeferred({
-          event_name: 'tutorial_reopened',
-          screen: 'TutorialBeginner',
-          metadata: { mode: 'beginner' },
-        });
-      }
-      navigateSafely(initialStep.screen);
-    },
-    [closeOverlay, persistState, resolveBeginnerIndex]
-  );
-
-  const startAdvancedTutorial = useCallback(
-    async (options?: { replay?: boolean; source?: 'auto' | 'manual' }) => {
-      const replay = Boolean(options?.replay);
-      const source = options?.source ?? 'manual';
-      closeOverlay();
-      setBeginnerActive(false);
-      setAdvancedActive(true);
-      if (replay) {
-        setAdvancedCompleted(false);
-        setAdvancedDoneTasks([]);
-      }
-      await persistState({
-        tutorial_reopen_enabled: true,
-        tutorial_active_mode: 'advanced',
-        tutorial_advanced_completed: replay ? false : undefined,
-        tutorial_advanced_tasks_done: replay ? [] : undefined,
-      });
-      if (source !== 'auto') {
-        trackAnalyticsEventDeferred({
-          event_name: 'tutorial_reopened',
-          screen: 'TutorialAdvanced',
-          metadata: { mode: 'advanced' },
-        });
-      }
-    },
-    [closeOverlay, persistState]
-  );
-
-  const stopTutorial = useCallback(async () => {
-    setBeginnerActive(false);
-    setAdvancedActive(false);
-    setSpotlightRect(null);
-    await persistState({ tutorial_last_step: null });
-  }, [persistState]);
-
-  const completeBeginner = useCallback(async () => {
-    setBeginnerActive(false);
-    setBeginnerCompleted(true);
-    setSpotlightRect(null);
-    await persistState({
-      tutorial_beginner_completed: true,
-      tutorial_last_step: null,
-      tutorial_reopen_enabled: false,
-      tutorial_active_mode: null,
     });
-    trackAnalyticsEventDeferred({
-      event_name: 'onboarding_completed',
-      screen: 'TutorialBeginner',
-      metadata: { mode: 'beginner' },
-    });
-  }, [persistState]);
-
-  const completeAdvanced = useCallback(async () => {
-    setAdvancedActive(false);
-    setAdvancedCompleted(true);
-    await persistState({
-      tutorial_advanced_completed: true,
-      tutorial_advanced_tasks_done: ADVANCED_TASKS.map((task) => task.id),
-      tutorial_reopen_enabled: false,
-      tutorial_active_mode: null,
-    });
-    trackAnalyticsEventDeferred({
-      event_name: 'onboarding_completed',
-      screen: 'TutorialAdvanced',
-      metadata: { mode: 'advanced' },
-    });
-  }, [persistState]);
-
-  const skipBeginner = useCallback(async () => {
-    await completeBeginner();
-    trackAnalyticsEventDeferred({
-      event_name: 'onboarding_skipped',
-      screen: 'TutorialBeginner',
-      metadata: { mode: 'beginner' },
-    });
-  }, [completeBeginner]);
-
-  const goToStep = useCallback(
-    async (nextIndex: number) => {
-      const step = BEGINNER_STEPS[nextIndex];
-      if (!step) return;
-      closeOverlay();
-      setSpotlightRect(null);
-      setTargetUnavailable(false);
-      setMeasureFailCount(0);
-      setBeginnerIndex(nextIndex);
-      await persistState({
-        tutorial_last_step: step.id,
-        tutorial_active_mode: 'beginner',
-        tutorial_reopen_enabled: true,
-      });
-      navigateSafely(step.screen);
-    },
-    [closeOverlay, persistState]
-  );
-
-  const handleNextStep = useCallback(async () => {
-    const nextIndex = beginnerIndex + 1;
-    if (nextIndex >= BEGINNER_STEPS.length) {
-      await completeBeginner();
-      return;
-    }
-    await goToStep(nextIndex);
-  }, [beginnerIndex, completeBeginner, goToStep]);
-
-  const handlePrevStep = useCallback(async () => {
-    const prevIndex = beginnerIndex - 1;
-    if (prevIndex < 0) return;
-    await goToStep(prevIndex);
-  }, [beginnerIndex, goToStep]);
+  }, [
+    currentRouteName,
+    currentStep,
+    insets.bottom,
+    insets.top,
+    isEssentialActive,
+    markMeasureFailure,
+    windowHeight,
+    windowWidth,
+  ]);
 
   useEffect(() => {
-    setOverlayBlocked(beginnerActive);
-    if (beginnerActive) {
+    setOverlayBlocked(isEssentialActive);
+    if (isEssentialActive) {
       closeOverlay();
     }
-  }, [beginnerActive, closeOverlay, setOverlayBlocked]);
+  }, [closeOverlay, isEssentialActive, setOverlayBlocked]);
 
   useEffect(() => {
     if (!signed) {
       hasBootstrappedRef.current = false;
+      setTrackState('idle');
+      setMissionsDone([]);
       return;
     }
     if (hasBootstrappedRef.current) return;
@@ -478,46 +374,29 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       const prefs = await getAppPreferences();
       if (!mounted) return;
 
-      const beginnerDone = Boolean(prefs.tutorial_beginner_completed);
-      const advancedDone = Boolean(prefs.tutorial_advanced_completed);
-      const advancedDoneList = Array.isArray(prefs.tutorial_advanced_tasks_done)
-        ? prefs.tutorial_advanced_tasks_done.filter((item) => typeof item === 'string')
-        : [];
-      const rebuiltAdvancedDoneList = await rebuildAdvancedDoneTasks(advancedDoneList);
-      if (!mounted) return;
+      const migrated = migrateLegacyTutorialState(prefs);
 
-      setBeginnerCompleted(beginnerDone);
-      const allAdvancedTasksDone = ADVANCED_TASKS.every((task) => rebuiltAdvancedDoneList.includes(task.id));
-      const effectiveAdvancedDone = advancedDone || allAdvancedTasksDone;
+      setTrackState(migrated.tutorial_track_state);
+      setMissionsDone(migrated.tutorial_missions_done);
+      setEssentialStepIndex(resolveTutorialStepIndex(prefs.tutorial_last_step));
 
-      setAdvancedCompleted(effectiveAdvancedDone);
-      setAdvancedDoneTasks(rebuiltAdvancedDoneList);
+      const shouldPersistMigration =
+        prefs.tutorial_version !== migrated.tutorial_version ||
+        prefs.tutorial_track_state !== migrated.tutorial_track_state ||
+        JSON.stringify(prefs.tutorial_missions_done || []) !== JSON.stringify(migrated.tutorial_missions_done);
 
-      if (
-        rebuiltAdvancedDoneList.length !== advancedDoneList.length ||
-        rebuiltAdvancedDoneList.some((taskId) => !advancedDoneList.includes(taskId)) ||
-        effectiveAdvancedDone !== advancedDone
-      ) {
-        await persistState({
-          tutorial_advanced_tasks_done: rebuiltAdvancedDoneList,
-          tutorial_advanced_completed: effectiveAdvancedDone ? true : undefined,
+      if (shouldPersistMigration) {
+        await persistTutorialState({
+          tutorial_track_state: migrated.tutorial_track_state,
+          tutorial_missions_done: migrated.tutorial_missions_done,
         });
-        if (!mounted) return;
       }
 
-      if (!prefs.onboarding_seen || !prefs.tutorial_reopen_enabled) return;
-
-      const preferredMode = prefs.tutorial_active_mode ?? prefs.onboarding_mode;
-      if (!preferredMode) return;
-
-      if (beginnerActive || advancedActive) return;
-
-      if (preferredMode === 'beginner' && !beginnerDone) {
-        await startBeginnerTutorial({ source: 'auto', initialStepId: prefs.tutorial_last_step });
-      }
-
-      if (preferredMode === 'advanced' && !effectiveAdvancedDone) {
-        await startAdvancedTutorial({ source: 'auto' });
+      if (!prefs.onboarding_seen || prefs.tutorial_reopen_enabled === false) return;
+      if (migrated.tutorial_track_state === 'essential') {
+        await startEssentialTutorial({ source: 'auto', initialStepId: prefs.tutorial_last_step });
+      } else if (migrated.tutorial_track_state === 'contextual') {
+        await startContextualTutorial({ source: 'auto' });
       }
     };
 
@@ -526,61 +405,74 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     return () => {
       mounted = false;
     };
-  }, [advancedActive, beginnerActive, persistState, rebuildAdvancedDoneTasks, signed, startAdvancedTutorial, startBeginnerTutorial]);
+  }, [persistTutorialState, signed, startContextualTutorial, startEssentialTutorial]);
 
   useEffect(() => {
-    if (!beginnerActive || !currentStep) return;
+    if (!isEssentialActive || !currentStep) return;
     if (!currentRouteName) return;
     if (currentRouteName !== currentStep.screen) {
-      navigateSafely(currentStep.screen);
+      setSpotlightRect(null);
+      setTargetUnavailable(true);
       return;
     }
-    measureCurrentStep();
-    const shortTimeout = setTimeout(measureCurrentStep, 90);
-    const longTimeout = setTimeout(measureCurrentStep, 260);
+
+    refreshTargetMeasure();
+    const shortTimeout = setTimeout(refreshTargetMeasure, 90);
+    const longTimeout = setTimeout(refreshTargetMeasure, 260);
+
     return () => {
       clearTimeout(shortTimeout);
       clearTimeout(longTimeout);
     };
-  }, [beginnerActive, currentStep, currentRouteName, measureCurrentStep, windowHeight, windowWidth, fontScale]);
+  }, [currentRouteName, currentStep, fontScale, isEssentialActive, refreshTargetMeasure, windowHeight, windowWidth]);
 
   useEffect(() => {
-    if (!beginnerActive) return;
+    if (!isEssentialActive) return;
     const interval = setInterval(() => {
-      measureCurrentStep();
-    }, 280);
+      refreshTargetMeasure();
+    }, 320);
     return () => clearInterval(interval);
-  }, [beginnerActive, measureCurrentStep]);
+  }, [isEssentialActive, refreshTargetMeasure]);
 
   useEffect(() => {
-    if (!beginnerActive || !currentStep) return;
-    setSpotlightRect(null);
-    setTargetUnavailable(false);
-    setMeasureFailCount(0);
-  }, [beginnerActive, currentStep?.id]);
+    if (!isEssentialActive) return;
+    if (currentRouteName === 'Inicio') {
+      void markMissionDone('visit_home');
+    }
+  }, [currentRouteName, isEssentialActive, markMissionDone]);
 
   useEffect(() => {
-    if (!advancedActive || !currentRouteName) return;
-    if (currentRouteName === 'Inicio') markAdvancedTaskDone('visit_home');
-    if (currentRouteName === 'Relatorios') markAdvancedTaskDone('reports_viewed');
-  }, [advancedActive, currentRouteName, markAdvancedTaskDone]);
+    if (!isContextualActive) return;
+    if (currentRouteName === 'Inicio') {
+      void markMissionDone('visit_home');
+    }
+    if (currentRouteName === 'Relatorios') {
+      void markMissionDone('reports_viewed');
+    }
+  }, [currentRouteName, isContextualActive, markMissionDone]);
 
   useEffect(() => {
     const unsubscribe = subscribeAnalyticsEvents((eventName: AnalyticsEventName) => {
-      if (!advancedActive) return;
-      if (eventName === 'record_created') markAdvancedTaskDone('record_created');
-      if (eventName === 'goal_created') markAdvancedTaskDone('goal_created');
-      if (eventName === 'reports_viewed') markAdvancedTaskDone('reports_viewed');
+      if (!isContextualActive) return;
+      if (eventName === 'record_created') {
+        void markMissionDone('record_created');
+      }
+      if (eventName === 'goal_created') {
+        void markMissionDone('goal_created');
+      }
+      if (eventName === 'reports_viewed') {
+        void markMissionDone('reports_viewed');
+      }
     });
     return unsubscribe;
-  }, [advancedActive, markAdvancedTaskDone]);
+  }, [isContextualActive, markMissionDone]);
 
   useEffect(() => {
-    if (!advancedActive) return;
-    if (ADVANCED_TASKS.every((task) => advancedDoneTasks.includes(task.id))) {
-      void completeAdvanced();
+    if (!isContextualActive) return;
+    if (CONTEXTUAL_MISSIONS.every((mission) => missionsDone.includes(mission.id))) {
+      void completeTutorial();
     }
-  }, [advancedActive, advancedDoneTasks, completeAdvanced]);
+  }, [completeTutorial, isContextualActive, missionsDone]);
 
   const tooltipTop = useMemo(() => {
     const safeTop = insets.top + 12;
@@ -597,32 +489,74 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     return maxTop;
   }, [insets.bottom, insets.top, spotlightRect, tooltipHeight, windowHeight]);
 
+  const needsFallback = useMemo(() => {
+    if (!isEssentialActive) return false;
+    if (!currentStep) return true;
+    if (!currentRouteName) return true;
+    if (currentRouteName !== currentStep.screen) return true;
+    return !spotlightRect || targetUnavailable;
+  }, [currentRouteName, currentStep, isEssentialActive, spotlightRect, targetUnavailable]);
+
+  const runMissionCta = useCallback((mission: TutorialMission | null) => {
+    if (!mission) return;
+    if (mission.action === 'go_screen') {
+      navigateSafely(mission.screen);
+      return;
+    }
+    if (mission.action === 'open_lancamentos_income') {
+      navigateSafely('Lancamentos', { mode: 'income' });
+      return;
+    }
+    navigateSafely('Lancamentos', { mode: 'debt' });
+  }, []);
+
+  const tutorialProgressLabel = useMemo(() => {
+    if (trackState === 'essential') {
+      return `Etapa essencial ${Math.min(essentialStepIndex + 1, ESSENTIAL_STEPS.length)}/${ESSENTIAL_STEPS.length}`;
+    }
+    if (trackState === 'contextual') {
+      return `Missoes ${missionsDone.length}/${CONTEXTUAL_MISSIONS.length}`;
+    }
+    if (trackState === 'completed') return 'Tutorial concluido';
+    if (trackState === 'paused') return 'Tutorial pausado';
+    return 'Tutorial inativo';
+  }, [essentialStepIndex, missionsDone.length, trackState]);
+
   const value = useMemo(
     () => ({
       registerTarget,
       unregisterTarget,
       refreshTargetMeasure,
-      startBeginnerTutorial,
-      startAdvancedTutorial,
+      startBeginnerTutorial: async (options?: { replay?: boolean }) => {
+        await startEssentialTutorial({ replay: options?.replay, source: 'manual' });
+      },
+      startAdvancedTutorial: async (options?: { replay?: boolean }) => {
+        await startContextualTutorial({ replay: options?.replay, source: 'manual' });
+      },
       stopTutorial,
       beginnerCompleted,
       advancedCompleted,
-      advancedDoneTasks,
+      advancedDoneTasks: missionsDone,
       isTutorialActive,
       isBeginnerTutorialActive,
+      tutorialTrackState: trackState,
+      tutorialMissionsDone: missionsDone,
+      tutorialDeviceClass: deviceClass,
     }),
     [
       registerTarget,
       unregisterTarget,
       refreshTargetMeasure,
-      startBeginnerTutorial,
-      startAdvancedTutorial,
       stopTutorial,
       beginnerCompleted,
       advancedCompleted,
-      advancedDoneTasks,
+      missionsDone,
       isTutorialActive,
       isBeginnerTutorialActive,
+      trackState,
+      deviceClass,
+      startEssentialTutorial,
+      startContextualTutorial,
     ]
   );
 
@@ -631,15 +565,15 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       {children}
 
       <Modal
-        visible={beginnerActive}
+        visible={isEssentialActive}
         transparent
         animationType="fade"
         statusBarTranslucent
         presentationStyle="overFullScreen"
-        onRequestClose={() => void skipBeginner()}
+        onRequestClose={() => void stopTutorial()}
       >
         <View style={styles.overlayRoot}>
-          {spotlightRect ? (
+          {spotlightRect && !needsFallback ? (
             <>
               <Pressable style={[styles.dim, { left: 0, right: 0, top: 0, height: Math.max(0, spotlightRect.y) }]} />
               <Pressable
@@ -708,82 +642,86 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
               styles.tooltipCard,
               {
                 top: tooltipTop,
+                left: tooltipMetrics.sidePadding,
+                right: tooltipMetrics.sidePadding,
+                borderRadius: tooltipMetrics.borderRadius,
+                minHeight: tooltipMetrics.minHeight,
                 backgroundColor: darkMode ? '#0f172a' : '#ffffff',
                 borderColor: darkMode ? '#334155' : '#e2e8f0',
               },
             ]}
             onLayout={(event) => {
-              const height = Math.max(180, Math.round(event.nativeEvent.layout.height));
-              if (Math.abs(tooltipHeight - height) > 2) {
-                setTooltipHeight(height);
+              const nextHeight = Math.max(tooltipMetrics.minHeight, Math.round(event.nativeEvent.layout.height));
+              if (Math.abs(nextHeight - tooltipHeight) > 2) {
+                setTooltipHeight(nextHeight);
               }
             }}
           >
             <AppText style={[styles.titleText, { color: darkMode ? '#f8fafc' : '#0f172a' }]}>{currentStep?.title}</AppText>
             <AppText style={[styles.bodyText, { color: darkMode ? '#cbd5e1' : '#475569' }]}>{currentStep?.description}</AppText>
-            <AppText style={[styles.stepText, { color: darkMode ? '#94a3b8' : '#94a3b8' }]}>
-              Passo {Math.min(beginnerIndex + 1, BEGINNER_STEPS.length)} de {BEGINNER_STEPS.length}
-              {targetUnavailable ? ' • ajuste de layout detectado' : ''}
+            <AppText style={[styles.stepText, { color: darkMode ? '#94a3b8' : '#64748b' }]}>
+              {tutorialProgressLabel}
+              {needsFallback ? ' • fallback ativo' : ''}
             </AppText>
 
+            {needsFallback && currentStep ? (
+              <Button
+                title={`Ir para ${currentStep.screen}`}
+                variant="outline"
+                onPress={() => navigateSafely(currentStep.screen)}
+                className="h-10 mt-3"
+              />
+            ) : null}
+
             <View className="flex-row mt-4 gap-2">
-              <Button title="Pular" variant="outline" onPress={() => void skipBeginner()} className="flex-1 h-10" />
+              <Button title="Pausar" variant="outline" onPress={() => void stopTutorial()} className="flex-1 h-11" />
               <Button
                 title="Voltar"
                 variant="outline"
-                disabled={beginnerIndex === 0}
-                onPress={() => void handlePrevStep()}
-                className="flex-1 h-10"
+                disabled={essentialStepIndex === 0}
+                onPress={() => void handlePrevEssentialStep()}
+                className="flex-1 h-11"
               />
-              <Button title={beginnerIndex + 1 >= BEGINNER_STEPS.length ? 'Concluir' : 'Próximo'} onPress={() => void handleNextStep()} className="flex-1 h-10" />
+              <Button
+                title={essentialStepIndex + 1 >= ESSENTIAL_STEPS.length ? 'Ir para missoes' : currentStep?.cta || 'Proximo'}
+                onPress={() => void handleNextEssentialStep()}
+                className="flex-1 h-11"
+              />
             </View>
           </View>
         </View>
       </Modal>
 
-      <Modal
-        visible={advancedActive}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        presentationStyle="overFullScreen"
-        onRequestClose={() => void stopTutorial()}
-      >
-        <View style={styles.overlayRoot}>
-          <Pressable style={[StyleSheet.absoluteFillObject, styles.dim]} onPress={() => void stopTutorial()} />
-          <View style={[styles.advancedCard, { backgroundColor: darkMode ? '#0f172a' : '#f8fafc', borderColor: darkMode ? '#334155' : '#e2e8f0' }]}>
-            <AppText style={[styles.advancedTitle, { color: darkMode ? '#f8fafc' : '#0f172a' }]}>Checklist rápido (Avançado)</AppText>
-            <AppText style={[styles.advancedDescription, { color: darkMode ? '#cbd5e1' : '#475569' }]}>
-              Complete os objetivos para finalizar seu tutorial avançado.
+      {isContextualActive && currentMission ? (
+        <View pointerEvents="box-none" style={styles.contextualRoot}>
+          <View
+            style={[
+              styles.contextualCard,
+              {
+                marginHorizontal: tooltipMetrics.sidePadding,
+                marginBottom: Math.max(12, insets.bottom + 10),
+                borderRadius: tooltipMetrics.borderRadius,
+                backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+                borderColor: darkMode ? '#334155' : '#e2e8f0',
+              },
+            ]}
+          >
+            <AppText style={[styles.contextualTitle, { color: darkMode ? '#f8fafc' : '#0f172a' }]}>Trilha contextual</AppText>
+            <AppText style={[styles.contextualBody, { color: darkMode ? '#cbd5e1' : '#475569' }]}>
+              Proxima missao: {currentMission.label}
             </AppText>
-
-            {ADVANCED_TASKS.map((task) => {
-              const done = advancedDoneTasks.includes(task.id);
-              return (
-                <View
-                  key={task.id}
-                  style={[
-                    styles.taskCard,
-                    done
-                      ? { backgroundColor: darkMode ? '#052e24' : '#ecfdf5', borderColor: darkMode ? '#065f46' : '#a7f3d0' }
-                      : { backgroundColor: darkMode ? '#111827' : '#ffffff', borderColor: darkMode ? '#334155' : '#e2e8f0' },
-                  ]}
-                >
-                  <AppText style={[styles.taskTitle, { color: done ? '#10b981' : darkMode ? '#f8fafc' : '#0f172a' }]}>
-                    {done ? 'Concluído' : 'Pendente'} · {task.label}
-                  </AppText>
-                  <AppText style={[styles.taskDescription, { color: darkMode ? '#cbd5e1' : '#475569' }]}>{task.description}</AppText>
-                </View>
-              );
-            })}
+            <AppText style={[styles.contextualBody, { color: darkMode ? '#cbd5e1' : '#475569' }]}>
+              {currentMission.description}
+            </AppText>
+            <AppText style={[styles.stepText, { color: darkMode ? '#94a3b8' : '#64748b' }]}>{tutorialProgressLabel}</AppText>
 
             <View className="flex-row gap-2 mt-3">
-              <Button title="Fechar" variant="outline" onPress={() => void stopTutorial()} className="flex-1 h-11" />
-              <Button title="Concluir agora" onPress={() => void completeAdvanced()} className="flex-1 h-11" />
+              <Button title="Pausar" variant="outline" onPress={() => void stopTutorial()} className="flex-1 h-11" />
+              <Button title={currentMission.cta} onPress={() => runMissionCta(currentMission)} className="flex-1 h-11" />
             </View>
           </View>
         </View>
-      </Modal>
+      ) : null}
     </TutorialContext.Provider>
   );
 };
@@ -809,9 +747,6 @@ const styles = StyleSheet.create({
   },
   tooltipCard: {
     position: 'absolute',
-    left: 16,
-    right: 16,
-    borderRadius: 16,
     borderWidth: 1,
     padding: 14,
   },
@@ -827,35 +762,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 8,
   },
-  advancedCard: {
-    marginHorizontal: 16,
-    marginTop: 120,
-    borderRadius: 16,
+  contextualRoot: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    pointerEvents: 'box-none',
+  },
+  contextualCard: {
     borderWidth: 1,
     padding: 14,
   },
-  advancedTitle: {
-    fontSize: 18,
+  contextualTitle: {
+    fontSize: 16,
     fontWeight: '700',
   },
-  advancedDescription: {
-    fontSize: 14,
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  taskCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  taskTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  taskDescription: {
-    fontSize: 12,
+  contextualBody: {
+    fontSize: 13,
     marginTop: 4,
   },
 });

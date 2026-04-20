@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
-import { ArrowLeft, Lightbulb, Rocket } from 'lucide-react-native';
+import { ArrowLeft, Lightbulb, Target } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import AppText from '../../components/AppText';
 import Button from '../../components/Button';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useTutorial } from '../../context/TutorialContext';
+import { CONTEXTUAL_MISSIONS } from '../../context/tutorialEngine';
 
 const Tutorial = () => {
   const navigation = useNavigation<any>();
@@ -14,9 +15,26 @@ const Tutorial = () => {
   const {
     startBeginnerTutorial,
     startAdvancedTutorial,
+    stopTutorial,
     beginnerCompleted,
-    advancedCompleted,
+    advancedDoneTasks,
+    tutorialTrackState,
+    tutorialDeviceClass,
   } = useTutorial();
+
+  const missionsTotal = CONTEXTUAL_MISSIONS.length;
+  const missionsDoneCount = advancedDoneTasks.length;
+
+  const statusLabel =
+    tutorialTrackState === 'essential'
+      ? 'Etapa essencial em andamento'
+      : tutorialTrackState === 'contextual'
+      ? 'Missoes contextuais em andamento'
+      : tutorialTrackState === 'completed'
+      ? 'Trilha concluida'
+      : tutorialTrackState === 'paused'
+      ? 'Trilha pausada'
+      : 'Trilha inativa';
 
   return (
     <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
@@ -26,8 +44,8 @@ const Tutorial = () => {
             <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
           <View className="flex-1">
-            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Tutorial do app</AppText>
-            <AppText className="text-slate-500 dark:text-slate-200 text-xs">Escolha um módulo para revisar quando quiser.</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Tutorial adaptativo</AppText>
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs">Status atual: {statusLabel}</AppText>
           </View>
         </View>
       </View>
@@ -36,16 +54,20 @@ const Tutorial = () => {
         <View className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] p-4 mb-4">
           <View className="flex-row items-center mb-2">
             <Lightbulb size={18} color="#f48c25" />
-            <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Tutorial Iniciante</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Etapa essencial</AppText>
           </View>
           <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-3">
-            Passo a passo guiado com foco e sombra, bloqueando toques fora do alvo.
+            Sequencia guiada com spotlight hibrido e fallback automatico para telas compactas, padrao e grandes.
           </AppText>
-          <AppText className={`text-xs font-bold mb-3 ${beginnerCompleted ? 'text-emerald-600 dark:text-emerald-300' : 'text-amber-600 dark:text-amber-300'}`}>
-            {beginnerCompleted ? 'Status: concluído' : 'Status: pendente'}
+          <AppText
+            className={`text-xs font-bold mb-3 ${
+              beginnerCompleted ? 'text-emerald-600 dark:text-emerald-300' : 'text-amber-600 dark:text-amber-300'
+            }`}
+          >
+            {beginnerCompleted ? 'Status: concluida' : 'Status: pendente'}
           </AppText>
           <Button
-            title={beginnerCompleted ? 'Refazer iniciante' : 'Iniciar iniciante'}
+            title={beginnerCompleted ? 'Refazer etapa essencial' : 'Iniciar etapa essencial'}
             onPress={async () => {
               await startBeginnerTutorial({ replay: true });
               navigation.navigate('Inicio');
@@ -54,26 +76,34 @@ const Tutorial = () => {
           />
         </View>
 
-        <View className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] p-4">
+        <View className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] p-4 mb-4">
           <View className="flex-row items-center mb-2">
-            <Rocket size={18} color="#0ea5e9" />
-            <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Tutorial Avançado</AppText>
+            <Target size={18} color="#0ea5e9" />
+            <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Missoes contextuais</AppText>
           </View>
           <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-3">
-            Checklist rápido por objetivos, sem travar sua navegação.
+            Conclua no fluxo real do app sem modal grande bloqueando navegacao.
           </AppText>
-          <AppText className={`text-xs font-bold mb-3 ${advancedCompleted ? 'text-emerald-600 dark:text-emerald-300' : 'text-amber-600 dark:text-amber-300'}`}>
-            {advancedCompleted ? 'Status: concluído' : 'Status: pendente'}
+          <AppText className="text-xs font-bold mb-3 text-slate-700 dark:text-slate-100">
+            Progresso: {missionsDoneCount}/{missionsTotal}
           </AppText>
           <Button
-            title={advancedCompleted ? 'Refazer avançado' : 'Iniciar avançado'}
+            title="Iniciar missoes"
             variant="outline"
             onPress={async () => {
-              await startAdvancedTutorial({ replay: true });
-              navigation.goBack();
+              await startAdvancedTutorial({ replay: false });
+              navigation.navigate('Inicio');
             }}
             className="h-11"
           />
+        </View>
+
+        <View className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] p-4">
+          <AppText className="text-slate-900 dark:text-slate-100 font-bold">Compatibilidade de dispositivo</AppText>
+          <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1">
+            Classe detectada neste aparelho: {tutorialDeviceClass}.
+          </AppText>
+          <Button title="Pausar tutorial" variant="outline" onPress={() => void stopTutorial()} className="h-11 mt-3" />
         </View>
       </View>
     </Layout>
@@ -81,3 +111,4 @@ const Tutorial = () => {
 };
 
 export default Tutorial;
+

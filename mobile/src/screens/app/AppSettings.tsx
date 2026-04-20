@@ -77,7 +77,7 @@ const AppSettings = () => {
         event_name: 'tutorial_reopened',
         screen: 'AppSettings',
       });
-      setMessage('Tutorial aberto. Escolha o módulo iniciante ou avançado.');
+      setMessage('Tutorial adaptativo reaberto. Retome a trilha quando quiser.');
       navigation.navigate('Tutorial');
     } finally {
       setSaving(false);
