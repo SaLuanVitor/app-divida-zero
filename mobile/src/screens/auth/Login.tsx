@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Alert } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { CreditCard, Lock, Quote } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -71,7 +71,6 @@ const Login = () => {
       const message = error?.response?.data?.error ?? 'Falha na autenticação. Verifique suas credenciais e tente novamente.';
       setAuthError(message);
       setPasswordError('Verifique sua senha e tente novamente.');
-      Alert.alert('Não foi possível entrar', message);
     }
   };
 
@@ -166,3 +165,4 @@ const Login = () => {
 };
 
 export default Login;
+
