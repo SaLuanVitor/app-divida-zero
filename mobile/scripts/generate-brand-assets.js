@@ -59,18 +59,36 @@ const createCanvas = (size, background) =>
     },
   });
 
-const createRoundedMask = (size, radius) =>
-  Buffer.from(
-    `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><rect width="${size}" height="${size}" rx="${radius}" ry="${radius}" fill="#fff" /></svg>`
-  );
+const toRaw = async (buffer) => sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+
+const fromRaw = ({ data, width, height }) => sharp(data, { raw: { width, height, channels: 4 } }).png().toBuffer();
+
+const stripNearBlackPixels = async (buffer, threshold = 24) => {
+  const { data, info } = await toRaw(buffer);
+  for (let i = 0; i < data.length; i += info.channels) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = data[i + 3];
+    if (a > 0 && r <= threshold && g <= threshold && b <= threshold) {
+      data[i] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 0;
+    }
+  }
+
+  return fromRaw({ data, width: info.width, height: info.height });
+};
 
 const trimAndScaleCentered = async (buffer, size, ratio) => {
   const target = Math.max(1, Math.round(size * ratio));
-  const clipped = await sharp(buffer)
+  const clippedRaw = await sharp(buffer)
     .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 1 })
     .resize(target, target, { fit: 'contain' })
     .png()
     .toBuffer();
+  const clipped = await stripNearBlackPixels(clippedRaw);
 
   return createCanvas(size, { r: 0, g: 0, b: 0, alpha: 0 })
     .composite([{ input: clipped, gravity: 'center' }])
@@ -78,9 +96,126 @@ const trimAndScaleCentered = async (buffer, size, ratio) => {
     .toBuffer();
 };
 
-const toRaw = async (buffer) => sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+const removeHorizontalStripeComponents = (data, info) => {
+  const width = info.width;
+  const height = info.height;
+  const channels = info.channels;
+  const visited = new Uint8Array(width * height);
+  const queue = new Int32Array(width * height);
+  const toClear = [];
 
-const fromRaw = ({ data, width, height }) => sharp(data, { raw: { width, height, channels: 4 } }).png().toBuffer();
+  const alphaAt = (idx) => data[idx * channels + 3];
+
+  for (let i = 0; i < width * height; i += 1) {
+    if (visited[i] || alphaAt(i) === 0) {
+      continue;
+    }
+
+    let head = 0;
+    let tail = 0;
+    queue[tail++] = i;
+    visited[i] = 1;
+
+    const pixels = [];
+    let minX = width;
+    let minY = height;
+    let maxX = 0;
+    let maxY = 0;
+
+    while (head < tail) {
+      const node = queue[head++];
+      pixels.push(node);
+
+      const x = node % width;
+      const y = Math.floor(node / width);
+
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+
+      const neighbors = [node - 1, node + 1, node - width, node + width];
+      for (const next of neighbors) {
+        if (next < 0 || next >= width * height || visited[next]) {
+          continue;
+        }
+
+        const nx = next % width;
+        const ny = Math.floor(next / width);
+        if (Math.abs(nx - x) + Math.abs(ny - y) !== 1) {
+          continue;
+        }
+
+        if (alphaAt(next) > 0) {
+          visited[next] = 1;
+          queue[tail++] = next;
+        }
+      }
+    }
+
+    const componentWidth = maxX - minX + 1;
+    const componentHeight = maxY - minY + 1;
+    const isHorizontalStripe = componentWidth >= width * 0.45 && componentHeight <= height * 0.08;
+
+    if (isHorizontalStripe) {
+      toClear.push(...pixels);
+    }
+  }
+
+  for (const idx of toClear) {
+    const base = idx * channels;
+    data[base] = 0;
+    data[base + 1] = 0;
+    data[base + 2] = 0;
+    data[base + 3] = 0;
+  }
+};
+
+const removeHorizontalBandRuns = (data, info) => {
+  const width = info.width;
+  const height = info.height;
+  const channels = info.channels;
+  const alpha = (x, y) => data[(y * width + x) * channels + 3];
+
+  let minY = height;
+  let maxY = 0;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (alpha(x, y) > 0) {
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  if (minY >= maxY) return;
+
+  const bandHeight = Math.max(1, Math.floor((maxY - minY + 1) * 0.25));
+  const isInBand = (y) => y <= minY + bandHeight || y >= maxY - bandHeight;
+
+  for (let y = minY; y <= maxY; y += 1) {
+    if (!isInBand(y)) {
+      continue;
+    }
+
+    let opaqueCount = 0;
+    for (let x = 0; x < width; x += 1) {
+      if (alpha(x, y) > 0) {
+        opaqueCount += 1;
+      }
+    }
+
+    if (opaqueCount >= width * 0.45) {
+      for (let x = 0; x < width; x += 1) {
+        const idx = (y * width + x) * channels;
+        data[idx] = 0;
+        data[idx + 1] = 0;
+        data[idx + 2] = 0;
+        data[idx + 3] = 0;
+      }
+    }
+  }
+};
 
 const extractWhiteMask = async (buffer, threshold = 216) => {
   const { data, info } = await toRaw(buffer);
@@ -105,6 +240,8 @@ const extractWhiteMask = async (buffer, threshold = 216) => {
     }
   }
 
+  removeHorizontalStripeComponents(data, info);
+  removeHorizontalBandRuns(data, info);
   return fromRaw({ data, width: info.width, height: info.height });
 };
 
@@ -117,7 +254,7 @@ const tintMask = async (buffer, color) => {
       data[i] = color.r;
       data[i + 1] = color.g;
       data[i + 2] = color.b;
-      data[i + 3] = 255;
+      data[i + 3] = alpha;
     }
   }
 
@@ -168,20 +305,22 @@ const generateAssets = async () => {
   const orangeSymbol = await tintMask(whiteBase, BRAND_ORANGE);
   const whiteSymbol = await tintMask(whiteBase, WHITE);
 
-  const appIconRaw = await trimAndScaleCentered(master, TARGETS.appIcon.size, 0.86);
-  const appIcon = await createCanvas(TARGETS.appIcon.size, { r: 0, g: 0, b: 0, alpha: 0 })
-    .composite([
-      { input: appIconRaw, gravity: 'center' },
-      { input: createRoundedMask(TARGETS.appIcon.size, 230), blend: 'dest-in' },
-    ])
+  const appIconSymbolRaw = await trimAndScaleCentered(whiteSymbol, TARGETS.appIcon.size, 0.68);
+  const appIconSymbol = await tintMask(appIconSymbolRaw, WHITE);
+  const appIcon = await createCanvas(TARGETS.appIcon.size, BRAND_ORANGE_DARK)
+    .composite([{ input: appIconSymbol, gravity: 'center' }])
     .png()
     .toBuffer();
 
-  const splashLogo = await trimAndScaleCentered(orangeSymbol, TARGETS.splashLogo.size, 0.74);
-  const adaptiveForeground = await trimAndScaleCentered(whiteSymbol, TARGETS.adaptiveForeground.size, 0.7);
+  const splashLogoRaw = await trimAndScaleCentered(orangeSymbol, TARGETS.splashLogo.size, 0.74);
+  const splashLogo = await tintMask(splashLogoRaw, BRAND_ORANGE);
+  const adaptiveForegroundRaw = await trimAndScaleCentered(whiteSymbol, TARGETS.adaptiveForeground.size, 0.7);
+  const adaptiveForeground = await tintMask(adaptiveForegroundRaw, WHITE);
   const adaptiveBackground = await createCanvas(TARGETS.adaptiveBackground.size, BRAND_ORANGE_DARK).png().toBuffer();
-  const adaptiveMonochrome = await trimAndScaleCentered(whiteSymbol, TARGETS.adaptiveMonochrome.size, 0.72);
-  const notificationMonochrome = await trimAndScaleCentered(whiteSymbol, TARGETS.notificationMonochrome.size, 0.7);
+  const adaptiveMonochromeRaw = await trimAndScaleCentered(whiteSymbol, TARGETS.adaptiveMonochrome.size, 0.72);
+  const adaptiveMonochrome = await tintMask(adaptiveMonochromeRaw, WHITE);
+  const notificationMonochromeRaw = await trimAndScaleCentered(whiteSymbol, TARGETS.notificationMonochrome.size, 0.7);
+  const notificationMonochrome = await tintMask(notificationMonochromeRaw, WHITE);
 
   await Promise.all([
     writePng(path.join(BRAND_DIR, TARGETS.appIcon.file), appIcon),
