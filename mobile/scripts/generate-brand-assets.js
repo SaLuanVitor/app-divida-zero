@@ -40,25 +40,16 @@ const ADAPTIVE_MIPMAP_SIZE = {
 
 const ensureSourceExists = () => {
   if (!fs.existsSync(MASTER_SVG)) {
-    throw new Error(`Arquivo de marca não encontrado: ${MASTER_SVG}`);
+    throw new Error(`Brand source SVG not found: ${MASTER_SVG}`);
   }
 };
 
 const readSvg = (filePath) => fs.readFileSync(filePath, 'utf8');
 
-const renderSvgBuffer = async (svgMarkup, size) => sharp(Buffer.from(svgMarkup)).resize(size, size, { fit: 'contain' }).png().toBuffer();
+const renderSvgToPng = async (svgMarkup, size) =>
+  sharp(Buffer.from(svgMarkup)).resize(size, size, { fit: 'contain' }).png().toBuffer();
 
-const createTransparentCanvas = (size) =>
-  sharp({
-    create: {
-      width: size,
-      height: size,
-      channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    },
-  });
-
-const createSolidCanvas = (size, background) =>
+const createCanvas = (size, background) =>
   sharp({
     create: {
       width: size,
@@ -73,120 +64,92 @@ const createRoundedMask = (size, radius) =>
     `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><rect width="${size}" height="${size}" rx="${radius}" ry="${radius}" fill="#fff" /></svg>`
   );
 
+const trimAndScaleCentered = async (buffer, size, ratio) => {
+  const target = Math.max(1, Math.round(size * ratio));
+  const clipped = await sharp(buffer)
+    .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 1 })
+    .resize(target, target, { fit: 'contain' })
+    .png()
+    .toBuffer();
+
+  return createCanvas(size, { r: 0, g: 0, b: 0, alpha: 0 })
+    .composite([{ input: clipped, gravity: 'center' }])
+    .png()
+    .toBuffer();
+};
+
 const toRaw = async (buffer) => sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 
 const fromRaw = ({ data, width, height }) => sharp(data, { raw: { width, height, channels: 4 } }).png().toBuffer();
 
-const tintOpaquePixels = async (buffer, color) => {
+const extractWhiteMask = async (buffer, threshold = 216) => {
   const { data, info } = await toRaw(buffer);
+
+  for (let i = 0; i < data.length; i += info.channels) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const alpha = data[i + 3];
+    const isWhiteLike = alpha > 20 && r >= threshold && g >= threshold && b >= threshold;
+
+    if (isWhiteLike) {
+      data[i] = 255;
+      data[i + 1] = 255;
+      data[i + 2] = 255;
+      data[i + 3] = 255;
+    } else {
+      data[i] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 0;
+    }
+  }
+
+  return fromRaw({ data, width: info.width, height: info.height });
+};
+
+const tintMask = async (buffer, color) => {
+  const { data, info } = await toRaw(buffer);
+
   for (let i = 0; i < data.length; i += info.channels) {
     const alpha = data[i + 3];
     if (alpha > 0) {
       data[i] = color.r;
       data[i + 1] = color.g;
       data[i + 2] = color.b;
-    }
-  }
-
-  return fromRaw({ data, width: info.width, height: info.height });
-};
-
-const extractLightSymbol = async (buffer, threshold = 228) => {
-  const { data, info } = await toRaw(buffer);
-  for (let i = 0; i < data.length; i += info.channels) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const alpha = data[i + 3];
-    const isLight = r >= threshold && g >= threshold && b >= threshold && alpha > 0;
-
-    if (isLight) {
-      data[i] = 255;
-      data[i + 1] = 255;
-      data[i + 2] = 255;
       data[i + 3] = 255;
-    } else {
-      data[i] = 0;
-      data[i + 1] = 0;
-      data[i + 2] = 0;
-      data[i + 3] = 0;
     }
   }
 
   return fromRaw({ data, width: info.width, height: info.height });
 };
 
-const extractOrangeSymbol = async (buffer) => {
+const alphaCoverage = async (buffer) => {
   const { data, info } = await toRaw(buffer);
-  for (let i = 0; i < data.length; i += info.channels) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const alpha = data[i + 3];
-    const isOrangeLike = r >= 170 && g >= 70 && g <= 200 && b <= 120 && alpha > 0;
-
-    if (isOrangeLike) {
-      data[i] = 255;
-      data[i + 1] = 255;
-      data[i + 2] = 255;
-      data[i + 3] = 255;
-    } else {
-      data[i] = 0;
-      data[i + 1] = 0;
-      data[i + 2] = 0;
-      data[i + 3] = 0;
-    }
-  }
-
-  return fromRaw({ data, width: info.width, height: info.height });
-};
-
-const alphaCoverageFromBuffer = async (buffer) => {
-  const { data, info } = await toRaw(buffer);
-  let nonTransparent = 0;
+  let used = 0;
 
   for (let i = 3; i < data.length; i += info.channels) {
-    if (data[i] > 0) nonTransparent += 1;
+    if (data[i] > 0) used += 1;
   }
 
-  return nonTransparent / (info.width * info.height);
+  return used / (info.width * info.height);
 };
 
-const centerOnCanvas = async (buffer, size, scale) => {
-  const target = Math.max(1, Math.round(size * scale));
-  const resized = await sharp(buffer)
-    .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 1 })
-    .resize(target, target, { fit: 'contain' })
-    .png()
-    .toBuffer();
-  return createTransparentCanvas(size).composite([{ input: resized, gravity: 'center' }]).png().toBuffer();
-};
-
-const buildMonochromeSymbol = async (masterRendered) => {
-  const lightExtracted = await extractLightSymbol(masterRendered);
-  const lightCoverage = await alphaCoverageFromBuffer(lightExtracted);
-
-  if (lightCoverage >= 0.005) {
-    return lightExtracted;
-  }
-
-  const orangeExtracted = await extractOrangeSymbol(masterRendered);
-  const orangeCoverage = await alphaCoverageFromBuffer(orangeExtracted);
-
-  if (orangeCoverage >= 0.005) {
-    return orangeExtracted;
+const resolveMonochromeBase = async (masterPng) => {
+  const whiteMask = await extractWhiteMask(masterPng);
+  if ((await alphaCoverage(whiteMask)) >= 0.02) {
+    return whiteMask;
   }
 
   if (!fs.existsSync(MONO_SVG)) {
-    return lightExtracted;
+    return whiteMask;
   }
 
-  const monoRendered = await renderSvgBuffer(readSvg(MONO_SVG), 1024);
-  const monoTinted = await tintOpaquePixels(monoRendered, WHITE);
-  return monoTinted;
+  const fallback = await renderSvgToPng(readSvg(MONO_SVG), 1024);
+  return extractWhiteMask(fallback, 180);
 };
 
-const writeBuffer = async (targetPath, buffer) => {
+const writePng = async (targetPath, buffer) => {
   await sharp(buffer).png().toFile(targetPath);
 };
 
@@ -200,100 +163,75 @@ const generateAssets = async () => {
   ensureSourceExists();
   fs.mkdirSync(BRAND_DIR, { recursive: true });
 
-  const masterSvg = readSvg(MASTER_SVG);
-  const masterRendered1024 = await renderSvgBuffer(masterSvg, 1024);
-  const monochromeBase = await buildMonochromeSymbol(masterRendered1024);
-  const orangeSymbol = await tintOpaquePixels(monochromeBase, BRAND_ORANGE);
-  const whiteSymbol = await tintOpaquePixels(monochromeBase, WHITE);
+  const master = await renderSvgToPng(readSvg(MASTER_SVG), 1024);
+  const whiteBase = await resolveMonochromeBase(master);
+  const orangeSymbol = await tintMask(whiteBase, BRAND_ORANGE);
+  const whiteSymbol = await tintMask(whiteBase, WHITE);
 
-  const appLogo = await centerOnCanvas(masterRendered1024, TARGETS.appIcon.size, 0.82);
-  const appIcon = await createTransparentCanvas(TARGETS.appIcon.size)
+  const appIconRaw = await trimAndScaleCentered(master, TARGETS.appIcon.size, 0.86);
+  const appIcon = await createCanvas(TARGETS.appIcon.size, { r: 0, g: 0, b: 0, alpha: 0 })
     .composite([
-      { input: appLogo, gravity: 'center' },
-      { input: createRoundedMask(TARGETS.appIcon.size, 220), blend: 'dest-in' },
+      { input: appIconRaw, gravity: 'center' },
+      { input: createRoundedMask(TARGETS.appIcon.size, 230), blend: 'dest-in' },
     ])
     .png()
     .toBuffer();
 
-  const splashLogo = await centerOnCanvas(orangeSymbol, TARGETS.splashLogo.size, 0.78);
-  const adaptiveForeground = await centerOnCanvas(orangeSymbol, TARGETS.adaptiveForeground.size, 0.88);
-  const adaptiveBackground = await createSolidCanvas(TARGETS.adaptiveBackground.size, BRAND_ORANGE_DARK).png().toBuffer();
-  const adaptiveMonochrome = await centerOnCanvas(whiteSymbol, TARGETS.adaptiveMonochrome.size, 0.9);
-  const notificationMonochrome = await centerOnCanvas(whiteSymbol, TARGETS.notificationMonochrome.size, 0.9);
+  const splashLogo = await trimAndScaleCentered(orangeSymbol, TARGETS.splashLogo.size, 0.74);
+  const adaptiveForeground = await trimAndScaleCentered(whiteSymbol, TARGETS.adaptiveForeground.size, 0.7);
+  const adaptiveBackground = await createCanvas(TARGETS.adaptiveBackground.size, BRAND_ORANGE_DARK).png().toBuffer();
+  const adaptiveMonochrome = await trimAndScaleCentered(whiteSymbol, TARGETS.adaptiveMonochrome.size, 0.72);
+  const notificationMonochrome = await trimAndScaleCentered(whiteSymbol, TARGETS.notificationMonochrome.size, 0.7);
 
   await Promise.all([
-    writeBuffer(path.join(BRAND_DIR, TARGETS.appIcon.file), appIcon),
-    writeBuffer(path.join(BRAND_DIR, TARGETS.splashLogo.file), splashLogo),
-    writeBuffer(path.join(BRAND_DIR, TARGETS.adaptiveForeground.file), adaptiveForeground),
-    writeBuffer(path.join(BRAND_DIR, TARGETS.adaptiveBackground.file), adaptiveBackground),
-    writeBuffer(path.join(BRAND_DIR, TARGETS.adaptiveMonochrome.file), adaptiveMonochrome),
-    writeBuffer(path.join(BRAND_DIR, TARGETS.notificationMonochrome.file), notificationMonochrome),
+    writePng(path.join(BRAND_DIR, TARGETS.appIcon.file), appIcon),
+    writePng(path.join(BRAND_DIR, TARGETS.splashLogo.file), splashLogo),
+    writePng(path.join(BRAND_DIR, TARGETS.adaptiveForeground.file), adaptiveForeground),
+    writePng(path.join(BRAND_DIR, TARGETS.adaptiveBackground.file), adaptiveBackground),
+    writePng(path.join(BRAND_DIR, TARGETS.adaptiveMonochrome.file), adaptiveMonochrome),
+    writePng(path.join(BRAND_DIR, TARGETS.notificationMonochrome.file), notificationMonochrome),
   ]);
 };
 
 const syncAndroidLauncherResources = async () => {
-  const appIconPath = path.join(BRAND_DIR, TARGETS.appIcon.file);
-  const foregroundPath = path.join(BRAND_DIR, TARGETS.adaptiveForeground.file);
-  const backgroundPath = path.join(BRAND_DIR, TARGETS.adaptiveBackground.file);
-  const monochromePath = path.join(BRAND_DIR, TARGETS.adaptiveMonochrome.file);
-
-  const appIconBuffer = await sharp(appIconPath).png().toBuffer();
-  const foregroundBuffer = await sharp(foregroundPath).png().toBuffer();
-  const backgroundBuffer = await sharp(backgroundPath).png().toBuffer();
-  const monochromeBuffer = await sharp(monochromePath).png().toBuffer();
+  const appIcon = await sharp(path.join(BRAND_DIR, TARGETS.appIcon.file)).png().toBuffer();
+  const foreground = await sharp(path.join(BRAND_DIR, TARGETS.adaptiveForeground.file)).png().toBuffer();
+  const background = await sharp(path.join(BRAND_DIR, TARGETS.adaptiveBackground.file)).png().toBuffer();
+  const monochrome = await sharp(path.join(BRAND_DIR, TARGETS.adaptiveMonochrome.file)).png().toBuffer();
 
   const androidRes = path.resolve(__dirname, '..', 'android', 'app', 'src', 'main', 'res');
-  const densities = Object.keys(LEGACY_MIPMAP_SIZE);
 
-  for (const density of densities) {
+  for (const density of Object.keys(LEGACY_MIPMAP_SIZE)) {
     const mipmapDir = path.join(androidRes, `mipmap-${density}`);
-
     const launcherSize = LEGACY_MIPMAP_SIZE[density];
     const adaptiveSize = ADAPTIVE_MIPMAP_SIZE[density];
 
-    await sharp(await toWebp(appIconBuffer, launcherSize)).toFile(path.join(mipmapDir, 'ic_launcher.webp'));
-    await sharp(await toWebp(appIconBuffer, launcherSize)).toFile(path.join(mipmapDir, 'ic_launcher_round.webp'));
-    await sharp(await toWebp(foregroundBuffer, adaptiveSize)).toFile(path.join(mipmapDir, 'ic_launcher_foreground.webp'));
-    await sharp(await toWebp(backgroundBuffer, adaptiveSize)).toFile(path.join(mipmapDir, 'ic_launcher_background.webp'));
-    await sharp(await toWebp(monochromeBuffer, adaptiveSize)).toFile(path.join(mipmapDir, 'ic_launcher_monochrome.webp'));
+    await sharp(await toWebp(appIcon, launcherSize)).toFile(path.join(mipmapDir, 'ic_launcher.webp'));
+    await sharp(await toWebp(appIcon, launcherSize)).toFile(path.join(mipmapDir, 'ic_launcher_round.webp'));
+    await sharp(await toWebp(foreground, adaptiveSize)).toFile(path.join(mipmapDir, 'ic_launcher_foreground.webp'));
+    await sharp(await toWebp(background, adaptiveSize)).toFile(path.join(mipmapDir, 'ic_launcher_background.webp'));
+    await sharp(await toWebp(monochrome, adaptiveSize)).toFile(path.join(mipmapDir, 'ic_launcher_monochrome.webp'));
   }
-};
-
-const alphaCoverageFromFile = async (filePath) => {
-  const raw = await toRaw(await sharp(filePath).png().toBuffer());
-  let nonTransparent = 0;
-
-  for (let i = 3; i < raw.data.length; i += raw.info.channels) {
-    if (raw.data[i] > 0) nonTransparent += 1;
-  }
-
-  return nonTransparent / (raw.info.width * raw.info.height);
 };
 
 const checkBrandAssets = async () => {
-  const required = Object.values(TARGETS).map((target) => ({
-    filePath: path.join(BRAND_DIR, target.file),
-    expected: target.size,
-  }));
-
-  for (const item of required) {
-    if (!fs.existsSync(item.filePath)) {
-      throw new Error(`Asset obrigatório ausente: ${item.filePath}`);
+  for (const target of Object.values(TARGETS)) {
+    const filePath = path.join(BRAND_DIR, target.file);
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Missing required asset: ${filePath}`);
     }
 
-    const metadata = await sharp(item.filePath).metadata();
-    if (metadata.width !== item.expected || metadata.height !== item.expected) {
-      throw new Error(
-        `Dimensão inválida em ${path.basename(item.filePath)}. Esperado ${item.expected}x${item.expected}, recebido ${metadata.width}x${metadata.height}.`
-      );
+    const metadata = await sharp(filePath).metadata();
+    if (metadata.width !== target.size || metadata.height !== target.size) {
+      throw new Error(`Invalid size for ${target.file}. Expected ${target.size}x${target.size}, got ${metadata.width}x${metadata.height}.`);
     }
   }
 
-  const monoTargets = [TARGETS.adaptiveMonochrome.file, TARGETS.notificationMonochrome.file];
-  for (const file of monoTargets) {
-    const coverage = await alphaCoverageFromFile(path.join(BRAND_DIR, file));
+  const monoFiles = [TARGETS.adaptiveMonochrome.file, TARGETS.notificationMonochrome.file];
+  for (const file of monoFiles) {
+    const coverage = await alphaCoverage(await sharp(path.join(BRAND_DIR, file)).png().toBuffer());
     if (coverage < 0.01) {
-      throw new Error(`Cobertura visual muito baixa em ${file}. Ajuste a versão monocromática da marca.`);
+      throw new Error(`Monochrome coverage is too low for ${file}.`);
     }
   }
 };
@@ -302,20 +240,20 @@ const runCli = async () => {
   const checkOnly = process.argv.includes('--check');
 
   if (!checkOnly) {
-    console.log('Gerando assets de marca...');
+    console.log('Generating brand assets...');
     await generateAssets();
-    console.log('Sincronizando icones nativos Android...');
+    console.log('Syncing native Android launcher resources...');
     await syncAndroidLauncherResources();
   }
 
-  console.log('Validando assets de marca...');
+  console.log('Validating brand assets...');
   await checkBrandAssets();
-  console.log('Assets de marca prontos e validados.');
+  console.log('Brand assets are ready.');
 };
 
 if (require.main === module) {
   runCli().catch((error) => {
-    console.error(`Erro: ${error.message}`);
+    console.error(`Error: ${error.message}`);
     process.exit(1);
   });
 }
@@ -328,7 +266,6 @@ module.exports = {
   generateAssets,
   syncAndroidLauncherResources,
   checkBrandAssets,
-  extractOrangeSymbol,
-  extractLightSymbol,
-  tintOpaquePixels,
+  extractWhiteMask,
+  tintMask,
 };

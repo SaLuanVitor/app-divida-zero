@@ -12,7 +12,6 @@ type BrandLogoProps = {
   subtitleSize?: number;
 };
 
-const BRAND_MARK = require('../../assets/brand/app-icon.png') as ImageSourcePropType;
 const BRAND_SYMBOL = require('../../assets/brand/splash-logo.png') as ImageSourcePropType;
 
 const BrandLogo = ({
@@ -27,23 +26,27 @@ const BrandLogo = ({
 
   if (variant === 'mark') {
     return (
-      <Image
-        source={BRAND_SYMBOL}
-        style={imageStyle}
-        resizeMode="contain"
-        accessibilityIgnoresInvertColors
-      />
+      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+        <Image
+          source={BRAND_SYMBOL}
+          style={imageStyle}
+          resizeMode="contain"
+          accessibilityIgnoresInvertColors
+        />
+      </View>
     );
   }
 
   return (
     <View style={{ alignItems: 'center' }}>
-      <Image
-        source={BRAND_MARK}
-        style={imageStyle}
-        resizeMode="contain"
-        accessibilityIgnoresInvertColors
-      />
+      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+        <Image
+          source={BRAND_SYMBOL}
+          style={imageStyle}
+          resizeMode="contain"
+          accessibilityIgnoresInvertColors
+        />
+      </View>
       <Text
         style={{
           marginTop: 10,
