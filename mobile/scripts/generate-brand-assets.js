@@ -22,6 +22,22 @@ const TARGETS = {
   notificationMonochrome: { file: 'notification-icon-monochrome.png', size: 96 },
 };
 
+const LEGACY_MIPMAP_SIZE = {
+  mdpi: 48,
+  hdpi: 72,
+  xhdpi: 96,
+  xxhdpi: 144,
+  xxxhdpi: 192,
+};
+
+const ADAPTIVE_MIPMAP_SIZE = {
+  mdpi: 108,
+  hdpi: 162,
+  xhdpi: 216,
+  xxhdpi: 324,
+  xxxhdpi: 432,
+};
+
 const ensureSourceExists = () => {
   if (!fs.existsSync(MASTER_SVG)) {
     throw new Error(`Arquivo de marca não encontrado: ${MASTER_SVG}`);
@@ -174,6 +190,12 @@ const writeBuffer = async (targetPath, buffer) => {
   await sharp(buffer).png().toFile(targetPath);
 };
 
+const toWebp = async (buffer, size) =>
+  sharp(buffer)
+    .resize(size, size, { fit: 'cover' })
+    .webp({ lossless: true })
+    .toBuffer();
+
 const generateAssets = async () => {
   ensureSourceExists();
   fs.mkdirSync(BRAND_DIR, { recursive: true });
@@ -207,6 +229,34 @@ const generateAssets = async () => {
     writeBuffer(path.join(BRAND_DIR, TARGETS.adaptiveMonochrome.file), adaptiveMonochrome),
     writeBuffer(path.join(BRAND_DIR, TARGETS.notificationMonochrome.file), notificationMonochrome),
   ]);
+};
+
+const syncAndroidLauncherResources = async () => {
+  const appIconPath = path.join(BRAND_DIR, TARGETS.appIcon.file);
+  const foregroundPath = path.join(BRAND_DIR, TARGETS.adaptiveForeground.file);
+  const backgroundPath = path.join(BRAND_DIR, TARGETS.adaptiveBackground.file);
+  const monochromePath = path.join(BRAND_DIR, TARGETS.adaptiveMonochrome.file);
+
+  const appIconBuffer = await sharp(appIconPath).png().toBuffer();
+  const foregroundBuffer = await sharp(foregroundPath).png().toBuffer();
+  const backgroundBuffer = await sharp(backgroundPath).png().toBuffer();
+  const monochromeBuffer = await sharp(monochromePath).png().toBuffer();
+
+  const androidRes = path.resolve(__dirname, '..', 'android', 'app', 'src', 'main', 'res');
+  const densities = Object.keys(LEGACY_MIPMAP_SIZE);
+
+  for (const density of densities) {
+    const mipmapDir = path.join(androidRes, `mipmap-${density}`);
+
+    const launcherSize = LEGACY_MIPMAP_SIZE[density];
+    const adaptiveSize = ADAPTIVE_MIPMAP_SIZE[density];
+
+    await sharp(await toWebp(appIconBuffer, launcherSize)).toFile(path.join(mipmapDir, 'ic_launcher.webp'));
+    await sharp(await toWebp(appIconBuffer, launcherSize)).toFile(path.join(mipmapDir, 'ic_launcher_round.webp'));
+    await sharp(await toWebp(foregroundBuffer, adaptiveSize)).toFile(path.join(mipmapDir, 'ic_launcher_foreground.webp'));
+    await sharp(await toWebp(backgroundBuffer, adaptiveSize)).toFile(path.join(mipmapDir, 'ic_launcher_background.webp'));
+    await sharp(await toWebp(monochromeBuffer, adaptiveSize)).toFile(path.join(mipmapDir, 'ic_launcher_monochrome.webp'));
+  }
 };
 
 const alphaCoverageFromFile = async (filePath) => {
@@ -254,6 +304,8 @@ const runCli = async () => {
   if (!checkOnly) {
     console.log('Gerando assets de marca...');
     await generateAssets();
+    console.log('Sincronizando icones nativos Android...');
+    await syncAndroidLauncherResources();
   }
 
   console.log('Validando assets de marca...');
@@ -274,6 +326,7 @@ module.exports = {
   MONO_SVG,
   TARGETS,
   generateAssets,
+  syncAndroidLauncherResources,
   checkBrandAssets,
   extractOrangeSymbol,
   extractLightSymbol,
