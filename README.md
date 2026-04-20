@@ -6,6 +6,21 @@ Este guia centraliza os comandos para:
 - resetar o ambiente para novas configuracoes
 - validar se API e mobile estao conectando
 
+## Fase 1 sem IA
+
+Status atual desta entrega:
+- recursos de IA ocultos na interface mobile
+- chamadas mobile para endpoints de IA bloqueadas por modo de fase
+- backend com endpoints de IA preservado para reativacao futura
+
+Limitacoes esperadas:
+- preferencias `ai_assistant_enabled` e `notify_daily_ai_message` permanecem por compatibilidade, mas estao inativas na fase 1
+- a mensagem do dia na Home usa catalogo local rotativo
+
+Criterio de reativacao:
+- definir `EXPO_PUBLIC_PHASE_1_MODE=false`
+- revalidar UX, notificacoes e testes automatizados antes de liberar em producao
+
 ## Pre-requisitos
 
 - Docker Desktop ativo

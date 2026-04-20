@@ -3,6 +3,7 @@ import { AppPreferences } from '../types/settings';
 import { FinancialRecordDto } from '../types/financialRecord';
 import { listFinancialRecords } from './financialRecords';
 import { getAppPreferences, updateAppPreferences } from './preferences';
+import { featurePhaseConfig } from '../config/featurePhase';
 
 type NotificationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable';
 export type ManualNotificationKind = 'test' | 'due_today' | 'due_tomorrow' | 'weekly_summary' | 'daily_ai_message' | 'xp_badge' | 'generic';
@@ -55,7 +56,7 @@ const NOTIFICATION_BODY_FALLBACKS: Record<ManualNotificationKind, string> = {
   due_today: 'Você tem pendências para hoje. Abra o app para revisar.',
   due_tomorrow: 'Você tem pendências para amanhã. Organize-se no app.',
   weekly_summary: 'Seu resumo semanal está disponível no app.',
-  daily_ai_message: 'A mensagem diária de incentivo já está disponível no app.',
+  daily_ai_message: 'A mensagem diária do app já está disponível.',
   xp_badge: 'Você recebeu uma atualização de progresso no app.',
   generic: 'Abra o app para ver os detalhes.',
 };
@@ -476,6 +477,10 @@ export const sendManualNotification = async ({
   }
 
   if (kind === 'daily_ai_message' && !prefs.notify_daily_ai_message) {
+    return { sent: false, reason: 'disabled' };
+  }
+
+  if (kind === 'daily_ai_message' && !featurePhaseConfig.aiEnabledInMobileCalls) {
     return { sent: false, reason: 'disabled' };
   }
 

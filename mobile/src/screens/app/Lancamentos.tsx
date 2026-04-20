@@ -138,6 +138,7 @@ const Lancamentos = () => {
 
     const [loading, setLoading] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
+    const [formError, setFormError] = useState('');
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
     const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
@@ -206,6 +207,39 @@ const Lancamentos = () => {
 
         return true;
     }, [selectedCategory, amountValue, activeTab, recurring, installmentsTotal, recurrenceCount]);
+
+    const validationMessage = useMemo(() => {
+        if (!selectedCategory) return 'Selecione uma categoria para continuar.';
+        if (amountValue <= 0) return 'Informe um valor maior que zero.';
+
+        if (activeTab === 'debt' && !recurring) {
+            const installments = Number(installmentsTotal);
+            if (!Number.isInteger(installments) || installments < 1) {
+                return 'Informe um número de parcelas válido.';
+            }
+        }
+
+        if (recurring) {
+            const count = Number(recurrenceCount);
+            if (!Number.isInteger(count) || count < 1) {
+                return 'Informe uma quantidade válida para recorrência.';
+            }
+        }
+
+        return '';
+    }, [activeTab, amountValue, installmentsTotal, recurrenceCount, recurring, selectedCategory]);
+
+    useEffect(() => {
+        if (formError && canSubmit) {
+            setFormError('');
+        }
+    }, [canSubmit, formError]);
+
+    useEffect(() => {
+        if (!formError) return;
+        setFormError('');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [title, amountDigits, category, customCategory, recurring, recurrenceCount, installmentsTotal, dayOfMonth]);
 
     const monthGrid = useMemo(() => {
         const year = pickerMonth.getFullYear();
@@ -348,9 +382,10 @@ const Lancamentos = () => {
 
     const onSubmit = async () => {
         if (!canSubmit) {
-            Alert.alert('Dados inválidos', 'Revise os campos obrigatórios: valor, categoria e configurações de periodicidade/parcelas.');
+            setFormError(validationMessage || 'Revise os campos obrigatórios e tente novamente.');
             return;
         }
+        setFormError('');
 
         const payload: CreateFinancialRecordPayload = {
             mode: activeTab === 'debt' ? 'debt' : 'launch',
@@ -682,6 +717,12 @@ const Lancamentos = () => {
                         <AppText className="text-center text-xs text-slate-500 dark:text-slate-200 -mt-1 mb-4">
                             Informe o valor para habilitar o salvamento.
                         </AppText>
+                    ) : null}
+
+                    {formError ? (
+                        <View className="mb-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2">
+                            <AppText className="text-red-700 dark:text-red-300 text-sm">{formError}</AppText>
+                        </View>
                     ) : null}
 
                     {loading ? (

@@ -23,12 +23,11 @@ import { getAppPreferences } from '../../services/preferences';
 
 type MessageKind = 'success' | 'error' | '';
 
-const FALLBACK_MANUAL_PAYLOADS: Record<ManualNotificationKind, { title: string; body: string }> = {
+const FALLBACK_MANUAL_PAYLOADS: Partial<Record<ManualNotificationKind, { title: string; body: string }>> = {
   test: { title: 'Dívida Zero', body: 'Atualização da conta enviada com sucesso.' },
   due_today: { title: 'Vencimentos de hoje', body: 'Você tem pendências para hoje.' },
   due_tomorrow: { title: 'Lembrete para amanhã', body: 'Você tem pendências para amanhã.' },
   weekly_summary: { title: 'Resumo semanal', body: 'Seu resumo semanal está disponível.' },
-  daily_ai_message: { title: 'Mensagem do dia', body: 'A mensagem diária de incentivo já está disponível.' },
   xp_badge: { title: 'Nova conquista desbloqueada', body: 'Você ganhou +20 XP. Continue evoluindo.' },
   generic: { title: '', body: '' },
 };
@@ -117,42 +116,42 @@ const NotificationManualSender = () => {
       title: 'Abertura da conta',
       subtitle: 'Abre os alertas com dados reais da sua conta.',
       icon: Sparkles,
-      payload: scenarioByKind.get('test') ?? FALLBACK_MANUAL_PAYLOADS.test,
+      payload: scenarioByKind.get('test') ?? FALLBACK_MANUAL_PAYLOADS.test!,
     },
     {
       kind: 'due_today',
       title: 'Vencimento de hoje',
       subtitle: 'Alerta diário com pendências reais.',
       icon: CalendarCheck2,
-      payload: scenarioByKind.get('due_today') ?? FALLBACK_MANUAL_PAYLOADS.due_today,
+      payload: scenarioByKind.get('due_today') ?? FALLBACK_MANUAL_PAYLOADS.due_today!,
     },
     {
       kind: 'due_tomorrow',
       title: 'Lembrete amanhã',
       subtitle: 'Aviso antecipado com dados reais.',
       icon: CalendarClock,
-      payload: scenarioByKind.get('due_tomorrow') ?? FALLBACK_MANUAL_PAYLOADS.due_tomorrow,
+      payload: scenarioByKind.get('due_tomorrow') ?? FALLBACK_MANUAL_PAYLOADS.due_tomorrow!,
     },
     {
       kind: 'weekly_summary',
       title: 'Resumo semanal',
       subtitle: 'Usa totais reais pendentes da sua conta.',
       icon: BellRing,
-      payload: scenarioByKind.get('weekly_summary') ?? FALLBACK_MANUAL_PAYLOADS.weekly_summary,
+      payload: scenarioByKind.get('weekly_summary') ?? FALLBACK_MANUAL_PAYLOADS.weekly_summary!,
     },
     {
       kind: 'xp_badge',
       title: 'XP e badge',
       subtitle: 'Avanço de jornada com contexto da conta.',
       icon: Trophy,
-      payload: scenarioByKind.get('xp_badge') ?? FALLBACK_MANUAL_PAYLOADS.xp_badge,
+      payload: scenarioByKind.get('xp_badge') ?? FALLBACK_MANUAL_PAYLOADS.xp_badge!,
     },
     {
       kind: 'generic',
       title: 'Alerta genérico',
       subtitle: 'Valida fallback robusto.',
       icon: Sparkles,
-      payload: FALLBACK_MANUAL_PAYLOADS.generic,
+      payload: FALLBACK_MANUAL_PAYLOADS.generic!,
     },
   ];
 

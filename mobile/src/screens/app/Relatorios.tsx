@@ -207,6 +207,19 @@ const Relatorios = () => {
   }), [category, flowType, monthRef, status]);
   const hasVisibleData = data.monthly_summary.records_count > 0 || data.monthly_trend.length > 0;
   const isInitialEmptyLoading = loading && !hasVisibleData;
+  const activeFiltersSummary = useMemo(() => {
+    const parts: string[] = [];
+    if (status !== 'all') {
+      parts.push(status === 'pending' ? 'Pendentes' : 'Concluídos');
+    }
+    if (flowType !== 'all') {
+      parts.push(flowType === 'income' ? 'Entradas' : 'Saídas');
+    }
+    if (category) {
+      parts.push(category);
+    }
+    return parts.length ? parts.join(' • ') : 'Sem filtros adicionais';
+  }, [category, flowType, status]);
 
   useEffect(() => {
     hasVisibleDataRef.current = hasVisibleData;
@@ -319,6 +332,10 @@ const Relatorios = () => {
   const changeMonth = (delta: number) => setMonthRef((p) => new Date(p.getFullYear(), p.getMonth() + delta, 1));
   const today = () => { const now = new Date(); setMonthRef(new Date(now.getFullYear(), now.getMonth(), 1)); };
   const clearFilters = () => { setStatus('all'); setFlowType('all'); setCategory(null); };
+  const resetFiltersAndReload = () => {
+    clearFilters();
+    void load('initial_load');
+  };
   const handleExportPdf = useCallback(async () => {
     if (exportingPdf) return;
 
@@ -365,9 +382,14 @@ const Relatorios = () => {
 
         <Card className="mb-3" noPadding><View className="p-4">
           <View className="flex-row items-center justify-between mb-1">
-            <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(-1)}><ChevronLeft size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} /></TouchableOpacity>
+              <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(-1)}><ChevronLeft size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} /></TouchableOpacity>
             <TutorialTarget targetId="relatorios-period-picker">
-              <TouchableOpacity className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" onPress={() => { setPickerYear(monthRef.getFullYear()); setPickerMode('month'); setShowPeriodPicker(true); }}>
+              <TouchableOpacity
+                className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                onPress={() => { setPickerYear(monthRef.getFullYear()); setPickerMode('month'); setShowPeriodPicker(true); }}
+                accessibilityRole="button"
+                accessibilityLabel="Selecionar período dos relatórios"
+              >
                 <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{monthLabel(monthRef)}</AppText>
               </TouchableOpacity>
             </TutorialTarget>
@@ -425,6 +447,11 @@ const Relatorios = () => {
               <AppText className="text-slate-700 dark:text-slate-200 text-xs font-bold">Limpar</AppText>
             </TouchableOpacity>
           </View>
+          <View className="mt-2 rounded-lg bg-slate-50 dark:bg-[#1a1a1a] border border-slate-100 dark:border-slate-800 px-3 py-2">
+            <AppText className="text-[11px] text-slate-500 dark:text-slate-200">
+              Filtros ativos: <AppText className="font-bold text-slate-700 dark:text-slate-100">{activeFiltersSummary}</AppText>
+            </AppText>
+          </View>
         </View></Card>
 
         {isInitialEmptyLoading ? (
@@ -440,7 +467,21 @@ const Relatorios = () => {
             </View>
           </View>
         ) : null}
-        {error ? <Card className="mb-3" noPadding><View className="p-4"><AppText className="text-red-700 dark:text-red-300 text-sm">{error}</AppText><TouchableOpacity onPress={() => void load('initial_load')} className="mt-3 self-start px-3 py-2 rounded-lg bg-primary/10 border border-primary/20"><AppText className="text-primary text-xs font-bold">Tentar novamente</AppText></TouchableOpacity></View></Card> : null}
+        {error ? (
+          <Card className="mb-3" noPadding>
+            <View className="p-4">
+              <AppText className="text-red-700 dark:text-red-300 text-sm">{error}</AppText>
+              <TouchableOpacity
+                onPress={resetFiltersAndReload}
+                className="mt-3 self-start px-3 py-2 rounded-lg bg-primary/10 border border-primary/20"
+                accessibilityRole="button"
+                accessibilityLabel="Limpar filtros e tentar novamente"
+              >
+                <AppText className="text-primary text-xs font-bold">Limpar filtros e tentar novamente</AppText>
+              </TouchableOpacity>
+            </View>
+          </Card>
+        ) : null}
 
         {!isInitialEmptyLoading && !error ? (
           <>
@@ -486,7 +527,19 @@ const Relatorios = () => {
                 <TouchableOpacity className={`flex-1 h-10 rounded-xl border items-center justify-center ${tab === 'records' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setTab('records')}><AppText className={`font-bold text-sm ${tab === 'records' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Lançamentos</AppText></TouchableOpacity>
                 <TouchableOpacity className={`flex-1 h-10 rounded-xl border items-center justify-center ${tab === 'categories' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setTab('categories')}><AppText className={`font-bold text-sm ${tab === 'categories' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Categorias</AppText></TouchableOpacity>
               </View>
-              {data.monthly_summary.records_count === 0 ? <View className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] border border-slate-100 dark:border-slate-800 p-3"><AppText className="text-slate-600 dark:text-slate-200 text-sm">Não existem dados para os filtros selecionados.</AppText></View> : null}
+              {data.monthly_summary.records_count === 0 ? (
+                <View className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] border border-slate-100 dark:border-slate-800 p-3">
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Não existem dados para os filtros selecionados.</AppText>
+                  <TouchableOpacity
+                    className="mt-3 self-start px-3 py-2 rounded-lg bg-primary/10 border border-primary/20"
+                    onPress={resetFiltersAndReload}
+                    accessibilityRole="button"
+                    accessibilityLabel="Resetar filtros e atualizar relatórios"
+                  >
+                    <AppText className="text-primary text-xs font-bold">Resetar filtros e atualizar</AppText>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
 
               {data.monthly_summary.records_count > 0 && tab === 'records' ? (
                 data.detailed_records.map((item) => (
