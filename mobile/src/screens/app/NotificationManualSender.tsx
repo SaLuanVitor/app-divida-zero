@@ -114,28 +114,28 @@ const NotificationManualSender = () => {
     {
       kind: 'test',
       title: 'Abertura da conta',
-      subtitle: 'Abre os alertas com dados reais da sua conta.',
+      subtitle: 'Abre os alertas com dados atuais da sua conta.',
       icon: Sparkles,
       payload: scenarioByKind.get('test') ?? FALLBACK_MANUAL_PAYLOADS.test!,
     },
     {
       kind: 'due_today',
       title: 'Vencimento de hoje',
-      subtitle: 'Alerta diário com pendências reais.',
+      subtitle: 'Alerta diário com pendências atuais.',
       icon: CalendarCheck2,
       payload: scenarioByKind.get('due_today') ?? FALLBACK_MANUAL_PAYLOADS.due_today!,
     },
     {
       kind: 'due_tomorrow',
       title: 'Lembrete amanhã',
-      subtitle: 'Aviso antecipado com dados reais.',
+      subtitle: 'Aviso antecipado com dados atuais.',
       icon: CalendarClock,
       payload: scenarioByKind.get('due_tomorrow') ?? FALLBACK_MANUAL_PAYLOADS.due_tomorrow!,
     },
     {
       kind: 'weekly_summary',
       title: 'Resumo semanal',
-      subtitle: 'Usa totais reais pendentes da sua conta.',
+      subtitle: 'Usa totais atuais pendentes da sua conta.',
       icon: BellRing,
       payload: scenarioByKind.get('weekly_summary') ?? FALLBACK_MANUAL_PAYLOADS.weekly_summary!,
     },
@@ -177,7 +177,7 @@ const NotificationManualSender = () => {
       setAppNotificationsEnabled(Boolean(prefs.notifications_enabled));
       setDevicePushEnabled(Boolean(prefs.device_push_enabled));
       setMessageKind('success');
-      setMessage('Alertas atualizados com os dados atuais da conta.');
+      setMessage('Alertas atualizados com os dados da conta.');
     } catch {
       setMessageKind('error');
       setMessage('Não foi possível atualizar os alertas da conta agora.');
@@ -329,7 +329,7 @@ const NotificationManualSender = () => {
           <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Envio de notificações</AppText>
             <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-              Alertas locais com dados reais da sua conta.
+              Alertas locais com dados da sua conta.
             </AppText>
           </View>
         </View>

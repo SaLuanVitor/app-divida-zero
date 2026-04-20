@@ -67,3 +67,4 @@ Validar estabilidade da entrega Fase 1 com IA oculta no mobile, sem regressão n
 - Capturas de tela: Home, Lançamentos (erro inline), Relatórios (filtros ativos), Configurações, Notificações.
 - Vídeo curto opcional do fluxo completo.
 - Log de defeitos com severidade (Bloqueador, Alto, Médio, Baixo).
+- Registro consolidado: `docs/qa/evidencias-android-fase1.md`.

@@ -4,10 +4,10 @@ import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal, FlatList } from 'react-native';
 import {
     Bell,
-    Bot,
     CheckCircle2,
     CircleDollarSign,
     Landmark,
+    Quote,
     ChevronLeft,
     ChevronRight,
     Wallet,
@@ -859,7 +859,7 @@ const Home = () => {
 
                         <View className="mt-3 bg-white/90 dark:bg-[#121212] rounded-2xl border border-stone-200/60 dark:border-slate-800 p-4">
                             <View className="flex-row items-center mb-1">
-                                <Bot size={14} color="#f48c25" />
+                                <Quote size={14} color="#f48c25" />
                                 <AppText className="ml-1 text-[11px] text-slate-500 dark:text-slate-200 font-bold uppercase">Mensagem de hoje</AppText>
                             </View>
                             <AppText className="text-slate-900 dark:text-slate-100 font-bold text-[15px]">
@@ -878,10 +878,20 @@ const Home = () => {
                     <Card className="mb-5" noPadding>
                         <View className="p-4">
                             <View className="flex-row items-center justify-between mb-4">
-                                <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(-1)}>
+                                <TouchableOpacity
+                                    className="p-2 rounded-full bg-slate-100 dark:bg-slate-800"
+                                    onPress={() => changeMonth(-1)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Mês anterior no calendário"
+                                >
                                     <ChevronLeft size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} />
                                 </TouchableOpacity>
-                                <TouchableOpacity className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" onPress={openPeriodPicker}>
+                                <TouchableOpacity
+                                    className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                                    onPress={openPeriodPicker}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Selecionar período do calendário"
+                                >
                                     <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{toMonthLabel(currentMonth)}</AppText>
                                 </TouchableOpacity>
                                 <View className="flex-row items-center gap-2">
@@ -889,10 +899,17 @@ const Home = () => {
                                         className="px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center"
                                         style={{ minHeight: compactPillHeight, height: compactPillHeight }}
                                         onPress={focusToday}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Ir para hoje no calendário"
                                     >
                                         <AppText className="text-primary text-xs font-bold">Hoje</AppText>
                                     </TouchableOpacity>
-                                    <TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => changeMonth(1)}>
+                                    <TouchableOpacity
+                                        className="p-2 rounded-full bg-slate-100 dark:bg-slate-800"
+                                        onPress={() => changeMonth(1)}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Próximo mês no calendário"
+                                    >
                                         <ChevronRight size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} />
                                     </TouchableOpacity>
                                 </View>

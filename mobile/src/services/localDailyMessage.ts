@@ -1,4 +1,4 @@
-export interface LocalDailyMessage {
+﻿export interface LocalDailyMessage {
   id: number;
   date: string;
   title: string;

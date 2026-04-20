@@ -241,6 +241,39 @@ npm run build:apk
 
 Compartilhe o link/arquivo APK gerado pelo EAS com os testers.
 
+## 9) Pre-release checklist (Fase 1)
+
+Antes da banca, executar:
+
+```powershell
+cd C:\Users\luanv\Projetos\app-divida-zero
+node .\scripts\check-mojibake.js
+```
+
+```powershell
+cd C:\Users\luanv\Projetos\app-divida-zero\mobile
+npx tsc --noEmit
+npm run test -- --runInBand
+```
+
+```powershell
+cd C:\Users\luanv\Projetos\app-divida-zero
+docker compose exec api bash -lc "RAILS_ENV=test bundle exec rails db:prepare && bundle exec rails test"
+```
+
+Checklist de execução manual Android (QA):
+
+- `docs/qa/checklist-manual-android-fase1.md`
+
+## 10) Pacote de entrega para banca
+
+Itens recomendados:
+
+- APK de teste instalada/validada em device real Android
+- credencial fictícia de demonstração
+- roteiro de demo de 5 a 7 minutos cobrindo Auth -> Home -> Lançamentos -> Relatórios -> Configurações -> Notificações
+- evidências de QA (capturas por fluxo e log de defeitos)
+
 ### 8.5 Operacao segura (nao perder dados)
 
 - Nao executar rotinas destrutivas no ambiente remoto.

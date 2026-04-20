@@ -1,5 +1,17 @@
 # API Divida Zero
 
+## Fase 1 sem IA
+
+Estado desta entrega:
+
+- backend de IA preservado para reativação futura
+- app mobile em modo de fase, sem consumo de IA na experiência do usuário
+- contratos públicos atuais mantidos sem quebra
+
+Observação:
+
+- chaves legadas de preferências relacionadas à IA podem existir por compatibilidade, mas estão inativas na Fase 1 pelo app.
+
 ## Stack local (Docker hibrido)
 
 Este projeto usa:

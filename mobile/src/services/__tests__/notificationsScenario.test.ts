@@ -1,4 +1,4 @@
-import { buildManualNotificationScenario } from '../notifications';
+﻿import { buildManualNotificationScenario } from '../notifications';
 import { AppPreferences } from '../../types/settings';
 import { FinancialRecordDto } from '../../types/financialRecord';
 
