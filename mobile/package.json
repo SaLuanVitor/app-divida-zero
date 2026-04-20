@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "mobile",
   "version": "1.0.0",
   "main": "index.ts",
@@ -6,7 +6,7 @@
     "start": "expo start",
     "android": "expo run:android",
     "build:apk:local": "cd android && gradlew.bat assembleRelease",
-    "build:apk:local:named": "cd android && gradlew.bat assembleRelease && copy /Y app\\build\\outputs\\apk\\release\\app-release.apk \"..\\Dívida Zero.apk\"",
+    "build:apk:local:named": "cd android && gradlew.bat assembleRelease && copy /Y app\\build\\outputs\\apk\\release\\app-release.apk \"..\\D\u00EDvida Zero.apk\"",
     "build:apk": "npx eas-cli build -p android --profile preview",
     "build:apk:download": "node scripts/download-latest-apk.js",
     "build:aab": "npx eas-cli build -p android --profile production",
@@ -14,7 +14,8 @@
     "web": "expo start --web",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
-    "brand:generate": "node scripts/generate-brand-assets.js"
+    "brand:generate": "node scripts/generate-brand-assets.js",
+    "build:apk:local:stable": "node scripts/build-local-apk-stable.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -57,3 +58,4 @@
   },
   "private": true
 }
+
