@@ -19,6 +19,7 @@ interface LayoutProps {
     className?: string;
     contentContainerClassName?: string;
     scrollViewProps?: ScrollViewProps;
+    scrollRef?: React.RefObject<ScrollView | null>;
 }
 
 const cn = (...classes: Array<string | undefined | null | false>) =>
@@ -31,11 +32,12 @@ const Layout: React.FC<LayoutProps> = ({
     className,
     contentContainerClassName,
     scrollViewProps,
+    scrollRef,
 }) => {
     const { width } = useWindowDimensions();
     const insets = useSafeAreaInsets();
     const { contentBottomInset } = useBottomInset();
-    const scrollViewRef = React.useRef<ScrollView>(null);
+    const internalScrollViewRef = React.useRef<ScrollView>(null);
     const [keyboardHeight, setKeyboardHeight] = React.useState(0);
     const shouldConstrain = width >= 768;
     const { contentContainerStyle: userContentContainerStyle, ...restScrollViewProps } = scrollViewProps ?? {};
@@ -60,14 +62,15 @@ const Layout: React.FC<LayoutProps> = ({
     }, [formMode]);
 
     const handleInputFocus = React.useCallback((target?: number | null) => {
-        if (!formMode || !scrollable || !target || !scrollViewRef.current) return;
+        const activeScrollRef = scrollRef?.current ?? internalScrollViewRef.current;
+        if (!formMode || !scrollable || !target || !activeScrollRef) return;
 
         // Keep some top context (label + field) visible above keyboard on Android.
         const extraOffset = 96;
         requestAnimationFrame(() => {
-            (scrollViewRef.current as any)?.scrollResponderScrollNativeHandleToKeyboard?.(target, extraOffset, true);
+            (activeScrollRef as any)?.scrollResponderScrollNativeHandleToKeyboard?.(target, extraOffset, true);
         });
-    }, [formMode, scrollable]);
+    }, [formMode, scrollRef, scrollable]);
 
     const contentWrapperStyle = {
         width: '100%' as const,
@@ -88,7 +91,7 @@ const Layout: React.FC<LayoutProps> = ({
                 >
                     {scrollable ? (
                         <ScrollView
-                            ref={scrollViewRef}
+                            ref={scrollRef ?? internalScrollViewRef}
                             className="flex-1"
                             contentContainerClassName={cn('p-6 pb-8', contentContainerClassName)}
                             contentContainerStyle={[

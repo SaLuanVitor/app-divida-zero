@@ -15,6 +15,9 @@ export interface AppPreferences {
   larger_touch_targets: boolean;
   onboarding_seen: boolean;
   onboarding_mode: 'beginner' | 'advanced' | null;
+  onboarding_primary_goal: 'organize_month' | 'pay_off_debt' | 'create_goal' | null;
+  advanced_quick_guide_seen: boolean;
+  first_success_milestone_done: boolean;
   tutorial_reopen_enabled: boolean;
   tutorial_active_mode: 'beginner' | 'advanced' | null;
   tutorial_beginner_completed: boolean;

@@ -1,7 +1,7 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal, FlatList } from 'react-native';
+import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal, FlatList, LayoutChangeEvent, Alert } from 'react-native';
 import {
     Bell,
     CheckCircle2,
@@ -39,6 +39,7 @@ import {
 import { getGamificationSummary } from '../../services/gamification';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
+import { useTutorial } from '../../context/TutorialContext';
 import { listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto } from '../../types/financialGoal';
 import { runWhenIdle } from '../../utils/idle';
@@ -221,6 +222,7 @@ const Home = () => {
     const { contentBottomInset, overlayBottomInset } = useBottomInset();
     const { darkMode } = useThemeMode();
     const { fontScale, largerTouchTargets } = useAccessibility();
+    const { isBeginnerTutorialActive, currentEssentialStepId } = useTutorial();
     const insets = useSafeAreaInsets();
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
@@ -254,6 +256,7 @@ const Home = () => {
     const [showNotificationsPopup, setShowNotificationsPopup] = useState(false);
     const [notificationsPopupLoading, setNotificationsPopupLoading] = useState(false);
     const [notificationItems, setNotificationItems] = useState<NotificationHistoryItem[]>([]);
+    const [onboardingPrimaryGoal, setOnboardingPrimaryGoal] = useState<'organize_month' | 'pay_off_debt' | 'create_goal' | null>(null);
     const dailyMessage = useMemo(() => getLocalDailyMessage(), []);
     const compactPillHeight = Math.max(Math.round(36 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 36);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
@@ -261,6 +264,9 @@ const Home = () => {
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastMonthLoadAtRef = useRef(0);
+    const scrollRef = useRef<ScrollView>(null);
+    const [calendarSectionY, setCalendarSectionY] = useState(0);
+    const [monthHistorySectionY, setMonthHistorySectionY] = useState(0);
 
     const showDayDetails = isOverlayOpen('dayDetails');
     const showConfirm = !!confirmState;
@@ -289,6 +295,29 @@ const Home = () => {
                 clearTimeout(undoTimer.current);
             }
         };
+    }, []);
+
+    useEffect(() => {
+        if (!isBeginnerTutorialActive || !currentEssentialStepId) return;
+        if (currentEssentialStepId !== 'home_calendar' && currentEssentialStepId !== 'home_month_history') return;
+
+        const timer = setTimeout(() => {
+            if (currentEssentialStepId === 'home_calendar') {
+                scrollRef.current?.scrollTo({ y: Math.max(calendarSectionY - 24, 0), animated: true });
+                return;
+            }
+            scrollRef.current?.scrollTo({ y: Math.max(monthHistorySectionY - 36, 0), animated: true });
+        }, 140);
+
+        return () => clearTimeout(timer);
+    }, [calendarSectionY, currentEssentialStepId, isBeginnerTutorialActive, monthHistorySectionY]);
+
+    const handleCalendarLayout = useCallback((event: LayoutChangeEvent) => {
+        setCalendarSectionY(event.nativeEvent.layout.y);
+    }, []);
+
+    const handleMonthHistoryLayout = useCallback((event: LayoutChangeEvent) => {
+        setMonthHistorySectionY(event.nativeEvent.layout.y);
     }, []);
 
     const loadMonthlyRecords = useCallback(async (options: { force?: boolean; silent?: boolean } = {}) => {
@@ -425,6 +454,32 @@ const Home = () => {
         }, [loadNotificationBadge])
     );
 
+    useFocusEffect(
+        useCallback(() => {
+            const cancel = runWhenIdle(async () => {
+                const prefs = await getAppPreferences();
+                setOnboardingPrimaryGoal(prefs.onboarding_primary_goal);
+            });
+            return cancel;
+        }, [])
+    );
+
+    const openHomeQuickGuide = useCallback(() => {
+        const focusText =
+            onboardingPrimaryGoal === 'pay_off_debt'
+                ? 'Foco atual: quitar dívida.'
+                : onboardingPrimaryGoal === 'create_goal'
+                ? 'Foco atual: criar meta.'
+                : onboardingPrimaryGoal === 'organize_month'
+                ? 'Foco atual: organizar mês.'
+                : 'Foco atual: manter visão geral.';
+
+        Alert.alert(
+            'Guia rápido da Home',
+            `${focusText}\n\n1. Confira o resumo e a próxima ação.\n2. Use o calendário para abrir detalhes por dia.\n3. Revise o histórico do mês com filtros e busca.\n\nSe quiser, abra o tutorial completo em Configurações > Ver tutorial novamente.`
+        );
+    }, [onboardingPrimaryGoal]);
+
     const entries = useMemo(() => records.map(toCalendarEntry), [records]);
     const notificationModalWidth = useMemo(() => Math.min(windowWidth - 24, 420), [windowWidth]);
     const notificationModalMaxHeight = useMemo(
@@ -453,13 +508,34 @@ const Home = () => {
             };
         }
 
+        if (onboardingPrimaryGoal === 'pay_off_debt') {
+            return {
+                title: 'Comece registrando sua dívida principal',
+                description: 'Assim você já acompanha vencimentos e evolução no mês.',
+                cta: 'Registrar dívida',
+                onPress: () => navigation.navigate('Lancamentos', { mode: 'debt' }),
+            };
+        }
+
+        if (onboardingPrimaryGoal === 'organize_month') {
+            return {
+                title: 'Registre o primeiro lançamento do mês',
+                description: 'Isso melhora o calendário e as próximas recomendações.',
+                cta: 'Registrar lançamento',
+                onPress: () => navigation.navigate('Lancamentos', { mode: 'income' }),
+            };
+        }
+
         return {
-            title: 'Crie sua próxima meta',
-            description: 'Defina um objetivo para manter seu ritmo de evolução.',
-            cta: 'Nova meta',
+            title: onboardingPrimaryGoal === 'create_goal' ? 'Crie sua primeira meta' : 'Crie sua próxima meta',
+            description:
+                onboardingPrimaryGoal === 'create_goal'
+                    ? 'Defina um objetivo para começar seu plano financeiro.'
+                    : 'Defina um objetivo para manter seu ritmo de evolução.',
+            cta: onboardingPrimaryGoal === 'create_goal' ? 'Criar meta' : 'Nova meta',
             onPress: () => navigation.navigate('MetaForm'),
         };
-    }, [goals, navigation, pendingEntriesCount]);
+    }, [goals, navigation, onboardingPrimaryGoal, pendingEntriesCount]);
 
     const visibleEntries = useMemo(() => {
         let base = entries;
@@ -779,6 +855,7 @@ const Home = () => {
                 contentContainerClassName="p-0 bg-[#f8f7f5] dark:bg-black"
                 scrollable
                 formMode
+                scrollRef={scrollRef}
                 scrollViewProps={{
                     onScroll: handleMonthListScroll,
                     scrollEventThrottle: 16,
@@ -805,6 +882,9 @@ const Home = () => {
                                 <AppText className="text-slate-500 dark:text-slate-200 text-xs font-medium">
                                     {gamificationSummary.level_title} • XP {gamificationSummary.xp_in_level}/{gamificationSummary.xp_in_level + gamificationSummary.xp_to_next_level}
                                 </AppText>
+                                <TouchableOpacity onPress={openHomeQuickGuide} className="self-start mt-1">
+                                    <AppText className="text-primary text-xs font-bold">Ver guia rápido</AppText>
+                                </TouchableOpacity>
                             </View>
                         </View>
                         <TouchableOpacity
@@ -875,7 +955,7 @@ const Home = () => {
 
                 <View className="pt-4" style={{ paddingBottom: contentBottomInset }}>
                     <TutorialTarget targetId="home-calendar-card">
-                    <Card className="mb-5" noPadding>
+                    <Card className="mb-5" noPadding onLayout={handleCalendarLayout}>
                         <View className="p-4">
                             <View className="flex-row items-center justify-between mb-4">
                                 <TouchableOpacity
@@ -976,39 +1056,43 @@ const Home = () => {
                     </Card>
                     </TutorialTarget>
 
-                    <View className="flex-row items-center justify-between mb-3">
-                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-xl">Lançamentos do mês</AppText>
-                        <AppText className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full">{filteredMonthItems.length} registros</AppText>
-                    </View>
+                    <TutorialTarget targetId="home-month-history">
+                        <View onLayout={handleMonthHistoryLayout}>
+                            <View className="flex-row items-center justify-between mb-3">
+                                <AppText className="text-slate-900 dark:text-slate-100 font-bold text-xl">Lançamentos do mês</AppText>
+                                <AppText className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full">{filteredMonthItems.length} registros</AppText>
+                            </View>
 
-                    <View className="flex-row flex-wrap gap-2 mb-4">
-                        <TouchableOpacity
-                            className={`px-3 py-2 rounded-full border ${monthListFilter === 'all' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
-                            onPress={() => setMonthListFilter('all')}
-                        >
-                            <AppText className={`text-xs font-bold ${monthListFilter === 'all' ? 'text-white' : 'text-slate-600 dark:text-slate-200'}`}>Todos</AppText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            className={`px-3 py-2 rounded-full border ${monthListFilter === 'pending' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
-                            onPress={() => setMonthListFilter('pending')}
-                        >
-                            <AppText className={`text-xs font-bold ${monthListFilter === 'pending' ? 'text-white' : 'text-slate-600 dark:text-slate-200'}`}>Pendentes</AppText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            className={`px-3 py-2 rounded-full border ${monthListFilter === 'completed' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
-                            onPress={() => setMonthListFilter('completed')}
-                        >
-                            <AppText className={`text-xs font-bold ${monthListFilter === 'completed' ? 'text-white' : 'text-slate-600 dark:text-slate-200'}`}>Concluídos</AppText>
-                        </TouchableOpacity>
-                    </View>
+                            <View className="flex-row flex-wrap gap-2 mb-4">
+                                <TouchableOpacity
+                                    className={`px-3 py-2 rounded-full border ${monthListFilter === 'all' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                    onPress={() => setMonthListFilter('all')}
+                                >
+                                    <AppText className={`text-xs font-bold ${monthListFilter === 'all' ? 'text-white' : 'text-slate-600 dark:text-slate-200'}`}>Todos</AppText>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    className={`px-3 py-2 rounded-full border ${monthListFilter === 'pending' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                    onPress={() => setMonthListFilter('pending')}
+                                >
+                                    <AppText className={`text-xs font-bold ${monthListFilter === 'pending' ? 'text-white' : 'text-slate-600 dark:text-slate-200'}`}>Pendentes</AppText>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    className={`px-3 py-2 rounded-full border ${monthListFilter === 'completed' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                    onPress={() => setMonthListFilter('completed')}
+                                >
+                                    <AppText className={`text-xs font-bold ${monthListFilter === 'completed' ? 'text-white' : 'text-slate-600 dark:text-slate-200'}`}>Concluídos</AppText>
+                                </TouchableOpacity>
+                            </View>
 
-                    <AppTextInput
-                        className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 mb-4 text-slate-900 dark:text-slate-100"
-                        placeholder="Buscar por título, categoria, valor, data ou status"
-                        placeholderTextColor="#94a3b8"
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                    />
+                            <AppTextInput
+                                className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 mb-4 text-slate-900 dark:text-slate-100"
+                                placeholder="Buscar por título, categoria, valor, data ou status"
+                                placeholderTextColor="#94a3b8"
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                            />
+                        </View>
+                    </TutorialTarget>
 
                     {!loading && filteredMonthItems.length === 0 ? (
                         <Card className="mb-3" noPadding>

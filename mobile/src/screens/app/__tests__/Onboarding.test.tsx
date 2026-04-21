@@ -37,6 +37,7 @@ describe('Onboarding adaptive flow', () => {
       expect.objectContaining({
         tutorial_track_state: 'essential',
         tutorial_version: 2,
+        onboarding_primary_goal: 'organize_month',
       })
     );
     expect(onDone).toHaveBeenCalled();
@@ -64,12 +65,14 @@ describe('Onboarding adaptive flow', () => {
     const onDone = jest.fn();
     const screen = render(<Onboarding onDone={onDone} />);
 
-    fireEvent.press(screen.getByText('Modo avancado (sem tutorial)'));
+    fireEvent.press(screen.getByText('Modo avançado (sem tutorial)'));
+    fireEvent.press(screen.getByText('Entrar no app'));
 
     await waitFor(() => expect(updateAppPreferences).toHaveBeenCalled());
     expect(updateAppPreferences).toHaveBeenCalledWith(
       expect.objectContaining({
         onboarding_mode: 'advanced',
+        advanced_quick_guide_seen: true,
         tutorial_track_state: 'completed',
         tutorial_reopen_enabled: false,
         tutorial_active_mode: null,

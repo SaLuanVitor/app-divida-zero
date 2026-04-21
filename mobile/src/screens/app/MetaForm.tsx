@@ -10,7 +10,7 @@ import { useThemeMode } from '../../context/ThemeContext';
 import { createFinancialGoal, updateFinancialGoal } from '../../services/financialGoals';
 import { CreateFinancialGoalPayload, FinancialGoalDto, FinancialGoalType } from '../../types/financialGoal';
 import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamification';
-import { getAppPreferences } from '../../services/preferences';
+import { getAppPreferences, updateAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { useAccessibility } from '../../context/AccessibilityContext';
@@ -104,6 +104,7 @@ const MetaForm = () => {
     const [submitting, setSubmitting] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
+    const [firstSuccessUnlocked, setFirstSuccessUnlocked] = useState(false);
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
     const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
@@ -251,6 +252,12 @@ const MetaForm = () => {
             }
 
             const result = await createFinancialGoal(payload);
+            const prefs = await getAppPreferences();
+            const unlockedFirstSuccess = !prefs.first_success_milestone_done;
+            if (unlockedFirstSuccess) {
+                await updateAppPreferences({ first_success_milestone_done: true });
+                setFirstSuccessUnlocked(true);
+            }
             trackAnalyticsEventDeferred({
                 event_name: 'goal_created',
                 screen: 'MetaForm',
@@ -259,7 +266,6 @@ const MetaForm = () => {
                 },
             });
             if (result.xp_feedback) {
-                const prefs = await getAppPreferences();
                 await sendXpAndBadgeNotification({
                     enabled:
                         prefs.notifications_enabled &&
@@ -277,7 +283,13 @@ const MetaForm = () => {
                 });
             } else {
                 navigation.navigate('Metas', {
-                    feedback: { kind: 'success', title: 'Meta criada', message: result.message },
+                    feedback: {
+                        kind: 'success',
+                        title: 'Meta criada',
+                        message: unlockedFirstSuccess
+                            ? `${result.message} Você já consegue usar o app com segurança.`
+                            : result.message,
+                    },
                 });
             }
         } catch (error: any) {
@@ -636,7 +648,13 @@ const MetaForm = () => {
                                 onPress={() => {
                                     setXpPopup(null);
                                     navigation.navigate('Metas', {
-                                        feedback: { kind: 'success', title: 'Meta criada', message: 'Sua meta foi salva com sucesso.' },
+                                        feedback: {
+                                            kind: 'success',
+                                            title: 'Meta criada',
+                                            message: firstSuccessUnlocked
+                                                ? 'Sua meta foi salva com sucesso. Você já consegue usar o app com segurança.'
+                                                : 'Sua meta foi salva com sucesso.',
+                                        },
                                     });
                                 }}
                                 className="h-12 mt-4 w-full"
