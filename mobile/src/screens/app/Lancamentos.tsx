@@ -10,7 +10,7 @@ import { useThemeMode } from '../../context/ThemeContext';
 import { createFinancialRecord } from '../../services/financialRecords';
 import { CreateFinancialRecordPayload, FinancialRecurrenceType } from '../../types/financialRecord';
 import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamification';
-import { getAppPreferences } from '../../services/preferences';
+import { getAppPreferences, updateAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { useAccessibility } from '../../context/AccessibilityContext';
@@ -139,6 +139,7 @@ const Lancamentos = () => {
     const [loading, setLoading] = useState(false);
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
     const [formError, setFormError] = useState('');
+    const [milestoneMessage, setMilestoneMessage] = useState('');
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
     const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
@@ -240,6 +241,21 @@ const Lancamentos = () => {
         setFormError('');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [title, amountDigits, category, customCategory, recurring, recurrenceCount, installmentsTotal, dayOfMonth]);
+
+    useEffect(() => {
+        if (!milestoneMessage) return;
+        const timeout = setTimeout(() => {
+            setMilestoneMessage('');
+        }, 3200);
+        return () => clearTimeout(timeout);
+    }, [milestoneMessage]);
+
+    const maybeUnlockFirstSuccessMilestone = async () => {
+        const prefs = await getAppPreferences();
+        if (prefs.first_success_milestone_done) return;
+        await updateAppPreferences({ first_success_milestone_done: true });
+        setMilestoneMessage('Você já consegue usar o app. Continue no seu ritmo.');
+    };
 
     const monthGrid = useMemo(() => {
         const year = pickerMonth.getFullYear();
@@ -415,6 +431,7 @@ const Lancamentos = () => {
                     recurring: Boolean(payload.recurring),
                 },
             });
+            await maybeUnlockFirstSuccessMilestone();
             resetForm();
             if (result.xp_feedback) {
                 const prefs = await getAppPreferences();
@@ -722,6 +739,12 @@ const Lancamentos = () => {
                     {formError ? (
                         <View className="mb-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2">
                             <AppText className="text-red-700 dark:text-red-300 text-sm">{formError}</AppText>
+                        </View>
+                    ) : null}
+
+                    {milestoneMessage ? (
+                        <View className="mb-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
+                            <AppText className="text-emerald-700 dark:text-emerald-300 text-sm">{milestoneMessage}</AppText>
                         </View>
                     ) : null}
 

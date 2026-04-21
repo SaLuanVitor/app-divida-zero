@@ -1,5 +1,5 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View, useWindowDimensions, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import { ArrowDownCircle, ArrowUpCircle, Calendar, ChevronLeft, ChevronRight, FileDown, Filter, Scale, Wallet, X } from 'lucide-react-native';
@@ -20,6 +20,7 @@ import { ReportFlowFilter, ReportsSummaryDto, ReportStatusFilter } from '../../t
 import { useThemeMode } from '../../context/ThemeContext';
 import { useTutorial } from '../../context/TutorialContext';
 import { exportReportsPdf } from '../../services/reportsExport';
+import { getAppPreferences, updateAppPreferences } from '../../services/preferences';
 
 type DetailsTab = 'records' | 'categories';
 type PickerMode = 'month' | 'year';
@@ -193,7 +194,9 @@ const Relatorios = () => {
   const [selectedTrendKey, setSelectedTrendKey] = useState<string | null>(null);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportFeedback, setExportFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [milestoneMessage, setMilestoneMessage] = useState('');
   const hasVisibleDataRef = useRef(false);
+  const firstSuccessCheckedRef = useRef(false);
 
   const yearOptions = useMemo(() => Array.from({ length: 9 }, (_, idx) => monthRef.getFullYear() - 4 + idx), [monthRef]);
   const hasFilter = status !== 'all' || flowType !== 'all' || !!category;
@@ -241,6 +244,27 @@ const Relatorios = () => {
     return () => clearTimeout(timeout);
   }, [exportFeedback]);
 
+  useEffect(() => {
+    if (!milestoneMessage) return;
+    const timeout = setTimeout(() => setMilestoneMessage(''), 3200);
+    return () => clearTimeout(timeout);
+  }, [milestoneMessage]);
+
+  const maybeUnlockFirstSuccessMilestone = useCallback(async (summary: ReportsSummaryDto) => {
+    if (firstSuccessCheckedRef.current) return;
+    if (summary.monthly_summary.records_count <= 0) return;
+
+    const prefs = await getAppPreferences();
+    if (prefs.first_success_milestone_done) {
+      firstSuccessCheckedRef.current = true;
+      return;
+    }
+
+    await updateAppPreferences({ first_success_milestone_done: true });
+    firstSuccessCheckedRef.current = true;
+    setMilestoneMessage('Você já consegue usar o app. Continue no seu ritmo.');
+  }, []);
+
   const load = useCallback(async (mode: 'initial_load' | 'month_change' | 'background_revalidate') => {
     markPerf('reports_focus_to_content');
     const canShowFullLoading = mode === 'initial_load';
@@ -263,6 +287,7 @@ const Relatorios = () => {
         screen: 'Relatorios',
         metadata: { year: result.period.year, month: result.period.month, status, flow_type: flowType, has_category: !!category },
       });
+      void maybeUnlockFirstSuccessMilestone(result);
       void prefetchAdjacentReportsSummary(activeFilters);
     } catch (e: any) {
       if (mode !== 'background_revalidate') {
@@ -277,7 +302,7 @@ const Relatorios = () => {
       }
       measurePerf('reports_focus_to_content', 'Reports focus -> content');
     }
-  }, [activeFilters, category, flowType, status]);
+  }, [activeFilters, category, flowType, maybeUnlockFirstSuccessMilestone, status]);
 
   useFocusEffect(
     useCallback(() => {
@@ -361,11 +386,21 @@ const Relatorios = () => {
     setExportingPdf(false);
   }, [category, data, exportingPdf, flowType, monthRef, status]);
 
+  const openReportsGuide = useCallback(() => {
+    Alert.alert(
+      'Como usar Relatórios',
+      '1. Escolha o período no topo.\n2. Aplique filtros de status, tipo e categoria.\n3. Use os detalhes para validar entradas, saídas e saldo projetado.'
+    );
+  }, []);
+
   return (
     <>
       <Layout scrollable contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black">
         <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold mb-1">Relatórios</AppText>
         <AppText className="text-slate-500 dark:text-slate-200 mb-3">Indicadores gerais, filtros rápidos e detalhamento mensal.</AppText>
+        <TouchableOpacity onPress={openReportsGuide} className="-mt-1 mb-3 self-start">
+          <AppText className="text-primary text-xs font-bold">Como usar esta tela</AppText>
+        </TouchableOpacity>
 
         <Card className="mb-3" noPadding>
           <View className="p-3">
@@ -429,6 +464,14 @@ const Relatorios = () => {
               <AppText className={`text-sm ${exportFeedback.type === 'error' ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
                 {exportFeedback.text}
               </AppText>
+            </View>
+          </Card>
+        ) : null}
+
+        {milestoneMessage ? (
+          <Card className="mb-3" noPadding>
+            <View className="p-4">
+              <AppText className="text-emerald-700 dark:text-emerald-300 text-sm">{milestoneMessage}</AppText>
             </View>
           </Card>
         ) : null}

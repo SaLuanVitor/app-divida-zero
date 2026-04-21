@@ -1,35 +1,26 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
-import { ArrowLeft, Lightbulb, Target } from 'lucide-react-native';
+import { ArrowLeft, Lightbulb } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import AppText from '../../components/AppText';
 import Button from '../../components/Button';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useTutorial } from '../../context/TutorialContext';
-import { CONTEXTUAL_MISSIONS } from '../../context/tutorialEngine';
 
 const Tutorial = () => {
   const navigation = useNavigation<any>();
   const { darkMode } = useThemeMode();
   const {
     startBeginnerTutorial,
-    startAdvancedTutorial,
-    stopTutorial,
     beginnerCompleted,
-    advancedDoneTasks,
     tutorialTrackState,
     tutorialDeviceClass,
   } = useTutorial();
 
-  const missionsTotal = CONTEXTUAL_MISSIONS.length;
-  const missionsDoneCount = advancedDoneTasks.length;
-
   const statusLabel =
     tutorialTrackState === 'essential'
       ? 'Etapa essencial em andamento'
-      : tutorialTrackState === 'contextual'
-      ? 'Missoes contextuais em andamento'
       : tutorialTrackState === 'completed'
       ? 'Trilha concluida'
       : tutorialTrackState === 'paused'
@@ -76,34 +67,11 @@ const Tutorial = () => {
           />
         </View>
 
-        <View className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] p-4 mb-4">
-          <View className="flex-row items-center mb-2">
-            <Target size={18} color="#0ea5e9" />
-            <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Missoes contextuais</AppText>
-          </View>
-          <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-3">
-            Conclua no fluxo real do app sem modal grande bloqueando navegacao.
-          </AppText>
-          <AppText className="text-xs font-bold mb-3 text-slate-700 dark:text-slate-100">
-            Progresso: {missionsDoneCount}/{missionsTotal}
-          </AppText>
-          <Button
-            title="Iniciar missoes"
-            variant="outline"
-            onPress={async () => {
-              await startAdvancedTutorial({ replay: false });
-              navigation.navigate('Inicio');
-            }}
-            className="h-11"
-          />
-        </View>
-
         <View className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] p-4">
           <AppText className="text-slate-900 dark:text-slate-100 font-bold">Compatibilidade de dispositivo</AppText>
           <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1">
             Classe detectada neste aparelho: {tutorialDeviceClass}.
           </AppText>
-          <Button title="Pausar tutorial" variant="outline" onPress={() => void stopTutorial()} className="h-11 mt-3" />
         </View>
       </View>
     </Layout>
@@ -111,4 +79,3 @@ const Tutorial = () => {
 };
 
 export default Tutorial;
-

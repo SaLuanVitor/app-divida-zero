@@ -24,6 +24,9 @@ export const defaultAppPreferences: AppPreferences = {
   larger_touch_targets: false,
   onboarding_seen: false,
   onboarding_mode: null,
+  onboarding_primary_goal: null,
+  advanced_quick_guide_seen: false,
+  first_success_milestone_done: false,
   tutorial_reopen_enabled: true,
   tutorial_active_mode: null,
   tutorial_beginner_completed: false,
@@ -58,6 +61,16 @@ const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): 
       raw?.onboarding_mode === 'beginner' || raw?.onboarding_mode === 'advanced'
         ? raw.onboarding_mode
         : null,
+    onboarding_primary_goal:
+      raw?.onboarding_primary_goal === 'organize_month' ||
+      raw?.onboarding_primary_goal === 'pay_off_debt' ||
+      raw?.onboarding_primary_goal === 'create_goal'
+        ? raw.onboarding_primary_goal
+        : null,
+    advanced_quick_guide_seen:
+      typeof raw?.advanced_quick_guide_seen === 'boolean' ? raw.advanced_quick_guide_seen : false,
+    first_success_milestone_done:
+      typeof raw?.first_success_milestone_done === 'boolean' ? raw.first_success_milestone_done : false,
     tutorial_active_mode:
       raw?.tutorial_active_mode === 'beginner' || raw?.tutorial_active_mode === 'advanced'
         ? raw.tutorial_active_mode

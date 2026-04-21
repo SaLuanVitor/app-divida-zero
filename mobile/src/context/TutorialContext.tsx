@@ -3,7 +3,7 @@ import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppText from '../components/AppText';
 import Button from '../components/Button';
-import { AnalyticsEventName, subscribeAnalyticsEvents, trackAnalyticsEventDeferred } from '../services/analytics';
+import { trackAnalyticsEventDeferred } from '../services/analytics';
 import { getAppPreferences, subscribePreferencesChanges, updateAppPreferences } from '../services/preferences';
 import { AppPreferences } from '../types/settings';
 import { navigateSafely } from '../navigation/navigationRef';
@@ -12,16 +12,13 @@ import { useAuth } from './AuthContext';
 import { useOverlay } from './OverlayContext';
 import { useThemeMode } from './ThemeContext';
 import {
-  CONTEXTUAL_MISSIONS,
   CURRENT_TUTORIAL_VERSION,
   ESSENTIAL_STEPS,
   TutorialDeviceClass,
   TutorialInset,
-  TutorialMission,
   TutorialSpotlightRect,
   TutorialTrackState,
   computeSpotlightRect,
-  getFirstPendingMission,
   getTooltipMetrics,
   migrateLegacyTutorialState,
   resolveTutorialDeviceClass,
@@ -43,6 +40,7 @@ type TutorialContextData = {
   tutorialTrackState: TutorialTrackState;
   tutorialMissionsDone: string[];
   tutorialDeviceClass: TutorialDeviceClass;
+  currentEssentialStepId: string | null;
 };
 
 const TutorialContext = createContext<TutorialContextData>({} as TutorialContextData);
@@ -55,10 +53,7 @@ type TutorialProviderProps = {
 const TARGET_SPOTLIGHT_PADDING: Record<string, number> = {
   'home-summary-card': 18,
   'home-calendar-card': 14,
-  'tab-lancamentos': 24,
-  'tab-metas': 18,
-  'tab-relatorios': 18,
-  'tab-perfil': 18,
+  'home-month-history': 14,
   'metas-create-button': 16,
   'relatorios-period-picker': 14,
   'perfil-account-card': 16,
@@ -67,10 +62,7 @@ const TARGET_SPOTLIGHT_PADDING: Record<string, number> = {
 const TARGET_SPOTLIGHT_PADDING_BY_CLASS: Partial<Record<string, Record<TutorialDeviceClass, number>>> = {
   'home-summary-card': { compact: 14, standard: 18, large: 20 },
   'home-calendar-card': { compact: 10, standard: 14, large: 16 },
-  'tab-lancamentos': { compact: 20, standard: 24, large: 22 },
-  'tab-metas': { compact: 14, standard: 18, large: 20 },
-  'tab-relatorios': { compact: 14, standard: 18, large: 20 },
-  'tab-perfil': { compact: 14, standard: 18, large: 20 },
+  'home-month-history': { compact: 10, standard: 14, large: 16 },
   'metas-create-button': { compact: 12, standard: 16, large: 18 },
   'relatorios-period-picker': { compact: 10, standard: 14, large: 16 },
   'perfil-account-card': { compact: 12, standard: 16, large: 18 },
@@ -118,6 +110,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   const [measureFailCount, setMeasureFailCount] = useState(0);
   const [targetUnavailable, setTargetUnavailable] = useState(false);
   const [tooltipHeight, setTooltipHeight] = useState(196);
+  const [stepActionLoading, setStepActionLoading] = useState(false);
   const [qaCalibrationMode, setQaCalibrationMode] = useState(false);
   const targetRefs = useRef<Record<string, View | null>>({});
   const hasBootstrappedRef = useRef(false);
@@ -127,13 +120,11 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   const deviceClass = useMemo(() => resolveTutorialDeviceClass(windowWidth), [windowWidth]);
   const tooltipMetrics = useMemo(() => getTooltipMetrics(deviceClass), [deviceClass]);
   const isEssentialActive = trackState === 'essential';
-  const isContextualActive = trackState === 'contextual';
-  const isTutorialActive = isEssentialActive || isContextualActive;
+  const isTutorialActive = isEssentialActive;
   const isBeginnerTutorialActive = isEssentialActive;
   const currentStep = ESSENTIAL_STEPS[essentialStepIndex] ?? null;
-  const currentMission = useMemo(() => getFirstPendingMission(missionsDone), [missionsDone]);
-  const advancedCompleted = missionsDone.length >= CONTEXTUAL_MISSIONS.length;
-  const beginnerCompleted = trackState === 'contextual' || trackState === 'completed' || trackState === 'paused';
+  const advancedCompleted = trackState === 'completed';
+  const beginnerCompleted = trackState === 'completed' || trackState === 'paused';
 
   const persistState = useCallback(async (partial: Partial<AppPreferences>) => {
     await updateAppPreferences(partial);
@@ -268,23 +259,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     [measureTargetRect]
   );
 
-  const markMissionDone = useCallback(
-    async (missionId: string) => {
-      setMissionsDone((previous) => {
-        if (previous.includes(missionId)) return previous;
-        const next = [...previous, missionId];
-        void persistTutorialState({ tutorial_missions_done: next });
-        trackAnalyticsEventDeferred({
-          event_name: 'tutorial_mission_completed',
-          screen: currentRouteName ?? 'Tutorial',
-          metadata: { mission_id: missionId, done_count: next.length },
-        });
-        return next;
-      });
-    },
-    [currentRouteName, persistTutorialState]
-  );
-
   const startEssentialTutorial = useCallback(
     async (options?: { replay?: boolean; source?: 'auto' | 'manual'; initialStepId?: string | null }) => {
       const replay = Boolean(options?.replay);
@@ -298,6 +272,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       setSpotlightRect(null);
       setTargetUnavailable(false);
       setMeasureFailCount(0);
+      setStepActionLoading(false);
 
       await persistTutorialState({
         tutorial_track_state: 'essential',
@@ -331,44 +306,11 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     [closeOverlay, persistTutorialState]
   );
 
-  const startContextualTutorial = useCallback(
-    async (options?: { replay?: boolean; source?: 'auto' | 'manual' }) => {
-      const replay = Boolean(options?.replay);
-      const source = options?.source ?? 'manual';
-
-      closeOverlay();
-      setTrackState('contextual');
-      setSpotlightRect(null);
-      setTargetUnavailable(false);
-      setMeasureFailCount(0);
-
-      if (replay) {
-        setMissionsDone([]);
-      }
-
-      await persistTutorialState({
-        tutorial_track_state: 'contextual',
-        tutorial_reopen_enabled: true,
-        tutorial_active_mode: 'advanced',
-        tutorial_beginner_completed: true,
-        tutorial_last_step: null,
-        ...(replay ? { tutorial_missions_done: [], tutorial_advanced_completed: false } : {}),
-      });
-
-      if (source !== 'auto') {
-        trackAnalyticsEventDeferred({
-          event_name: 'tutorial_reopened',
-          screen: 'Tutorial',
-          metadata: { track: 'contextual' },
-        });
-      }
-    },
-    [closeOverlay, persistTutorialState]
-  );
-
   const completeTutorial = useCallback(async () => {
     setTrackState('completed');
     setSpotlightRect(null);
+    setStepActionLoading(false);
+    setMissionsDone([]);
     await persistTutorialState({
       tutorial_track_state: 'completed',
       tutorial_reopen_enabled: false,
@@ -376,8 +318,8 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       tutorial_beginner_completed: true,
       tutorial_advanced_completed: true,
       tutorial_last_step: null,
-      tutorial_missions_done: CONTEXTUAL_MISSIONS.map((item) => item.id),
-      tutorial_advanced_tasks_done: CONTEXTUAL_MISSIONS.map((item) => item.id),
+      tutorial_missions_done: [],
+      tutorial_advanced_tasks_done: [],
     });
     trackAnalyticsEventDeferred({
       event_name: 'onboarding_completed',
@@ -389,6 +331,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   const stopTutorial = useCallback(async () => {
     setTrackState('paused');
     setSpotlightRect(null);
+    setStepActionLoading(false);
     await persistTutorialState({
       tutorial_track_state: 'paused',
       tutorial_reopen_enabled: false,
@@ -421,7 +364,8 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   );
 
   const handleNextEssentialStep = useCallback(async () => {
-    if (!currentStep) return;
+    if (!currentStep || stepActionLoading) return;
+    setStepActionLoading(true);
 
     trackAnalyticsEventDeferred({
       event_name: 'tutorial_step_completed',
@@ -429,20 +373,30 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       metadata: { step_id: currentStep.id, step_index: essentialStepIndex + 1, step_total: ESSENTIAL_STEPS.length },
     });
 
-    const nextIndex = essentialStepIndex + 1;
-    if (nextIndex >= ESSENTIAL_STEPS.length) {
-      await startContextualTutorial({ source: 'manual' });
-      return;
-    }
+    try {
+      const nextIndex = essentialStepIndex + 1;
+      if (nextIndex >= ESSENTIAL_STEPS.length) {
+        await completeTutorial();
+        return;
+      }
 
-    await goToEssentialStep(nextIndex);
-  }, [currentStep, essentialStepIndex, goToEssentialStep, startContextualTutorial]);
+      await goToEssentialStep(nextIndex);
+    } finally {
+      setStepActionLoading(false);
+    }
+  }, [completeTutorial, currentStep, essentialStepIndex, goToEssentialStep, stepActionLoading]);
 
   const handlePrevEssentialStep = useCallback(async () => {
+    if (stepActionLoading) return;
     const prevIndex = essentialStepIndex - 1;
     if (prevIndex < 0) return;
-    await goToEssentialStep(prevIndex);
-  }, [essentialStepIndex, goToEssentialStep]);
+    setStepActionLoading(true);
+    try {
+      await goToEssentialStep(prevIndex);
+    } finally {
+      setStepActionLoading(false);
+    }
+  }, [essentialStepIndex, goToEssentialStep, stepActionLoading]);
 
   const refreshTargetMeasure = useCallback(() => {
     if (!isEssentialActive || !currentStep) return;
@@ -576,7 +530,17 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       if (migrated.tutorial_track_state === 'essential') {
         await startEssentialTutorial({ source: 'auto', initialStepId: prefs.tutorial_last_step });
       } else if (migrated.tutorial_track_state === 'contextual') {
-        await startContextualTutorial({ source: 'auto' });
+        setTrackState('completed');
+        await persistTutorialState({
+          tutorial_track_state: 'completed',
+          tutorial_reopen_enabled: false,
+          tutorial_active_mode: null,
+          tutorial_beginner_completed: true,
+          tutorial_advanced_completed: true,
+          tutorial_last_step: null,
+          tutorial_missions_done: [],
+          tutorial_advanced_tasks_done: [],
+        });
       }
     };
 
@@ -585,7 +549,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     return () => {
       mounted = false;
     };
-  }, [persistTutorialState, signed, startContextualTutorial, startEssentialTutorial]);
+  }, [persistTutorialState, signed, startEssentialTutorial]);
 
   useEffect(() => {
     const unsubscribe = subscribePreferencesChanges((nextPrefs) => {
@@ -623,43 +587,8 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
 
   useEffect(() => {
     if (!isEssentialActive) return;
-    if (currentRouteName === 'Inicio') {
-      void markMissionDone('visit_home');
-    }
-  }, [currentRouteName, isEssentialActive, markMissionDone]);
-
-  useEffect(() => {
-    if (!isContextualActive) return;
-    if (currentRouteName === 'Inicio') {
-      void markMissionDone('visit_home');
-    }
-    if (currentRouteName === 'Relatorios') {
-      void markMissionDone('reports_viewed');
-    }
-  }, [currentRouteName, isContextualActive, markMissionDone]);
-
-  useEffect(() => {
-    const unsubscribe = subscribeAnalyticsEvents((eventName: AnalyticsEventName) => {
-      if (!isContextualActive) return;
-      if (eventName === 'record_created') {
-        void markMissionDone('record_created');
-      }
-      if (eventName === 'goal_created') {
-        void markMissionDone('goal_created');
-      }
-      if (eventName === 'reports_viewed') {
-        void markMissionDone('reports_viewed');
-      }
-    });
-    return unsubscribe;
-  }, [isContextualActive, markMissionDone]);
-
-  useEffect(() => {
-    if (!isContextualActive) return;
-    if (CONTEXTUAL_MISSIONS.every((mission) => missionsDone.includes(mission.id))) {
-      void completeTutorial();
-    }
-  }, [completeTutorial, isContextualActive, missionsDone]);
+    setTooltipHeight(tooltipMetrics.minHeight);
+  }, [currentStep?.id, isEssentialActive, tooltipMetrics.minHeight]);
 
   const tooltipTop = useMemo(() => {
     const safeTop = insets.top + 12;
@@ -684,25 +613,9 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     return !spotlightRect || targetUnavailable;
   }, [currentRouteName, currentStep, isEssentialActive, spotlightRect, targetUnavailable]);
 
-  const runMissionCta = useCallback((mission: TutorialMission | null) => {
-    if (!mission) return;
-    if (mission.action === 'go_screen') {
-      navigateSafely(mission.screen);
-      return;
-    }
-    if (mission.action === 'open_lancamentos_income') {
-      navigateSafely('Lancamentos', { mode: 'income' });
-      return;
-    }
-    navigateSafely('Lancamentos', { mode: 'debt' });
-  }, []);
-
   const tutorialProgressLabel = useMemo(() => {
     if (trackState === 'essential') {
       return `Etapa essencial ${Math.min(essentialStepIndex + 1, ESSENTIAL_STEPS.length)}/${ESSENTIAL_STEPS.length}`;
-    }
-    if (trackState === 'contextual') {
-      return `Missoes ${missionsDone.length}/${CONTEXTUAL_MISSIONS.length}`;
     }
     if (trackState === 'completed') return 'Tutorial concluido';
     if (trackState === 'paused') return 'Tutorial pausado';
@@ -718,7 +631,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
         await startEssentialTutorial({ replay: options?.replay, source: 'manual' });
       },
       startAdvancedTutorial: async (options?: { replay?: boolean }) => {
-        await startContextualTutorial({ replay: options?.replay, source: 'manual' });
+        await completeTutorial();
       },
       stopTutorial,
       beginnerCompleted,
@@ -729,6 +642,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       tutorialTrackState: trackState,
       tutorialMissionsDone: missionsDone,
       tutorialDeviceClass: deviceClass,
+      currentEssentialStepId: currentStep?.id ?? null,
     }),
     [
       registerTarget,
@@ -742,8 +656,9 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       isBeginnerTutorialActive,
       trackState,
       deviceClass,
+      currentStep?.id,
+      completeTutorial,
       startEssentialTutorial,
-      startContextualTutorial,
     ]
   );
 
@@ -825,6 +740,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
           )}
 
           <View
+            key={currentStep?.id ?? 'tutorial-step'}
             style={[
               styles.tooltipCard,
               {
@@ -848,7 +764,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
             <AppText style={[styles.bodyText, { color: darkMode ? '#cbd5e1' : '#475569' }]}>{currentStep?.description}</AppText>
             <AppText style={[styles.stepText, { color: darkMode ? '#94a3b8' : '#64748b' }]}>
               {tutorialProgressLabel}
-              {needsFallback ? ' • fallback ativo' : ''}
+              {needsFallback ? ' - fallback ativo' : ''}
             </AppText>
 
             {needsFallback && currentStep ? (
@@ -861,16 +777,17 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
             ) : null}
 
             <View className="flex-row mt-4 gap-2">
-              <Button title="Pausar" variant="outline" onPress={() => void stopTutorial()} className="flex-1 h-11" />
               <Button
                 title="Voltar"
                 variant="outline"
-                disabled={essentialStepIndex === 0}
+                disabled={essentialStepIndex === 0 || stepActionLoading}
                 onPress={() => void handlePrevEssentialStep()}
                 className="flex-1 h-11"
               />
               <Button
-                title={essentialStepIndex + 1 >= ESSENTIAL_STEPS.length ? 'Ir para missoes' : currentStep?.cta || 'Proximo'}
+                title={essentialStepIndex + 1 >= ESSENTIAL_STEPS.length ? 'Concluir tutorial' : currentStep?.cta || 'Proximo'}
+                loading={stepActionLoading}
+                disabled={stepActionLoading}
                 onPress={() => void handleNextEssentialStep()}
                 className="flex-1 h-11"
               />
@@ -878,37 +795,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
           </View>
         </View>
       </Modal>
-
-      {isContextualActive && currentMission ? (
-        <View pointerEvents="box-none" style={styles.contextualRoot}>
-          <View
-            style={[
-              styles.contextualCard,
-              {
-                marginHorizontal: tooltipMetrics.sidePadding,
-                marginBottom: Math.max(12, insets.bottom + 10),
-                borderRadius: tooltipMetrics.borderRadius,
-                backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-                borderColor: darkMode ? '#334155' : '#e2e8f0',
-              },
-            ]}
-          >
-            <AppText style={[styles.contextualTitle, { color: darkMode ? '#f8fafc' : '#0f172a' }]}>Trilha contextual</AppText>
-            <AppText style={[styles.contextualBody, { color: darkMode ? '#cbd5e1' : '#475569' }]}>
-              Proxima missao: {currentMission.label}
-            </AppText>
-            <AppText style={[styles.contextualBody, { color: darkMode ? '#cbd5e1' : '#475569' }]}>
-              {currentMission.description}
-            </AppText>
-            <AppText style={[styles.stepText, { color: darkMode ? '#94a3b8' : '#64748b' }]}>{tutorialProgressLabel}</AppText>
-
-            <View className="flex-row gap-2 mt-3">
-              <Button title="Pausar" variant="outline" onPress={() => void stopTutorial()} className="flex-1 h-11" />
-              <Button title={currentMission.cta} onPress={() => runMissionCta(currentMission)} className="flex-1 h-11" />
-            </View>
-          </View>
-        </View>
-      ) : null}
     </TutorialContext.Provider>
   );
 };
@@ -948,23 +834,6 @@ const styles = StyleSheet.create({
   stepText: {
     fontSize: 12,
     marginTop: 8,
-  },
-  contextualRoot: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
-    pointerEvents: 'box-none',
-  },
-  contextualCard: {
-    borderWidth: 1,
-    padding: 14,
-  },
-  contextualTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  contextualBody: {
-    fontSize: 13,
-    marginTop: 4,
   },
 });
 

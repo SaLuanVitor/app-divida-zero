@@ -1,7 +1,7 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import AppTextInput from '../../components/AppTextInput';
-import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, Alert } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2, ChevronRight } from 'lucide-react-native';
 import Layout from '../../components/Layout';
@@ -182,6 +182,13 @@ const Metas = () => {
         });
     };
 
+    const openMetasGuide = useCallback(() => {
+        Alert.alert(
+            'Como usar Metas',
+            '1. Crie uma meta com valor e prazo.\n2. Use adicionar/retirar valor para acompanhar progresso.\n3. Revise metas ativas e concluídas para manter prioridade.'
+        );
+    }, []);
+
     const openEditScreen = (goal: FinancialGoalDto) => {
         navigation.navigate('MetaForm', {
             mode: 'edit',
@@ -291,6 +298,9 @@ const Metas = () => {
                     </TutorialTarget>
                 </View>
                 <AppText className="text-slate-500 dark:text-slate-200 mb-5">Acompanhe sua evolução e ajuste suas metas.</AppText>
+                <TouchableOpacity onPress={openMetasGuide} className="-mt-3 mb-4 self-start">
+                    <AppText className="text-primary text-xs font-bold">Como usar esta tela</AppText>
+                </TouchableOpacity>
 
                 <View className="flex-row gap-3 mb-4">
                     <Card className="flex-1" noPadding>

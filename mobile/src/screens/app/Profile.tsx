@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions, Modal } from 'react-native';
+import { View, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions, Modal, Alert } from 'react-native';
 import {
     User as UserIcon,
     Settings,
@@ -347,6 +347,13 @@ const Profile = () => {
         }
     }, [loadNotificationBadge]);
 
+    const openProfileGuide = useCallback(() => {
+        Alert.alert(
+            'Como usar Perfil',
+            '1. Edite seus dados e preferências do app.\n2. Revise notificações e configurações de segurança.\n3. Use o tutorial novamente quando quiser relembrar o fluxo.'
+        );
+    }, []);
+
     const saveProfileAppearance = async () => {
         if (savingAppearance) return;
 
@@ -427,6 +434,9 @@ const Profile = () => {
                                 ) : null}
                             </TouchableOpacity>
                         </View>
+                        <TouchableOpacity onPress={openProfileGuide} className="self-start -mt-2 mb-3">
+                            <AppText className="text-primary text-xs font-bold">Como usar esta tela</AppText>
+                        </TouchableOpacity>
 
                         <TouchableOpacity activeOpacity={0.9} onPress={openAvatarPicker}>
                             <View className="relative">
