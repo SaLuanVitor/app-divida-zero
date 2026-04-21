@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppText from '../components/AppText';
 import Button from '../components/Button';
 import { AnalyticsEventName, subscribeAnalyticsEvents, trackAnalyticsEventDeferred } from '../services/analytics';
-import { getAppPreferences, updateAppPreferences } from '../services/preferences';
+import { getAppPreferences, subscribePreferencesChanges, updateAppPreferences } from '../services/preferences';
 import { AppPreferences } from '../types/settings';
 import { navigateSafely } from '../navigation/navigationRef';
 import { useAccessibility } from './AccessibilityContext';
@@ -64,7 +64,44 @@ const TARGET_SPOTLIGHT_PADDING: Record<string, number> = {
   'perfil-account-card': 16,
 };
 
+const TARGET_SPOTLIGHT_PADDING_BY_CLASS: Partial<Record<string, Record<TutorialDeviceClass, number>>> = {
+  'home-summary-card': { compact: 14, standard: 18, large: 20 },
+  'home-calendar-card': { compact: 10, standard: 14, large: 16 },
+  'tab-lancamentos': { compact: 20, standard: 24, large: 22 },
+  'tab-metas': { compact: 14, standard: 18, large: 20 },
+  'tab-relatorios': { compact: 14, standard: 18, large: 20 },
+  'tab-perfil': { compact: 14, standard: 18, large: 20 },
+  'metas-create-button': { compact: 12, standard: 16, large: 18 },
+  'relatorios-period-picker': { compact: 10, standard: 14, large: 16 },
+  'perfil-account-card': { compact: 12, standard: 16, large: 18 },
+};
+
+const DEVICE_CLASS_PADDING_OFFSET: Record<TutorialDeviceClass, number> = {
+  compact: -4,
+  standard: 0,
+  large: 2,
+};
+
+const resolveSpotlightPadding = ({
+  targetId,
+  deviceClass,
+  fontScale,
+}: {
+  targetId: string;
+  deviceClass: TutorialDeviceClass;
+  fontScale: number;
+}) => {
+  const basePaddingByClass = TARGET_SPOTLIGHT_PADDING_BY_CLASS[targetId]?.[deviceClass];
+  const basePadding = basePaddingByClass ?? TARGET_SPOTLIGHT_PADDING[targetId] ?? 14;
+  const classOffset = basePaddingByClass == null ? DEVICE_CLASS_PADDING_OFFSET[deviceClass] : 0;
+  const fontOffset = fontScale >= 1.15 ? 1 : 0;
+  const nextPadding = basePadding + classOffset + fontOffset;
+  return Math.max(8, Math.min(24, nextPadding));
+};
+
 const MEASURE_FAILURE_THRESHOLD = 2;
+const MEASURE_SAMPLE_COUNT = 3;
+const MEASURE_MAX_VARIANCE = 16;
 
 export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, currentRouteName }) => {
   const { signed } = useAuth();
@@ -81,8 +118,11 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   const [measureFailCount, setMeasureFailCount] = useState(0);
   const [targetUnavailable, setTargetUnavailable] = useState(false);
   const [tooltipHeight, setTooltipHeight] = useState(196);
+  const [qaCalibrationMode, setQaCalibrationMode] = useState(false);
   const targetRefs = useRef<Record<string, View | null>>({});
   const hasBootstrappedRef = useRef(false);
+  const measureRequestRef = useRef(0);
+  const lastCalibrationLogRef = useRef<string | null>(null);
 
   const deviceClass = useMemo(() => resolveTutorialDeviceClass(windowWidth), [windowWidth]);
   const tooltipMetrics = useMemo(() => getTooltipMetrics(deviceClass), [deviceClass]);
@@ -117,16 +157,116 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     delete targetRefs.current[id];
   }, []);
 
-  const markMeasureFailure = useCallback(() => {
+  const logCalibration = useCallback(
+    (payload: Record<string, unknown>) => {
+      if (!qaCalibrationMode) return;
+      const signature = JSON.stringify(payload);
+      if (lastCalibrationLogRef.current === signature) return;
+      lastCalibrationLogRef.current = signature;
+      console.info('[tutorial-calibration]', payload);
+    },
+    [qaCalibrationMode]
+  );
+
+  const markMeasureFailure = useCallback((reason: string) => {
     setSpotlightRect(null);
     setMeasureFailCount((previous) => {
       const next = previous + 1;
       if (next >= MEASURE_FAILURE_THRESHOLD) {
         setTargetUnavailable(true);
       }
+
+      logCalibration({
+        type: 'measure_failed',
+        reason,
+        currentRouteName: currentRouteName ?? null,
+        stepId: currentStep?.id ?? null,
+        targetId: currentStep?.targetId ?? null,
+        deviceClass,
+        failCount: next,
+      });
       return next;
     });
+  }, [currentRouteName, currentStep?.id, currentStep?.targetId, deviceClass, logCalibration]);
+
+  const measureTargetRect = useCallback((target: View): Promise<TutorialSpotlightRect | null> => {
+    return new Promise((resolve) => {
+      const fallbackMeasureInWindow = () => {
+        if (typeof target.measureInWindow !== 'function') {
+          resolve(null);
+          return;
+        }
+
+        target.measureInWindow((x, y, width, height) => {
+          if (!Number.isFinite(x) || !Number.isFinite(y) || !width || !height) {
+            resolve(null);
+            return;
+          }
+          resolve({ x, y, width, height });
+        });
+      };
+
+      if (typeof target.measure === 'function') {
+        target.measure((x, y, width, height, pageX, pageY) => {
+          const nextX = Number.isFinite(pageX) ? pageX : x;
+          const nextY = Number.isFinite(pageY) ? pageY : y;
+          if (!Number.isFinite(nextX) || !Number.isFinite(nextY) || !width || !height) {
+            fallbackMeasureInWindow();
+            return;
+          }
+          resolve({ x: nextX, y: nextY, width, height });
+        });
+        return;
+      }
+
+      fallbackMeasureInWindow();
+    });
   }, []);
+
+  const getStableMeasuredRect = useCallback(
+    async (target: View, samples = MEASURE_SAMPLE_COUNT): Promise<TutorialSpotlightRect | null> => {
+      const measured: TutorialSpotlightRect[] = [];
+
+      for (let index = 0; index < samples; index += 1) {
+        const rect = await measureTargetRect(target);
+        if (!rect) {
+          return null;
+        }
+        measured.push(rect);
+        if (index < samples - 1) {
+          await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+        }
+      }
+
+      const pickMedian = (values: number[]) => {
+        const sorted = [...values].sort((a, b) => a - b);
+        return sorted[Math.floor(sorted.length / 2)];
+      };
+
+      const stableRect: TutorialSpotlightRect = {
+        x: pickMedian(measured.map((item) => item.x)),
+        y: pickMedian(measured.map((item) => item.y)),
+        width: pickMedian(measured.map((item) => item.width)),
+        height: pickMedian(measured.map((item) => item.height)),
+      };
+
+      const hasHighVariance = measured.some((item) => {
+        return (
+          Math.abs(item.x - stableRect.x) > MEASURE_MAX_VARIANCE ||
+          Math.abs(item.y - stableRect.y) > MEASURE_MAX_VARIANCE ||
+          Math.abs(item.width - stableRect.width) > MEASURE_MAX_VARIANCE ||
+          Math.abs(item.height - stableRect.height) > MEASURE_MAX_VARIANCE
+        );
+      });
+
+      if (hasHighVariance) {
+        return null;
+      }
+
+      return stableRect;
+    },
+    [measureTargetRect]
+  );
 
   const markMissionDone = useCallback(
     async (missionId: string) => {
@@ -309,14 +449,19 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     if (!currentRouteName || currentRouteName !== currentStep.screen) return;
 
     const target = targetRefs.current[currentStep.targetId];
-    if (!target || typeof target.measureInWindow !== 'function') {
-      markMeasureFailure();
+    if (!target || (typeof target.measure !== 'function' && typeof target.measureInWindow !== 'function')) {
+      markMeasureFailure('target_unavailable');
       return;
     }
 
-    target.measureInWindow((x, y, width, height) => {
-      if (!width || !height) {
-        markMeasureFailure();
+    const requestId = measureRequestRef.current + 1;
+    measureRequestRef.current = requestId;
+
+    const run = async () => {
+      const measuredRect = await getStableMeasuredRect(target);
+      if (measureRequestRef.current !== requestId) return;
+      if (!measuredRect?.width || !measuredRect?.height) {
+        markMeasureFailure('invalid_measurement');
         return;
       }
 
@@ -324,29 +469,63 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
         top: insets.top,
         bottom: insets.bottom,
       };
+      const targetPadding = resolveSpotlightPadding({
+        targetId: currentStep.targetId,
+        deviceClass,
+        fontScale,
+      });
       const computed = computeSpotlightRect({
-        rect: { x, y, width, height },
+        rect: measuredRect,
         windowWidth,
         windowHeight,
         insets: insetData,
-        padding: TARGET_SPOTLIGHT_PADDING[currentStep.targetId] ?? 14,
+        padding: targetPadding,
       });
 
       if (!computed) {
-        markMeasureFailure();
+        markMeasureFailure('computed_rect_outside_safe_area');
         return;
       }
 
       setSpotlightRect(computed);
       setTargetUnavailable(false);
       setMeasureFailCount(0);
-    });
+      logCalibration({
+        type: 'measure_success',
+        currentRouteName,
+        stepId: currentStep.id,
+        targetId: currentStep.targetId,
+        deviceClass,
+        fontScale,
+        window: { width: windowWidth, height: windowHeight },
+        insets: { top: insets.top, bottom: insets.bottom },
+        measuredRect: {
+          x: Math.round(measuredRect.x),
+          y: Math.round(measuredRect.y),
+          width: Math.round(measuredRect.width),
+          height: Math.round(measuredRect.height),
+        },
+        spotlightRect: {
+          x: Math.round(computed.x),
+          y: Math.round(computed.y),
+          width: Math.round(computed.width),
+          height: Math.round(computed.height),
+        },
+        padding: targetPadding,
+      });
+    };
+
+    void run();
   }, [
     currentRouteName,
     currentStep,
+    deviceClass,
+    fontScale,
+    getStableMeasuredRect,
     insets.bottom,
     insets.top,
     isEssentialActive,
+    logCalibration,
     markMeasureFailure,
     windowHeight,
     windowWidth,
@@ -375,6 +554,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       if (!mounted) return;
 
       const migrated = migrateLegacyTutorialState(prefs);
+      setQaCalibrationMode(Boolean(prefs.tutorial_qa_calibration_mode));
 
       setTrackState(migrated.tutorial_track_state);
       setMissionsDone(migrated.tutorial_missions_done);
@@ -406,6 +586,13 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       mounted = false;
     };
   }, [persistTutorialState, signed, startContextualTutorial, startEssentialTutorial]);
+
+  useEffect(() => {
+    const unsubscribe = subscribePreferencesChanges((nextPrefs) => {
+      setQaCalibrationMode(Boolean(nextPrefs.tutorial_qa_calibration_mode));
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     if (!isEssentialActive || !currentStep) return;
@@ -788,4 +975,3 @@ export const useTutorial = () => {
   }
   return context;
 };
-

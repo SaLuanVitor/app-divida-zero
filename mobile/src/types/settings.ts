@@ -24,5 +24,6 @@ export interface AppPreferences {
   tutorial_version: number;
   tutorial_track_state: 'idle' | 'essential' | 'contextual' | 'paused' | 'completed';
   tutorial_missions_done: string[];
+  tutorial_qa_calibration_mode: boolean;
 }
 

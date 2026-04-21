@@ -6,6 +6,7 @@ import Layout from '../../components/Layout';
 import Button from '../../components/Button';
 import { updateAppPreferences } from '../../services/preferences';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
+import { CONTEXTUAL_MISSIONS } from '../../context/tutorialEngine';
 
 type OnboardingProps = {
   onDone: () => void;
@@ -21,32 +22,36 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
     });
   }, []);
 
-  const complete = async (skip: boolean) => {
+  const complete = async (mode: 'beginner' | 'advanced' | 'skip') => {
     if (loading) return;
     setLoading(true);
 
-    const eventName = skip ? 'onboarding_skipped' : 'onboarding_completed';
+    const eventName = mode === 'skip' ? 'onboarding_skipped' : 'onboarding_completed';
 
     try {
+      const isBeginner = mode === 'beginner';
+      const isAdvanced = mode === 'advanced';
+      const allMissionIds = CONTEXTUAL_MISSIONS.map((item) => item.id);
+
       await updateAppPreferences({
         onboarding_seen: true,
-        onboarding_mode: 'beginner',
-        tutorial_reopen_enabled: !skip,
-        tutorial_active_mode: !skip ? 'beginner' : null,
-        tutorial_beginner_completed: false,
-        tutorial_advanced_completed: false,
-        tutorial_last_step: !skip ? 'home_summary' : null,
-        tutorial_advanced_tasks_done: [],
+        onboarding_mode: isAdvanced ? 'advanced' : 'beginner',
+        tutorial_reopen_enabled: isBeginner,
+        tutorial_active_mode: isBeginner ? 'beginner' : null,
+        tutorial_beginner_completed: isAdvanced,
+        tutorial_advanced_completed: isAdvanced,
+        tutorial_last_step: isBeginner ? 'home_summary' : null,
+        tutorial_advanced_tasks_done: isAdvanced ? allMissionIds : [],
         tutorial_version: 2,
-        tutorial_track_state: skip ? 'paused' : 'essential',
-        tutorial_missions_done: [],
+        tutorial_track_state: isBeginner ? 'essential' : isAdvanced ? 'completed' : 'paused',
+        tutorial_missions_done: isAdvanced ? allMissionIds : [],
       });
 
       trackAnalyticsEventDeferred({
         event_name: eventName,
         screen: 'Onboarding',
         metadata: {
-          mode: skip ? 'skipped' : 'adaptive',
+          mode: mode === 'skip' ? 'skipped' : mode === 'advanced' ? 'advanced_no_tutorial' : 'adaptive',
         },
       });
 
@@ -91,12 +96,12 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
       </View>
 
       <View className="px-5 pb-10">
-        <Button title="Comecar tutorial adaptativo" loading={loading} disabled={loading} onPress={() => complete(false)} className="h-12 mb-3" />
-        <Button title="Pular por enquanto" variant="outline" disabled={loading} onPress={() => complete(true)} className="h-11" />
+        <Button title="Modo iniciante (com tutorial)" loading={loading} disabled={loading} onPress={() => complete('beginner')} className="h-12 mb-3" />
+        <Button title="Modo avancado (sem tutorial)" variant="outline" disabled={loading} onPress={() => complete('advanced')} className="h-11 mb-3" />
+        <Button title="Pular por enquanto" variant="ghost" disabled={loading} onPress={() => complete('skip')} className="h-11" />
       </View>
     </Layout>
   );
 };
 
 export default Onboarding;
-
