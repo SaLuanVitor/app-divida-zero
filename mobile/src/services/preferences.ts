@@ -36,7 +36,6 @@ export const defaultAppPreferences: AppPreferences = {
   tutorial_version: 2,
   tutorial_track_state: 'idle',
   tutorial_missions_done: [],
-  tutorial_qa_calibration_mode: false,
   tutorial_general_version: 1,
   tutorial_general_track_state: 'idle',
 };
@@ -100,8 +99,6 @@ const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): 
     tutorial_missions_done: Array.isArray(raw?.tutorial_missions_done)
       ? raw.tutorial_missions_done.filter((item): item is string => typeof item === 'string')
       : [],
-    tutorial_qa_calibration_mode:
-      typeof raw?.tutorial_qa_calibration_mode === 'boolean' ? raw.tutorial_qa_calibration_mode : false,
     tutorial_general_version:
       typeof raw?.tutorial_general_version === 'number' ? raw.tutorial_general_version : 1,
     tutorial_general_track_state:

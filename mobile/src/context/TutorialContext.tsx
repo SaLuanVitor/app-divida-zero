@@ -117,11 +117,9 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   const [targetUnavailable, setTargetUnavailable] = useState(false);
   const [tooltipHeight, setTooltipHeight] = useState(196);
   const [stepActionLoading, setStepActionLoading] = useState(false);
-  const [qaCalibrationMode, setQaCalibrationMode] = useState(false);
   const targetRefs = useRef<Record<string, View | null>>({});
   const hasBootstrappedRef = useRef(false);
   const measureRequestRef = useRef(0);
-  const lastCalibrationLogRef = useRef<string | null>(null);
 
   const deviceClass = useMemo(() => resolveTutorialDeviceClass(windowWidth), [windowWidth]);
   const tooltipMetrics = useMemo(() => getTooltipMetrics(deviceClass), [deviceClass]);
@@ -162,18 +160,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     delete targetRefs.current[id];
   }, []);
 
-  const logCalibration = useCallback(
-    (payload: Record<string, unknown>) => {
-      if (!qaCalibrationMode) return;
-      const signature = JSON.stringify(payload);
-      if (lastCalibrationLogRef.current === signature) return;
-      lastCalibrationLogRef.current = signature;
-      console.info('[tutorial-calibration]', payload);
-    },
-    [qaCalibrationMode]
-  );
-
-  const markMeasureFailure = useCallback((reason: string) => {
+  const markMeasureFailure = useCallback((_reason: string) => {
     setSpotlightRect(null);
     setMeasureFailCount((previous) => {
       const next = previous + 1;
@@ -183,20 +170,9 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       if (next >= threshold) {
         setTargetUnavailable(true);
       }
-
-      logCalibration({
-        type: 'measure_failed',
-        reason,
-        currentRouteName: currentRouteName ?? null,
-        stepId: currentStep?.id ?? null,
-        targetId: currentStep?.targetId ?? null,
-        deviceClass,
-        failCount: next,
-        threshold,
-      });
       return next;
     });
-  }, [currentRouteName, currentStep?.id, currentStep?.targetId, deviceClass, logCalibration]);
+  }, [currentStep?.id]);
 
   const measureTargetRect = useCallback((target: View): Promise<TutorialSpotlightRect | null> => {
     return new Promise((resolve) => {
@@ -477,29 +453,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       setSpotlightRect(computed);
       setTargetUnavailable(false);
       setMeasureFailCount(0);
-      logCalibration({
-        type: 'measure_success',
-        currentRouteName,
-        stepId: currentStep.id,
-        targetId: currentStep.targetId,
-        deviceClass,
-        fontScale,
-        window: { width: windowWidth, height: windowHeight },
-        insets: { top: insets.top, bottom: insets.bottom },
-        measuredRect: {
-          x: Math.round(measuredRect.x),
-          y: Math.round(measuredRect.y),
-          width: Math.round(measuredRect.width),
-          height: Math.round(measuredRect.height),
-        },
-        spotlightRect: {
-          x: Math.round(computed.x),
-          y: Math.round(computed.y),
-          width: Math.round(computed.width),
-          height: Math.round(computed.height),
-        },
-        padding: targetPadding,
-      });
     };
 
     void run();
@@ -512,7 +465,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     insets.bottom,
     insets.top,
     isEssentialActive,
-    logCalibration,
     markMeasureFailure,
     windowHeight,
     windowWidth,
@@ -541,7 +493,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       if (!mounted) return;
 
       const migrated = migrateLegacyTutorialState(prefs);
-      setQaCalibrationMode(Boolean(prefs.tutorial_qa_calibration_mode));
 
       setTrackState(migrated.tutorial_track_state);
       setMissionsDone(migrated.tutorial_missions_done);
@@ -587,8 +538,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
 
   useEffect(() => {
     const unsubscribe = subscribePreferencesChanges((nextPrefs) => {
-      setQaCalibrationMode(Boolean(nextPrefs.tutorial_qa_calibration_mode));
-
       if (
         signed &&
         !isEssentialActive &&
