@@ -146,4 +146,19 @@ describe('notifications permission orchestration', () => {
 
     expect(result).toEqual({ sent: false, reason: 'native_module_mismatch' });
   });
+
+  it('does not mark permission as prompted when runtime is unavailable on post-login check', async () => {
+    const { notifications, readPrefs } = await loadWithMocks({
+      moduleLoadError: new Error('Cannot find native module ExpoNotificationsHandlerModule'),
+      prefsOverrides: {
+        notification_permission_prompted: false,
+      },
+    });
+
+    const result = await notifications.ensurePostLoginNotificationPermission();
+
+    expect(result.prompted).toBe(false);
+    expect(result.runtime).toBe('native_module_mismatch');
+    expect(readPrefs().notification_permission_prompted).toBe(false);
+  });
 });
