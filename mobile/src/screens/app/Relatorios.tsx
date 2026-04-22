@@ -1,5 +1,5 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View, useWindowDimensions, Alert } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import { ArrowDownCircle, ArrowUpCircle, Calendar, ChevronLeft, ChevronRight, FileDown, Filter, Scale, Wallet, X } from 'lucide-react-native';
@@ -8,6 +8,7 @@ import AppText from '../../components/AppText';
 import Card from '../../components/Card';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
+import ScreenHelpButton from '../../components/ScreenHelpButton';
 import {
   getCachedReportsSummary,
   getReportsSummary,
@@ -386,21 +387,22 @@ const Relatorios = () => {
     setExportingPdf(false);
   }, [category, data, exportingPdf, flowType, monthRef, status]);
 
-  const openReportsGuide = useCallback(() => {
-    Alert.alert(
-      'Como usar Relatórios',
-      '1. Escolha o período no topo.\n2. Aplique filtros de status, tipo e categoria.\n3. Use os detalhes para validar entradas, saídas e saldo projetado.'
-    );
-  }, []);
-
   return (
     <>
       <Layout scrollable contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black">
-        <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold mb-1">Relatórios</AppText>
+        <View className="flex-row items-center justify-between mb-1">
+          <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold">Relatórios</AppText>
+          <ScreenHelpButton
+            title="Ajuda - Relatórios"
+            bullets={[
+              'Escolha o período no topo para atualizar os indicadores.',
+              'Aplique filtros de status, tipo e categoria para refinar resultados.',
+              'Use os detalhes para validar entradas, saídas e saldo projetado.',
+            ]}
+            accessibilityLabel="Abrir ajuda da tela Relatórios"
+          />
+        </View>
         <AppText className="text-slate-500 dark:text-slate-200 mb-3">Indicadores gerais, filtros rápidos e detalhamento mensal.</AppText>
-        <TouchableOpacity onPress={openReportsGuide} className="-mt-1 mb-3 self-start">
-          <AppText className="text-primary text-xs font-bold">Como usar esta tela</AppText>
-        </TouchableOpacity>
 
         <Card className="mb-3" noPadding>
           <View className="p-3">

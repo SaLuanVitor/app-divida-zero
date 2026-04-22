@@ -51,10 +51,10 @@ export const ESSENTIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'home_month_history',
-    title: 'Historico do mes',
+    title: 'Resumo do mes',
     description: 'Aqui voce filtra, busca e acompanha os lancamentos do mes com mais contexto.',
     screen: 'Inicio',
-    targetId: 'home-month-history',
+    targetId: 'home-month-history-header',
     cta: 'Continuar',
   },
   {

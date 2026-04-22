@@ -1,7 +1,7 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal, FlatList, LayoutChangeEvent, Alert } from 'react-native';
+import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal, FlatList, LayoutChangeEvent } from 'react-native';
 import {
     Bell,
     CheckCircle2,
@@ -25,6 +25,7 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import ProfileAvatar from '../../components/ProfileAvatar';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
+import ScreenHelpButton from '../../components/ScreenHelpButton';
 import { useAuth } from '../../context/AuthContext';
 import { useOverlay } from '../../context/OverlayContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
@@ -222,7 +223,7 @@ const Home = () => {
     const { contentBottomInset, overlayBottomInset } = useBottomInset();
     const { darkMode } = useThemeMode();
     const { fontScale, largerTouchTargets } = useAccessibility();
-    const { isBeginnerTutorialActive, currentEssentialStepId } = useTutorial();
+    const { isBeginnerTutorialActive, currentEssentialStepId, refreshTargetMeasure } = useTutorial();
     const insets = useSafeAreaInsets();
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
@@ -263,6 +264,7 @@ const Home = () => {
 
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const monthHistoryGuideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastMonthLoadAtRef = useRef(0);
     const scrollRef = useRef<ScrollView>(null);
     const [calendarSectionY, setCalendarSectionY] = useState(0);
@@ -294,6 +296,9 @@ const Home = () => {
             if (undoTimer.current) {
                 clearTimeout(undoTimer.current);
             }
+            if (monthHistoryGuideTimerRef.current) {
+                clearTimeout(monthHistoryGuideTimerRef.current);
+            }
         };
     }, []);
 
@@ -304,13 +309,42 @@ const Home = () => {
         const timer = setTimeout(() => {
             if (currentEssentialStepId === 'home_calendar') {
                 scrollRef.current?.scrollTo({ y: Math.max(calendarSectionY - 24, 0), animated: true });
+                setTimeout(() => refreshTargetMeasure(), 220);
                 return;
             }
             scrollRef.current?.scrollTo({ y: Math.max(monthHistorySectionY - 36, 0), animated: true });
+            setTimeout(() => refreshTargetMeasure(), 220);
         }, 140);
 
         return () => clearTimeout(timer);
-    }, [calendarSectionY, currentEssentialStepId, isBeginnerTutorialActive, monthHistorySectionY]);
+    }, [calendarSectionY, currentEssentialStepId, isBeginnerTutorialActive, monthHistorySectionY, refreshTargetMeasure]);
+
+    useEffect(() => {
+        if (!isBeginnerTutorialActive || currentEssentialStepId !== 'home_month_history') return;
+
+        let attempts = 0;
+        const maxAttempts = 7;
+
+        const syncHistorySpotlight = () => {
+            attempts += 1;
+            const targetY = Math.max(monthHistorySectionY - 36, 0);
+            scrollRef.current?.scrollTo({ y: targetY, animated: true });
+            setTimeout(() => refreshTargetMeasure(), 220);
+
+            if (attempts < maxAttempts) {
+                monthHistoryGuideTimerRef.current = setTimeout(syncHistorySpotlight, 260);
+            }
+        };
+
+        monthHistoryGuideTimerRef.current = setTimeout(syncHistorySpotlight, 120);
+
+        return () => {
+            if (monthHistoryGuideTimerRef.current) {
+                clearTimeout(monthHistoryGuideTimerRef.current);
+                monthHistoryGuideTimerRef.current = null;
+            }
+        };
+    }, [currentEssentialStepId, isBeginnerTutorialActive, monthHistorySectionY, refreshTargetMeasure]);
 
     const handleCalendarLayout = useCallback((event: LayoutChangeEvent) => {
         setCalendarSectionY(event.nativeEvent.layout.y);
@@ -464,20 +498,21 @@ const Home = () => {
         }, [])
     );
 
-    const openHomeQuickGuide = useCallback(() => {
+    const homeHelpBullets = useMemo(() => {
         const focusText =
             onboardingPrimaryGoal === 'pay_off_debt'
-                ? 'Foco atual: quitar dívida.'
+                ? 'Seu foco atual é quitar dívida: priorize pendências do mês.'
                 : onboardingPrimaryGoal === 'create_goal'
-                ? 'Foco atual: criar meta.'
+                ? 'Seu foco atual é criar meta: acompanhe evolução no painel.'
                 : onboardingPrimaryGoal === 'organize_month'
-                ? 'Foco atual: organizar mês.'
-                : 'Foco atual: manter visão geral.';
+                ? 'Seu foco atual é organizar o mês: mantenha lançamentos atualizados.'
+                : 'Comece pelo resumo para entender seu cenário financeiro atual.';
 
-        Alert.alert(
-            'Guia rápido da Home',
-            `${focusText}\n\n1. Confira o resumo e a próxima ação.\n2. Use o calendário para abrir detalhes por dia.\n3. Revise o histórico do mês com filtros e busca.\n\nSe quiser, abra o tutorial completo em Configurações > Ver tutorial novamente.`
-        );
+        return [
+            focusText,
+            'Use o calendário para abrir detalhes por dia e conferir vencimentos.',
+            'Revise o histórico do mês com filtros e busca para agir rápido.',
+        ];
     }, [onboardingPrimaryGoal]);
 
     const entries = useMemo(() => records.map(toCalendarEntry), [records]);
@@ -882,26 +917,30 @@ const Home = () => {
                                 <AppText className="text-slate-500 dark:text-slate-200 text-xs font-medium">
                                     {gamificationSummary.level_title} • XP {gamificationSummary.xp_in_level}/{gamificationSummary.xp_in_level + gamificationSummary.xp_to_next_level}
                                 </AppText>
-                                <TouchableOpacity onPress={openHomeQuickGuide} className="self-start mt-1">
-                                    <AppText className="text-primary text-xs font-bold">Ver guia rápido</AppText>
-                                </TouchableOpacity>
                             </View>
                         </View>
-                        <TouchableOpacity
-                            className="bg-[#f8f7f5] dark:bg-black p-2 rounded-full relative"
-                            onPress={openNotificationsPopup}
-                            accessibilityRole="button"
-                            accessibilityLabel="Abrir notificações"
-                        >
-                            <Bell size={20} color={darkMode ? '#cbd5e1' : '#8a7560'} />
-                            {notificationUnreadCount > 0 ? (
-                                <View className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 items-center justify-center px-1 border border-white dark:border-black">
-                                    <AppText disableUserFontScale className="text-white text-[9px] font-bold">
-                                        {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
-                                    </AppText>
-                                </View>
-                            ) : null}
-                        </TouchableOpacity>
+                        <View className="flex-row items-center -mr-1">
+                            <ScreenHelpButton
+                                title="Ajuda - Início"
+                                bullets={homeHelpBullets}
+                                accessibilityLabel="Abrir ajuda da tela Início"
+                            />
+                            <TouchableOpacity
+                                className="bg-[#f8f7f5] dark:bg-black p-2 rounded-full relative"
+                                onPress={openNotificationsPopup}
+                                accessibilityRole="button"
+                                accessibilityLabel="Abrir notificações"
+                            >
+                                <Bell size={20} color={darkMode ? '#cbd5e1' : '#8a7560'} />
+                                {notificationUnreadCount > 0 ? (
+                                    <View className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 items-center justify-center px-1 border border-white dark:border-black">
+                                        <AppText disableUserFontScale className="text-white text-[9px] font-bold">
+                                            {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+                                        </AppText>
+                                    </View>
+                                ) : null}
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
                     <TutorialTarget targetId="home-summary-card">
@@ -1056,7 +1095,7 @@ const Home = () => {
                     </Card>
                     </TutorialTarget>
 
-                    <TutorialTarget targetId="home-month-history">
+                    <TutorialTarget targetId="home-month-history-header">
                         <View onLayout={handleMonthHistoryLayout}>
                             <View className="flex-row items-center justify-between mb-3">
                                 <AppText className="text-slate-900 dark:text-slate-100 font-bold text-xl">Lançamentos do mês</AppText>
@@ -1091,69 +1130,68 @@ const Home = () => {
                                 value={searchQuery}
                                 onChangeText={setSearchQuery}
                             />
+                            {!loading && filteredMonthItems.length === 0 ? (
+                                <Card className="mb-3" noPadding>
+                                    <View className="p-4">
+                                        <AppText className="text-slate-600 dark:text-slate-200 text-sm">Sem lançamentos para os filtros e busca informados neste mês.</AppText>
+                                    </View>
+                                </Card>
+                            ) : null}
+
+                            {monthItemsToRender.map((item, index) => (
+                                <Card key={String(item.id) + index} className="mb-3" noPadding>
+                                    <View className="p-4">
+                                        <View className="flex-row items-start justify-between">
+                                            <View className="flex-row items-center">
+                                                <View className="h-10 w-10 rounded-lg items-center justify-center" style={{ backgroundColor: `${item.color}15` }}>
+                                                    <item.icon size={18} color={item.color} />
+                                                </View>
+                                                <View className="ml-3">
+                                                    <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.title}</AppText>
+                                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs">{item.subtitle} • {formatDateBRFromISO(item.date)}</AppText>
+                                                </View>
+                                            </View>
+                                            <View className="items-end">
+                                                <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">{item.value}</AppText>
+                                                <AppText className={`text-[10px] font-bold uppercase ${statusColorClass(item.status)}`}>
+                                                    {statusLabel(item.status)}
+                                                </AppText>
+                                            </View>
+                                        </View>
+
+                                        <View className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex-row items-center justify-between">
+                                            <AppText className="text-xs text-slate-500 dark:text-slate-200">{item.reminder}</AppText>
+                                            <View className="flex-row items-center gap-2">
+                                                <TouchableOpacity onPress={() => requestDeleteSingle(item)} className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 flex-row items-center">
+                                                    <Trash2 size={14} color="#475569" />
+                                                    <AppText className="text-slate-700 dark:text-slate-200 font-bold text-xs ml-1">Excluir</AppText>
+                                                </TouchableOpacity>
+                                                {item.status === 'pending' ? (
+                                                    <TouchableOpacity onPress={() => requestPay(item)} className="bg-primary px-4 py-2 rounded-lg flex-row items-center">
+                                                        <CheckCircle2 size={16} color="#fff" />
+                                                        <AppText className="text-white font-bold text-sm ml-2">
+                                                            {item.icon === CircleDollarSign ? 'Receber' : 'Pagar'}
+                                                        </AppText>
+                                                    </TouchableOpacity>
+                                                ) : (
+                                                    <AppText className="text-teal-600 text-xs font-bold">Concluído</AppText>
+                                                )}
+                                            </View>
+                                        </View>
+                                    </View>
+                                </Card>
+                            ))}
+
+                            {!loading && hasMoreMonthItems ? (
+                                <View className="items-center pb-2">
+                                    <ActivityIndicator color="#f48c25" />
+                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
+                                        Carregando mais lançamentos...
+                                    </AppText>
+                                </View>
+                            ) : null}
                         </View>
                     </TutorialTarget>
-
-                    {!loading && filteredMonthItems.length === 0 ? (
-                        <Card className="mb-3" noPadding>
-                            <View className="p-4">
-                                <AppText className="text-slate-600 dark:text-slate-200 text-sm">Sem lançamentos para os filtros e busca informados neste mês.</AppText>
-                            </View>
-                        </Card>
-                    ) : null}
-
-                    {monthItemsToRender.map((item, index) => (
-                        <Card key={String(item.id) + index} className="mb-3" noPadding>
-                            <View className="p-4">
-                                <View className="flex-row items-start justify-between">
-                                    <View className="flex-row items-center">
-                                        <View className="h-10 w-10 rounded-lg items-center justify-center" style={{ backgroundColor: `${item.color}15` }}>
-                                            <item.icon size={18} color={item.color} />
-                                        </View>
-                                        <View className="ml-3">
-                                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.title}</AppText>
-                                            <AppText className="text-slate-500 dark:text-slate-200 text-xs">{item.subtitle} • {formatDateBRFromISO(item.date)}</AppText>
-                                        </View>
-                                    </View>
-                                    <View className="items-end">
-                                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">{item.value}</AppText>
-                                        <AppText className={`text-[10px] font-bold uppercase ${statusColorClass(item.status)}`}>
-                                            {statusLabel(item.status)}
-                                        </AppText>
-                                    </View>
-                                </View>
-
-                                <View className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex-row items-center justify-between">
-                                    <AppText className="text-xs text-slate-500 dark:text-slate-200">{item.reminder}</AppText>
-                                    <View className="flex-row items-center gap-2">
-                                        <TouchableOpacity onPress={() => requestDeleteSingle(item)} className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 flex-row items-center">
-                                            <Trash2 size={14} color="#475569" />
-                                            <AppText className="text-slate-700 dark:text-slate-200 font-bold text-xs ml-1">Excluir</AppText>
-                                        </TouchableOpacity>
-                                        {item.status === 'pending' ? (
-                                            <TouchableOpacity onPress={() => requestPay(item)} className="bg-primary px-4 py-2 rounded-lg flex-row items-center">
-                                                <CheckCircle2 size={16} color="#fff" />
-                                                <AppText className="text-white font-bold text-sm ml-2">
-                                                    {item.icon === CircleDollarSign ? 'Receber' : 'Pagar'}
-                                                </AppText>
-                                            </TouchableOpacity>
-                                        ) : (
-                                            <AppText className="text-teal-600 text-xs font-bold">Concluído</AppText>
-                                        )}
-                                    </View>
-                                </View>
-                            </View>
-                        </Card>
-                    ))}
-
-                    {!loading && hasMoreMonthItems ? (
-                        <View className="items-center pb-2">
-                            <ActivityIndicator color="#f48c25" />
-                            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
-                                Carregando mais lançamentos...
-                            </AppText>
-                        </View>
-                    ) : null}
                 </View>
             </Layout>
 
