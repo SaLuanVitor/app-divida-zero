@@ -7,6 +7,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Button from '../../components/Button';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
+import ScreenHelpButton from '../../components/ScreenHelpButton';
 import { useThemeMode } from '../../context/ThemeContext';
 import { createFinancialRecord } from '../../services/financialRecords';
 import { CreateFinancialRecordPayload, FinancialRecurrenceType } from '../../types/financialRecord';
@@ -376,13 +377,6 @@ const Lancamentos = () => {
         setRecurrenceCount(String(clamp(num, 1, recurrenceMax)));
     };
 
-    const openLancamentosGuide = () => {
-        Alert.alert(
-            'Como usar Lançamentos',
-            '1. Escolha ganho ou dívida.\n2. Preencha valor, data e categoria.\n3. Salve para atualizar histórico, metas e relatórios.'
-        );
-    };
-
     const resetForm = () => {
         const today = new Date();
         const defaultCategory = getDefaultCategory(activeTab);
@@ -481,7 +475,8 @@ const Lancamentos = () => {
                 }}
             >
                 <View className="px-4">
-                    <View className="flex-row items-center mt-4 mb-4">
+                    <View className="flex-row items-center justify-between mt-4 mb-4">
+                        <View className="flex-row items-center">
                         <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-1">
                             <ArrowLeft size={22} color={iconColor} />
                         </TouchableOpacity>
@@ -489,10 +484,17 @@ const Lancamentos = () => {
                             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">{formTitle}</AppText>
                             <AppText className="text-slate-500 dark:text-slate-200 text-xs">Preencha os dados para registrar no sistema.</AppText>
                         </View>
+                        </View>
+                        <ScreenHelpButton
+                            title="Ajuda - Lançamentos"
+                            bullets={[
+                                'Escolha ganho ou dívida para iniciar o registro.',
+                                'Preencha valor, data e categoria para salvar com segurança.',
+                                'Use o modo rápido para registrar sem fricção.',
+                            ]}
+                            accessibilityLabel="Abrir ajuda da tela Lançamentos"
+                        />
                     </View>
-                    <TouchableOpacity onPress={openLancamentosGuide} className="-mt-1 mb-3 self-start">
-                        <AppText className="text-primary text-xs font-bold">Como usar esta tela</AppText>
-                    </TouchableOpacity>
 
                     <TutorialTarget targetId="lancamentos-form-card">
                         <View className="bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4">

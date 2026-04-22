@@ -1,13 +1,14 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import AppTextInput from '../../components/AppTextInput';
-import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, Alert } from 'react-native';
+import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2, ChevronRight } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
+import ScreenHelpButton from '../../components/ScreenHelpButton';
 import { useBottomInset } from '../../context/BottomInsetContext';
 import {
     createFinancialGoalContribution,
@@ -182,13 +183,6 @@ const Metas = () => {
         });
     };
 
-    const openMetasGuide = useCallback(() => {
-        Alert.alert(
-            'Como usar Metas',
-            '1. Crie uma meta com valor e prazo.\n2. Use adicionar/retirar valor para acompanhar progresso.\n3. Revise metas ativas e concluídas para manter prioridade.'
-        );
-    }, []);
-
     const openEditScreen = (goal: FinancialGoalDto) => {
         navigation.navigate('MetaForm', {
             mode: 'edit',
@@ -290,17 +284,25 @@ const Metas = () => {
             >
                 <View className="flex-row items-center justify-between mb-1">
                     <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold">Metas</AppText>
-                    <TutorialTarget targetId="metas-create-button">
-                        <TouchableOpacity className="bg-primary rounded-full px-4 py-2 flex-row items-center gap-2" onPress={openCreateScreen}>
-                            <PlusCircle size={16} color="#fff" />
-                            <AppText className="text-white font-bold text-sm">Nova meta</AppText>
-                        </TouchableOpacity>
-                    </TutorialTarget>
+                    <View className="flex-row items-center -mr-1">
+                        <ScreenHelpButton
+                            title="Ajuda - Metas"
+                            bullets={[
+                                'Crie uma meta com valor-alvo e prazo.',
+                                'Adicione ou retire valor para acompanhar o progresso.',
+                                'Revise metas ativas e concluídas para manter prioridade.',
+                            ]}
+                            accessibilityLabel="Abrir ajuda da tela Metas"
+                        />
+                        <TutorialTarget targetId="metas-create-button">
+                            <TouchableOpacity className="bg-primary rounded-full px-4 py-2 flex-row items-center gap-2" onPress={openCreateScreen}>
+                                <PlusCircle size={16} color="#fff" />
+                                <AppText className="text-white font-bold text-sm">Nova meta</AppText>
+                            </TouchableOpacity>
+                        </TutorialTarget>
+                    </View>
                 </View>
                 <AppText className="text-slate-500 dark:text-slate-200 mb-5">Acompanhe sua evolução e ajuste suas metas.</AppText>
-                <TouchableOpacity onPress={openMetasGuide} className="-mt-3 mb-4 self-start">
-                    <AppText className="text-primary text-xs font-bold">Como usar esta tela</AppText>
-                </TouchableOpacity>
 
                 <View className="flex-row gap-3 mb-4">
                     <Card className="flex-1" noPadding>

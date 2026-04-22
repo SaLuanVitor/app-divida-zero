@@ -53,7 +53,7 @@ type TutorialProviderProps = {
 const TARGET_SPOTLIGHT_PADDING: Record<string, number> = {
   'home-summary-card': 18,
   'home-calendar-card': 14,
-  'home-month-history': 14,
+  'home-month-history-header': 14,
   'lancamentos-form-card': 14,
   'metas-create-button': 16,
   'relatorios-period-picker': 14,
@@ -63,7 +63,7 @@ const TARGET_SPOTLIGHT_PADDING: Record<string, number> = {
 const TARGET_SPOTLIGHT_PADDING_BY_CLASS: Partial<Record<string, Record<TutorialDeviceClass, number>>> = {
   'home-summary-card': { compact: 14, standard: 18, large: 20 },
   'home-calendar-card': { compact: 10, standard: 14, large: 16 },
-  'home-month-history': { compact: 10, standard: 14, large: 16 },
+  'home-month-history-header': { compact: 10, standard: 14, large: 16 },
   'lancamentos-form-card': { compact: 10, standard: 14, large: 16 },
   'metas-create-button': { compact: 12, standard: 16, large: 18 },
   'relatorios-period-picker': { compact: 10, standard: 14, large: 16 },
@@ -97,6 +97,9 @@ const MEASURE_FAILURE_THRESHOLD = 2;
 const MEASURE_SAMPLE_COUNT = 3;
 const MEASURE_MAX_VARIANCE = 16;
 const TUTORIAL_GENERAL_VERSION = 1;
+const STEP_MEASURE_FAILURE_THRESHOLD: Partial<Record<string, number>> = {
+  home_month_history: 5,
+};
 
 export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, currentRouteName }) => {
   const { signed } = useAuth();
@@ -174,7 +177,10 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     setSpotlightRect(null);
     setMeasureFailCount((previous) => {
       const next = previous + 1;
-      if (next >= MEASURE_FAILURE_THRESHOLD) {
+      const threshold = currentStep?.id
+        ? STEP_MEASURE_FAILURE_THRESHOLD[currentStep.id] ?? MEASURE_FAILURE_THRESHOLD
+        : MEASURE_FAILURE_THRESHOLD;
+      if (next >= threshold) {
         setTargetUnavailable(true);
       }
 
@@ -186,6 +192,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
         targetId: currentStep?.targetId ?? null,
         deviceClass,
         failCount: next,
+        threshold,
       });
       return next;
     });
@@ -581,9 +588,23 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   useEffect(() => {
     const unsubscribe = subscribePreferencesChanges((nextPrefs) => {
       setQaCalibrationMode(Boolean(nextPrefs.tutorial_qa_calibration_mode));
+
+      if (
+        signed &&
+        !isEssentialActive &&
+        nextPrefs.onboarding_seen &&
+        nextPrefs.onboarding_mode === 'beginner' &&
+        nextPrefs.tutorial_reopen_enabled !== false &&
+        nextPrefs.tutorial_track_state === 'essential'
+      ) {
+        void startEssentialTutorial({
+          source: 'auto',
+          initialStepId: nextPrefs.tutorial_last_step,
+        });
+      }
     });
     return unsubscribe;
-  }, []);
+  }, [isEssentialActive, signed, startEssentialTutorial]);
 
   useEffect(() => {
     if (!isEssentialActive || !currentStep) return;
@@ -791,17 +812,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
             <AppText style={[styles.bodyText, { color: darkMode ? '#cbd5e1' : '#475569' }]}>{currentStep?.description}</AppText>
             <AppText style={[styles.stepText, { color: darkMode ? '#94a3b8' : '#64748b' }]}>
               {tutorialProgressLabel}
-              {needsFallback ? ' - fallback ativo' : ''}
             </AppText>
-
-            {needsFallback && currentStep ? (
-              <Button
-                title={`Ir para ${currentStep.screen}`}
-                variant="outline"
-                onPress={() => navigateSafely(currentStep.screen)}
-                className="h-10 mt-3"
-              />
-            ) : null}
 
             <View className="flex-row mt-4 gap-2">
               <Button
