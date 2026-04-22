@@ -100,22 +100,6 @@ const AppSettings = () => {
     }
   };
 
-  const updateTutorialCalibrationMode = async (value: boolean) => {
-    setPrefs((prev) => ({ ...prev, tutorial_qa_calibration_mode: value }));
-    setSaving(true);
-    setMessage('');
-    try {
-      await updateAppPreferences({ tutorial_qa_calibration_mode: value });
-      setMessage(
-        value
-          ? 'Modo calibracao QA ativado. Os logs do tutorial serao exibidos no console.'
-          : 'Modo calibracao QA desativado.'
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const Item = ({
     title,
     subtitle,
@@ -213,15 +197,6 @@ const AppSettings = () => {
             Reabra o tutorial para revisar orientações de uso quando quiser.
           </AppText>
           <Button title="Ver tutorial novamente" variant="outline" onPress={reopenTutorial} className="h-11" />
-
-          <View className="mt-3">
-            <Item
-              title="Modo calibracao QA"
-              subtitle="Loga targetId, rect e deviceClass para ajuste fino em diferentes aparelhos."
-              value={prefs.tutorial_qa_calibration_mode}
-              onChange={updateTutorialCalibrationMode}
-            />
-          </View>
         </Card>
 
         {message ? (
