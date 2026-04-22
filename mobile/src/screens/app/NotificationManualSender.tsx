@@ -187,7 +187,7 @@ const NotificationManualSender = () => {
   };
 
   const requestPermission = async () => {
-    if (!runtimeAvailable) {
+    if (!runtimeAvailable && runtimeReason !== 'permission_denied') {
       setMessageKind('error');
       setMessage(runtimeBlockedMessage());
       return;

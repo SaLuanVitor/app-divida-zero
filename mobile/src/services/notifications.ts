@@ -394,7 +394,9 @@ export const ensurePostLoginNotificationPermission = async () => {
 
   if (!runtime.available && runtime.reason !== 'permission_denied') {
     await syncPermissionStatusWithPreferences(statusBeforePrompt, {
-      markPrompted: true,
+      // Keep prompt flag untouched when runtime is unavailable.
+      // This allows requesting permission later when runtime becomes available.
+      markPrompted: false,
       enablePushWhenGranted: false,
     });
     return {
