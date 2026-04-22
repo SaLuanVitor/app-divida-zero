@@ -1,4 +1,5 @@
 import {
+  ESSENTIAL_STEPS,
   CONTEXTUAL_MISSIONS,
   computeSpotlightRect,
   migrateLegacyTutorialState,
@@ -59,5 +60,11 @@ describe('tutorial engine', () => {
     expect(migrated.tutorial_track_state).toBe('contextual');
     expect(migrated.tutorial_missions_done).toContain('visit_home');
   });
-});
 
+  it('includes critical Lancamentos step in essential journey', () => {
+    const lancamentosStep = ESSENTIAL_STEPS.find((step) => step.id === 'lancamentos_quick_form');
+    expect(lancamentosStep).toBeTruthy();
+    expect(lancamentosStep?.screen).toBe('Lancamentos');
+    expect(lancamentosStep?.targetId).toBe('lancamentos-form-card');
+  });
+});

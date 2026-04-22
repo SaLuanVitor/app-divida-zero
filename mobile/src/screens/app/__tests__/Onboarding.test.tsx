@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import Onboarding from '../Onboarding';
 
@@ -36,6 +36,8 @@ describe('Onboarding adaptive flow', () => {
     expect(updateAppPreferences).toHaveBeenCalledWith(
       expect.objectContaining({
         tutorial_track_state: 'essential',
+        tutorial_general_track_state: 'essential',
+        tutorial_general_version: 1,
         tutorial_version: 2,
         onboarding_primary_goal: 'organize_month',
       })
@@ -54,6 +56,7 @@ describe('Onboarding adaptive flow', () => {
     expect(updateAppPreferences).toHaveBeenCalledWith(
       expect.objectContaining({
         tutorial_track_state: 'paused',
+        tutorial_general_track_state: 'paused',
         tutorial_reopen_enabled: false,
       })
     );
@@ -65,7 +68,7 @@ describe('Onboarding adaptive flow', () => {
     const onDone = jest.fn();
     const screen = render(<Onboarding onDone={onDone} />);
 
-    fireEvent.press(screen.getByText('Modo avançado (sem tutorial)'));
+    fireEvent.press(screen.getByText(/Modo avan/));
     fireEvent.press(screen.getByText('Entrar no app'));
 
     await waitFor(() => expect(updateAppPreferences).toHaveBeenCalled());
@@ -74,6 +77,7 @@ describe('Onboarding adaptive flow', () => {
         onboarding_mode: 'advanced',
         advanced_quick_guide_seen: true,
         tutorial_track_state: 'completed',
+        tutorial_general_track_state: 'completed',
         tutorial_reopen_enabled: false,
         tutorial_active_mode: null,
         tutorial_beginner_completed: true,
@@ -83,3 +87,4 @@ describe('Onboarding adaptive flow', () => {
     expect(onDone).toHaveBeenCalled();
   });
 });
+

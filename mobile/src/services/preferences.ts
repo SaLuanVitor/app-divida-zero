@@ -37,6 +37,8 @@ export const defaultAppPreferences: AppPreferences = {
   tutorial_track_state: 'idle',
   tutorial_missions_done: [],
   tutorial_qa_calibration_mode: false,
+  tutorial_general_version: 1,
+  tutorial_general_track_state: 'idle',
 };
 
 const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): AppPreferences => {
@@ -100,6 +102,21 @@ const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): 
       : [],
     tutorial_qa_calibration_mode:
       typeof raw?.tutorial_qa_calibration_mode === 'boolean' ? raw.tutorial_qa_calibration_mode : false,
+    tutorial_general_version:
+      typeof raw?.tutorial_general_version === 'number' ? raw.tutorial_general_version : 1,
+    tutorial_general_track_state:
+      raw?.tutorial_general_track_state === 'idle' ||
+      raw?.tutorial_general_track_state === 'essential' ||
+      raw?.tutorial_general_track_state === 'paused' ||
+      raw?.tutorial_general_track_state === 'completed'
+        ? raw.tutorial_general_track_state
+        : raw?.tutorial_track_state === 'essential'
+        ? 'essential'
+        : raw?.tutorial_track_state === 'paused'
+        ? 'paused'
+        : raw?.tutorial_track_state === 'completed'
+        ? 'completed'
+        : 'idle',
   };
 };
 

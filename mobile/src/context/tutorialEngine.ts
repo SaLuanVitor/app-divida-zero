@@ -58,6 +58,14 @@ export const ESSENTIAL_STEPS: TutorialStep[] = [
     cta: 'Continuar',
   },
   {
+    id: 'lancamentos_quick_form',
+    title: 'Lancamentos rapidos',
+    description: 'Registre ganhos ou dividas para alimentar calendario, metas e relatorios.',
+    screen: 'Lancamentos',
+    targetId: 'lancamentos-form-card',
+    cta: 'Continuar',
+  },
+  {
     id: 'metas_overview',
     title: 'Funcionalidades de Metas',
     description: 'Crie metas e acompanhe seu progresso com aportes e retiradas quando precisar.',

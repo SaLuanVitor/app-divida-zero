@@ -54,6 +54,7 @@ const TARGET_SPOTLIGHT_PADDING: Record<string, number> = {
   'home-summary-card': 18,
   'home-calendar-card': 14,
   'home-month-history': 14,
+  'lancamentos-form-card': 14,
   'metas-create-button': 16,
   'relatorios-period-picker': 14,
   'perfil-account-card': 16,
@@ -63,6 +64,7 @@ const TARGET_SPOTLIGHT_PADDING_BY_CLASS: Partial<Record<string, Record<TutorialD
   'home-summary-card': { compact: 14, standard: 18, large: 20 },
   'home-calendar-card': { compact: 10, standard: 14, large: 16 },
   'home-month-history': { compact: 10, standard: 14, large: 16 },
+  'lancamentos-form-card': { compact: 10, standard: 14, large: 16 },
   'metas-create-button': { compact: 12, standard: 16, large: 18 },
   'relatorios-period-picker': { compact: 10, standard: 14, large: 16 },
   'perfil-account-card': { compact: 12, standard: 16, large: 18 },
@@ -94,6 +96,7 @@ const resolveSpotlightPadding = ({
 const MEASURE_FAILURE_THRESHOLD = 2;
 const MEASURE_SAMPLE_COUNT = 3;
 const MEASURE_MAX_VARIANCE = 16;
+const TUTORIAL_GENERAL_VERSION = 1;
 
 export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, currentRouteName }) => {
   const { signed } = useAuth();
@@ -132,8 +135,16 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
 
   const persistTutorialState = useCallback(
     async (partial: Partial<AppPreferences>) => {
+      const nextTrack =
+        partial.tutorial_track_state === 'essential' ||
+        partial.tutorial_track_state === 'paused' ||
+        partial.tutorial_track_state === 'completed'
+          ? partial.tutorial_track_state
+          : undefined;
       await persistState({
         tutorial_version: CURRENT_TUTORIAL_VERSION,
+        tutorial_general_version: TUTORIAL_GENERAL_VERSION,
+        tutorial_general_track_state: nextTrack,
         ...partial,
       });
     },
@@ -298,7 +309,12 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       trackAnalyticsEventDeferred({
         event_name: 'tutorial_step_seen',
         screen: firstStep.screen,
-        metadata: { step_id: firstStep.id, step_index: nextIndex + 1, step_total: ESSENTIAL_STEPS.length },
+        metadata: {
+          tutorial_flow: 'general_critical',
+          step_id: firstStep.id,
+          step_index: nextIndex + 1,
+          step_total: ESSENTIAL_STEPS.length,
+        },
       });
 
       navigateSafely(firstStep.screen);
@@ -324,7 +340,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     trackAnalyticsEventDeferred({
       event_name: 'onboarding_completed',
       screen: 'Tutorial',
-      metadata: { track: 'adaptive' },
+      metadata: { track: 'adaptive', tutorial_flow: 'general_critical' },
     });
   }, [persistTutorialState]);
 
@@ -356,7 +372,12 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       trackAnalyticsEventDeferred({
         event_name: 'tutorial_step_seen',
         screen: step.screen,
-        metadata: { step_id: step.id, step_index: stepIndex + 1, step_total: ESSENTIAL_STEPS.length },
+        metadata: {
+          tutorial_flow: 'general_critical',
+          step_id: step.id,
+          step_index: stepIndex + 1,
+          step_total: ESSENTIAL_STEPS.length,
+        },
       });
       navigateSafely(step.screen);
     },
@@ -370,7 +391,12 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     trackAnalyticsEventDeferred({
       event_name: 'tutorial_step_completed',
       screen: currentStep.screen,
-      metadata: { step_id: currentStep.id, step_index: essentialStepIndex + 1, step_total: ESSENTIAL_STEPS.length },
+      metadata: {
+        tutorial_flow: 'general_critical',
+        step_id: currentStep.id,
+        step_index: essentialStepIndex + 1,
+        step_total: ESSENTIAL_STEPS.length,
+      },
     });
 
     try {
@@ -515,6 +541,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       setEssentialStepIndex(resolveTutorialStepIndex(prefs.tutorial_last_step));
 
       const shouldPersistMigration =
+        prefs.tutorial_general_version !== TUTORIAL_GENERAL_VERSION ||
         prefs.tutorial_version !== migrated.tutorial_version ||
         prefs.tutorial_track_state !== migrated.tutorial_track_state ||
         JSON.stringify(prefs.tutorial_missions_done || []) !== JSON.stringify(migrated.tutorial_missions_done);

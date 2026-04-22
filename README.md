@@ -317,6 +317,7 @@ docker compose exec api bash -lc "RAILS_ENV=test bundle exec rails db:prepare &&
 Checklist de execucao manual Android (QA):
 
 - `docs/qa/checklist-manual-android-fase1.md`
+- `docs/qa/checklist-manual-android-tutorial-geral.md`
 
 ## 10) Pacote de entrega para banca
 

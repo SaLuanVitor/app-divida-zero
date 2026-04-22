@@ -36,7 +36,6 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
     try {
       const isBeginner = mode === 'beginner';
       const isAdvanced = mode === 'advanced';
-      const isSkip = mode === 'skip';
 
       await updateAppPreferences({
         onboarding_seen: true,
@@ -52,6 +51,8 @@ const Onboarding = ({ onDone }: OnboardingProps) => {
         tutorial_advanced_tasks_done: [],
         tutorial_version: 2,
         tutorial_track_state: isBeginner ? 'essential' : isAdvanced ? 'completed' : 'paused',
+        tutorial_general_version: 1,
+        tutorial_general_track_state: isBeginner ? 'essential' : isAdvanced ? 'completed' : 'paused',
         tutorial_missions_done: [],
       });
 
