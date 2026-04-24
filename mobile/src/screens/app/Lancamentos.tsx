@@ -201,6 +201,8 @@ const Lancamentos = () => {
         if (activeTab === 'debt' && !recurring) {
             const inst = Number(installmentsTotal);
             if (!Number.isInteger(inst) || inst < 1) return false;
+            const totalCents = Number(amountDigits || '0');
+            if (totalCents < inst) return false;
         }
 
         if (recurring) {
@@ -209,7 +211,7 @@ const Lancamentos = () => {
         }
 
         return true;
-    }, [selectedCategory, amountValue, activeTab, recurring, installmentsTotal, recurrenceCount]);
+    }, [selectedCategory, amountValue, activeTab, recurring, installmentsTotal, recurrenceCount, amountDigits]);
 
     const validationMessage = useMemo(() => {
         if (!selectedCategory) return 'Selecione uma categoria para continuar.';
@@ -219,6 +221,10 @@ const Lancamentos = () => {
             const installments = Number(installmentsTotal);
             if (!Number.isInteger(installments) || installments < 1) {
                 return 'Informe um número de parcelas válido.';
+            }
+            const totalCents = Number(amountDigits || '0');
+            if (totalCents < installments) {
+                return 'Para parcelar, o valor total deve ser pelo menos igual ao número de parcelas.';
             }
         }
 
@@ -230,7 +236,7 @@ const Lancamentos = () => {
         }
 
         return '';
-    }, [activeTab, amountValue, installmentsTotal, recurrenceCount, recurring, selectedCategory]);
+    }, [activeTab, amountValue, installmentsTotal, recurrenceCount, recurring, selectedCategory, amountDigits]);
 
     useEffect(() => {
         if (formError && canSubmit) {
@@ -357,7 +363,12 @@ const Lancamentos = () => {
     };
 
     const handleInstallmentsChange = (value: string) => {
-        const num = Number(onlyDigits(value) || '1');
+        const digits = onlyDigits(value);
+        if (!digits) {
+            setInstallmentsTotal('');
+            return;
+        }
+        const num = Number(digits);
         setInstallmentsTotal(String(clamp(num, 1, 120)));
     };
 
@@ -373,7 +384,12 @@ const Lancamentos = () => {
     };
 
     const handleRecurrenceCountChange = (value: string) => {
-        const num = Number(onlyDigits(value) || '1');
+        const digits = onlyDigits(value);
+        if (!digits) {
+            setRecurrenceCount('');
+            return;
+        }
+        const num = Number(digits);
         setRecurrenceCount(String(clamp(num, 1, recurrenceMax)));
     };
 
@@ -405,10 +421,17 @@ const Lancamentos = () => {
         }
         setFormError('');
 
+        const parsedInstallments = Number(installmentsTotal);
+        const installments = activeTab === 'debt' && !recurring && Number.isInteger(parsedInstallments) && parsedInstallments > 0
+            ? parsedInstallments
+            : 1;
+        const totalCents = Number(amountDigits || '0');
+        const amountPerInstallment = installments > 1 ? Math.round(totalCents / installments) / 100 : amountValue;
+
         const payload: CreateFinancialRecordPayload = {
             mode: activeTab === 'debt' ? 'debt' : 'launch',
             title: title.trim() || suggestedTitle,
-            amount: amountValue,
+            amount: amountPerInstallment,
             start_date: formatDateISO(startDate),
             flow_type: activeTab === 'debt' ? 'expense' : 'income',
             description: description.trim() || undefined,
@@ -417,8 +440,8 @@ const Lancamentos = () => {
             notes: notes.trim() || undefined,
             recurring,
             recurrence_type: recurring ? recurrenceType : 'none',
-            recurrence_count: recurring ? Number(recurrenceCount) : 1,
-            installments_total: activeTab === 'debt' && !recurring ? Number(installmentsTotal) : 1,
+            recurrence_count: recurring ? Number(recurrenceCount || '1') : 1,
+            installments_total: installments,
             day_of_month: activeTab === 'debt' && !recurring && dayOfMonth ? Number(dayOfMonth) : undefined,
         };
 
