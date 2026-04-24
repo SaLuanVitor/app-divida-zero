@@ -122,6 +122,32 @@ class Api::V1::FinancialGoalContributionsControllerTest < ActionDispatch::Integr
     assert_match(/imutavel/, body["error"])
   end
 
+  test "deleting linked goal record also removes contribution and updates goal balance" do
+    post "/api/v1/financial_goals/#{@goal.id}/contributions",
+         params: { kind: "deposit", amount: 250, notes: "aporte para teste de exclusao" },
+         headers: auth_header(@tokens[:access_token])
+
+    assert_response :created
+    create_body = JSON.parse(response.body)
+    linked_record_id = create_body["linked_record_id"]
+    contribution_id = create_body.dig("contribution", "id")
+
+    @goal.reload
+    assert_equal 250.0, @goal.current_amount.to_f
+
+    assert_difference ["FinancialRecord.count", "FinancialGoalContribution.count"], -1 do
+      delete "/api/v1/financial_records/#{linked_record_id}",
+             headers: auth_header(@tokens[:access_token])
+    end
+
+    assert_response :ok
+    assert_nil FinancialGoalContribution.find_by(id: contribution_id)
+
+    @goal.reload
+    assert_equal 0.0, @goal.current_amount.to_f
+    assert_equal 0, @goal.progress_pct
+  end
+
   private
 
   def auth_header(token)

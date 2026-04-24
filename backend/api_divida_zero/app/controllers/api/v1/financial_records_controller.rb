@@ -93,7 +93,11 @@ module Api
           records_to_delete = @current_user.financial_records.where(group_code: record.group_code).to_a
           deleted_count = records_to_delete.size
           settled_count = records_to_delete.count { |item| item.status != "pending" }
-          @current_user.financial_records.where(group_code: record.group_code).delete_all
+          contribution_ids = records_to_delete.map(&:financial_goal_contribution_id).compact.uniq
+          ActiveRecord::Base.transaction do
+            @current_user.financial_records.where(group_code: record.group_code).delete_all
+            remove_linked_goal_contributions!(contribution_ids)
+          end
 
           xp_feedback = revert_xp_for_deletion!(deleted_count: deleted_count, settled_count: settled_count, source: record)
           FinancialGoalsProgressService.recalculate_for_user!(@current_user)
@@ -107,7 +111,11 @@ module Api
         end
 
         settled_count = record.status == "pending" ? 0 : 1
-        record.destroy!
+        contribution_ids = [record.financial_goal_contribution_id].compact
+        ActiveRecord::Base.transaction do
+          record.destroy!
+          remove_linked_goal_contributions!(contribution_ids)
+        end
         xp_feedback = revert_xp_for_deletion!(deleted_count: 1, settled_count: settled_count, source: record)
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
         DailyAchievementsService.sync_for_user!(@current_user)
@@ -447,6 +455,12 @@ module Api
             category: source.category
           }
         )
+      end
+
+      def remove_linked_goal_contributions!(contribution_ids)
+        return if contribution_ids.empty?
+
+        @current_user.financial_goal_contributions.where(id: contribution_ids).delete_all
       end
 
       def authenticate_access_token!
