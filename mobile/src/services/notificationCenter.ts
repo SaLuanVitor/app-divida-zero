@@ -155,15 +155,19 @@ const mapGamificationEventToNotification = (event: GamificationEventDto): Notifi
   };
 };
 
-const mapBackendAlertToNotification = (alert: BackendNotificationAlert): NotificationHistoryItem => ({
-  id: `backend-alert-${alert.id}`,
-  kind: 'reminder',
-  title: String(alert.title || 'Alerta'),
-  message: String(alert.message || 'Voce possui um alerta pendente.'),
-  created_at: alert.created_at || new Date().toISOString(),
-  read: Boolean(alert.read),
-  metadata: alert.metadata || {},
-});
+const mapBackendAlertToNotification = (alert: BackendNotificationAlert): NotificationHistoryItem => {
+  const kind: NotificationHistoryItem['kind'] = alert.alert_type === 'goal_funding' ? 'goal' : 'reminder';
+
+  return {
+    id: `backend-alert-${alert.id}`,
+    kind,
+    title: String(alert.title || 'Alerta'),
+    message: String(alert.message || 'Voce possui um alerta pendente.'),
+    created_at: alert.created_at || new Date().toISOString(),
+    read: Boolean(alert.read),
+    metadata: alert.metadata || {},
+  };
+};
 
 const buildReminderNotifications = (
   records: FinancialRecordDto[],

@@ -57,3 +57,13 @@ export interface CreateFinancialGoalContributionPayload {
   amount: number;
   notes?: string;
 }
+
+export interface CreateFinancialGoalContributionResponse {
+  message: string;
+  contribution: FinancialGoalContributionDto;
+  linked_record_id?: number | null;
+  goal: FinancialGoalDto;
+  settled_global_balance: string;
+  allocated_to_goals: string;
+  available_for_goal_funding: string;
+}

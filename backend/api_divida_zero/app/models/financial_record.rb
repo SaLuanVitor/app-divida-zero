@@ -1,5 +1,7 @@
-﻿class FinancialRecord < ApplicationRecord
+class FinancialRecord < ApplicationRecord
   belongs_to :user
+  belongs_to :financial_goal, optional: true
+  belongs_to :financial_goal_contribution, optional: true
 
   RECORD_TYPES = %w[launch debt].freeze
   FLOW_TYPES = %w[income expense].freeze
@@ -24,5 +26,3 @@
     where(due_date: start_date..start_date.end_of_month)
   }
 end
-
-

@@ -253,10 +253,13 @@ const Metas = () => {
             });
 
             await loadGoals();
+            const monthlyHistoryHint = result.linked_record_id
+                ? ' O registro já foi lançado no histórico mensal.'
+                : '';
             pushFeedback(
                 'success',
                 contributionKind === 'deposit' ? 'Valor adicionado' : 'Valor retirado',
-                result.message
+                `${result.message}${monthlyHistoryHint}`
             );
             setFundingSnapshot({
                 settled_global_balance: result.settled_global_balance,

@@ -1,5 +1,6 @@
 import api from './api';
 import {
+  CreateFinancialGoalContributionResponse,
   CreateFinancialGoalContributionPayload,
   CreateFinancialGoalPayload,
   CreateFinancialGoalResponse,
@@ -124,39 +125,13 @@ export const createFinancialGoalContribution = async (
   payload: CreateFinancialGoalContributionPayload
 ) => {
   const { data } = await api.post(`/financial_goals/${goalId}/contributions`, payload);
-  const parsed = data as {
-    message?: string;
-    contribution?: FinancialGoalContributionDto;
-    goal?: FinancialGoalDto;
-    settled_global_balance?: string;
-    allocated_to_goals?: string;
-    available_for_goal_funding?: string;
-  };
+  const parsed = data as Partial<CreateFinancialGoalContributionResponse>;
   invalidateFinancialGoalsCache();
   invalidateGamificationCache();
   return {
     message: parsed.message ?? 'Aporte registrado com sucesso.',
     contribution: parsed.contribution as FinancialGoalContributionDto,
-    goal: parsed.goal as FinancialGoalDto,
-    settled_global_balance: parsed?.settled_global_balance ?? '0',
-    allocated_to_goals: parsed?.allocated_to_goals ?? '0',
-    available_for_goal_funding: parsed?.available_for_goal_funding ?? '0',
-  };
-};
-
-export const deleteFinancialGoalContribution = async (goalId: number, contributionId: number) => {
-  const { data } = await api.delete(`/financial_goals/${goalId}/contributions/${contributionId}`);
-  const parsed = data as {
-    message?: string;
-    goal?: FinancialGoalDto;
-    settled_global_balance?: string;
-    allocated_to_goals?: string;
-    available_for_goal_funding?: string;
-  };
-  invalidateFinancialGoalsCache();
-  invalidateGamificationCache();
-  return {
-    message: parsed.message ?? 'Aporte removido com sucesso.',
+    linked_record_id: typeof parsed.linked_record_id === 'number' ? parsed.linked_record_id : null,
     goal: parsed.goal as FinancialGoalDto,
     settled_global_balance: parsed?.settled_global_balance ?? '0',
     allocated_to_goals: parsed?.allocated_to_goals ?? '0',

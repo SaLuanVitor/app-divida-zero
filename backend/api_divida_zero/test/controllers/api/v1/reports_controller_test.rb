@@ -88,6 +88,34 @@ class Api::V1::ReportsControllerTest < ActionDispatch::IntegrationTest
       installment_number: 1,
       priority: "normal"
     )
+
+    @goal = @user.financial_goals.create!(
+      title: "Reserva para viagem",
+      target_amount: 2000,
+      start_date: Date.new(2026, 3, 1),
+      goal_type: "save"
+    )
+    @goal_contribution = @goal.financial_goal_contributions.create!(
+      kind: "deposit",
+      amount: 150
+    )
+    @user.financial_records.create!(
+      title: "Aporte na meta: Reserva para viagem",
+      record_type: "launch",
+      flow_type: "expense",
+      amount: 150,
+      status: "paid",
+      due_date: Date.new(2026, 3, 22),
+      recurring: false,
+      recurrence_type: "none",
+      recurrence_count: 1,
+      installments_total: 1,
+      installment_number: 1,
+      category: "Meta",
+      priority: "normal",
+      financial_goal_id: @goal.id,
+      financial_goal_contribution_id: @goal_contribution.id
+    )
   end
 
   test "summary returns aggregated report with legacy and new payload" do
@@ -99,28 +127,31 @@ class Api::V1::ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2026, body.dig("period", "year")
     assert_equal 3, body.dig("period", "month")
     assert_equal "6000.0", body.dig("summary", "income_total")
-    assert_equal "800.0", body.dig("summary", "expense_total")
-    assert_equal "5200.0", body.dig("summary", "balance")
+    assert_equal "950.0", body.dig("summary", "expense_total")
+    assert_equal "5050.0", body.dig("summary", "balance")
     assert body["top_categories"].is_a?(Array)
 
     assert body["global_indicators"].is_a?(Hash)
-    assert_equal "9200.0", body.dig("global_indicators", "settled_balance_total")
+    assert_equal "9050.0", body.dig("global_indicators", "settled_balance_total")
     assert_equal "1000.0", body.dig("global_indicators", "pending_income_total")
     assert_equal "500.0", body.dig("global_indicators", "pending_expense_total")
-    assert_equal "9700.0", body.dig("global_indicators", "projected_balance_total")
-    assert_equal "4700.0", body.dig("period_indicators", "settled_balance_total")
+    assert_equal "9550.0", body.dig("global_indicators", "projected_balance_total")
+    assert_equal "4550.0", body.dig("period_indicators", "settled_balance_total")
     assert_equal "1000.0", body.dig("period_indicators", "pending_income_total")
     assert_equal "500.0", body.dig("period_indicators", "pending_expense_total")
-    assert_equal "5200.0", body.dig("period_indicators", "projected_balance_total")
+    assert_equal "5050.0", body.dig("period_indicators", "projected_balance_total")
 
     assert_equal "6000.0", body.dig("monthly_summary", "income_total")
-    assert_equal "800.0", body.dig("monthly_summary", "expense_total")
-    assert_equal "5200.0", body.dig("monthly_summary", "balance")
-    assert_equal 4, body.dig("monthly_summary", "records_count")
+    assert_equal "950.0", body.dig("monthly_summary", "expense_total")
+    assert_equal "5050.0", body.dig("monthly_summary", "balance")
+    assert_equal 5, body.dig("monthly_summary", "records_count")
 
     assert_equal 6, body["monthly_trend"].length
     assert body["categories_breakdown"].is_a?(Array)
-    assert_equal 4, body["detailed_records"].length
+    assert_equal 5, body["detailed_records"].length
+    linked_record = body["detailed_records"].find { |item| item["financial_goal_contribution_id"] == @goal_contribution.id }
+    assert_equal @goal.id, linked_record["financial_goal_id"]
+    assert_equal @goal_contribution.id, linked_record["financial_goal_contribution_id"]
     assert body["available_categories"].include?("Casa")
   end
 
@@ -145,10 +176,10 @@ class Api::V1::ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "500.0", body.dig("monthly_summary", "expense_total")
     assert_equal "-500.0", body.dig("monthly_summary", "balance")
     assert_equal 1, body.dig("monthly_summary", "records_count")
-    assert_equal "-300.0", body.dig("period_indicators", "settled_balance_total")
+    assert_equal "-450.0", body.dig("period_indicators", "settled_balance_total")
     assert_equal "0.0", body.dig("period_indicators", "pending_income_total")
     assert_equal "500.0", body.dig("period_indicators", "pending_expense_total")
-    assert_equal "-800.0", body.dig("period_indicators", "projected_balance_total")
+    assert_equal "-950.0", body.dig("period_indicators", "projected_balance_total")
 
     assert_equal 1, body["detailed_records"].length
     assert_equal "Mercado", body["detailed_records"].first["category"]
