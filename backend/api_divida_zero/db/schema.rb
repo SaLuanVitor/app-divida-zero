@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_09_030000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_24_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -106,6 +106,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_030000) do
     t.index ["date"], name: "index_daily_ai_messages_on_date", unique: true
   end
 
+  create_table "financial_goal_contributions", force: :cascade do |t|
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.bigint "financial_goal_id", null: false
+    t.string "kind", null: false
+    t.text "notes"
+    t.datetime "updated_at", null: false
+    t.index ["financial_goal_id", "created_at"], name: "idx_goal_contributions_goal_created_at"
+    t.index ["financial_goal_id"], name: "index_financial_goal_contributions_on_financial_goal_id"
+    t.index ["kind"], name: "index_financial_goal_contributions_on_kind"
+  end
+
   create_table "financial_goals", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -134,6 +146,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_030000) do
     t.datetime "created_at", null: false
     t.text "description"
     t.date "due_date", null: false
+    t.bigint "financial_goal_contribution_id"
+    t.bigint "financial_goal_id"
     t.string "flow_type", null: false
     t.string "group_code"
     t.integer "installment_number", default: 1, null: false
@@ -149,6 +163,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_030000) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["financial_goal_contribution_id"], name: "index_financial_records_on_financial_goal_contribution_id"
+    t.index ["financial_goal_contribution_id"], name: "index_financial_records_on_goal_contribution_unique", unique: true, where: "(financial_goal_contribution_id IS NOT NULL)"
+    t.index ["financial_goal_id"], name: "index_financial_records_on_financial_goal_id"
     t.index ["group_code"], name: "index_financial_records_on_group_code"
     t.index ["user_id", "due_date", "category"], name: "index_financial_records_on_user_due_category"
     t.index ["user_id", "due_date", "flow_type", "status"], name: "index_financial_records_on_user_due_flow_status"
@@ -209,7 +226,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_030000) do
   add_foreign_key "ai_usage_counters", "users"
   add_foreign_key "analytics_events", "users"
   add_foreign_key "app_ratings", "users"
+  add_foreign_key "financial_goal_contributions", "financial_goals"
   add_foreign_key "financial_goals", "users"
+  add_foreign_key "financial_records", "financial_goal_contributions"
+  add_foreign_key "financial_records", "financial_goals"
   add_foreign_key "financial_records", "users"
   add_foreign_key "gamification_events", "users"
   add_foreign_key "notification_alerts", "users"

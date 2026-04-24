@@ -1,4 +1,4 @@
-﻿module Api
+module Api
   module V1
     class FinancialRecordsController < ApplicationController
       before_action :authenticate_access_token!
@@ -425,7 +425,9 @@
           category: record.category,
           priority: record.priority,
           notes: record.notes,
-          group_code: record.group_code
+          group_code: record.group_code,
+          financial_goal_id: record.financial_goal_id,
+          financial_goal_contribution_id: record.financial_goal_contribution_id
         }
       end
 
@@ -467,3 +469,5 @@
     end
   end
 end
+
+

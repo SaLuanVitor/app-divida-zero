@@ -1,5 +1,5 @@
 class NotificationAlert < ApplicationRecord
-  ALERT_TYPES = %w[due_today near_due overdue weekly_summary daily_ai_message].freeze
+  ALERT_TYPES = %w[due_today near_due overdue weekly_summary daily_ai_message goal_funding].freeze
 
   belongs_to :user
 

@@ -130,6 +130,11 @@ const normalize = (payload: Partial<ReportsSummaryDto> | null | undefined): Repo
           due_date: typeof item?.due_date === 'string' ? item.due_date : '',
           category: typeof item?.category === 'string' ? item.category : null,
           priority: item?.priority === 'low' || item?.priority === 'high' ? item.priority : 'normal',
+          financial_goal_id: typeof item?.financial_goal_id === 'number' ? item.financial_goal_id : null,
+          financial_goal_contribution_id:
+            typeof item?.financial_goal_contribution_id === 'number'
+              ? item.financial_goal_contribution_id
+              : null,
         }))
       : [],
     available_categories: Array.isArray(payload?.available_categories)

@@ -37,6 +37,8 @@ export interface FinancialRecordDto {
   priority: 'low' | 'normal' | 'high';
   notes?: string;
   group_code?: string;
+  financial_goal_id?: number;
+  financial_goal_contribution_id?: number;
 }
 
 

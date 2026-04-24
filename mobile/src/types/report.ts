@@ -47,6 +47,8 @@ export interface ReportDetailedRecordItemDto {
   due_date: string;
   category?: string | null;
   priority: 'low' | 'normal' | 'high';
+  financial_goal_id?: number | null;
+  financial_goal_contribution_id?: number | null;
 }
 
 export interface ReportsSummaryDto {

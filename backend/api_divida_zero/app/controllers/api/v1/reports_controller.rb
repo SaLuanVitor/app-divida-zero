@@ -265,7 +265,9 @@ module Api
           status: record.status,
           due_date: record.due_date,
           category: record.category,
-          priority: record.priority
+          priority: record.priority,
+          financial_goal_id: record.financial_goal_id,
+          financial_goal_contribution_id: record.financial_goal_contribution_id
         }
       end
 
@@ -283,3 +285,5 @@ module Api
     end
   end
 end
+
+
