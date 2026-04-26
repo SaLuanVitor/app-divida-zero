@@ -42,6 +42,13 @@ jest.mock('../AppNavigator', () => ({
   },
 }));
 
+jest.mock('../AdminNavigator', () => ({
+  AdminNavigator: () => {
+    const { Text } = require('react-native');
+    return <Text>ADMIN_SCREEN</Text>;
+  },
+}));
+
 jest.mock('../../screens/Splash', () => () => {
   const { Text } = require('react-native');
   return <Text>SPLASH_SCREEN</Text>;
@@ -107,6 +114,26 @@ describe('RootNavigator auth guard', () => {
 
     await waitFor(() => {
       expect(getByText('ONBOARDING_SCREEN')).toBeTruthy();
+    });
+  });
+
+  it('routes admin directly to admin portal without onboarding', async () => {
+    (useAuth as jest.Mock).mockReturnValue({
+      signed: true,
+      loading: false,
+      user: { role: 'admin', force_password_change: false },
+    });
+    (getAppPreferences as jest.Mock).mockResolvedValue({ onboarding_seen: false });
+    const { RootNavigator } = require('../index');
+    const { getByText, queryByText } = render(<RootNavigator />);
+
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+
+    await waitFor(() => {
+      expect(getByText('ADMIN_SCREEN')).toBeTruthy();
+      expect(queryByText('ONBOARDING_SCREEN')).toBeNull();
     });
   });
 

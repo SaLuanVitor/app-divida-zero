@@ -1,12 +1,12 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Search, ShieldCheck, UserCheck, UserX } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import AppText from '../../components/AppText';
 import AppTextInput from '../../components/AppTextInput';
 import Button from '../../components/Button';
-import useBackToProfile from '../../hooks/useBackToProfile';
 import { useThemeMode } from '../../context/ThemeContext';
 import { listAdminUsers, resetAdminUserPassword, updateAdminUserStatus } from '../../services/admin';
 import { useAuth } from '../../context/AuthContext';
@@ -15,7 +15,7 @@ type FeedbackState = { kind: 'success' | 'error'; message: string } | null;
 
 const AdminUsers = () => {
   const { darkMode } = useThemeMode();
-  const goBackToProfile = useBackToProfile();
+  const navigation = useNavigation<any>();
   const { user: currentUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
@@ -30,7 +30,7 @@ const AdminUsers = () => {
       const response = await listAdminUsers({ q: query || undefined, per_page: 50 });
       setUsers(Array.isArray(response.users) ? response.users : []);
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Não foi possível carregar usuários.';
+      const message = error?.response?.data?.error ?? 'N�o foi poss�vel carregar usu�rios.';
       setFeedback({ kind: 'error', message });
     } finally {
       setLoading(false);
@@ -52,7 +52,7 @@ const AdminUsers = () => {
       setFeedback({ kind: 'success', message: result.message });
       await loadUsers();
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Não foi possível atualizar status deste usuário.';
+      const message = error?.response?.data?.error ?? 'N�o foi poss�vel atualizar status deste usu�rio.';
       setFeedback({ kind: 'error', message });
     } finally {
       setSavingId(null);
@@ -69,11 +69,11 @@ const AdminUsers = () => {
       const result = await resetAdminUserPassword(target.id, tempPassword);
       setFeedback({
         kind: 'success',
-        message: `${result.message} Senha temporária: ${tempPassword}`,
+        message: `${result.message} Senha tempor�ria: ${tempPassword}`,
       });
       await loadUsers();
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Não foi possível redefinir a senha agora.';
+      const message = error?.response?.data?.error ?? 'N�o foi poss�vel redefinir a senha agora.';
       setFeedback({ kind: 'error', message });
     } finally {
       setSavingId(null);
@@ -86,13 +86,13 @@ const AdminUsers = () => {
     <Layout contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
       <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <View className="flex-row items-center">
-          <TouchableOpacity onPress={goBackToProfile} className="p-2 -ml-2 mr-2">
+          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
             <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
           <View className="flex-1 pr-1">
-            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Admin - Usuários</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Admin - Usu�rios</AppText>
             <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-              Controle de contas ativas/inativas e senha temporária.
+              Controle de contas ativas/inativas e senha tempor�ria.
             </AppText>
           </View>
         </View>
@@ -111,7 +111,7 @@ const AdminUsers = () => {
             />
           </View>
           <Button
-            title={loading ? 'Buscando...' : 'Buscar usuários'}
+            title={loading ? 'Buscando...' : 'Buscar usu�rios'}
             onPress={() => void loadUsers()}
             disabled={!canInteract}
             loading={loading}
@@ -165,7 +165,7 @@ const AdminUsers = () => {
                     </View>
                     {item.force_password_change ? (
                       <AppText className="text-amber-700 dark:text-amber-300 text-xs mt-1">
-                        Troca de senha obrigatória pendente.
+                        Troca de senha obrigat�ria pendente.
                       </AppText>
                     ) : null}
                   </View>
@@ -181,7 +181,7 @@ const AdminUsers = () => {
                     className="flex-1 h-10"
                   />
                   <Button
-                    title="Senha temporária"
+                    title="Senha tempor�ria"
                     variant="outline"
                     onPress={() => void handleTemporaryReset(item)}
                     disabled={disabled}
@@ -191,7 +191,7 @@ const AdminUsers = () => {
 
                 {isSelf ? (
                   <AppText className="text-slate-400 dark:text-slate-300 text-[11px] mt-2">
-                    Sua própria conta admin não pode ser inativada.
+                    Sua pr�pria conta admin n�o pode ser inativada.
                   </AppText>
                 ) : null}
               </Card>
@@ -204,3 +204,4 @@ const AdminUsers = () => {
 };
 
 export default AdminUsers;
+
