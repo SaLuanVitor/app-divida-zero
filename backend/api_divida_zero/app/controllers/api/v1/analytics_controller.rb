@@ -66,7 +66,11 @@ module Api
         when Numeric
           value
         else
-          value.to_s.slice(0, 120)
+          normalized = value.to_s.strip
+          return true if normalized.casecmp("true").zero?
+          return false if normalized.casecmp("false").zero?
+
+          normalized.slice(0, 120)
         end
       end
       def authenticate_access_token!
