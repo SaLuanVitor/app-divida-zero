@@ -8,7 +8,7 @@
     "runtime": "V2",
     "numReplicas": 1,
     "preDeployCommand": "bundle exec rails db:prepare && bundle exec rails app:bootstrap_admin",
-    "startCommand": "bundle exec puma -C config/puma.rb",
+    "startCommand": "bundle exec rails db:prepare && bundle exec rails app:bootstrap_admin && bundle exec puma -C config/puma.rb",
     "healthcheckPath": "/up",
     "sleepApplication": false,
     "useLegacyStacker": false,
