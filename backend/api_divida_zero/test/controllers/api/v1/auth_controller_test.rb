@@ -26,6 +26,9 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert body["access_token"].present?
     assert body["refresh_token"].present?
     assert_equal "novo_usuario", body.dig("user", "email")
+    assert_equal "user", body.dig("user", "role")
+    assert_equal true, body.dig("user", "active")
+    assert_equal false, body.dig("user", "force_password_change")
     assert_equal "icon_01", body.dig("user", "profile_icon_key")
     assert_equal "frame_01", body.dig("user", "profile_frame_key")
   end
@@ -47,6 +50,9 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     body = JSON.parse(response.body)
 
     assert_equal @user.id, body.dig("user", "id")
+    assert_equal "user", body.dig("user", "role")
+    assert_equal true, body.dig("user", "active")
+    assert_equal false, body.dig("user", "force_password_change")
     assert_equal "icon_01", body.dig("user", "profile_icon_key")
     assert_equal "frame_01", body.dig("user", "profile_frame_key")
     assert body["access_token"].present?
@@ -63,6 +69,16 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     post "/api/v1/auth/login", params: { email: @user.email, password: "senha_errada" }
 
     assert_response :unauthorized
+  end
+
+  test "login blocks inactive account" do
+    @user.update!(active: false)
+
+    post "/api/v1/auth/login", params: { email: @user.email, password: @password }
+
+    assert_response :forbidden
+    body = JSON.parse(response.body)
+    assert_equal "Conta inativa. Entre em contato com o administrador.", body["error"]
   end
 
   test "refresh returns new token pair with valid refresh token" do
@@ -166,8 +182,22 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
     body = JSON.parse(response.body)
     assert_equal @user.id, body.dig("user", "id")
+    assert_equal "user", body.dig("user", "role")
+    assert_equal true, body.dig("user", "active")
+    assert_equal false, body.dig("user", "force_password_change")
     assert_equal "icon_01", body.dig("user", "profile_icon_key")
     assert_equal "frame_01", body.dig("user", "profile_frame_key")
+  end
+
+  test "me blocks inactive account even with valid token" do
+    @user.update!(active: false)
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    get "/api/v1/auth/me", headers: auth_header(tokens[:access_token])
+
+    assert_response :forbidden
+    body = JSON.parse(response.body)
+    assert_equal "Conta inativa. Entre em contato com o administrador.", body["error"]
   end
 
   test "me returns unauthorized when using refresh token instead of access token" do
@@ -259,6 +289,7 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "change_password updates password with valid current password" do
+    @user.update!(force_password_change: true)
     tokens = JsonWebToken.issue_pair(user_id: @user.id)
 
     patch "/api/v1/auth/change_password", params: {
@@ -269,6 +300,7 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
     @user.reload
     assert @user.authenticate("senha_nova_123")
+    assert_equal false, @user.force_password_change
   end
 
   test "change_password returns unprocessable entity when current password is invalid" do

@@ -1,8 +1,9 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
+﻿import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, AuthResponse } from '../types/auth';
 import api, { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, setUnauthorizedHandler } from '../services/api';
 import { trackAnalyticsEventDeferred } from '../services/analytics';
+import { getCurrentUser } from '../services/account';
 
 const USER_KEY = '@DividaZero:user';
 const LEGACY_USER_KEY = '@DívidaZero:user';
@@ -25,6 +26,7 @@ interface AuthContextData {
     invalidateSession(): Promise<void>;
     refreshToken(): Promise<void>;
     updateUser(user: User): Promise<void>;
+    reloadMe(): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -46,6 +48,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [loading, setLoading] = useState(true);
     const [authLoading, setAuthLoading] = useState(false);
 
+    const normalizeUser = useCallback((value: User): User => {
+        return {
+            ...value,
+            role: value.role === 'admin' ? 'admin' : 'user',
+            active: typeof value.active === 'boolean' ? value.active : true,
+            force_password_change:
+                typeof value.force_password_change === 'boolean' ? value.force_password_change : false,
+        };
+    }, []);
+
     const invalidateSession = useCallback(async () => {
         await AsyncStorage.multiRemove(CLEAR_SESSION_KEYS);
         setUser(null);
@@ -66,7 +78,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const savedRefreshToken = refreshToken[1];
 
                 if (savedUser && savedAccessToken && savedRefreshToken) {
-                    setUser(JSON.parse(savedUser));
+                    setUser(normalizeUser(JSON.parse(savedUser)));
                     api.defaults.headers.common.Authorization = `Bearer ${savedAccessToken}`;
                     return;
                 }
@@ -78,7 +90,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         bootstrap();
-    }, [invalidateSession]);
+    }, [invalidateSession, normalizeUser]);
 
     useEffect(() => {
         setUnauthorizedHandler(invalidateSession);
@@ -96,10 +108,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 password: pass,
             });
 
-            setUser(data.user);
+            const normalized = normalizeUser(data.user);
+            setUser(normalized);
             api.defaults.headers.common.Authorization = `Bearer ${data.access_token}`;
 
-            await AsyncStorage.setItem(USER_KEY, JSON.stringify(data.user));
+            await AsyncStorage.setItem(USER_KEY, JSON.stringify(normalized));
             await AsyncStorage.setItem(ACCESS_TOKEN_KEY, data.access_token);
             await AsyncStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token);
 
@@ -151,8 +164,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     async function updateUser(nextUser: User) {
-        setUser(nextUser);
-        await AsyncStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+        const normalized = normalizeUser(nextUser);
+        setUser(normalized);
+        await AsyncStorage.setItem(USER_KEY, JSON.stringify(normalized));
+    }
+
+    async function reloadMe() {
+        const { user: freshUser } = await getCurrentUser();
+        await updateUser(freshUser);
     }
 
     return (
@@ -170,6 +189,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 invalidateSession,
                 refreshToken,
                 updateUser,
+                reloadMe,
             }}
         >
             {children}

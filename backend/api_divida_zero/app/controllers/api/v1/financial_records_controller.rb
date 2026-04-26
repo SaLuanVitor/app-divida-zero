@@ -462,13 +462,8 @@ module Api
 
         @current_user.financial_goal_contributions.where(id: contribution_ids).delete_all
       end
-
       def authenticate_access_token!
-        token = request.headers["Authorization"].to_s.split(" ").last
-        payload = JsonWebToken.decode(token, expected_type: "access")
-        @current_user = User.find(payload["sub"])
-      rescue JWT::DecodeError, ActiveRecord::RecordNotFound
-        render json: { error: "Não autorizado." }, status: :unauthorized
+        super
       end
 
       def refresh_feedback_summary(xp_feedback)

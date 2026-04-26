@@ -52,6 +52,11 @@ jest.mock('../../screens/app/Onboarding', () => () => {
   return <Text>ONBOARDING_SCREEN</Text>;
 });
 
+jest.mock('../../screens/auth/ForcePasswordChange', () => () => {
+  const { Text } = require('react-native');
+  return <Text>FORCE_PASSWORD_SCREEN</Text>;
+});
+
 describe('RootNavigator auth guard', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -66,7 +71,7 @@ describe('RootNavigator auth guard', () => {
   });
 
   it('shows splash while auth is loading', () => {
-    (useAuth as jest.Mock).mockReturnValue({ signed: false, loading: true });
+    (useAuth as jest.Mock).mockReturnValue({ signed: false, loading: true, user: null });
     const { RootNavigator } = require('../index');
     const { getByText, unmount } = render(<RootNavigator />);
 
@@ -75,7 +80,7 @@ describe('RootNavigator auth guard', () => {
   });
 
   it('routes to App after splash when signed', async () => {
-    (useAuth as jest.Mock).mockReturnValue({ signed: true, loading: false });
+    (useAuth as jest.Mock).mockReturnValue({ signed: true, loading: false, user: { force_password_change: false } });
     const { RootNavigator } = require('../index');
     const { getByText } = render(<RootNavigator />);
 
@@ -91,7 +96,7 @@ describe('RootNavigator auth guard', () => {
   });
 
   it('routes to Onboarding when signed and onboarding not seen', async () => {
-    (useAuth as jest.Mock).mockReturnValue({ signed: true, loading: false });
+    (useAuth as jest.Mock).mockReturnValue({ signed: true, loading: false, user: { force_password_change: false } });
     (getAppPreferences as jest.Mock).mockResolvedValue({ onboarding_seen: false });
     const { RootNavigator } = require('../index');
     const { getByText } = render(<RootNavigator />);
@@ -106,7 +111,7 @@ describe('RootNavigator auth guard', () => {
   });
 
   it('routes to Auth after splash when not signed', async () => {
-    (useAuth as jest.Mock).mockReturnValue({ signed: false, loading: false });
+    (useAuth as jest.Mock).mockReturnValue({ signed: false, loading: false, user: null });
     const { RootNavigator } = require('../index');
     const { getByText } = render(<RootNavigator />);
 
@@ -118,6 +123,21 @@ describe('RootNavigator auth guard', () => {
 
     await waitFor(() => {
       expect(getByText('AUTH_SCREEN')).toBeTruthy();
+    });
+  });
+
+  it('routes to force password change screen when required', async () => {
+    (useAuth as jest.Mock).mockReturnValue({ signed: true, loading: false, user: { force_password_change: true } });
+    (getAppPreferences as jest.Mock).mockResolvedValue({ onboarding_seen: true });
+    const { RootNavigator } = require('../index');
+    const { getByText } = render(<RootNavigator />);
+
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+
+    await waitFor(() => {
+      expect(getByText('FORCE_PASSWORD_SCREEN')).toBeTruthy();
     });
   });
 });

@@ -10,6 +10,11 @@ export const updateProfile = async (payload: UpdateProfilePayload) => {
   return data as { message: string; user: User };
 };
 
+export const getCurrentUser = async () => {
+  const { data } = await api.get('/auth/me');
+  return data as { user: User };
+};
+
 export const changePassword = async (payload: { current_password: string; new_password: string }) => {
   const { data } = await api.patch('/auth/change_password', payload);
   return data as { message: string };

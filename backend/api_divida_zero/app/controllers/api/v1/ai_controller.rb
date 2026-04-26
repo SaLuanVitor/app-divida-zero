@@ -202,13 +202,8 @@ module Api
           source: ai_result[:source]
         }
       end
-
       def authenticate_access_token!
-        token = request.headers["Authorization"].to_s.split(" ").last
-        payload = JsonWebToken.decode(token, expected_type: "access")
-        @current_user = User.find(payload["sub"])
-      rescue JWT::DecodeError, ActiveRecord::RecordNotFound
-        render json: { error: "Nao autorizado." }, status: :unauthorized
+        super
       end
     end
   end

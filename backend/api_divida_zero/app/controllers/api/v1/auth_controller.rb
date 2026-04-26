@@ -20,6 +20,11 @@ module Api
         unless user&.authenticate(password)
           return render json: { error: "Usuário ou senha inválidos." }, status: :unauthorized
         end
+        unless user.active?
+          return render json: { error: "Conta inativa. Entre em contato com o administrador." }, status: :forbidden
+        end
+
+        user.update!(last_login_at: Time.current)
 
         render_auth_payload(user)
       end
@@ -28,6 +33,9 @@ module Api
         refresh_token = params[:refresh_token].presence || bearer_token
         payload = JsonWebToken.decode(refresh_token, expected_type: "refresh")
         user = User.find(payload["sub"])
+        unless user.active?
+          return render json: { error: "Conta inativa. Entre em contato com o administrador." }, status: :forbidden
+        end
 
         render_auth_payload(user)
       rescue JWT::DecodeError, ActiveRecord::RecordNotFound
@@ -72,6 +80,7 @@ module Api
         user.password_confirmation = password
         user.reset_password_token_digest = nil
         user.reset_password_sent_at = nil
+        user.force_password_change = false
         user.save!
 
         render json: { message: "Senha atualizada com sucesso." }, status: :ok
@@ -110,6 +119,7 @@ module Api
 
         @current_user.password = new_password
         @current_user.password_confirmation = new_password
+        @current_user.force_password_change = false
         @current_user.save!
 
         render json: { message: "Senha alterada com sucesso." }, status: :ok
@@ -130,12 +140,8 @@ module Api
           refresh_token: tokens[:refresh_token]
         }, status: status
       end
-
       def authenticate_access_token!
-        payload = JsonWebToken.decode(bearer_token, expected_type: "access")
-        @current_user = User.find(payload["sub"])
-      rescue JWT::DecodeError, ActiveRecord::RecordNotFound
-        render json: { error: "Não autorizado." }, status: :unauthorized
+        super
       end
 
       def profile_params

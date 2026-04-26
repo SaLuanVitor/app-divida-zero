@@ -18,6 +18,8 @@ import SecuritySettings from '../screens/app/SecuritySettings';
 import HelpSupport from '../screens/app/HelpSupport';
 import AppRating from '../screens/app/AppRating';
 import Tutorial from '../screens/app/Tutorial';
+import AdminDashboard from '../screens/app/AdminDashboard';
+import AdminUsers from '../screens/app/AdminUsers';
 import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, Landmark } from 'lucide-react-native';
 import { useOverlay } from '../context/OverlayContext';
 import { useThemeMode } from '../context/ThemeContext';
@@ -276,6 +278,8 @@ export const AppNavigator = () => {
                 <Tab.Screen name="Ajuda e Suporte" component={HelpSupport} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Avaliacao App" component={AppRating} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Tutorial" component={Tutorial} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Admin Dashboard" component={AdminDashboard} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Admin Usuarios" component={AdminUsers} options={{ tabBarButton: () => null }} />
             </Tab.Navigator>
         </BottomInsetProvider>
     );

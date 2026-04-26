@@ -18,6 +18,12 @@
       post "app_ratings", to: "app_ratings#create"
       get "app_ratings/me", to: "app_ratings#me"
       get "app_ratings/summary", to: "app_ratings#summary"
+      namespace :admin do
+        get "users", to: "users#index"
+        patch "users/:id/status", to: "users#update_status"
+        patch "users/:id/reset_password", to: "users#reset_password"
+        get "analytics/overview", to: "analytics#overview"
+      end
       get "reports/summary", to: "reports#summary"
       post "analytics/events", to: "analytics#create"
       post "ai/next_action", to: "ai#next_action"

@@ -15,6 +15,14 @@ class Api::V1::AppRatingsControllerTest < ActionDispatch::IntegrationTest
       password_confirmation: "senha1234"
     )
     @tokens = JsonWebToken.issue_pair(user_id: @user.id)
+    @admin = User.create!(
+      name: "Admin Usuario",
+      email: "admin_usuario_avaliacoes_#{Time.now.to_i}",
+      password: "senha1234",
+      password_confirmation: "senha1234",
+      role: "admin"
+    )
+    @admin_tokens = JsonWebToken.issue_pair(user_id: @admin.id)
   end
 
   test "create stores app rating for authenticated user" do
@@ -68,13 +76,19 @@ class Api::V1::AppRatingsControllerTest < ActionDispatch::IntegrationTest
     @user.app_ratings.create!(valid_payload.merge(usability_rating: 5, helpfulness_rating: 3))
     @other_user.app_ratings.create!(valid_payload.merge(usability_rating: 3, helpfulness_rating: 5))
 
-    get "/api/v1/app_ratings/summary", headers: auth_header(@tokens[:access_token])
+    get "/api/v1/app_ratings/summary", headers: auth_header(@admin_tokens[:access_token])
 
     assert_response :ok
     body = JSON.parse(response.body)
     assert_equal 2, body["total_responses"]
     assert_equal 4.0, body.dig("averages", "usability")
     assert_equal 4.0, body.dig("averages", "helpfulness")
+  end
+
+  test "summary is forbidden for non admin users" do
+    get "/api/v1/app_ratings/summary", headers: auth_header(@tokens[:access_token])
+
+    assert_response :forbidden
   end
 
   test "endpoints require token" do

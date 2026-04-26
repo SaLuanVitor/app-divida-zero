@@ -125,6 +125,9 @@ const Profile = () => {
         { label: 'Notificações', icon: Bell, color: '#f59e0b', route: 'Notificacoes' },
         { label: 'Envio de notificações', icon: Bell, color: '#f97316', route: 'Envio Notificacoes' },
         { label: 'Avaliar aplicativo', icon: Star, color: '#f48c25', route: 'Avaliacao App' },
+        ...(user?.role === 'admin'
+            ? [{ label: 'Painel Admin', icon: Shield, color: '#0ea5e9', route: 'Admin Dashboard' }]
+            : []),
         { label: 'Segurança', icon: Shield, color: '#10b981', route: 'Seguranca' },
         { label: 'Ajuda e suporte', icon: HelpCircle, color: '#8b5cf6', route: 'Ajuda e Suporte' },
     ];
