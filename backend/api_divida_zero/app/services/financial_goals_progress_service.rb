@@ -197,10 +197,29 @@
     end
 
     def relevant_amount_for(goal)
-      total = goal.financial_goal_contributions.sum do |contribution|
-        contribution.signed_amount
+      case goal.goal_type
+      when "debt"
+        settled_scope_for_goal(goal)
+          .where(record_type: "debt", flow_type: "expense")
+          .sum(:amount)
+          .to_d
+      when "save", "specific"
+        totals = settled_scope_for_goal(goal).group(:flow_type).sum(:amount)
+        income = totals.fetch("income", 0).to_d
+        expense = totals.fetch("expense", 0).to_d
+        balance = income - expense
+        balance.positive? ? balance : 0.to_d
+      else
+        total = goal.financial_goal_contributions.sum(&:signed_amount)
+        total.positive? ? total : 0.to_d
       end
-      total.positive? ? total : 0.to_d
+    end
+
+    def settled_scope_for_goal(goal)
+      scope = goal.user.financial_records.where.not(status: "pending")
+      scope = scope.where("due_date >= ?", goal.start_date)
+      scope = scope.where("due_date <= ?", goal.target_date) if goal.target_date.present?
+      scope
     end
 
     def progress_for(target_amount, current_amount)

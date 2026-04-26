@@ -1,8 +1,8 @@
 module Api
   module V1
     class DailyMessagesController < ApplicationController
-      before_action :authenticate_access_token!, only: [:today, :dispatch]
-      before_action :authenticate_internal_dispatch!, only: [:dispatch]
+      before_action :authenticate_access_token!, only: [:today, :dispatch_daily]
+      before_action :authenticate_internal_dispatch!, only: [:dispatch_daily]
 
       def today
         message = DailyAiMessage.find_by(date: Date.current) || Ai::DailyMessageGenerator.generate_for(date: Date.current)
@@ -10,7 +10,7 @@ module Api
         render json: serialize_message(message), status: :ok
       end
 
-      def dispatch
+      def dispatch_daily
         message = DailyAiMessage.find_by(date: Date.current) || Ai::DailyMessageGenerator.generate_for(date: Date.current)
         dispatched = 0
 

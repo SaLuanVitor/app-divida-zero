@@ -42,7 +42,12 @@ module Api
         return {} unless raw_metadata.is_a?(Hash) || raw_metadata.is_a?(ActionController::Parameters)
 
         allowed_keys = METADATA_ALLOWLIST[event_name.to_s] || []
-        hash = raw_metadata.to_h
+        hash =
+          if raw_metadata.is_a?(ActionController::Parameters)
+            raw_metadata.permit!.to_h
+          else
+            raw_metadata.to_h
+          end
 
         hash.each_with_object({}) do |(key, value), acc|
           normalized_key = key.to_s
