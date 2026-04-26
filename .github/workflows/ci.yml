@@ -47,6 +47,9 @@ jobs:
           bundler-cache: true
           working-directory: backend/api_divida_zero
 
+      - name: Ensure Rails bin executables
+        run: chmod +x bin/rails bin/rake bin/setup bin/dev bin/docker-entrypoint
+
       - name: Prepare database
         run: bin/rails db:prepare
 
