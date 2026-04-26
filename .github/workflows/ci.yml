@@ -49,6 +49,7 @@ jobs:
           --health-retries 10
     env:
       RAILS_ENV: test
+      PARALLEL_WORKERS: 1
       POSTGRES_HOST: 127.0.0.1
       POSTGRES_PORT: 5432
       POSTGRES_USER: postgres
