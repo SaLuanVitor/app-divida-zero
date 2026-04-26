@@ -1,4 +1,6 @@
 ﻿class User < ApplicationRecord
+  ROLES = %w[user admin].freeze
+
   has_secure_password
 
   has_many :financial_records, dependent: :destroy
@@ -32,11 +34,19 @@
             length: { minimum: 8, too_short: "Senha deve ter no mínimo %{count} caracteres." },
             allow_nil: true
 
+  validates :role, inclusion: { in: ROLES, message: "Papel inválido." }
+
+  scope :admins, -> { where(role: "admin") }
+  scope :active_users, -> { where(active: true) }
+
   def public_payload
     {
       id: id,
       name: name,
       email: email,
+      role: role,
+      active: active,
+      force_password_change: force_password_change,
       profile_icon_key: profile_icon_key.presence || ProfileAppearanceCatalog::DEFAULT_ICON_KEY,
       profile_frame_key: profile_frame_key.presence || ProfileAppearanceCatalog::DEFAULT_FRAME_KEY
     }

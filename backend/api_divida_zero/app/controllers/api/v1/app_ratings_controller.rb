@@ -2,6 +2,7 @@ module Api
   module V1
     class AppRatingsController < ApplicationController
       before_action :authenticate_access_token!
+      before_action :authenticate_admin!, only: [:summary]
 
       def create
         rating = @current_user.app_ratings.find_or_initialize_by(user_id: @current_user.id)
@@ -59,13 +60,8 @@ module Api
 
         scope.average(column).to_f.round(2)
       end
-
       def authenticate_access_token!
-        token = request.headers["Authorization"].to_s.split(" ").last
-        payload = JsonWebToken.decode(token, expected_type: "access")
-        @current_user = User.find(payload["sub"])
-      rescue JWT::DecodeError, ActiveRecord::RecordNotFound
-        render json: { error: "Não autorizado." }, status: :unauthorized
+        super
       end
     end
   end

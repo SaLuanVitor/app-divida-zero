@@ -1,4 +1,4 @@
-class ApplicationController < ActionController::API
+﻿class ApplicationController < ActionController::API
   wrap_parameters false
   before_action :set_current_user_local_date!
   before_action :enforce_utf8_response!
@@ -44,5 +44,26 @@ class ApplicationController < ActionController::API
 
   def enforce_utf8_response!
     response.set_header("Content-Type", "application/json; charset=utf-8")
+  end
+
+  def authenticate_access_token!
+    token = request.headers["Authorization"].to_s.split(" ").last
+    payload = JsonWebToken.decode(token, expected_type: "access")
+    @current_user = User.find(payload["sub"])
+
+    unless @current_user.active?
+      return render json: { error: "Conta inativa. Entre em contato com o administrador." }, status: :forbidden
+    end
+  rescue JWT::DecodeError, ActiveRecord::RecordNotFound
+    render json: { error: "Não autorizado." }, status: :unauthorized
+  end
+
+  def authenticate_admin!
+    authenticate_access_token!
+    return if performed?
+
+    return if @current_user&.role == "admin"
+
+    render json: { error: "Acesso restrito a administradores." }, status: :forbidden
   end
 end

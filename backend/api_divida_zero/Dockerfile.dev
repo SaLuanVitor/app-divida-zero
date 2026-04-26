@@ -13,4 +13,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["bash", "-lc", "rm -f /rails/tmp/pids/server.pid && bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p 3000"]
+CMD ["bash", "-lc", "rm -f /rails/tmp/pids/server.pid && bundle exec rails db:prepare && bundle exec rails app:bootstrap_admin && bundle exec rails server -b 0.0.0.0 -p 3000"]

@@ -5,13 +5,14 @@ import { AppNavigator } from './AppNavigator';
 import { useAuth } from '../context/AuthContext';
 import Splash from '../screens/Splash';
 import Onboarding from '../screens/app/Onboarding';
+import ForcePasswordChange from '../screens/auth/ForcePasswordChange';
 import { getAppPreferences } from '../services/preferences';
 import { useAccessibility } from '../context/AccessibilityContext';
 
 const Stack = createStackNavigator();
 
 export const RootNavigator = () => {
-    const { signed, loading } = useAuth();
+    const { signed, loading, user } = useAuth();
     const { reduceMotion } = useAccessibility();
     const [showSplash, setShowSplash] = useState(true);
     const [onboardingChecked, setOnboardingChecked] = useState(false);
@@ -59,6 +60,8 @@ export const RootNavigator = () => {
                 <Stack.Screen name="Onboarding">
                     {() => <Onboarding onDone={() => setOnboardingSeen(true)} />}
                 </Stack.Screen>
+            ) : signed && user?.force_password_change ? (
+                <Stack.Screen name="ForcePasswordChange" component={ForcePasswordChange} />
             ) : signed ? (
                 <Stack.Screen name="App" component={AppNavigator} />
             ) : (

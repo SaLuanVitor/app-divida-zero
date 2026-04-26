@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_24_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_26_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -207,17 +207,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_24_000100) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.string "email", null: false
+    t.boolean "force_password_change", default: false, null: false
+    t.datetime "last_login_at"
     t.string "name", null: false
     t.string "password_digest", null: false
     t.string "profile_frame_key", default: "frame_01", null: false
     t.string "profile_icon_key", default: "icon_01", null: false
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token_digest"
+    t.string "role", default: "user", null: false
     t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_users_on_active"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token_digest"], name: "index_users_on_reset_password_token_digest"
+    t.index ["role"], name: "index_users_on_role"
   end
 
   add_foreign_key "ai_feedbacks", "ai_interactions"

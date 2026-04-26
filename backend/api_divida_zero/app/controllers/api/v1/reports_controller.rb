@@ -274,13 +274,8 @@ module Api
       def decimal_string(value)
         value.to_d.to_s("F")
       end
-
       def authenticate_access_token!
-        token = request.headers["Authorization"].to_s.split(" ").last
-        payload = JsonWebToken.decode(token, expected_type: "access")
-        @current_user = User.find(payload["sub"])
-      rescue JWT::DecodeError, ActiveRecord::RecordNotFound
-        render json: { error: "Não autorizado." }, status: :unauthorized
+        super
       end
     end
   end
