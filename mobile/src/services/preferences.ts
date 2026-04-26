@@ -2,10 +2,51 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppPreferences } from '../types/settings';
 
 const APP_PREFERENCES_KEY = '@DividaZero:appPreferences';
+const USER_STORAGE_KEY = '@DividaZero:user';
+const TUTORIAL_SCOPE_KEY_PREFIX = '@DividaZero:appPreferences:tutorial:user:';
+const TUTORIAL_MIGRATION_OWNER_KEY = '@DividaZero:appPreferences:tutorial:migrationOwner';
 const FONT_SCALE_OPTIONS: Array<AppPreferences['font_scale']> = [0.9, 1, 1.15, 1.3];
 type PreferencesListener = (prefs: AppPreferences) => void;
+type TutorialScopedPreferences = Pick<
+  AppPreferences,
+  | 'onboarding_seen'
+  | 'onboarding_mode'
+  | 'onboarding_primary_goal'
+  | 'advanced_quick_guide_seen'
+  | 'first_success_milestone_done'
+  | 'tutorial_reopen_enabled'
+  | 'tutorial_active_mode'
+  | 'tutorial_beginner_completed'
+  | 'tutorial_advanced_completed'
+  | 'tutorial_last_step'
+  | 'tutorial_advanced_tasks_done'
+  | 'tutorial_version'
+  | 'tutorial_track_state'
+  | 'tutorial_missions_done'
+  | 'tutorial_general_version'
+  | 'tutorial_general_track_state'
+>;
 
 const listeners = new Set<PreferencesListener>();
+
+const tutorialScopedDefaults: TutorialScopedPreferences = {
+  onboarding_seen: false,
+  onboarding_mode: null,
+  onboarding_primary_goal: null,
+  advanced_quick_guide_seen: false,
+  first_success_milestone_done: false,
+  tutorial_reopen_enabled: true,
+  tutorial_active_mode: null,
+  tutorial_beginner_completed: false,
+  tutorial_advanced_completed: false,
+  tutorial_last_step: null,
+  tutorial_advanced_tasks_done: [],
+  tutorial_version: 2,
+  tutorial_track_state: 'idle',
+  tutorial_missions_done: [],
+  tutorial_general_version: 1,
+  tutorial_general_track_state: 'idle',
+};
 
 export const defaultAppPreferences: AppPreferences = {
   notifications_enabled: true,
@@ -127,21 +168,132 @@ const emitPreferences = (prefs: AppPreferences) => {
   });
 };
 
-export const getAppPreferences = async (): Promise<AppPreferences> => {
-  const raw = await AsyncStorage.getItem(APP_PREFERENCES_KEY);
-  if (!raw) return defaultAppPreferences;
+const scopedTutorialKeyForUser = (userId: string | number) => `${TUTORIAL_SCOPE_KEY_PREFIX}${String(userId)}`;
+
+const pickTutorialScopedPreferences = (prefs: AppPreferences): TutorialScopedPreferences => ({
+  onboarding_seen: prefs.onboarding_seen,
+  onboarding_mode: prefs.onboarding_mode,
+  onboarding_primary_goal: prefs.onboarding_primary_goal,
+  advanced_quick_guide_seen: prefs.advanced_quick_guide_seen,
+  first_success_milestone_done: prefs.first_success_milestone_done,
+  tutorial_reopen_enabled: prefs.tutorial_reopen_enabled,
+  tutorial_active_mode: prefs.tutorial_active_mode,
+  tutorial_beginner_completed: prefs.tutorial_beginner_completed,
+  tutorial_advanced_completed: prefs.tutorial_advanced_completed,
+  tutorial_last_step: prefs.tutorial_last_step,
+  tutorial_advanced_tasks_done: prefs.tutorial_advanced_tasks_done,
+  tutorial_version: prefs.tutorial_version,
+  tutorial_track_state: prefs.tutorial_track_state,
+  tutorial_missions_done: prefs.tutorial_missions_done,
+  tutorial_general_version: prefs.tutorial_general_version,
+  tutorial_general_track_state: prefs.tutorial_general_track_state,
+});
+
+const readCurrentUserIdFromStorage = async (): Promise<string | null> => {
+  const rawUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
+  if (!rawUser) return null;
 
   try {
-    const parsed = JSON.parse(raw) as Partial<AppPreferences>;
-    return normalizePreferences(parsed);
+    const parsed = JSON.parse(rawUser) as { id?: number | string } | null;
+    if (!parsed?.id && parsed?.id !== 0) return null;
+    return String(parsed.id);
   } catch {
-    return defaultAppPreferences;
+    return null;
   }
+};
+
+const readScopedTutorialPreferences = async (userId: string): Promise<TutorialScopedPreferences | null> => {
+  const rawScoped = await AsyncStorage.getItem(scopedTutorialKeyForUser(userId));
+  if (!rawScoped) return null;
+
+  try {
+    const parsedScoped = JSON.parse(rawScoped) as Partial<AppPreferences>;
+    const normalized = normalizePreferences(parsedScoped);
+    return pickTutorialScopedPreferences(normalized);
+  } catch {
+    return null;
+  }
+};
+
+const readTutorialMigrationOwner = async (): Promise<string | null> => {
+  const rawOwner = await AsyncStorage.getItem(TUTORIAL_MIGRATION_OWNER_KEY);
+  if (!rawOwner) return null;
+
+  try {
+    const parsed = JSON.parse(rawOwner) as { userId?: string | number } | null;
+    if (!parsed?.userId && parsed?.userId !== 0) return null;
+    return String(parsed.userId);
+  } catch {
+    return null;
+  }
+};
+
+const writeScopedTutorialPreferences = async (
+  userId: string,
+  scopedPreferences: TutorialScopedPreferences,
+  markAsMigrationOwner = false
+) => {
+  await AsyncStorage.setItem(scopedTutorialKeyForUser(userId), JSON.stringify(scopedPreferences));
+
+  if (markAsMigrationOwner) {
+    await AsyncStorage.setItem(TUTORIAL_MIGRATION_OWNER_KEY, JSON.stringify({ userId }));
+  }
+};
+
+export const getAppPreferences = async (): Promise<AppPreferences> => {
+  const [rawGlobal, currentUserId] = await Promise.all([
+    AsyncStorage.getItem(APP_PREFERENCES_KEY),
+    readCurrentUserIdFromStorage(),
+  ]);
+
+  let basePreferences = defaultAppPreferences;
+  try {
+    if (rawGlobal) {
+      const parsedGlobal = JSON.parse(rawGlobal) as Partial<AppPreferences>;
+      basePreferences = normalizePreferences(parsedGlobal);
+    }
+  } catch {
+    basePreferences = defaultAppPreferences;
+  }
+
+  if (!currentUserId) return basePreferences;
+
+  const scopedTutorial = await readScopedTutorialPreferences(currentUserId);
+  if (scopedTutorial) {
+    const merged = normalizePreferences({
+      ...basePreferences,
+      ...scopedTutorial,
+    });
+
+    return merged;
+  }
+
+  const tutorialMigrationOwner = await readTutorialMigrationOwner();
+  if (!tutorialMigrationOwner) {
+    const legacyTutorial = pickTutorialScopedPreferences(basePreferences);
+    await writeScopedTutorialPreferences(currentUserId, legacyTutorial, true);
+    return normalizePreferences({
+      ...basePreferences,
+      ...legacyTutorial,
+    });
+  }
+
+  const merged = normalizePreferences({
+    ...basePreferences,
+    ...tutorialScopedDefaults,
+  });
+
+  return merged;
 };
 
 export const saveAppPreferences = async (next: AppPreferences) => {
   const normalized = normalizePreferences(next);
+  const currentUserId = await readCurrentUserIdFromStorage();
+
   await AsyncStorage.setItem(APP_PREFERENCES_KEY, JSON.stringify(normalized));
+  if (currentUserId) {
+    await writeScopedTutorialPreferences(currentUserId, pickTutorialScopedPreferences(normalized));
+  }
   emitPreferences(normalized);
 };
 
