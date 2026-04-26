@@ -51,11 +51,15 @@ class Api::V1::DailyMessagesControllerTest < ActionDispatch::IntegrationTest
       source_version: "v1"
     )
 
-    ENV.stub(:[], "dispatch-secret") do
+    original = ENV["DAILY_MESSAGE_DISPATCH_TOKEN"]
+    ENV["DAILY_MESSAGE_DISPATCH_TOKEN"] = "dispatch-secret"
+    begin
       assert_difference("NotificationAlert.count", 1) do
         post "/api/v1/daily_message/dispatch",
              headers: auth_header(@tokens[:access_token]).merge("X-Internal-Dispatch-Token" => "dispatch-secret")
       end
+    ensure
+      ENV["DAILY_MESSAGE_DISPATCH_TOKEN"] = original
     end
 
     assert_response :ok

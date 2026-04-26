@@ -12,9 +12,9 @@ class Api::V1::AiControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "next_action returns ai payload and creates interaction" do
-    Ai::UsageGuard.stub(:check, { allowed: true, daily_remaining: 10, monthly_remaining: 90 }) do
-      Ai::UsageGuard.stub(:consume!, { allowed: true, daily_remaining: 9, monthly_remaining: 89 }) do
-        Ai::Client.stub(:generate_json, mock_next_action_result) do
+    with_singleton_stub(Ai::UsageGuard, :check, { allowed: true, daily_remaining: 10, monthly_remaining: 90 }) do
+      with_singleton_stub(Ai::UsageGuard, :consume!, { allowed: true, daily_remaining: 9, monthly_remaining: 89 }) do
+        with_singleton_stub(Ai::Client, :generate_json, mock_next_action_result) do
           assert_difference("AiInteraction.count", 1) do
             post "/api/v1/ai/next_action", headers: auth_header(@tokens[:access_token])
           end
@@ -34,7 +34,7 @@ class Api::V1::AiControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "next_action returns too_many_requests when quota is exhausted" do
-    Ai::UsageGuard.stub(:check, { allowed: false, daily_remaining: 0, monthly_remaining: 50 }) do
+    with_singleton_stub(Ai::UsageGuard, :check, { allowed: false, daily_remaining: 0, monthly_remaining: 50 }) do
       post "/api/v1/ai/next_action", headers: auth_header(@tokens[:access_token])
     end
 
@@ -87,5 +87,21 @@ class Api::V1::AiControllerTest < ActionDispatch::IntegrationTest
       total_tokens: 150,
       latency_ms: 1200
     }
+  end
+
+  def with_singleton_stub(target, method_name, return_value)
+    singleton = class << target; self; end
+    backup_method = "__codex_backup_#{method_name}_#{object_id}".to_sym
+
+    singleton.send(:alias_method, backup_method, method_name)
+    singleton.send(:define_method, method_name) do |*_args|
+      return_value
+    end
+
+    yield
+  ensure
+    singleton.send(:remove_method, method_name) rescue nil
+    singleton.send(:alias_method, method_name, backup_method) rescue nil
+    singleton.send(:remove_method, backup_method) rescue nil
   end
 end
