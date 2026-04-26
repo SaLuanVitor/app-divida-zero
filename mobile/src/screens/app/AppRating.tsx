@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, TouchableOpacity, View } from 'react-native';
 import { ArrowLeft, Star } from 'lucide-react-native';
 import AppText from '../../components/AppText';
 import AppTextInput from '../../components/AppTextInput';
@@ -36,6 +36,8 @@ const ratingFields: Array<{ key: AppRatingDimensionKey; title: string; subtitle:
   { key: 'reports_rating', title: 'Relatórios', subtitle: 'Leitura dos indicadores e resumo mensal.' },
   { key: 'records_rating', title: 'Lançamentos', subtitle: 'Cadastro e atualização de ganhos/dívidas.' },
 ];
+
+const TCC_SURVEY_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfrFrNmG19uH_1yxRKED0z8wqHdKk4Y6fHSa-vpzZoH_Nn-rQ/viewform';
 
 const AppRating = () => {
   const { darkMode } = useThemeMode();
@@ -118,6 +120,17 @@ const AppRating = () => {
       setFeedback({ kind: 'error', message });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleOpenTccSurvey = async () => {
+    try {
+      await Linking.openURL(TCC_SURVEY_URL);
+    } catch {
+      setFeedback({
+        kind: 'error',
+        message: 'Não foi possível abrir o questionário agora. Tente novamente em alguns instantes.',
+      });
     }
   };
 
@@ -229,6 +242,17 @@ const AppRating = () => {
             </AppText>
           </View>
         ) : null}
+
+        <Card className="p-4 mb-3">
+          <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-1">Questionário de avaliação do TCC</AppText>
+          <AppText className="text-slate-500 dark:text-slate-200 text-xs mb-2">
+            Ao continuar, você será direcionado para um formulário externo do Google Forms para avaliar este TCC.
+          </AppText>
+          <AppText className="text-slate-500 dark:text-slate-200 text-xs mb-3">
+            O link será aberto externamente, no navegador do seu aparelho.
+          </AppText>
+          <Button title="Responder questionário do TCC" onPress={handleOpenTccSurvey} className="h-11" />
+        </Card>
       </ScrollView>
     </Layout>
   );
