@@ -32,7 +32,7 @@
       post "ai/reports_briefing", to: "ai#reports_briefing"
       post "ai/feedback", to: "ai#feedback"
       get "daily_message/today", to: "daily_messages#today"
-      post "daily_message/dispatch", to: "daily_messages#dispatch"
+      post "daily_message/dispatch", to: "daily_messages#dispatch_daily"
 
       resources :financial_records, only: [:index, :create, :destroy] do
         member do
