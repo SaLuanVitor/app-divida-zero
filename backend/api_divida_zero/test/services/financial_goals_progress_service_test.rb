@@ -10,7 +10,7 @@ class FinancialGoalsProgressServiceTest < ActiveSupport::TestCase
     )
   end
 
-  test "save goal uses net settled balance within selected interval" do
+  test "save goal uses contribution balance" do
     goal = @user.financial_goals.create!(
       title: "Reserva trimestral",
       target_amount: 1000,
@@ -19,17 +19,15 @@ class FinancialGoalsProgressServiceTest < ActiveSupport::TestCase
       goal_type: "save"
     )
 
-    create_record!(title: "Salario", flow_type: "income", status: "received", amount: 500, due_date: Date.new(2026, 3, 5))
-    create_record!(title: "Divida paga", record_type: "debt", flow_type: "expense", status: "paid", amount: 180, due_date: Date.new(2026, 3, 9))
-    create_record!(title: "Conta paga", flow_type: "expense", status: "paid", amount: 70, due_date: Date.new(2026, 3, 12))
-    create_record!(title: "Fora do periodo", flow_type: "income", status: "received", amount: 300, due_date: Date.new(2026, 4, 2))
-    create_record!(title: "Pendente", flow_type: "income", status: "pending", amount: 100, due_date: Date.new(2026, 3, 20))
+    goal.financial_goal_contributions.create!(kind: "deposit", amount: 500)
+    goal.financial_goal_contributions.create!(kind: "withdraw", amount: 180)
+    goal.financial_goal_contributions.create!(kind: "deposit", amount: 70)
 
     FinancialGoalsProgressService.recalculate_goal!(goal)
     goal.reload
 
-    assert_equal 250.0, goal.current_amount.to_f
-    assert_equal 25, goal.progress_pct
+    assert_equal 390.0, goal.current_amount.to_f
+    assert_equal 39, goal.progress_pct
     assert_equal "active", goal.status
   end
 
@@ -56,7 +54,7 @@ class FinancialGoalsProgressServiceTest < ActiveSupport::TestCase
     assert_equal "active", goal.status
   end
 
-  test "goal without target_date includes records after start_date" do
+  test "specific goal uses contribution balance even without target_date" do
     goal = @user.financial_goals.create!(
       title: "Objetivo sem prazo final",
       target_amount: 1000,
@@ -65,10 +63,9 @@ class FinancialGoalsProgressServiceTest < ActiveSupport::TestCase
       goal_type: "specific"
     )
 
-    create_record!(title: "Antes do inicio", flow_type: "income", status: "received", amount: 700, due_date: Date.new(2026, 2, 25))
-    create_record!(title: "Marco 1", flow_type: "income", status: "received", amount: 200, due_date: Date.new(2026, 3, 6))
-    create_record!(title: "Marco 2", flow_type: "income", status: "received", amount: 400, due_date: Date.new(2026, 4, 6))
-    create_record!(title: "Saida", flow_type: "expense", status: "paid", amount: 50, due_date: Date.new(2026, 4, 10))
+    goal.financial_goal_contributions.create!(kind: "deposit", amount: 200)
+    goal.financial_goal_contributions.create!(kind: "deposit", amount: 400)
+    goal.financial_goal_contributions.create!(kind: "withdraw", amount: 50)
 
     FinancialGoalsProgressService.recalculate_goal!(goal)
     goal.reload
@@ -78,7 +75,7 @@ class FinancialGoalsProgressServiceTest < ActiveSupport::TestCase
     assert_equal "active", goal.status
   end
 
-  test "save/specific goals clamp negative balance to zero" do
+  test "save/specific goals clamp negative contribution balance to zero" do
     goal = @user.financial_goals.create!(
       title: "Reserva negativa",
       target_amount: 500,
@@ -87,8 +84,8 @@ class FinancialGoalsProgressServiceTest < ActiveSupport::TestCase
       goal_type: "save"
     )
 
-    create_record!(title: "Saida maior", flow_type: "expense", status: "paid", amount: 200, due_date: Date.new(2026, 3, 5))
-    create_record!(title: "Ganho menor", flow_type: "income", status: "received", amount: 80, due_date: Date.new(2026, 3, 7))
+    goal.financial_goal_contributions.create!(kind: "withdraw", amount: 200)
+    goal.financial_goal_contributions.create!(kind: "deposit", amount: 80)
 
     FinancialGoalsProgressService.recalculate_goal!(goal)
     goal.reload
@@ -113,4 +110,3 @@ class FinancialGoalsProgressServiceTest < ActiveSupport::TestCase
     @user.financial_records.create!(defaults.merge(attrs))
   end
 end
-

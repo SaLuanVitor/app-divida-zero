@@ -204,11 +204,8 @@
           .sum(:amount)
           .to_d
       when "save", "specific"
-        totals = settled_scope_for_goal(goal).group(:flow_type).sum(:amount)
-        income = totals.fetch("income", 0).to_d
-        expense = totals.fetch("expense", 0).to_d
-        balance = income - expense
-        balance.positive? ? balance : 0.to_d
+        total = goal.financial_goal_contributions.sum(&:signed_amount)
+        total.positive? ? total : 0.to_d
       else
         total = goal.financial_goal_contributions.sum(&:signed_amount)
         total.positive? ? total : 0.to_d
