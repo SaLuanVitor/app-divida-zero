@@ -91,7 +91,7 @@ const AdminUsers = () => {
             <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
           <View className="flex-1 pr-1">
-            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Admin - Usuários</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Gestão de usuários</AppText>
             <AppText className="text-slate-500 dark:text-slate-200 text-xs">
               Controle de contas ativas/inativas e senha temporária.
             </AppText>

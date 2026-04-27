@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import AdminDashboard from '../AdminDashboard';
 
 jest.mock('../../../components/Layout', () => {
@@ -126,11 +126,12 @@ describe('AdminDashboard', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Painel Administrativo')).toBeTruthy();
-      expect(screen.getByText('Visao geral')).toBeTruthy();
-      expect(screen.getAllByText('Usuarios e atividade').length).toBeGreaterThan(0);
-      expect(screen.getByText('Funil de onboarding')).toBeTruthy();
-      expect(screen.getByText('Satisfacao dos usuarios')).toBeTruthy();
-      expect(screen.getByText('Acoes rapidas')).toBeTruthy();
+      expect(screen.getByText('Panorama da operação')).toBeTruthy();
+      expect(screen.getByText('Contas ativas e inativas')).toBeTruthy();
+      expect(screen.getByText('Adoção inicial')).toBeTruthy();
+      expect(screen.getByText('Satisfação dos usuários')).toBeTruthy();
+      expect(screen.getByText('Ações rápidas')).toBeTruthy();
+      expect(screen.getByText('Aparência e acessibilidade')).toBeTruthy();
     });
   });
 
@@ -176,7 +177,31 @@ describe('AdminDashboard', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Painel Administrativo')).toBeTruthy();
-      expect(screen.getByText(/Sem novos cadastros no periodo/)).toBeTruthy();
+      expect(screen.getByText(/Sem novas contas no período/)).toBeTruthy();
     });
+  });
+
+  it('navigates to admin appearance settings from quick actions', async () => {
+    const { getAdminAnalyticsOverview } = require('../../../services/admin');
+    getAdminAnalyticsOverview.mockResolvedValue({
+      period_days: 30,
+      users: { total: 1, active: 1, inactive: 0, created_in_period: 0, created_trend: [] },
+      app_ratings: {
+        total_responses: 0,
+        averages: { usability: 0, helpfulness: 0, calendar: 0, alerts: 0, goals: 0, reports: 0, records: 0 },
+        distributions: { usability: [], helpfulness: [], calendar: [], alerts: [], goals: [], reports: [], records: [] },
+        recent_suggestions: { items: [], pagination: { page: 1, per_page: 20, total: 0, total_pages: 0 } },
+      },
+    });
+
+    const navigate = jest.fn();
+    const screen = render(<AdminDashboard navigation={{ navigate }} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Aparência e acessibilidade')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('Aparência e acessibilidade'));
+    expect(navigate).toHaveBeenCalledWith('Admin Aparencia');
   });
 });

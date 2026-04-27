@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
-import { Calendar, LogOut, RefreshCw, ShieldCheck, TrendingUp, Users } from 'lucide-react-native';
+import { Calendar, LogOut, RefreshCw, Settings, ShieldCheck, TrendingUp, Users } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import AppText from '../../components/AppText';
@@ -23,6 +23,38 @@ const toFixedSafe = (value: unknown, digits = 2): string => toNumber(value).toFi
 
 const toPercentSafe = (value: unknown): string => `${toFixedSafe(value, 2)}%`;
 
+const EVENT_LABELS: Record<string, string> = {
+  onboarding_viewed: 'Onboarding iniciado',
+  onboarding_completed: 'Onboarding concluído',
+  onboarding_skipped: 'Onboarding pulado',
+  tutorial_reopened: 'Tutorial reaberto',
+  app_rating_submitted: 'Avaliação enviada',
+  goal_created: 'Meta criada',
+  record_created: 'Lançamento criado',
+};
+
+const SCREEN_LABELS: Record<string, string> = {
+  Home: 'Início',
+  Onboarding: 'Onboarding',
+  Tutorial: 'Tutorial',
+  Metas: 'Metas',
+  Lancamentos: 'Lançamentos',
+  Relatorios: 'Relatórios',
+  Perfil: 'Perfil',
+  AdminDashboard: 'Painel Admin',
+  AdminUsers: 'Usuários do Admin',
+};
+
+const toFriendlyEventLabel = (value?: string): string => {
+  if (!value) return 'Sem dados no período';
+  return EVENT_LABELS[value] ?? value.replace(/_/g, ' ');
+};
+
+const toFriendlyScreenLabel = (value?: string): string => {
+  if (!value) return 'Sem dados no período';
+  return SCREEN_LABELS[value] ?? value;
+};
+
 const AdminDashboard = ({ navigation }: any) => {
   const { darkMode } = useThemeMode();
   const { signOut } = useAuth();
@@ -39,7 +71,7 @@ const AdminDashboard = ({ navigation }: any) => {
       const response = await getAdminAnalyticsOverview({ days: nextDays });
       setOverview(response);
     } catch (err: any) {
-      const message = err?.response?.data?.error ?? 'Nao foi possivel carregar metricas administrativas.';
+    const message = err?.response?.data?.error ?? 'Não foi possível carregar os dados do painel.';
       setError(message);
     } finally {
       setLoading(false);
@@ -100,18 +132,18 @@ const AdminDashboard = ({ navigation }: any) => {
 
   const userHealthInsight =
     inactiveUsers > activeUsers * 0.25
-      ? 'Atencao: base com taxa de inatividade elevada. Planeje reativacao.'
-      : 'Bom sinal: maioria da base permanece ativa no periodo.';
+      ? 'Atenção: muitas contas ficaram inativas. Considere uma ação de reativação.'
+      : 'Bom sinal: a maior parte da base está ativa no período.';
 
   const onboardingInsight =
     toNumber(funnel?.onboarding_completed) < toNumber(funnel?.onboarding_viewed) * 0.5
-      ? 'Atencao: conclusao do onboarding baixa. Revise passos iniciais.'
-      : 'Bom sinal: onboarding com conversao saudavel.';
+      ? 'Atenção: conclusão inicial baixa. Vale revisar os primeiros passos no app.'
+      : 'Bom sinal: boa taxa de conclusão nas etapas iniciais.';
 
   const ratingInsight =
     averageRating < 3.5
-      ? 'Atencao: satisfacao geral abaixo do esperado. Priorize pontos de atrito.'
-      : 'Bom sinal: satisfacao dos usuarios consistente no periodo.';
+      ? 'Atenção: satisfação abaixo do esperado. Priorize correções de experiência.'
+      : 'Bom sinal: satisfação dos usuários consistente no período.';
 
   return (
     <Layout contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
@@ -120,7 +152,7 @@ const AdminDashboard = ({ navigation }: any) => {
           <View className="flex-1 pr-2">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-black">Painel Administrativo</AppText>
             <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-              Visao executiva para acompanhamento da saude do aplicativo.
+              Visão clara da operação para apoiar decisões administrativas.
             </AppText>
           </View>
           <TouchableOpacity
@@ -138,7 +170,7 @@ const AdminDashboard = ({ navigation }: any) => {
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center">
               <Calendar size={16} color="#334155" />
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Periodo analisado</AppText>
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Período analisado</AppText>
             </View>
             <Button title="Atualizar" variant="outline" className="px-3" onPress={() => void load(periodDays)} />
           </View>
@@ -175,10 +207,10 @@ const AdminDashboard = ({ navigation }: any) => {
           <>
             <Card className="p-4 mb-3">
               <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base" numberOfLines={1}>
-                Visao geral
+                Panorama da operação
               </AppText>
               <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
-                Saude da base e adocao no periodo selecionado.
+                Saúde da base e engajamento no período selecionado.
               </AppText>
               <View className="mt-3 gap-2">
                 <View className="flex-row items-center justify-between">
@@ -186,11 +218,11 @@ const AdminDashboard = ({ navigation }: any) => {
                   <AppText className="text-slate-900 dark:text-slate-100 text-lg font-black">{totalUsers}</AppText>
                 </View>
                 <View className="flex-row items-center justify-between">
-                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Logins no periodo</AppText>
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Entradas no período</AppText>
                   <AppText className="text-slate-900 dark:text-slate-100 text-lg font-black">{loginsInPeriod}</AppText>
                 </View>
                 <View className="flex-row items-center justify-between">
-                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Taxa de atividade</AppText>
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Taxa de engajamento</AppText>
                   <AppText className="text-emerald-700 dark:text-emerald-300 text-lg font-black">{toPercentSafe(activityRate)}</AppText>
                 </View>
               </View>
@@ -203,7 +235,7 @@ const AdminDashboard = ({ navigation }: any) => {
 
             <View className="mb-3 gap-3">
               <DonutChart
-                title="Usuarios e atividade"
+                title="Contas ativas e inativas"
                 subtitle="Ativos x inativos na base atual."
                 centerLabel="Ativos"
                 centerValue={String(activeUsers)}
@@ -214,7 +246,7 @@ const AdminDashboard = ({ navigation }: any) => {
               />
 
               <DonutChart
-                title="Funil de onboarding"
+                title="Adoção inicial"
                 subtitle="Conversao da adocao inicial no periodo."
                 centerLabel="Concluidos"
                 centerValue={String(toNumber(funnel?.onboarding_completed))}
@@ -226,7 +258,7 @@ const AdminDashboard = ({ navigation }: any) => {
               />
 
               <DonutChart
-                title="Satisfacao dos usuarios"
+                title="Satisfação dos usuários"
                 subtitle="Media consolidada das avaliacoes (0 a 5)."
                 centerLabel="Media geral"
                 centerValue={toFixedSafe(averageRating, 2)}
@@ -240,27 +272,27 @@ const AdminDashboard = ({ navigation }: any) => {
             <Card className="p-4 mb-3">
               <View className="flex-row items-center">
                 <TrendingUp size={16} color="#334155" />
-                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2 flex-1" numberOfLines={1}>Usuarios e atividade</AppText>
+                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2 flex-1" numberOfLines={1}>Uso do aplicativo</AppText>
               </View>
               <View className="mt-3 gap-2">
                 <View className="flex-row items-center justify-between">
-                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Eventos de uso</AppText>
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Interações registradas</AppText>
                   <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold">{totalEvents}</AppText>
                 </View>
                 <View className="flex-row items-center justify-between">
-                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Sessoes no periodo</AppText>
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Sessões no período</AppText>
                   <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold">{totalSessions}</AppText>
                 </View>
                 <View className="flex-row items-center justify-between">
-                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Evento mais frequente</AppText>
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Ação mais frequente</AppText>
                   <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold flex-1 text-right" numberOfLines={textClampLines('list')} ellipsizeMode="tail">
-                    {topEvent?.event_name || 'Sem dados'}
+                    {toFriendlyEventLabel(topEvent?.event_name)}
                   </AppText>
                 </View>
                 <View className="flex-row items-center justify-between">
-                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Tela mais acessada</AppText>
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Tela mais visitada</AppText>
                   <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold flex-1 text-right" numberOfLines={textClampLines('list')} ellipsizeMode="tail">
-                    {topScreen?.screen || 'Sem dados'}
+                    {toFriendlyScreenLabel(topScreen?.screen)}
                   </AppText>
                 </View>
               </View>
@@ -272,9 +304,9 @@ const AdminDashboard = ({ navigation }: any) => {
             </Card>
 
             <Card className="p-4 mb-3">
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold">Avaliacoes</AppText>
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold">Avaliações</AppText>
               <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
-                Percepcao geral dos usuarios e feedback recente.
+                Percepção geral dos usuários e comentários recentes.
               </AppText>
               <View className="mt-3 gap-2">
                 <View className="flex-row items-center justify-between">
@@ -296,9 +328,9 @@ const AdminDashboard = ({ navigation }: any) => {
               </View>
 
               <View className="mt-3">
-                <AppText className="text-slate-700 dark:text-slate-200 text-xs font-semibold mb-2">Sugestoes recentes</AppText>
+                <AppText className="text-slate-700 dark:text-slate-200 text-xs font-semibold mb-2">Sugestões recentes</AppText>
                 {suggestions.length === 0 ? (
-                  <AppText className="text-slate-500 dark:text-slate-300 text-xs">Sem comentarios no periodo.</AppText>
+                  <AppText className="text-slate-500 dark:text-slate-300 text-xs">Sem comentários no período.</AppText>
                 ) : (
                   suggestions.map((item) => (
                     <View key={item.id} className="py-2 border-b border-slate-100 dark:border-slate-800">
@@ -314,28 +346,35 @@ const AdminDashboard = ({ navigation }: any) => {
             <Card className="p-4 mb-3">
               <View className="flex-row items-center">
                 <Users size={16} color="#334155" />
-                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2 flex-1" numberOfLines={1}>Acoes rapidas</AppText>
+                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2 flex-1" numberOfLines={1}>Ações rápidas</AppText>
               </View>
-              <View className="flex-row gap-2 mt-3">
+              <View className="flex-row flex-wrap gap-2 mt-3">
                 <TouchableOpacity
-                  className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-3 flex-row items-center justify-center"
+                  className="flex-1 min-w-[46%] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-3 flex-row items-center justify-center"
                   onPress={() => navigation.navigate('Admin Usuarios')}
                 >
                   <ShieldCheck size={16} color="#0ea5e9" />
-                  <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold ml-2">Gerenciar usuarios</AppText>
+                  <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold ml-2">Gerenciar usuários</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-3 flex-row items-center justify-center"
+                  className="flex-1 min-w-[46%] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-3 flex-row items-center justify-center"
                   onPress={() => void load(periodDays)}
                 >
                   <RefreshCw size={16} color="#f48c25" />
                   <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold ml-2">Recarregar painel</AppText>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-3 flex-row items-center justify-center"
+                  onPress={() => navigation.navigate('Admin Aparencia')}
+                >
+                  <Settings size={16} color="#334155" />
+                  <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold ml-2">Aparência e acessibilidade</AppText>
+                </TouchableOpacity>
               </View>
             </Card>
 
             <Card className="p-4 mb-3">
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-2">Tendencia de novos usuarios</AppText>
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-2">Tendência de novas contas</AppText>
               {createdTrendLast7.length ? (
                 createdTrendLast7.map((item) => (
                   <View key={item.date} className="flex-row items-center justify-between py-1">
@@ -344,7 +383,7 @@ const AdminDashboard = ({ navigation }: any) => {
                   </View>
                 ))
               ) : (
-                <AppText className="text-slate-500 dark:text-slate-300 text-sm">Sem novos cadastros no periodo.</AppText>
+                <AppText className="text-slate-500 dark:text-slate-300 text-sm">Sem novas contas no período.</AppText>
               )}
             </Card>
           </>
