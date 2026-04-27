@@ -59,7 +59,7 @@ jest.mock('../../../services/admin', () => ({
 }));
 
 describe('AdminDashboard', () => {
-  it('renders executive sections and donut charts with complete payload', async () => {
+  it('renders sections with friendly copy and formatted numbers', async () => {
     const { getAdminAnalyticsOverview } = require('../../../services/admin');
     getAdminAnalyticsOverview.mockResolvedValue({
       period_days: 30,
@@ -132,10 +132,12 @@ describe('AdminDashboard', () => {
       expect(screen.getByText('Satisfação dos usuários')).toBeTruthy();
       expect(screen.getByText('Ações rápidas')).toBeTruthy();
       expect(screen.getByText('Aparência e acessibilidade')).toBeTruthy();
+      expect(screen.getByText('75.50%')).toBeTruthy();
+      expect(screen.getByText('4.21/5')).toBeTruthy();
     });
   });
 
-  it('renders safely with partial payload and empty trends', async () => {
+  it('renders safely with partial payload and fallback copy', async () => {
     const { getAdminAnalyticsOverview } = require('../../../services/admin');
     getAdminAnalyticsOverview.mockResolvedValue({
       period_days: 30,
@@ -145,6 +147,14 @@ describe('AdminDashboard', () => {
         inactive: 0,
         created_in_period: 0,
         created_trend: [],
+      },
+      app_usage: {
+        total_events: 0,
+        sessions: 0,
+        users_with_events: 0,
+        top_events: [],
+        top_screens: [],
+        events_trend: [],
       },
       app_ratings: {
         total_responses: 0,
@@ -177,7 +187,37 @@ describe('AdminDashboard', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Painel Administrativo')).toBeTruthy();
-      expect(screen.getByText(/Sem novas contas no período/)).toBeTruthy();
+      expect(screen.getAllByText('Sem dados no período').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('handles long unknown event and screen labels without crashing', async () => {
+    const { getAdminAnalyticsOverview } = require('../../../services/admin');
+    getAdminAnalyticsOverview.mockResolvedValue({
+      period_days: 30,
+      users: { total: 1, active: 1, inactive: 0, created_in_period: 0, created_trend: [] },
+      app_usage: {
+        total_events: 4,
+        sessions: 2,
+        users_with_events: 1,
+        top_events: [{ event_name: 'super_long_custom_event_name_for_mobile_admin_dashboard', count: 3 }],
+        top_screens: [{ screen: 'SomeVeryLongUnknownScreenNameForTest', count: 2 }],
+        events_trend: [],
+      },
+      app_ratings: {
+        total_responses: 0,
+        averages: { usability: 0, helpfulness: 0, calendar: 0, alerts: 0, goals: 0, reports: 0, records: 0 },
+        distributions: { usability: [], helpfulness: [], calendar: [], alerts: [], goals: [], reports: [], records: [] },
+        recent_suggestions: { items: [], pagination: { page: 1, per_page: 20, total: 0, total_pages: 0 } },
+      },
+    });
+
+    const screen = render(<AdminDashboard navigation={{ navigate: jest.fn() }} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Uso do aplicativo')).toBeTruthy();
+      expect(screen.getByText('Ação mais frequente')).toBeTruthy();
+      expect(screen.getByText('Tela mais visitada')).toBeTruthy();
     });
   });
 

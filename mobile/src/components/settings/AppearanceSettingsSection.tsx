@@ -1,9 +1,10 @@
 import React from 'react';
-import { Switch, TouchableOpacity, View } from 'react-native';
+import { Switch, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Settings2 } from 'lucide-react-native';
 import Card from '../Card';
 import AppText from '../AppText';
 import { AppPreferences } from '../../types/settings';
+import { isCompactDevice, textClampLines } from '../../utils/responsive';
 
 const TEXT_SIZE_OPTIONS: Array<{ label: string; value: AppPreferences['font_scale'] }> = [
   { label: 'Pequeno', value: 0.9 },
@@ -31,6 +32,9 @@ const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps> = ({
   onToggleTouchTargets,
   onSelectFontScale,
 }) => {
+  const { width } = useWindowDimensions();
+  const compact = isCompactDevice(width);
+
   const Item = ({
     title,
     subtitle,
@@ -45,8 +49,12 @@ const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps> = ({
     <View className="py-3 border-b border-slate-100 dark:border-slate-800" style={{ minHeight: rowHeight + 10, justifyContent: 'center' }}>
       <View className="flex-row items-center justify-between">
         <View className="flex-1 pr-3">
-          <AppText className="text-slate-900 dark:text-slate-100 font-semibold">{title}</AppText>
-          <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">{subtitle}</AppText>
+          <AppText className="text-slate-900 dark:text-slate-100 font-semibold" numberOfLines={textClampLines('title')} ellipsizeMode="tail">
+            {title}
+          </AppText>
+          <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5" numberOfLines={textClampLines('card')} ellipsizeMode="tail">
+            {subtitle}
+          </AppText>
         </View>
         <Switch value={value} onValueChange={onChange} trackColor={{ true: '#f48c25' }} />
       </View>
@@ -57,7 +65,9 @@ const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps> = ({
     <Card className="p-4">
       <View className="flex-row items-center mb-2">
         <Settings2 size={16} color="#64748b" />
-        <AppText className="text-slate-700 dark:text-slate-200 font-bold ml-2">Aparência e acessibilidade</AppText>
+        <AppText className="text-slate-700 dark:text-slate-200 font-bold ml-2" numberOfLines={textClampLines('title')} ellipsizeMode="tail">
+          Aparência e acessibilidade
+        </AppText>
       </View>
 
       <Item
@@ -82,26 +92,30 @@ const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps> = ({
             return (
               <TouchableOpacity
                 key={option.value}
-                className={`w-[48.5%] px-3 rounded-xl border items-center justify-center mb-2 ${
+                className={`px-3 rounded-xl border items-center justify-center mb-2 ${
                   selected
                     ? 'bg-primary border-primary'
                     : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'
                 }`}
                 onPress={() => onSelectFontScale(option.value)}
-                style={{ minHeight: rowHeight }}
+                style={{ minHeight: rowHeight, width: compact ? '100%' : '48.5%' }}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 accessibilityLabel={`Tamanho do texto ${option.label}`}
               >
-                <AppText className={`text-xs font-bold text-center ${selected ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>
+                <AppText
+                  className={`text-xs font-bold text-center ${selected ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}
+                  numberOfLines={textClampLines('list')}
+                  ellipsizeMode="tail"
+                >
                   {option.label}
                 </AppText>
               </TouchableOpacity>
             );
           })}
         </View>
-        <AppText className="text-[11px] text-slate-500 dark:text-slate-200 mt-2">
-          Pré-visualização: o app inteiro aplica este tamanho automaticamente.
+        <AppText className="text-[11px] text-slate-500 dark:text-slate-200 mt-2" numberOfLines={textClampLines('card')} ellipsizeMode="tail">
+          Pré-visualização: o aplicativo inteiro aplica este tamanho automaticamente.
         </AppText>
       </View>
     </Card>
@@ -109,4 +123,3 @@ const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps> = ({
 };
 
 export default AppearanceSettingsSection;
-

@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import AppText from '../AppText';
+import { formatDonutValue } from '../../utils/adminPresentation';
+import { textClampLines } from '../../utils/responsive';
 
 type DonutSegment = {
   label: string;
@@ -31,7 +33,7 @@ const DonutChart = ({
   centerLabel,
   centerValue,
   segments,
-  emptyLabel = 'Sem dados no periodo selecionado.',
+  emptyLabel = 'Sem dados no período selecionado.',
   size = 132,
   strokeWidth = 18,
 }: DonutChartProps) => {
@@ -68,8 +70,14 @@ const DonutChart = ({
 
   return (
     <View className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] p-4">
-      <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{title}</AppText>
-      {subtitle ? <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">{subtitle}</AppText> : null}
+      <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold" numberOfLines={textClampLines('title')} ellipsizeMode="tail">
+        {title}
+      </AppText>
+      {subtitle ? (
+        <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1" numberOfLines={textClampLines('card')} ellipsizeMode="tail">
+          {subtitle}
+        </AppText>
+      ) : null}
 
       {total <= 0 ? (
         <View className="mt-4 rounded-xl bg-slate-50 dark:bg-[#0f172a] px-3 py-4">
@@ -108,9 +116,11 @@ const DonutChart = ({
               <View key={segment.label} className="flex-row items-center justify-between">
                 <View className="flex-row items-center flex-1 pr-2">
                   <View className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: segment.color }} />
-                  <AppText className="text-slate-600 dark:text-slate-200 text-xs">{segment.label}</AppText>
+                  <AppText className="text-slate-600 dark:text-slate-200 text-xs flex-1" numberOfLines={textClampLines('legend')} ellipsizeMode="tail">
+                    {segment.label}
+                  </AppText>
                 </View>
-                <AppText className="text-slate-900 dark:text-slate-100 text-xs font-semibold">{segment.value}</AppText>
+                <AppText className="text-slate-900 dark:text-slate-100 text-xs font-semibold">{formatDonutValue(segment.value)}</AppText>
               </View>
             ))}
           </View>
@@ -121,4 +131,3 @@ const DonutChart = ({
 };
 
 export default DonutChart;
-

@@ -9,7 +9,7 @@ import { AppPreferences } from '../../types/settings';
 import { defaultAppPreferences, getAppPreferences, saveAppPreferences } from '../../services/preferences';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
-import { controlHeight } from '../../utils/responsive';
+import { controlHeight, textClampLines } from '../../utils/responsive';
 
 const AdminAppearanceSettings = () => {
   const navigation = useNavigation<any>();
@@ -26,7 +26,7 @@ const AdminAppearanceSettings = () => {
       const result = await getAppPreferences();
       setPrefs(result);
     };
-    load();
+    void load();
   }, []);
 
   const setFontScale = async (nextFontScale: AppPreferences['font_scale']) => {
@@ -74,14 +74,16 @@ const AdminAppearanceSettings = () => {
   return (
     <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
       <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-        <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
+        <View className="flex-row items-start">
+          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2 mt-0.5">
             <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
           <View className="flex-1 pr-1">
-            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Aparência e acessibilidade</AppText>
-            <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-              Ajuste visual do portal administrativo para facilitar a leitura.
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold" numberOfLines={textClampLines('title')} ellipsizeMode="tail">
+              Aparência e acessibilidade
+            </AppText>
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs" numberOfLines={textClampLines('card')} ellipsizeMode="tail">
+              Ajuste visual do portal administrativo para facilitar leitura e navegação.
             </AppText>
           </View>
         </View>
@@ -100,7 +102,9 @@ const AdminAppearanceSettings = () => {
 
         {message ? (
           <View className="mt-3 rounded-xl px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700">
-            <AppText className="text-emerald-700 dark:text-emerald-300 text-sm">{message}</AppText>
+            <AppText className="text-emerald-700 dark:text-emerald-300 text-sm" numberOfLines={textClampLines('card')} ellipsizeMode="tail">
+              {message}
+            </AppText>
           </View>
         ) : null}
 
@@ -111,4 +115,3 @@ const AdminAppearanceSettings = () => {
 };
 
 export default AdminAppearanceSettings;
-
