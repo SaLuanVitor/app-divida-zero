@@ -30,6 +30,18 @@ jest.mock('../../../components/Button', () => {
   );
 });
 
+jest.mock('../../../components/admin/DonutChart', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return ({ title, centerLabel, centerValue }: { title: string; centerLabel: string; centerValue: string }) => (
+    <View>
+      <Text>{title}</Text>
+      <Text>{centerLabel}</Text>
+      <Text>{centerValue}</Text>
+    </View>
+  );
+});
+
 jest.mock('../../../context/ThemeContext', () => ({
   useThemeMode: () => ({
     darkMode: false,
@@ -47,64 +59,52 @@ jest.mock('../../../services/admin', () => ({
 }));
 
 describe('AdminDashboard', () => {
-  it('renders safely when numeric fields come as strings', async () => {
+  it('renders executive sections and donut charts with complete payload', async () => {
     const { getAdminAnalyticsOverview } = require('../../../services/admin');
     getAdminAnalyticsOverview.mockResolvedValue({
       period_days: 30,
       users: {
-        total: '10',
-        active: '8',
-        inactive: '2',
-        created_in_period: '3',
-        created_trend: [{ date: '2026-04-26', count: '3' }],
+        total: '12',
+        active: '9',
+        inactive: '3',
+        created_in_period: '2',
+        created_trend: [{ date: '2026-04-26', count: '2' }],
       },
       engagement: {
-        logins_in_period: '7',
-        active_users_7d: '6',
-        active_users_30d: '8',
-        activity_rate_pct: '70.456',
+        logins_in_period: '8',
+        active_users_7d: '7',
+        active_users_30d: '9',
+        activity_rate_pct: '75.5',
       },
       app_usage: {
-        total_events: '20',
-        sessions: '4',
-        users_with_events: '3',
-        top_events: [{ event_name: 'onboarding_viewed', count: '5' }],
-        top_screens: [{ screen: 'Onboarding', count: '5' }],
-        events_trend: [{ date: '2026-04-26', count: '5' }],
+        total_events: '40',
+        sessions: '10',
+        users_with_events: '9',
+        top_events: [{ event_name: 'onboarding_viewed', count: '8' }],
+        top_screens: [{ screen: 'Onboarding', count: '8' }],
+        events_trend: [{ date: '2026-04-26', count: '8' }],
       },
       onboarding_tutorial_funnel: {
-        onboarding_viewed: '5',
-        onboarding_completed: '3',
+        onboarding_viewed: '8',
+        onboarding_completed: '5',
         onboarding_skipped: '2',
         tutorial_reopened: '1',
         onboarding_mode: {
-          beginner: '2',
+          beginner: '4',
           advanced: '1',
           unknown: '0',
         },
       },
-      financial_overview: {
-        records_in_period: '12',
-        by_flow: { income: '500.5' },
-        by_status: { paid: '200.0' },
-        settled_income_total: '500.5',
-        settled_expense_total: '120.2',
-        settled_net_balance: '380.3',
-        goals_active: '4',
-        goals_completed: '1',
-        goal_deposit_volume: '90.12',
-        goal_withdraw_volume: '20.15',
-      },
       app_ratings: {
-        total_responses: '4',
+        total_responses: '6',
         averages: {
           usability: '4.5',
-          helpfulness: '4.25',
-          calendar: '4.0',
-          alerts: '3.5',
+          helpfulness: '4.2',
+          calendar: '4.1',
+          alerts: '3.8',
           goals: '4.0',
-          reports: '4.75',
-          records: '4.2',
+          reports: '4.6',
+          records: '4.3',
         },
         distributions: {
           usability: [],
@@ -125,13 +125,16 @@ describe('AdminDashboard', () => {
     const screen = render(<AdminDashboard navigation={{ navigate: jest.fn() }} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Portal Admin')).toBeTruthy();
-      expect(screen.getByText(/Taxa de atividade:/)).toBeTruthy();
-      expect(screen.getByText(/Respostas de avalia/)).toBeTruthy();
+      expect(screen.getByText('Painel Administrativo')).toBeTruthy();
+      expect(screen.getByText('Visao geral')).toBeTruthy();
+      expect(screen.getAllByText('Usuarios e atividade').length).toBeGreaterThan(0);
+      expect(screen.getByText('Funil de onboarding')).toBeTruthy();
+      expect(screen.getByText('Satisfacao dos usuarios')).toBeTruthy();
+      expect(screen.getByText('Acoes rapidas')).toBeTruthy();
     });
   });
 
-  it('renders without crashing with partial optional sections', async () => {
+  it('renders safely with partial payload and empty trends', async () => {
     const { getAdminAnalyticsOverview } = require('../../../services/admin');
     getAdminAnalyticsOverview.mockResolvedValue({
       period_days: 30,
@@ -172,8 +175,8 @@ describe('AdminDashboard', () => {
     const screen = render(<AdminDashboard navigation={{ navigate: jest.fn() }} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Portal Admin')).toBeTruthy();
-      expect(screen.getByText(/Sem novos cadastros no período/)).toBeTruthy();
+      expect(screen.getByText('Painel Administrativo')).toBeTruthy();
+      expect(screen.getByText(/Sem novos cadastros no periodo/)).toBeTruthy();
     });
   });
 });
