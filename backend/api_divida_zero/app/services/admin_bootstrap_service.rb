@@ -18,11 +18,8 @@
       user.name = name if user.name.blank?
       user.role = "admin"
       user.active = true
-
-      if user.new_record?
-        user.password = password
-        user.password_confirmation = password
-      end
+      user.password = password
+      user.password_confirmation = password
 
       user.save! if user.new_record? || user.changed?
       true
