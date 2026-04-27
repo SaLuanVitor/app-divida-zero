@@ -96,7 +96,7 @@ const ForcePasswordChange = () => {
           onPress={handleSubmit}
           loading={loading}
           disabled={loading}
-          className="h-11 mt-4"
+          className="mt-4"
         />
 
         <Button
@@ -104,7 +104,7 @@ const ForcePasswordChange = () => {
           variant="outline"
           onPress={signOut}
           disabled={loading}
-          className="h-11 mt-2"
+          className="mt-2"
         />
       </Card>
 

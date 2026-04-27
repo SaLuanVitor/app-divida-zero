@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Pressable, Keyboard, FlatList } from 'react-native';
+import { View, TouchableOpacity, Pressable, Keyboard, FlatList, useWindowDimensions } from 'react-native';
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Landmark, PiggyBank, Target, Trophy, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -15,6 +15,7 @@ import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
+import { controlHeight, threeColumnItemWidth } from '../../utils/responsive';
 
 type GoalDateField = 'start' | 'target';
 type FeedbackState = {
@@ -78,6 +79,7 @@ const MetaForm = () => {
     const { darkMode } = useThemeMode();
     const { overlayBottomInset } = useBottomInset();
     const { fontScale, largerTouchTargets } = useAccessibility();
+    const { width: windowWidth } = useWindowDimensions();
     const goal = route.params?.goal as FinancialGoalDto | undefined;
     const formMode = route.params?.mode as 'create' | 'edit' | undefined;
     const formNonce = route.params?.nonce as number | undefined;
@@ -106,8 +108,10 @@ const MetaForm = () => {
     const [xpPopup, setXpPopup] = useState<XpFeedbackDto | null>(null);
     const [firstSuccessUnlocked, setFirstSuccessUnlocked] = useState(false);
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
-    const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
-    const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
+    const fieldControlHeight = controlHeight(fontScale, largerTouchTargets, 44);
+    const pickerTabHeight = controlHeight(fontScale, largerTouchTargets, 40, { minTouchHeight: 40 });
+    const quickActionHeight = controlHeight(fontScale, largerTouchTargets, 36, { minTouchHeight: 36 });
+    const pickerGridWidth = useMemo(() => threeColumnItemWidth(Math.min(windowWidth - 48, 420), 8), [windowWidth]);
 
     const applyGoalState = useCallback((selectedGoal?: FinancialGoalDto) => {
         if (selectedGoal) {
@@ -393,9 +397,9 @@ const MetaForm = () => {
                         title={submitting ? 'Salvando...' : goal ? 'Salvar alterações' : 'Salvar meta'}
                         onPress={handleSubmit}
                         disabled={submitting || !canSubmit}
-                        className="h-12 mb-2"
+                        className="mb-2"
                     />
-                    <Button title="Cancelar" variant="outline" disabled={submitting} onPress={goBackToGoals} className="h-11" />
+                    <Button title="Cancelar" variant="outline" disabled={submitting} onPress={goBackToGoals} />
                 </View>
             </Layout>
 
@@ -415,7 +419,8 @@ const MetaForm = () => {
                             </TouchableOpacity>
                             <View className="flex-row items-center gap-2">
                                 <TouchableOpacity
-                                    className="px-3 h-9 rounded-full bg-primary/10 border border-primary/20 items-center justify-center"
+                                    className="px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center"
+                                    style={{ minHeight: quickActionHeight }}
                                     onPress={() => {
                                         const today = new Date();
                                         setPickerMonth(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -482,10 +487,10 @@ const MetaForm = () => {
                                         setTargetDate(null);
                                         closeDatePicker();
                                     }}
-                                    className="h-11 flex-1"
+                                    className="flex-1"
                                 />
                             ) : null}
-                            <Button title="Fechar" onPress={closeDatePicker} className="h-11 flex-1" />
+                            <Button title="Fechar" onPress={closeDatePicker} className="flex-1" />
                         </View>
                     </View>
                 </View>
@@ -536,8 +541,8 @@ const MetaForm = () => {
                                         return (
                                             <TouchableOpacity
                                                 key={label}
-                                                className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
-                                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
+                                                className={`mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                                style={{ width: pickerGridWidth, minHeight: pickerTabHeight }}
                                                 onPress={() => selectMonth(index)}
                                             >
                                                 <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</AppText>
@@ -565,8 +570,8 @@ const MetaForm = () => {
                                     const active = pickerMonth.getFullYear() === year;
                                     return (
                                         <TouchableOpacity
-                                            className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
-                                            style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
+                                            className={`mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                            style={{ width: pickerGridWidth, minHeight: pickerTabHeight }}
                                             onPress={() => selectYear(year)}
                                         >
                                             <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText>
@@ -657,7 +662,7 @@ const MetaForm = () => {
                                         },
                                     });
                                 }}
-                                className="h-12 mt-4 w-full"
+                                className="mt-4 w-full"
                             />
                         </View>
                     </View>

@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Alert, ActivityIndicator, Pressable, Keyboard, FlatList } from 'react-native';
+import { View, TouchableOpacity, Alert, ActivityIndicator, Pressable, Keyboard, FlatList, useWindowDimensions } from 'react-native';
 import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, ChevronRight, Trophy, Target, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -17,6 +17,7 @@ import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
+import { controlHeight, threeColumnItemWidth } from '../../utils/responsive';
 
 type RegisterTab = 'income' | 'debt';
 
@@ -107,6 +108,7 @@ const Lancamentos = () => {
     const { darkMode } = useThemeMode();
     const { overlayBottomInset } = useBottomInset();
     const { fontScale, largerTouchTargets } = useAccessibility();
+    const { width: windowWidth } = useWindowDimensions();
 
     const [activeTab, setActiveTab] = useState<RegisterTab>('income');
 
@@ -143,8 +145,10 @@ const Lancamentos = () => {
     const [formError, setFormError] = useState('');
     const [milestoneMessage, setMilestoneMessage] = useState('');
     const iconColor = darkMode ? '#e2e8f0' : '#334155';
-    const fieldControlHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
-    const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
+    const fieldControlHeight = controlHeight(fontScale, largerTouchTargets, 44);
+    const pickerTabHeight = controlHeight(fontScale, largerTouchTargets, 40, { minTouchHeight: 40 });
+    const quickActionHeight = controlHeight(fontScale, largerTouchTargets, 36, { minTouchHeight: 36 });
+    const pickerGridWidth = useMemo(() => threeColumnItemWidth(Math.min(windowWidth - 48, 420), 8), [windowWidth]);
 
     useEffect(() => {
         const incomingMode = route.params?.mode as string | undefined;
@@ -766,7 +770,7 @@ const Lancamentos = () => {
                         title={loading ? 'Salvando...' : showAdvanced ? 'Salvar registro' : 'Salvar rápido'}
                         onPress={onSubmit}
                         disabled={loading || !canSubmit}
-                        className="h-14 mb-4"
+                        className="mb-4"
                     />
                     {!canSubmit ? (
                         <AppText className="text-center text-xs text-slate-500 dark:text-slate-200 -mt-1 mb-4">
@@ -810,7 +814,8 @@ const Lancamentos = () => {
                             </TouchableOpacity>
                             <View className="flex-row items-center gap-2">
                                 <TouchableOpacity
-                                    className="px-3 h-9 rounded-full bg-primary/10 border border-primary/20 items-center justify-center"
+                                    className="px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center"
+                                    style={{ minHeight: quickActionHeight }}
                                     onPress={() => {
                                         const today = new Date();
                                         setStartDate(today);
@@ -853,7 +858,7 @@ const Lancamentos = () => {
                         </View>
 
                         <View className="flex-row gap-2">
-                            <Button title="Fechar" variant="outline" onPress={closeDatePicker} className="h-11 flex-1" />
+                            <Button title="Fechar" variant="outline" onPress={closeDatePicker} className="flex-1" />
                         </View>
                     </View>
                 </View>
@@ -904,8 +909,8 @@ const Lancamentos = () => {
                                         return (
                                             <TouchableOpacity
                                                 key={label}
-                                                className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
-                                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
+                                                className={`mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                                style={{ width: pickerGridWidth, minHeight: pickerTabHeight }}
                                                 onPress={() => selectMonth(index)}
                                             >
                                                 <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</AppText>
@@ -933,8 +938,8 @@ const Lancamentos = () => {
                                     const active = pickerMonth.getFullYear() === year;
                                     return (
                                         <TouchableOpacity
-                                            className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
-                                            style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
+                                            className={`mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                            style={{ width: pickerGridWidth, minHeight: pickerTabHeight }}
                                             onPress={() => selectYear(year)}
                                         >
                                             <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText>
@@ -980,7 +985,7 @@ const Lancamentos = () => {
                                 </View>
                             </View>
 
-                            <Button title="Continuar" onPress={() => setXpPopup(null)} className="h-12 mt-4 w-full" />
+                            <Button title="Continuar" onPress={() => setXpPopup(null)} className="mt-4 w-full" />
                         </View>
                     </View>
                 </View>

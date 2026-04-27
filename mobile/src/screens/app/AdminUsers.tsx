@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Search, ShieldCheck, UserCheck, UserX } from 'lucide-react-native';
@@ -10,6 +10,7 @@ import Button from '../../components/Button';
 import { useThemeMode } from '../../context/ThemeContext';
 import { listAdminUsers, resetAdminUserPassword, updateAdminUserStatus } from '../../services/admin';
 import { useAuth } from '../../context/AuthContext';
+import { textClampLines } from '../../utils/responsive';
 
 type FeedbackState = { kind: 'success' | 'error'; message: string } | null;
 
@@ -115,7 +116,7 @@ const AdminUsers = () => {
             onPress={() => void loadUsers()}
             disabled={!canInteract}
             loading={loading}
-            className="h-10 mt-3"
+            className="mt-3"
           />
         </Card>
 
@@ -149,8 +150,8 @@ const AdminUsers = () => {
               <Card key={item.id} className="p-4 mb-3">
                 <View className="flex-row items-start justify-between">
                   <View className="flex-1 pr-2">
-                    <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.name}</AppText>
-                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">{item.email}</AppText>
+                    <AppText className="text-slate-900 dark:text-slate-100 font-bold" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{item.name}</AppText>
+                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{item.email}</AppText>
                     <View className="flex-row items-center mt-2">
                       {item.active ? <UserCheck size={14} color="#16a34a" /> : <UserX size={14} color="#dc2626" />}
                       <AppText className="text-slate-600 dark:text-slate-200 text-xs ml-1">
@@ -178,14 +179,14 @@ const AdminUsers = () => {
                     onPress={() => void handleToggleStatus(item)}
                     disabled={disabled || isSelf}
                     loading={disabled}
-                    className="flex-1 h-10"
+                    className="flex-1"
                   />
                   <Button
                     title="Senha temporária"
                     variant="outline"
                     onPress={() => void handleTemporaryReset(item)}
                     disabled={disabled}
-                    className="flex-1 h-10"
+                    className="flex-1"
                   />
                 </View>
 
@@ -204,4 +205,5 @@ const AdminUsers = () => {
 };
 
 export default AdminUsers;
+
 

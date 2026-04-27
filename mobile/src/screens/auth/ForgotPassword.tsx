@@ -100,7 +100,7 @@ const ForgotPassword = () => {
                 onPress={handleResetPassword}
                 loading={loading}
                 disabled={loading}
-                className="mt-4 h-14"
+                className="mt-4"
             />
 
             <View className="mt-6 items-center gap-3">

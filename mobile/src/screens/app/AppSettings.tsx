@@ -12,6 +12,7 @@ import { useThemeMode } from '../../context/ThemeContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import useBackToProfile from '../../hooks/useBackToProfile';
+import { controlHeight } from '../../utils/responsive';
 
 const TEXT_SIZE_OPTIONS: Array<{ label: string; value: AppPreferences['font_scale'] }> = [
   { label: 'Pequeno', value: 0.9 },
@@ -29,7 +30,7 @@ const AppSettings = () => {
   const [prefs, setPrefs] = useState<AppPreferences>(defaultAppPreferences);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const rowHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
+  const rowHeight = controlHeight(fontScale, largerTouchTargets, 44);
 
   useEffect(() => {
     const load = async () => {
@@ -196,7 +197,7 @@ const AppSettings = () => {
           <AppText className="text-slate-500 dark:text-slate-200 text-xs mb-3">
             Reabra o tutorial para revisar orientações de uso quando quiser.
           </AppText>
-          <Button title="Ver tutorial novamente" variant="outline" onPress={reopenTutorial} className="h-11" />
+          <Button title="Ver tutorial novamente" variant="outline" onPress={reopenTutorial} />
         </Card>
 
         {message ? (

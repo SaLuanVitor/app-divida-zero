@@ -368,7 +368,7 @@ const Metas = () => {
                             <AppText className="text-slate-500 dark:text-slate-200 text-sm mb-4">
                                 Crie sua primeira meta e gerencie o saldo dela com aportes manuais.
                             </AppText>
-                            <Button title="Criar primeira meta" onPress={openCreateScreen} className="h-11" />
+                            <Button title="Criar primeira meta" onPress={openCreateScreen} />
                         </View>
                     </Card>
                 ) : null}
@@ -569,14 +569,13 @@ const Metas = () => {
                                         Number(fundingSnapshot.available_for_goal_funding || '0'))
                             }
                             onPress={submitContribution}
-                            className="h-12 mb-2"
+                            className="mb-2"
                         />
                         <Button
                             title="Cancelar"
                             variant="outline"
                             disabled={contributionLoading}
                             onPress={() => closeContributionModal()}
-                            className="h-11"
                         />
                     </View>
                 </View>
@@ -597,14 +596,13 @@ const Metas = () => {
                             loading={deleteLoading}
                             disabled={deleteLoading}
                             onPress={confirmDeleteGoal}
-                            className="h-12 mb-2"
+                            className="mb-2"
                         />
                         <Button
                             title="Cancelar"
                             variant="outline"
                             disabled={deleteLoading}
                             onPress={() => setGoalPendingDelete(null)}
-                            className="h-11"
                         />
                     </View>
                 </View>
