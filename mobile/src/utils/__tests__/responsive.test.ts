@@ -3,6 +3,7 @@ import {
   isCompactDevice,
   isLargeDevice,
   resolveTabLabel,
+  shouldStackForLargeText,
   textClampLines,
   threeColumnItemWidth,
 } from '../responsive';
@@ -39,5 +40,11 @@ describe('responsive utils', () => {
     expect(resolveTabLabel('Relatorios', 1, false)).toBe('Relatorios');
     expect(resolveTabLabel('Relatorios', 1.15, false)).toBe('Relat.');
     expect(resolveTabLabel('Lancamentos', 1, true)).toBe('Lanç.');
+  });
+
+  it('decides when cards should stack for large text or compact screens', () => {
+    expect(shouldStackForLargeText(1, 420)).toBe(false);
+    expect(shouldStackForLargeText(1.15, 420)).toBe(true);
+    expect(shouldStackForLargeText(1, 360)).toBe(true);
   });
 });

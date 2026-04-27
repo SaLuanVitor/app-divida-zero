@@ -4,6 +4,12 @@ export const isCompactDevice = (width: number): boolean => width < 380;
 
 export const isLargeDevice = (width: number): boolean => width >= 768;
 
+export const shouldStackForLargeText = (fontScale: number, width: number, options?: { compactWidth?: number; scaleThreshold?: number }): boolean => {
+  const compactWidth = options?.compactWidth ?? 390;
+  const scaleThreshold = options?.scaleThreshold ?? 1.15;
+  return width < compactWidth || fontScale >= scaleThreshold;
+};
+
 export const controlHeight = (
   fontScale: number,
   largerTouchTargets: boolean,
