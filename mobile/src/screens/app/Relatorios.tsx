@@ -19,9 +19,11 @@ import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { markPerf, measurePerf } from '../../services/perf';
 import { ReportFlowFilter, ReportsSummaryDto, ReportStatusFilter } from '../../types/report';
 import { useThemeMode } from '../../context/ThemeContext';
+import { useAccessibility } from '../../context/AccessibilityContext';
 import { useTutorial } from '../../context/TutorialContext';
 import { exportReportsPdf } from '../../services/reportsExport';
 import { getAppPreferences, updateAppPreferences } from '../../services/preferences';
+import { controlHeight, threeColumnItemWidth } from '../../utils/responsive';
 
 type DetailsTab = 'records' | 'categories';
 type PickerMode = 'month' | 'year';
@@ -177,6 +179,7 @@ const IndicatorsShimmer = React.memo(() => (
 
 const Relatorios = () => {
   const { darkMode } = useThemeMode();
+  const { fontScale, largerTouchTargets } = useAccessibility();
   const { isBeginnerTutorialActive } = useTutorial();
   const { width: screenWidth } = useWindowDimensions();
   const [monthRef, setMonthRef] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -202,6 +205,11 @@ const Relatorios = () => {
   const yearOptions = useMemo(() => Array.from({ length: 9 }, (_, idx) => monthRef.getFullYear() - 4 + idx), [monthRef]);
   const hasFilter = status !== 'all' || flowType !== 'all' || !!category;
   const chartWidth = useMemo(() => Math.max(260, Math.min(screenWidth - 88, 560)), [screenWidth]);
+  const controlHeightMd = useMemo(
+    () => controlHeight(fontScale, largerTouchTargets, 40, { minTouchHeight: 40 }),
+    [fontScale, largerTouchTargets]
+  );
+  const gridPickerWidth = useMemo(() => threeColumnItemWidth(Math.min(screenWidth - 64, 420), 8), [screenWidth]);
   const activeFilters = useMemo(() => ({
     year: monthRef.getFullYear(),
     month: monthRef.getMonth() + 1,
@@ -407,7 +415,8 @@ const Relatorios = () => {
         <Card className="mb-3" noPadding>
           <View className="p-3">
             <TouchableOpacity
-              className={`h-11 rounded-xl border flex-row items-center justify-center ${exportingPdf ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700' : 'bg-primary/10 border-primary/30'}`}
+              className={`rounded-xl border flex-row items-center justify-center ${exportingPdf ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700' : 'bg-primary/10 border-primary/30'}`}
+              style={{ minHeight: controlHeightMd }}
               onPress={() => void handleExportPdf()}
               disabled={exportingPdf || isInitialEmptyLoading}
             >
@@ -500,10 +509,10 @@ const Relatorios = () => {
             <TouchableOpacity className={`px-3 py-2 rounded-full border ${flowType === 'expense' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setFlowType('expense')}><AppText className={`text-xs font-bold ${flowType === 'expense' ? 'text-white' : 'text-slate-600 dark:text-slate-200'}`}>Saídas</AppText></TouchableOpacity>
           </View>
           <View className="flex-row items-center">
-            <TouchableOpacity className="flex-1 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 justify-center" onPress={() => setShowCategoryPicker(true)}>
+            <TouchableOpacity className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 justify-center" style={{ minHeight: controlHeightMd }} onPress={() => setShowCategoryPicker(true)}>
               <AppText className="text-slate-700 dark:text-slate-200 text-sm">{category || 'Todas as categorias'}</AppText>
             </TouchableOpacity>
-            <TouchableOpacity className={`ml-2 px-4 h-10 rounded-xl border border-slate-200 dark:border-slate-700 items-center justify-center ${hasFilter ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`} onPress={clearFilters}>
+            <TouchableOpacity className={`ml-2 px-4 rounded-xl border border-slate-200 dark:border-slate-700 items-center justify-center ${hasFilter ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`} style={{ minHeight: controlHeightMd }} onPress={clearFilters}>
               <AppText className="text-slate-700 dark:text-slate-200 text-xs font-bold">Limpar</AppText>
             </TouchableOpacity>
           </View>
@@ -584,8 +593,8 @@ const Relatorios = () => {
 
             <Card className="mb-3" noPadding><View className="p-4">
               <View className="flex-row gap-2 mb-3">
-                <TouchableOpacity className={`flex-1 h-10 rounded-xl border items-center justify-center ${tab === 'records' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setTab('records')}><AppText className={`font-bold text-sm ${tab === 'records' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Lançamentos</AppText></TouchableOpacity>
-                <TouchableOpacity className={`flex-1 h-10 rounded-xl border items-center justify-center ${tab === 'categories' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setTab('categories')}><AppText className={`font-bold text-sm ${tab === 'categories' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Categorias</AppText></TouchableOpacity>
+                <TouchableOpacity className={`flex-1 rounded-xl border items-center justify-center ${tab === 'records' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ minHeight: controlHeightMd }} onPress={() => setTab('records')}><AppText className={`font-bold text-sm ${tab === 'records' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Lançamentos</AppText></TouchableOpacity>
+                <TouchableOpacity className={`flex-1 rounded-xl border items-center justify-center ${tab === 'categories' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ minHeight: controlHeightMd }} onPress={() => setTab('categories')}><AppText className={`font-bold text-sm ${tab === 'categories' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Categorias</AppText></TouchableOpacity>
               </View>
               {data.monthly_summary.records_count === 0 ? (
                 <View className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] border border-slate-100 dark:border-slate-800 p-3">
@@ -646,16 +655,16 @@ const Relatorios = () => {
           <View className="w-full max-w-[420px] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
             <View className="flex-row items-center justify-between mb-3"><AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Navegar por período</AppText><TouchableOpacity className="p-1" onPress={() => setShowPeriodPicker(false)}><X size={18} color="#64748b" /></TouchableOpacity></View>
             <View className="flex-row gap-2 mb-3">
-              <TouchableOpacity className={`flex-1 h-10 rounded-xl items-center justify-center border ${pickerMode === 'month' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setPickerMode('month')}><AppText className={`font-bold text-sm ${pickerMode === 'month' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Meses</AppText></TouchableOpacity>
-              <TouchableOpacity className={`flex-1 h-10 rounded-xl items-center justify-center border ${pickerMode === 'year' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setPickerMode('year')}><AppText className={`font-bold text-sm ${pickerMode === 'year' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Anos</AppText></TouchableOpacity>
+              <TouchableOpacity className={`flex-1 rounded-xl items-center justify-center border ${pickerMode === 'month' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ minHeight: controlHeightMd }} onPress={() => setPickerMode('month')}><AppText className={`font-bold text-sm ${pickerMode === 'month' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Meses</AppText></TouchableOpacity>
+              <TouchableOpacity className={`flex-1 rounded-xl items-center justify-center border ${pickerMode === 'year' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ minHeight: controlHeightMd }} onPress={() => setPickerMode('year')}><AppText className={`font-bold text-sm ${pickerMode === 'year' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Anos</AppText></TouchableOpacity>
             </View>
             {pickerMode === 'month' ? (
               <>
                 <View className="flex-row items-center justify-between mb-3"><TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerYear((x) => x - 1)}><ChevronLeft size={14} color={darkMode ? '#e2e8f0' : '#334155'} /></TouchableOpacity><AppText className="text-slate-900 dark:text-slate-100 font-bold">{pickerYear}</AppText><TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerYear((x) => x + 1)}><ChevronRight size={14} color={darkMode ? '#e2e8f0' : '#334155'} /></TouchableOpacity></View>
-                <View className="flex-row flex-wrap justify-between">{monthNames.map((label, idx) => { const active = monthRef.getFullYear() === pickerYear && monthRef.getMonth() === idx; return <TouchableOpacity key={label} className={`w-[31%] mb-2 h-10 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => { setMonthRef(new Date(pickerYear, idx, 1)); setShowPeriodPicker(false); }}><AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</AppText></TouchableOpacity>; })}</View>
+                <View className="flex-row flex-wrap justify-between">{monthNames.map((label, idx) => { const active = monthRef.getFullYear() === pickerYear && monthRef.getMonth() === idx; return <TouchableOpacity key={label} className={`mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ width: gridPickerWidth, minHeight: controlHeightMd }} onPress={() => { setMonthRef(new Date(pickerYear, idx, 1)); setShowPeriodPicker(false); }}><AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</AppText></TouchableOpacity>; })}</View>
               </>
             ) : (
-              <View className="flex-row flex-wrap justify-between">{yearOptions.map((year) => { const active = monthRef.getFullYear() === year; return <TouchableOpacity key={year} className={`w-[31%] mb-2 h-10 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => { setPickerYear(year); setMonthRef((p) => new Date(year, p.getMonth(), 1)); setPickerMode('month'); }}><AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText></TouchableOpacity>; })}</View>
+              <View className="flex-row flex-wrap justify-between">{yearOptions.map((year) => { const active = monthRef.getFullYear() === year; return <TouchableOpacity key={year} className={`mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ width: gridPickerWidth, minHeight: controlHeightMd }} onPress={() => { setPickerYear(year); setMonthRef((p) => new Date(year, p.getMonth(), 1)); setPickerMode('month'); }}><AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText></TouchableOpacity>; })}</View>
             )}
           </View>
         </View>

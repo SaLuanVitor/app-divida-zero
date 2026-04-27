@@ -10,6 +10,7 @@ import { getAdminAnalyticsOverview } from '../../services/admin';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { AdminAnalyticsOverviewDto } from '../../types/admin';
+import { textClampLines } from '../../utils/responsive';
 
 const PERIOD_OPTIONS = [7, 30, 90, 180] as const;
 
@@ -139,7 +140,7 @@ const AdminDashboard = ({ navigation }: any) => {
               <Calendar size={16} color="#334155" />
               <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Periodo analisado</AppText>
             </View>
-            <Button title="Atualizar" variant="outline" className="h-9 px-3" onPress={() => void load(periodDays)} />
+            <Button title="Atualizar" variant="outline" className="px-3" onPress={() => void load(periodDays)} />
           </View>
           <View className="flex-row flex-wrap gap-2">
             {PERIOD_OPTIONS.map((days) => {
@@ -173,7 +174,9 @@ const AdminDashboard = ({ navigation }: any) => {
         ) : (
           <>
             <Card className="p-4 mb-3">
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">Visao geral</AppText>
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base" numberOfLines={1}>
+                Visao geral
+              </AppText>
               <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
                 Saude da base e adocao no periodo selecionado.
               </AppText>
@@ -192,7 +195,9 @@ const AdminDashboard = ({ navigation }: any) => {
                 </View>
               </View>
               <View className="mt-3 rounded-xl bg-slate-50 dark:bg-[#111827] px-3 py-2">
-                <AppText className="text-slate-600 dark:text-slate-200 text-xs">{userHealthInsight}</AppText>
+                <AppText className="text-slate-600 dark:text-slate-200 text-xs" numberOfLines={textClampLines('card')} ellipsizeMode="tail">
+                  {userHealthInsight}
+                </AppText>
               </View>
             </Card>
 
@@ -235,7 +240,7 @@ const AdminDashboard = ({ navigation }: any) => {
             <Card className="p-4 mb-3">
               <View className="flex-row items-center">
                 <TrendingUp size={16} color="#334155" />
-                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Usuarios e atividade</AppText>
+                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2 flex-1" numberOfLines={1}>Usuarios e atividade</AppText>
               </View>
               <View className="mt-3 gap-2">
                 <View className="flex-row items-center justify-between">
@@ -248,19 +253,19 @@ const AdminDashboard = ({ navigation }: any) => {
                 </View>
                 <View className="flex-row items-center justify-between">
                   <AppText className="text-slate-600 dark:text-slate-200 text-sm">Evento mais frequente</AppText>
-                  <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold">
+                  <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold flex-1 text-right" numberOfLines={textClampLines('list')} ellipsizeMode="tail">
                     {topEvent?.event_name || 'Sem dados'}
                   </AppText>
                 </View>
                 <View className="flex-row items-center justify-between">
                   <AppText className="text-slate-600 dark:text-slate-200 text-sm">Tela mais acessada</AppText>
-                  <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold">
+                  <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold flex-1 text-right" numberOfLines={textClampLines('list')} ellipsizeMode="tail">
                     {topScreen?.screen || 'Sem dados'}
                   </AppText>
                 </View>
               </View>
               <View className="mt-3 rounded-xl bg-slate-50 dark:bg-[#111827] px-3 py-2">
-                <AppText className="text-slate-600 dark:text-slate-200 text-xs">
+                <AppText className="text-slate-600 dark:text-slate-200 text-xs" numberOfLines={textClampLines('card')} ellipsizeMode="tail">
                   {onboardingInsight}
                 </AppText>
               </View>
@@ -285,7 +290,9 @@ const AdminDashboard = ({ navigation }: any) => {
               </View>
 
               <View className="mt-3 rounded-xl bg-slate-50 dark:bg-[#111827] px-3 py-2">
-                <AppText className="text-slate-600 dark:text-slate-200 text-xs">{ratingInsight}</AppText>
+                <AppText className="text-slate-600 dark:text-slate-200 text-xs" numberOfLines={textClampLines('card')} ellipsizeMode="tail">
+                  {ratingInsight}
+                </AppText>
               </View>
 
               <View className="mt-3">
@@ -295,7 +302,9 @@ const AdminDashboard = ({ navigation }: any) => {
                 ) : (
                   suggestions.map((item) => (
                     <View key={item.id} className="py-2 border-b border-slate-100 dark:border-slate-800">
-                      <AppText className="text-slate-700 dark:text-slate-200 text-xs">{item.suggestion}</AppText>
+                      <AppText className="text-slate-700 dark:text-slate-200 text-xs" numberOfLines={textClampLines('list')} ellipsizeMode="tail">
+                        {item.suggestion}
+                      </AppText>
                     </View>
                   ))
                 )}
@@ -305,7 +314,7 @@ const AdminDashboard = ({ navigation }: any) => {
             <Card className="p-4 mb-3">
               <View className="flex-row items-center">
                 <Users size={16} color="#334155" />
-                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Acoes rapidas</AppText>
+                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2 flex-1" numberOfLines={1}>Acoes rapidas</AppText>
               </View>
               <View className="flex-row gap-2 mt-3">
                 <TouchableOpacity
@@ -346,4 +355,3 @@ const AdminDashboard = ({ navigation }: any) => {
 };
 
 export default AdminDashboard;
-

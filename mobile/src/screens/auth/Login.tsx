@@ -149,7 +149,7 @@ const Login = () => {
             className="text-[#7a5a35] dark:text-slate-100"
           />
 
-          <Button title="Entrar" onPress={handleLogin} loading={authLoading} disabled={authLoading} className="h-14" />
+          <Button title="Entrar" onPress={handleLogin} loading={authLoading} disabled={authLoading} />
         </View>
 
         <View className="mt-8 flex-row justify-center items-center pb-10">

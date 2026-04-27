@@ -3,6 +3,7 @@ import { StyleSheet, TextInput, TextInputProps, TextStyle } from 'react-native';
 import { cssInterop } from 'nativewind';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { useFormKeyboard } from '../context/FormKeyboardContext';
+import { controlHeight } from '../utils/responsive';
 
 const DEFAULT_INPUT_FONT_SIZE = 16;
 
@@ -15,8 +16,7 @@ const AppTextInputBase: React.FC<AppTextInputProps> = ({ style, onFocus, ...rest
   const baseFontSize = typeof flattened?.fontSize === 'number' ? flattened.fontSize : DEFAULT_INPUT_FONT_SIZE;
   const baseLineHeight = typeof flattened?.lineHeight === 'number' ? flattened.lineHeight : undefined;
   const baseHeight = typeof flattened?.height === 'number' ? flattened.height : 44;
-  const scaledHeight = Math.round(baseHeight * Math.max(fontScale, 1));
-  const targetHeight = Math.max(scaledHeight, largerTouchTargets ? 52 : 44);
+  const targetHeight = controlHeight(fontScale, largerTouchTargets, baseHeight, { minTouchHeight: 44 });
 
   const scaledStyle: TextStyle | undefined =
     fontScale !== 1

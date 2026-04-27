@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Alert } from 'react-native';
 import { User, Lock, ArrowLeft, Sparkles } from 'lucide-react-native';
@@ -185,14 +185,13 @@ const Register = () => {
             onPress={handleRegister}
             loading={loading}
             disabled={loading}
-            className="h-14"
           />
         </View>
 
         <View className="mt-8 flex-row justify-center items-center pb-10">
           <AppText className="text-[#7a4c1e] dark:text-slate-200 text-lg">Já tem uma conta? </AppText>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <AppText className="text-[#8a4c00] dark:text-primary font-bold text-lg">Faça login</AppText>
+            <AppText className="text-[#8a4c00] dark:text-primary font-bold text-lg">faça login</AppText>
           </TouchableOpacity>
         </View>
       </View>
@@ -201,3 +200,5 @@ const Register = () => {
 };
 
 export default Register;
+
+

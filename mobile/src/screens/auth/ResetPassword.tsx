@@ -150,7 +150,7 @@ const ResetPassword = () => {
                 onPress={handleReset}
                 loading={loading}
                 disabled={loading}
-                className="h-14 mt-4"
+                className="mt-4"
             />
         </Layout>
     );

@@ -55,6 +55,7 @@ import {
 } from '../../services/notificationCenter';
 import { NotificationHistoryItem } from '../../types/notificationCenter';
 import { getLocalDailyMessage } from '../../services/localDailyMessage';
+import { threeColumnItemWidth } from '../../utils/responsive';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
 
@@ -261,6 +262,7 @@ const Home = () => {
     const dailyMessage = useMemo(() => getLocalDailyMessage(), []);
     const compactPillHeight = Math.max(Math.round(36 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 36);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
+    const pickerGridWidth = useMemo(() => threeColumnItemWidth(Math.min(windowWidth - 48, 420), 8), [windowWidth]);
 
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1455,8 +1457,8 @@ const Home = () => {
                                         return (
                                             <TouchableOpacity
                                                 key={label}
-                                                className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
-                                                style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
+                                                className={`mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                                style={{ width: pickerGridWidth, minHeight: pickerTabHeight }}
                                                 onPress={() => selectMonth(index)}
                                             >
                                                 <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</AppText>
@@ -1484,8 +1486,8 @@ const Home = () => {
                                     const active = currentMonth.getFullYear() === year;
                                     return (
                                         <TouchableOpacity
-                                            className={`w-[31%] mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
-                                            style={{ minHeight: pickerTabHeight, height: pickerTabHeight }}
+                                            className={`mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`}
+                                            style={{ width: pickerGridWidth, minHeight: pickerTabHeight }}
                                             onPress={() => selectYear(year)}
                                         >
                                             <AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText>

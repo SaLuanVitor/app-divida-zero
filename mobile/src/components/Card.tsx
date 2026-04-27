@@ -25,12 +25,22 @@ const Card: React.FC<CardProps> = ({
             {(title || subtitle) && (
                 <View className="p-4 border-b border-slate-50 dark:border-slate-800">
                     {title && (
-                        <AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg leading-tight">
+                        <AppText
+                            className="text-slate-900 dark:text-slate-100 font-bold text-lg leading-tight"
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                            style={{ flexShrink: 1 }}
+                        >
                             {title}
                         </AppText>
                     )}
                     {subtitle && (
-                        <AppText className="text-slate-500 dark:text-slate-200 text-sm mt-1">
+                        <AppText
+                            className="text-slate-500 dark:text-slate-200 text-sm mt-1"
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                            style={{ flexShrink: 1 }}
+                        >
                             {subtitle}
                         </AppText>
                     )}

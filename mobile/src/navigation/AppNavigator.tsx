@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, TouchableOpacity, Pressable, StyleSheet, LayoutChangeEvent, Modal, useWindowDimensions, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +26,7 @@ import AppText from '../components/AppText';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { BottomInsetProvider } from '../context/BottomInsetContext';
 import TutorialTarget from '../components/tutorial/TutorialTarget';
+import { controlHeight, isCompactDevice, resolveTabLabel } from '../utils/responsive';
 
 const Tab = createBottomTabNavigator();
 
@@ -38,6 +39,8 @@ const NavItem = ({
     largerTouchTargets,
     slotStyle,
     labelStyle,
+    fontScale,
+    compact,
 }: {
     label: string;
     active: boolean;
@@ -47,15 +50,18 @@ const NavItem = ({
     largerTouchTargets: boolean;
     slotStyle?: StyleProp<ViewStyle>;
     labelStyle?: StyleProp<TextStyle>;
+    fontScale: number;
+    compact: boolean;
 }) => (
     <TouchableOpacity onPress={onPress} style={[styles.navItem, largerTouchTargets && styles.navItemLarge, slotStyle]}>
         {icon}
         <AppText
             numberOfLines={1}
             maxUserFontScale={1.15}
+            ellipsizeMode="tail"
             style={[styles.navText, darkMode && styles.navTextDark, active && styles.navTextActive, labelStyle]}
         >
-            {label}
+            {resolveTabLabel(label, fontScale, compact)}
         </AppText>
     </TouchableOpacity>
 );
@@ -68,7 +74,7 @@ const CustomTabBar = ({
     const insets = useSafeAreaInsets();
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
     const { darkMode } = useThemeMode();
-    const { largerTouchTargets } = useAccessibility();
+    const { largerTouchTargets, fontScale } = useAccessibility();
     const { width: screenWidth } = useWindowDimensions();
 
     const showActions = isOverlayOpen('actions');
@@ -106,7 +112,7 @@ const CustomTabBar = ({
     );
 
     const actionsBottom = Math.max(96, insets.bottom + 88);
-    const compact = screenWidth < 380;
+    const compact = isCompactDevice(screenWidth);
     const roomy = screenWidth >= 430;
     const slotMinWidth = Math.max(60, Math.floor((screenWidth - 16) / 5));
     const iconSize = compact ? 18 : 20;
@@ -114,7 +120,7 @@ const CustomTabBar = ({
     const centerLift = compact ? -22 : roomy ? -30 : -26;
     const labelFontSize = compact ? 9 : 10;
     const centerLabelWidth = compact ? 78 : 90;
-    const baseSlotHeight = Math.max(largerTouchTargets ? 62 : 56, compact ? 56 : 58);
+    const baseSlotHeight = controlHeight(fontScale, largerTouchTargets, compact ? 56 : 58, { minTouchHeight: 52 });
 
     return (
         <>
@@ -161,6 +167,8 @@ const CustomTabBar = ({
                         largerTouchTargets={largerTouchTargets}
                         slotStyle={{ minWidth: slotMinWidth, minHeight: baseSlotHeight }}
                         labelStyle={{ fontSize: labelFontSize }}
+                        fontScale={fontScale}
+                        compact={compact}
                     />
 
                     <TutorialTarget targetId="tab-metas">
@@ -173,6 +181,8 @@ const CustomTabBar = ({
                             largerTouchTargets={largerTouchTargets}
                             slotStyle={{ minWidth: slotMinWidth, minHeight: baseSlotHeight }}
                             labelStyle={{ fontSize: labelFontSize }}
+                            fontScale={fontScale}
+                            compact={compact}
                         />
                     </TutorialTarget>
 
@@ -202,7 +212,7 @@ const CustomTabBar = ({
                                 { width: centerLabelWidth, fontSize: labelFontSize, lineHeight: compact ? 11 : 12 },
                             ]}
                         >
-                            Lançamentos
+                            {resolveTabLabel('Lancamentos', fontScale, compact)}
                         </AppText>
                     </TutorialTarget>
 
@@ -216,6 +226,8 @@ const CustomTabBar = ({
                             largerTouchTargets={largerTouchTargets}
                             slotStyle={{ minWidth: slotMinWidth, minHeight: baseSlotHeight }}
                             labelStyle={{ fontSize: labelFontSize }}
+                            fontScale={fontScale}
+                            compact={compact}
                         />
                     </TutorialTarget>
 
@@ -229,6 +241,8 @@ const CustomTabBar = ({
                             largerTouchTargets={largerTouchTargets}
                             slotStyle={{ minWidth: slotMinWidth, minHeight: baseSlotHeight }}
                             labelStyle={{ fontSize: labelFontSize }}
+                            fontScale={fontScale}
+                            compact={compact}
                         />
                     </TutorialTarget>
                 </View>
@@ -296,6 +310,8 @@ const styles = StyleSheet.create({
         marginTop: 4,
         fontWeight: '700',
         color: '#8a7560',
+        textAlign: 'center',
+        flexShrink: 1,
     },
     navTextDark: {
         color: '#94a3b8',
@@ -402,11 +418,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         width: 88,
         lineHeight: 12,
+        flexShrink: 1,
     },
     centerButtonTextDark: {
         color: '#94a3b8',
     },
 });
+
 
 
 
