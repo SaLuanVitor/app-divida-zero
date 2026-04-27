@@ -86,9 +86,13 @@ class Api::V1::Admin::AnalyticsControllerTest < ActionDispatch::IntegrationTest
     assert body.dig("app_ratings", "total_responses") >= 1
     assert body.dig("app_ratings", "distributions", "usability").is_a?(Array)
     assert body.dig("engagement", "logins_in_period") >= 1
+    assert body.dig("engagement", "activity_rate_pct").is_a?(Numeric)
     assert body.dig("app_usage", "total_events") >= 3
     assert body.dig("onboarding_tutorial_funnel", "onboarding_viewed") >= 1
     assert body.dig("financial_overview", "records_in_period") >= 2
+    assert body.dig("financial_overview", "settled_income_total").is_a?(Numeric)
+    assert body.dig("financial_overview", "settled_expense_total").is_a?(Numeric)
+    assert body.dig("financial_overview", "settled_net_balance").is_a?(Numeric)
   end
 
   test "overview blocks non admin users" do

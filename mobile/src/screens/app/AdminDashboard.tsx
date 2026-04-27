@@ -22,6 +22,15 @@ const dimensionLabels: Record<string, string> = {
 
 const PERIOD_OPTIONS = [7, 30, 90, 180] as const;
 
+const toNumber = (value: unknown): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const toFixedSafe = (value: unknown, digits = 2): string => {
+  return toNumber(value).toFixed(digits);
+};
+
 const AdminDashboard = ({ navigation }: any) => {
   const { darkMode } = useThemeMode();
   const { signOut } = useAuth();
@@ -134,20 +143,20 @@ const AdminDashboard = ({ navigation }: any) => {
               <View className="gap-2">
                 <View className="flex-row items-center">
                   <Users size={16} color="#334155" />
-                  <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">Total de contas: {users?.total ?? 0}</AppText>
+                  <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">Total de contas: {toNumber(users?.total)}</AppText>
                 </View>
                 <View className="flex-row items-center">
                   <UserCheck size={16} color="#16a34a" />
-                  <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">Ativas: {users?.active ?? 0}</AppText>
+                  <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">Ativas: {toNumber(users?.active)}</AppText>
                 </View>
                 <View className="flex-row items-center">
                   <UserX size={16} color="#dc2626" />
-                  <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">Inativas: {users?.inactive ?? 0}</AppText>
+                  <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">Inativas: {toNumber(users?.inactive)}</AppText>
                 </View>
                 <View className="flex-row items-center">
                   <BarChart3 size={16} color="#f48c25" />
                   <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">
-                    Respostas de avaliação: {overview?.app_ratings?.total_responses ?? 0}
+                    Respostas de avaliação: {toNumber(overview?.app_ratings?.total_responses)}
                   </AppText>
                 </View>
               </View>
@@ -157,13 +166,13 @@ const AdminDashboard = ({ navigation }: any) => {
               <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Engajamento</AppText>
               <View className="gap-2">
                 <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Logins no período: {engagement?.logins_in_period ?? 0}
+                  Logins no período: {toNumber(engagement?.logins_in_period)}
                 </AppText>
                 <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Usuários ativos (7d/30d): {engagement?.active_users_7d ?? 0} / {engagement?.active_users_30d ?? 0}
+                  Usuários ativos (7d/30d): {toNumber(engagement?.active_users_7d)} / {toNumber(engagement?.active_users_30d)}
                 </AppText>
                 <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Taxa de atividade: {(engagement?.activity_rate_pct ?? 0).toFixed(2)}%
+                  Taxa de atividade: {toFixedSafe(engagement?.activity_rate_pct, 2)}%
                 </AppText>
               </View>
             </Card>
@@ -171,7 +180,7 @@ const AdminDashboard = ({ navigation }: any) => {
             <Card className="p-4 mb-3">
               <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Uso do app</AppText>
               <AppText className="text-slate-700 dark:text-slate-200 text-sm mb-2">
-                Eventos no período: {appUsage?.total_events ?? 0} • Sessões: {appUsage?.sessions ?? 0}
+                Eventos no período: {toNumber(appUsage?.total_events)} • Sessões: {toNumber(appUsage?.sessions)}
               </AppText>
               <AppText className="text-slate-700 dark:text-slate-200 text-xs font-semibold mb-1">Top eventos</AppText>
               {topEvents.length === 0 ? (
@@ -179,7 +188,7 @@ const AdminDashboard = ({ navigation }: any) => {
               ) : (
                 topEvents.map((item) => (
                   <AppText key={item.event_name} className="text-slate-600 dark:text-slate-200 text-xs mb-1">
-                    • {item.event_name}: {item.count}
+                    • {item.event_name}: {toNumber(item.count)}
                   </AppText>
                 ))
               )}
@@ -189,7 +198,7 @@ const AdminDashboard = ({ navigation }: any) => {
               ) : (
                 topScreens.map((item) => (
                   <AppText key={item.screen} className="text-slate-600 dark:text-slate-200 text-xs mb-1">
-                    • {item.screen}: {item.count}
+                    • {item.screen}: {toNumber(item.count)}
                   </AppText>
                 ))
               )}
@@ -198,12 +207,12 @@ const AdminDashboard = ({ navigation }: any) => {
             <Card className="p-4 mb-3">
               <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Funil onboarding/tutorial</AppText>
               <View className="gap-1">
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Onboarding visto: {funnel?.onboarding_viewed ?? 0}</AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Concluído: {funnel?.onboarding_completed ?? 0}</AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Pulado: {funnel?.onboarding_skipped ?? 0}</AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Tutorial reaberto: {funnel?.tutorial_reopened ?? 0}</AppText>
+                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Onboarding visto: {toNumber(funnel?.onboarding_viewed)}</AppText>
+                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Concluído: {toNumber(funnel?.onboarding_completed)}</AppText>
+                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Pulado: {toNumber(funnel?.onboarding_skipped)}</AppText>
+                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Tutorial reaberto: {toNumber(funnel?.tutorial_reopened)}</AppText>
                 <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Modo iniciante/avançado: {funnel?.onboarding_mode?.beginner ?? 0} / {funnel?.onboarding_mode?.advanced ?? 0}
+                  Modo iniciante/avançado: {toNumber(funnel?.onboarding_mode?.beginner)} / {toNumber(funnel?.onboarding_mode?.advanced)}
                 </AppText>
               </View>
             </Card>
@@ -212,19 +221,19 @@ const AdminDashboard = ({ navigation }: any) => {
               <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Financeiro agregado</AppText>
               <View className="gap-1">
                 <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Receitas/Despesas (liquidadas): {Number(financial?.settled_income_total ?? 0).toFixed(2)} / {Number(financial?.settled_expense_total ?? 0).toFixed(2)}
+                  Receitas/Despesas (liquidadas): {toFixedSafe(financial?.settled_income_total, 2)} / {toFixedSafe(financial?.settled_expense_total, 2)}
                 </AppText>
                 <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Saldo líquido quitado: {Number(financial?.settled_net_balance ?? 0).toFixed(2)}
+                  Saldo líquido quitado: {toFixedSafe(financial?.settled_net_balance, 2)}
                 </AppText>
                 <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Registros no período: {financial?.records_in_period ?? 0}
+                  Registros no período: {toNumber(financial?.records_in_period)}
                 </AppText>
                 <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Metas ativas/concluídas: {financial?.goals_active ?? 0} / {financial?.goals_completed ?? 0}
+                  Metas ativas/concluídas: {toNumber(financial?.goals_active)} / {toNumber(financial?.goals_completed)}
                 </AppText>
                 <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Aportes/Retiradas em metas: {Number(financial?.goal_deposit_volume ?? 0).toFixed(2)} / {Number(financial?.goal_withdraw_volume ?? 0).toFixed(2)}
+                  Aportes/Retiradas em metas: {toFixedSafe(financial?.goal_deposit_volume, 2)} / {toFixedSafe(financial?.goal_withdraw_volume, 2)}
                 </AppText>
               </View>
             </Card>
@@ -233,7 +242,7 @@ const AdminDashboard = ({ navigation }: any) => {
               <Card className="p-4 mb-3">
                 <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Médias por dimensão</AppText>
                 {Object.entries(overview.app_ratings.averages).map(([key, value]) => {
-                  const score = Number(value || 0);
+                  const score = toNumber(value);
                   const widthPct = Math.max(0, Math.min(100, (score / 5) * 100));
                   return (
                     <View key={key} className="mb-3">
@@ -277,7 +286,7 @@ const AdminDashboard = ({ navigation }: any) => {
                 users.created_trend.slice(-7).map((item) => (
                   <View key={item.date} className="flex-row items-center justify-between py-1">
                     <AppText className="text-slate-600 dark:text-slate-200 text-xs">{item.date}</AppText>
-                    <AppText className="text-slate-900 dark:text-slate-100 text-xs font-semibold">{item.count}</AppText>
+                    <AppText className="text-slate-900 dark:text-slate-100 text-xs font-semibold">{toNumber(item.count)}</AppText>
                   </View>
                 ))
               ) : (
@@ -309,3 +318,4 @@ const AdminDashboard = ({ navigation }: any) => {
 };
 
 export default AdminDashboard;
+

@@ -29,8 +29,8 @@
           goal_contributions_scope = FinancialGoalContribution.where("created_at >= ? AND created_at <= ?", period_start, period_end)
 
           settled_totals = records_scope.where.not(status: "pending").group(:flow_type).sum(:amount)
-          settled_income_total = settled_totals.fetch("income", 0).to_d
-          settled_expense_total = settled_totals.fetch("expense", 0).to_d
+          settled_income_total = numeric_value(settled_totals.fetch("income", 0))
+          settled_expense_total = numeric_value(settled_totals.fetch("expense", 0))
 
           render json: {
             period_days: days,
@@ -62,11 +62,11 @@
               by_status: grouped_totals(records_scope.group(:status).sum(:amount)),
               settled_income_total: settled_income_total,
               settled_expense_total: settled_expense_total,
-              settled_net_balance: settled_income_total - settled_expense_total,
+              settled_net_balance: numeric_value(settled_income_total - settled_expense_total),
               goals_active: FinancialGoal.where(status: "active").count,
               goals_completed: FinancialGoal.where(status: "completed").count,
-              goal_deposit_volume: goal_contributions_scope.where(kind: "deposit").sum(:amount).to_d,
-              goal_withdraw_volume: goal_contributions_scope.where(kind: "withdraw").sum(:amount).to_d
+              goal_deposit_volume: numeric_value(goal_contributions_scope.where(kind: "deposit").sum(:amount)),
+              goal_withdraw_volume: numeric_value(goal_contributions_scope.where(kind: "withdraw").sum(:amount))
             },
             app_ratings: {
               total_responses: ratings_scope.count,
@@ -87,9 +87,9 @@
         end
 
         def activity_rate(total_users, active_users)
-          return 0.to_d if total_users <= 0
+          return 0.0 if total_users <= 0
 
-          ((active_users.to_d / total_users.to_d) * 100).round(2)
+          numeric_value((active_users.to_d / total_users.to_d) * 100)
         end
 
         def users_created_trend(period_start)
@@ -156,8 +156,12 @@
 
         def grouped_totals(grouped_values)
           grouped_values.each_with_object({}) do |(key, value), result|
-            result[key.to_s] = value.to_d
+            result[key.to_s] = numeric_value(value)
           end
+        end
+
+        def numeric_value(value)
+          value.to_d.round(2).to_f
         end
 
         def averages_for(scope)
