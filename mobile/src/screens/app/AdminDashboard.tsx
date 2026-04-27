@@ -1,24 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
-import { BarChart3, Calendar, LogOut, RefreshCw, ShieldCheck, Users, UserCheck, UserX } from 'lucide-react-native';
+import { Calendar, LogOut, RefreshCw, ShieldCheck, TrendingUp, Users } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import AppText from '../../components/AppText';
 import Button from '../../components/Button';
+import DonutChart from '../../components/admin/DonutChart';
 import { getAdminAnalyticsOverview } from '../../services/admin';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { AdminAnalyticsOverviewDto } from '../../types/admin';
-
-const dimensionLabels: Record<string, string> = {
-  usability: 'Usabilidade',
-  helpfulness: 'Utilidade',
-  calendar: 'Calendário',
-  alerts: 'Avisos',
-  goals: 'Metas',
-  reports: 'Relatórios',
-  records: 'Lançamentos',
-};
 
 const PERIOD_OPTIONS = [7, 30, 90, 180] as const;
 
@@ -27,13 +18,14 @@ const toNumber = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const toFixedSafe = (value: unknown, digits = 2): string => {
-  return toNumber(value).toFixed(digits);
-};
+const toFixedSafe = (value: unknown, digits = 2): string => toNumber(value).toFixed(digits);
+
+const toPercentSafe = (value: unknown): string => `${toFixedSafe(value, 2)}%`;
 
 const AdminDashboard = ({ navigation }: any) => {
   const { darkMode } = useThemeMode();
   const { signOut } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [periodDays, setPeriodDays] = useState<number>(30);
@@ -46,7 +38,7 @@ const AdminDashboard = ({ navigation }: any) => {
       const response = await getAdminAnalyticsOverview({ days: nextDays });
       setOverview(response);
     } catch (err: any) {
-      const message = err?.response?.data?.error ?? 'Não foi possível carregar métricas administrativas.';
+      const message = err?.response?.data?.error ?? 'Nao foi possivel carregar metricas administrativas.';
       setError(message);
     } finally {
       setLoading(false);
@@ -57,35 +49,77 @@ const AdminDashboard = ({ navigation }: any) => {
     void load(30);
   }, []);
 
-  const topSuggestions = useMemo(() => {
-    const items = overview?.app_ratings?.recent_suggestions?.items;
-    return Array.isArray(items) ? items.slice(0, 5) : [];
-  }, [overview]);
-
-  const topEvents = useMemo(() => {
-    const items = overview?.app_usage?.top_events ?? [];
-    return items.slice(0, 5);
-  }, [overview]);
-
-  const topScreens = useMemo(() => {
-    const items = overview?.app_usage?.top_screens ?? [];
-    return items.slice(0, 5);
-  }, [overview]);
-
   const users = overview?.users;
   const engagement = overview?.engagement;
   const appUsage = overview?.app_usage;
   const funnel = overview?.onboarding_tutorial_funnel;
-  const financial = overview?.financial_overview;
+  const ratings = overview?.app_ratings;
+
+  const createdTrendLast7 = useMemo(() => (users?.created_trend ?? []).slice(-7), [users?.created_trend]);
+
+  const suggestions = useMemo(
+    () => (ratings?.recent_suggestions?.items ?? []).slice(0, 3),
+    [ratings?.recent_suggestions?.items]
+  );
+
+  const onboardingPending = useMemo(() => {
+    const viewed = toNumber(funnel?.onboarding_viewed);
+    const completed = toNumber(funnel?.onboarding_completed);
+    const skipped = toNumber(funnel?.onboarding_skipped);
+    return Math.max(0, viewed - completed - skipped);
+  }, [funnel?.onboarding_completed, funnel?.onboarding_skipped, funnel?.onboarding_viewed]);
+
+  const averageRating = useMemo(() => {
+    const avg = ratings?.averages;
+    if (!avg) return 0;
+    const values = [
+      toNumber(avg.usability),
+      toNumber(avg.helpfulness),
+      toNumber(avg.calendar),
+      toNumber(avg.alerts),
+      toNumber(avg.goals),
+      toNumber(avg.reports),
+      toNumber(avg.records),
+    ];
+    const valid = values.filter((value) => value > 0);
+    if (valid.length === 0) return 0;
+    return valid.reduce((acc, value) => acc + value, 0) / valid.length;
+  }, [ratings?.averages]);
+
+  const activeUsers = toNumber(users?.active);
+  const inactiveUsers = toNumber(users?.inactive);
+  const totalUsers = toNumber(users?.total);
+  const totalEvents = toNumber(appUsage?.total_events);
+  const totalSessions = toNumber(appUsage?.sessions);
+  const loginsInPeriod = toNumber(engagement?.logins_in_period);
+  const activityRate = toNumber(engagement?.activity_rate_pct);
+
+  const topEvent = (appUsage?.top_events ?? [])[0];
+  const topScreen = (appUsage?.top_screens ?? [])[0];
+
+  const userHealthInsight =
+    inactiveUsers > activeUsers * 0.25
+      ? 'Atencao: base com taxa de inatividade elevada. Planeje reativacao.'
+      : 'Bom sinal: maioria da base permanece ativa no periodo.';
+
+  const onboardingInsight =
+    toNumber(funnel?.onboarding_completed) < toNumber(funnel?.onboarding_viewed) * 0.5
+      ? 'Atencao: conclusao do onboarding baixa. Revise passos iniciais.'
+      : 'Bom sinal: onboarding com conversao saudavel.';
+
+  const ratingInsight =
+    averageRating < 3.5
+      ? 'Atencao: satisfacao geral abaixo do esperado. Priorize pontos de atrito.'
+      : 'Bom sinal: satisfacao dos usuarios consistente no periodo.';
 
   return (
     <Layout contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
       <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-2">
-            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Portal Admin</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-black">Painel Administrativo</AppText>
             <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-              Painel operacional geral do aplicativo.
+              Visao executiva para acompanhamento da saude do aplicativo.
             </AppText>
           </View>
           <TouchableOpacity
@@ -103,7 +137,7 @@ const AdminDashboard = ({ navigation }: any) => {
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center">
               <Calendar size={16} color="#334155" />
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Período</AppText>
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Periodo analisado</AppText>
             </View>
             <Button title="Atualizar" variant="outline" className="h-9 px-3" onPress={() => void load(periodDays)} />
           </View>
@@ -139,179 +173,173 @@ const AdminDashboard = ({ navigation }: any) => {
         ) : (
           <>
             <Card className="p-4 mb-3">
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">KPIs principais</AppText>
-              <View className="gap-2">
-                <View className="flex-row items-center">
-                  <Users size={16} color="#334155" />
-                  <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">Total de contas: {toNumber(users?.total)}</AppText>
-                </View>
-                <View className="flex-row items-center">
-                  <UserCheck size={16} color="#16a34a" />
-                  <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">Ativas: {toNumber(users?.active)}</AppText>
-                </View>
-                <View className="flex-row items-center">
-                  <UserX size={16} color="#dc2626" />
-                  <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">Inativas: {toNumber(users?.inactive)}</AppText>
-                </View>
-                <View className="flex-row items-center">
-                  <BarChart3 size={16} color="#f48c25" />
-                  <AppText className="text-slate-700 dark:text-slate-200 text-sm ml-2">
-                    Respostas de avaliação: {toNumber(overview?.app_ratings?.total_responses)}
-                  </AppText>
-                </View>
-              </View>
-            </Card>
-
-            <Card className="p-4 mb-3">
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Engajamento</AppText>
-              <View className="gap-2">
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Logins no período: {toNumber(engagement?.logins_in_period)}
-                </AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Usuários ativos (7d/30d): {toNumber(engagement?.active_users_7d)} / {toNumber(engagement?.active_users_30d)}
-                </AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Taxa de atividade: {toFixedSafe(engagement?.activity_rate_pct, 2)}%
-                </AppText>
-              </View>
-            </Card>
-
-            <Card className="p-4 mb-3">
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Uso do app</AppText>
-              <AppText className="text-slate-700 dark:text-slate-200 text-sm mb-2">
-                Eventos no período: {toNumber(appUsage?.total_events)} • Sessões: {toNumber(appUsage?.sessions)}
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">Visao geral</AppText>
+              <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                Saude da base e adocao no periodo selecionado.
               </AppText>
-              <AppText className="text-slate-700 dark:text-slate-200 text-xs font-semibold mb-1">Top eventos</AppText>
-              {topEvents.length === 0 ? (
-                <AppText className="text-slate-500 dark:text-slate-200 text-xs">Sem dados no período.</AppText>
-              ) : (
-                topEvents.map((item) => (
-                  <AppText key={item.event_name} className="text-slate-600 dark:text-slate-200 text-xs mb-1">
-                    • {item.event_name}: {toNumber(item.count)}
-                  </AppText>
-                ))
-              )}
-              <AppText className="text-slate-700 dark:text-slate-200 text-xs font-semibold mt-2 mb-1">Top telas</AppText>
-              {topScreens.length === 0 ? (
-                <AppText className="text-slate-500 dark:text-slate-200 text-xs">Sem dados no período.</AppText>
-              ) : (
-                topScreens.map((item) => (
-                  <AppText key={item.screen} className="text-slate-600 dark:text-slate-200 text-xs mb-1">
-                    • {item.screen}: {toNumber(item.count)}
-                  </AppText>
-                ))
-              )}
+              <View className="mt-3 gap-2">
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Contas totais</AppText>
+                  <AppText className="text-slate-900 dark:text-slate-100 text-lg font-black">{totalUsers}</AppText>
+                </View>
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Logins no periodo</AppText>
+                  <AppText className="text-slate-900 dark:text-slate-100 text-lg font-black">{loginsInPeriod}</AppText>
+                </View>
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Taxa de atividade</AppText>
+                  <AppText className="text-emerald-700 dark:text-emerald-300 text-lg font-black">{toPercentSafe(activityRate)}</AppText>
+                </View>
+              </View>
+              <View className="mt-3 rounded-xl bg-slate-50 dark:bg-[#111827] px-3 py-2">
+                <AppText className="text-slate-600 dark:text-slate-200 text-xs">{userHealthInsight}</AppText>
+              </View>
             </Card>
 
+            <View className="mb-3 gap-3">
+              <DonutChart
+                title="Usuarios e atividade"
+                subtitle="Ativos x inativos na base atual."
+                centerLabel="Ativos"
+                centerValue={String(activeUsers)}
+                segments={[
+                  { label: 'Ativos', value: activeUsers, color: '#16a34a' },
+                  { label: 'Inativos', value: inactiveUsers, color: '#ef4444' },
+                ]}
+              />
+
+              <DonutChart
+                title="Funil de onboarding"
+                subtitle="Conversao da adocao inicial no periodo."
+                centerLabel="Concluidos"
+                centerValue={String(toNumber(funnel?.onboarding_completed))}
+                segments={[
+                  { label: 'Concluidos', value: toNumber(funnel?.onboarding_completed), color: '#0ea5e9' },
+                  { label: 'Pulados', value: toNumber(funnel?.onboarding_skipped), color: '#f59e0b' },
+                  { label: 'Pendentes', value: onboardingPending, color: '#94a3b8' },
+                ]}
+              />
+
+              <DonutChart
+                title="Satisfacao dos usuarios"
+                subtitle="Media consolidada das avaliacoes (0 a 5)."
+                centerLabel="Media geral"
+                centerValue={toFixedSafe(averageRating, 2)}
+                segments={[
+                  { label: 'Media', value: averageRating, color: '#8b5cf6' },
+                  { label: 'Gap ate 5', value: Math.max(0, 5 - averageRating), color: '#cbd5e1' },
+                ]}
+              />
+            </View>
+
             <Card className="p-4 mb-3">
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Funil onboarding/tutorial</AppText>
-              <View className="gap-1">
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Onboarding visto: {toNumber(funnel?.onboarding_viewed)}</AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Concluído: {toNumber(funnel?.onboarding_completed)}</AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Pulado: {toNumber(funnel?.onboarding_skipped)}</AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">Tutorial reaberto: {toNumber(funnel?.tutorial_reopened)}</AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Modo iniciante/avançado: {toNumber(funnel?.onboarding_mode?.beginner)} / {toNumber(funnel?.onboarding_mode?.advanced)}
+              <View className="flex-row items-center">
+                <TrendingUp size={16} color="#334155" />
+                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Usuarios e atividade</AppText>
+              </View>
+              <View className="mt-3 gap-2">
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Eventos de uso</AppText>
+                  <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold">{totalEvents}</AppText>
+                </View>
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Sessoes no periodo</AppText>
+                  <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold">{totalSessions}</AppText>
+                </View>
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Evento mais frequente</AppText>
+                  <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold">
+                    {topEvent?.event_name || 'Sem dados'}
+                  </AppText>
+                </View>
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Tela mais acessada</AppText>
+                  <AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold">
+                    {topScreen?.screen || 'Sem dados'}
+                  </AppText>
+                </View>
+              </View>
+              <View className="mt-3 rounded-xl bg-slate-50 dark:bg-[#111827] px-3 py-2">
+                <AppText className="text-slate-600 dark:text-slate-200 text-xs">
+                  {onboardingInsight}
                 </AppText>
               </View>
             </Card>
 
             <Card className="p-4 mb-3">
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Financeiro agregado</AppText>
-              <View className="gap-1">
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Receitas/Despesas (liquidadas): {toFixedSafe(financial?.settled_income_total, 2)} / {toFixedSafe(financial?.settled_expense_total, 2)}
-                </AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Saldo líquido quitado: {toFixedSafe(financial?.settled_net_balance, 2)}
-                </AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Registros no período: {toNumber(financial?.records_in_period)}
-                </AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Metas ativas/concluídas: {toNumber(financial?.goals_active)} / {toNumber(financial?.goals_completed)}
-                </AppText>
-                <AppText className="text-slate-700 dark:text-slate-200 text-sm">
-                  Aportes/Retiradas em metas: {toFixedSafe(financial?.goal_deposit_volume, 2)} / {toFixedSafe(financial?.goal_withdraw_volume, 2)}
-                </AppText>
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold">Avaliacoes</AppText>
+              <AppText className="text-slate-500 dark:text-slate-300 text-xs mt-1">
+                Percepcao geral dos usuarios e feedback recente.
+              </AppText>
+              <View className="mt-3 gap-2">
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Respostas coletadas</AppText>
+                  <AppText className="text-slate-900 dark:text-slate-100 text-base font-black">
+                    {toNumber(ratings?.total_responses)}
+                  </AppText>
+                </View>
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-slate-600 dark:text-slate-200 text-sm">Media consolidada</AppText>
+                  <AppText className="text-slate-900 dark:text-slate-100 text-base font-black">{toFixedSafe(averageRating, 2)}/5</AppText>
+                </View>
               </View>
-            </Card>
 
-            {overview?.app_ratings?.averages ? (
-              <Card className="p-4 mb-3">
-                <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-3">Médias por dimensão</AppText>
-                {Object.entries(overview.app_ratings.averages).map(([key, value]) => {
-                  const score = toNumber(value);
-                  const widthPct = Math.max(0, Math.min(100, (score / 5) * 100));
-                  return (
-                    <View key={key} className="mb-3">
-                      <View className="flex-row items-center justify-between mb-1">
-                        <AppText className="text-slate-700 dark:text-slate-200 text-xs">{dimensionLabels[key] || key}</AppText>
-                        <AppText className="text-slate-900 dark:text-slate-100 text-xs font-semibold">{score.toFixed(2)}</AppText>
-                      </View>
-                      <View className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                        <View className="h-2 bg-primary" style={{ width: `${widthPct}%` }} />
-                      </View>
+              <View className="mt-3 rounded-xl bg-slate-50 dark:bg-[#111827] px-3 py-2">
+                <AppText className="text-slate-600 dark:text-slate-200 text-xs">{ratingInsight}</AppText>
+              </View>
+
+              <View className="mt-3">
+                <AppText className="text-slate-700 dark:text-slate-200 text-xs font-semibold mb-2">Sugestoes recentes</AppText>
+                {suggestions.length === 0 ? (
+                  <AppText className="text-slate-500 dark:text-slate-300 text-xs">Sem comentarios no periodo.</AppText>
+                ) : (
+                  suggestions.map((item) => (
+                    <View key={item.id} className="py-2 border-b border-slate-100 dark:border-slate-800">
+                      <AppText className="text-slate-700 dark:text-slate-200 text-xs">{item.suggestion}</AppText>
                     </View>
-                  );
-                })}
-              </Card>
-            ) : null}
+                  ))
+                )}
+              </View>
+            </Card>
 
             <Card className="p-4 mb-3">
-              <View className="flex-row items-center justify-between mb-2">
-                <AppText className="text-slate-900 dark:text-slate-100 font-bold">Sugestões recentes</AppText>
-                <TouchableOpacity onPress={() => navigation.navigate('Admin Usuarios')}>
-                  <AppText className="text-primary text-xs font-semibold">Gerenciar usuários</AppText>
+              <View className="flex-row items-center">
+                <Users size={16} color="#334155" />
+                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">Acoes rapidas</AppText>
+              </View>
+              <View className="flex-row gap-2 mt-3">
+                <TouchableOpacity
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-3 flex-row items-center justify-center"
+                  onPress={() => navigation.navigate('Admin Usuarios')}
+                >
+                  <ShieldCheck size={16} color="#0ea5e9" />
+                  <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold ml-2">Gerenciar usuarios</AppText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-3 flex-row items-center justify-center"
+                  onPress={() => void load(periodDays)}
+                >
+                  <RefreshCw size={16} color="#f48c25" />
+                  <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold ml-2">Recarregar painel</AppText>
                 </TouchableOpacity>
               </View>
-              {topSuggestions.length === 0 ? (
-                <AppText className="text-slate-500 dark:text-slate-200 text-sm">Nenhuma sugestão registrada.</AppText>
-              ) : (
-                topSuggestions.map((item: any) => (
-                  <View key={item.id} className="py-2 border-b border-slate-100 dark:border-slate-800">
-                    <AppText className="text-slate-700 dark:text-slate-200 text-sm">{item.suggestion}</AppText>
-                    <AppText className="text-slate-400 dark:text-slate-300 text-[11px] mt-1">
-                      {new Date(item.created_at).toLocaleString('pt-BR')}
-                    </AppText>
-                  </View>
-                ))
-              )}
             </Card>
 
             <Card className="p-4 mb-3">
-              <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-2">Tendência de novos usuários</AppText>
-              {users?.created_trend?.length ? (
-                users.created_trend.slice(-7).map((item) => (
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-2">Tendencia de novos usuarios</AppText>
+              {createdTrendLast7.length ? (
+                createdTrendLast7.map((item) => (
                   <View key={item.date} className="flex-row items-center justify-between py-1">
                     <AppText className="text-slate-600 dark:text-slate-200 text-xs">{item.date}</AppText>
                     <AppText className="text-slate-900 dark:text-slate-100 text-xs font-semibold">{toNumber(item.count)}</AppText>
                   </View>
                 ))
               ) : (
-                <AppText className="text-slate-500 dark:text-slate-200 text-sm">Sem novos cadastros no período.</AppText>
+                <AppText className="text-slate-500 dark:text-slate-300 text-sm">Sem novos cadastros no periodo.</AppText>
               )}
             </Card>
           </>
         )}
-
-        <View className="flex-row gap-2 mb-4">
-          <TouchableOpacity
-            className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-3 flex-row items-center justify-center"
-            onPress={() => navigation.navigate('Admin Usuarios')}
-          >
-            <ShieldCheck size={16} color="#0ea5e9" />
-            <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold ml-2">Usuários</AppText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-3 flex-row items-center justify-center"
-            onPress={() => void load(periodDays)}
-          >
-            <RefreshCw size={16} color="#f48c25" />
-            <AppText className="text-slate-700 dark:text-slate-200 text-sm font-semibold ml-2">Atualizar</AppText>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </Layout>
   );
