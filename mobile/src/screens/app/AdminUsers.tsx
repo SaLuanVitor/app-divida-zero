@@ -30,7 +30,7 @@ const AdminUsers = () => {
       const response = await listAdminUsers({ q: query || undefined, per_page: 50 });
       setUsers(Array.isArray(response.users) ? response.users : []);
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Não foi possível carregar usuários.';
+      const message = error?.response?.data?.error ?? 'NÃ£o foi possÃ­vel carregar usuÃ¡rios.';
       setFeedback({ kind: 'error', message });
     } finally {
       setLoading(false);
@@ -52,7 +52,7 @@ const AdminUsers = () => {
       setFeedback({ kind: 'success', message: result.message });
       await loadUsers();
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Não foi possível atualizar status deste usuário.';
+      const message = error?.response?.data?.error ?? 'NÃ£o foi possÃ­vel atualizar status deste usuÃ¡rio.';
       setFeedback({ kind: 'error', message });
     } finally {
       setSavingId(null);
@@ -69,11 +69,11 @@ const AdminUsers = () => {
       const result = await resetAdminUserPassword(target.id, tempPassword);
       setFeedback({
         kind: 'success',
-        message: `${result.message} Senha temporária: ${tempPassword}`,
+        message: `${result.message} Senha temporÃ¡ria: ${tempPassword}`,
       });
       await loadUsers();
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? 'Não foi possível redefinir a senha agora.';
+      const message = error?.response?.data?.error ?? 'NÃ£o foi possÃ­vel redefinir a senha agora.';
       setFeedback({ kind: 'error', message });
     } finally {
       setSavingId(null);
@@ -90,9 +90,9 @@ const AdminUsers = () => {
             <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
           <View className="flex-1 pr-1">
-            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Admin - Usuários</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Admin - UsuÃ¡rios</AppText>
             <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-              Controle de contas ativas/inativas e senha temporária.
+              Controle de contas ativas/inativas e senha temporÃ¡ria.
             </AppText>
           </View>
         </View>
@@ -111,7 +111,7 @@ const AdminUsers = () => {
             />
           </View>
           <Button
-            title={loading ? 'Buscando...' : 'Buscar usuários'}
+            title={loading ? 'Buscando...' : 'Buscar usuÃ¡rios'}
             onPress={() => void loadUsers()}
             disabled={!canInteract}
             loading={loading}
@@ -165,7 +165,7 @@ const AdminUsers = () => {
                     </View>
                     {item.force_password_change ? (
                       <AppText className="text-amber-700 dark:text-amber-300 text-xs mt-1">
-                        Troca de senha obrigatória pendente.
+                        Troca de senha obrigatÃ³ria pendente.
                       </AppText>
                     ) : null}
                   </View>
@@ -181,7 +181,7 @@ const AdminUsers = () => {
                     className="flex-1 h-10"
                   />
                   <Button
-                    title="Senha temporária"
+                    title="Senha temporÃ¡ria"
                     variant="outline"
                     onPress={() => void handleTemporaryReset(item)}
                     disabled={disabled}
@@ -191,7 +191,7 @@ const AdminUsers = () => {
 
                 {isSelf ? (
                   <AppText className="text-slate-400 dark:text-slate-300 text-[11px] mt-2">
-                    Sua própria conta admin não pode ser inativada.
+                    Sua prÃ³pria conta admin nÃ£o pode ser inativada.
                   </AppText>
                 ) : null}
               </Card>
