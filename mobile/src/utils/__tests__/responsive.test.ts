@@ -25,6 +25,9 @@ describe('responsive utils', () => {
     expect(textClampLines('title')).toBe(1);
     expect(textClampLines('card')).toBe(2);
     expect(textClampLines('list')).toBe(2);
+    expect(textClampLines('kpi_label')).toBe(2);
+    expect(textClampLines('kpi_value')).toBe(1);
+    expect(textClampLines('legend')).toBe(2);
   });
 
   it('calculates three-column width with safe minimum', () => {
@@ -38,4 +41,3 @@ describe('responsive utils', () => {
     expect(resolveTabLabel('Lancamentos', 1, true)).toBe('Lanç.');
   });
 });
-

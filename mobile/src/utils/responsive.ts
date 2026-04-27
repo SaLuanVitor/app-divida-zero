@@ -1,4 +1,4 @@
-export type ClampContext = 'card' | 'list' | 'title';
+export type ClampContext = 'card' | 'list' | 'title' | 'kpi_label' | 'kpi_value' | 'legend';
 
 export const isCompactDevice = (width: number): boolean => width < 380;
 
@@ -20,6 +20,9 @@ export const controlHeight = (
 
 export const textClampLines = (context: ClampContext): number => {
   if (context === 'title') return 1;
+  if (context === 'kpi_value') return 1;
+  if (context === 'kpi_label') return 2;
+  if (context === 'legend') return 2;
   return 2;
 };
 
@@ -42,4 +45,3 @@ export const resolveTabLabel = (label: string, fontScale: number, compact: boole
   if (!needsFallback) return label;
   return TAB_LABEL_FALLBACKS[label] ?? label;
 };
-
