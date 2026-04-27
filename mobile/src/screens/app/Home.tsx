@@ -55,7 +55,7 @@ import {
 } from '../../services/notificationCenter';
 import { NotificationHistoryItem } from '../../types/notificationCenter';
 import { getLocalDailyMessage } from '../../services/localDailyMessage';
-import { threeColumnItemWidth } from '../../utils/responsive';
+import { shouldStackForLargeText, textClampLines, threeColumnItemWidth } from '../../utils/responsive';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
 
@@ -261,12 +261,18 @@ const Home = () => {
     const [onboardingPrimaryGoal, setOnboardingPrimaryGoal] = useState<'organize_month' | 'pay_off_debt' | 'create_goal' | null>(null);
     const dailyMessage = useMemo(() => getLocalDailyMessage(), []);
     const compactPillHeight = Math.max(Math.round(36 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 36);
+    const searchInputHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 48 : 44);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
     const pickerGridWidth = useMemo(() => threeColumnItemWidth(Math.min(windowWidth - 48, 420), 8), [windowWidth]);
+    const monthCardStackedLayout = useMemo(
+        () => shouldStackForLargeText(fontScale, windowWidth, { compactWidth: 400, scaleThreshold: 1.15 }),
+        [fontScale, windowWidth]
+    );
 
     const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const monthHistoryGuideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const homeSummaryGuideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastMonthLoadAtRef = useRef(0);
     const scrollRef = useRef<ScrollView>(null);
     const [calendarSectionY, setCalendarSectionY] = useState(0);
@@ -301,14 +307,26 @@ const Home = () => {
             if (monthHistoryGuideTimerRef.current) {
                 clearTimeout(monthHistoryGuideTimerRef.current);
             }
+            if (homeSummaryGuideTimerRef.current) {
+                clearTimeout(homeSummaryGuideTimerRef.current);
+            }
         };
     }, []);
 
     useEffect(() => {
         if (!isBeginnerTutorialActive || !currentEssentialStepId) return;
-        if (currentEssentialStepId !== 'home_calendar' && currentEssentialStepId !== 'home_month_history') return;
+        if (
+            currentEssentialStepId !== 'home_summary' &&
+            currentEssentialStepId !== 'home_calendar' &&
+            currentEssentialStepId !== 'home_month_history'
+        ) return;
 
         const timer = setTimeout(() => {
+            if (currentEssentialStepId === 'home_summary') {
+                scrollRef.current?.scrollTo({ y: 0, animated: true });
+                setTimeout(() => refreshTargetMeasure(), 220);
+                return;
+            }
             if (currentEssentialStepId === 'home_calendar') {
                 scrollRef.current?.scrollTo({ y: Math.max(calendarSectionY - 24, 0), animated: true });
                 setTimeout(() => refreshTargetMeasure(), 220);
@@ -320,6 +338,32 @@ const Home = () => {
 
         return () => clearTimeout(timer);
     }, [calendarSectionY, currentEssentialStepId, isBeginnerTutorialActive, monthHistorySectionY, refreshTargetMeasure]);
+
+    useEffect(() => {
+        if (!isBeginnerTutorialActive || currentEssentialStepId !== 'home_summary') return;
+
+        let attempts = 0;
+        const maxAttempts = 4;
+
+        const syncSummarySpotlight = () => {
+            attempts += 1;
+            scrollRef.current?.scrollTo({ y: 0, animated: true });
+            setTimeout(() => refreshTargetMeasure(), 220);
+
+            if (attempts < maxAttempts) {
+                homeSummaryGuideTimerRef.current = setTimeout(syncSummarySpotlight, 220);
+            }
+        };
+
+        homeSummaryGuideTimerRef.current = setTimeout(syncSummarySpotlight, 100);
+
+        return () => {
+            if (homeSummaryGuideTimerRef.current) {
+                clearTimeout(homeSummaryGuideTimerRef.current);
+                homeSummaryGuideTimerRef.current = null;
+            }
+        };
+    }, [currentEssentialStepId, isBeginnerTutorialActive, refreshTargetMeasure]);
 
     useEffect(() => {
         if (!isBeginnerTutorialActive || currentEssentialStepId !== 'home_month_history') return;
@@ -1126,7 +1170,8 @@ const Home = () => {
                             </View>
 
                             <AppTextInput
-                                className="h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 mb-4 text-slate-900 dark:text-slate-100"
+                                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 mb-4 text-slate-900 dark:text-slate-100"
+                                style={{ minHeight: searchInputHeight }}
                                 placeholder="Buscar por título, categoria, valor, data ou status"
                                 placeholderTextColor="#94a3b8"
                                 value={searchQuery}
@@ -1143,27 +1188,51 @@ const Home = () => {
                             {monthItemsToRender.map((item, index) => (
                                 <Card key={String(item.id) + index} className="mb-3" noPadding>
                                     <View className="p-4">
-                                        <View className="flex-row items-start justify-between">
-                                            <View className="flex-row items-center">
+                                        <View className="flex-row items-start justify-between gap-3">
+                                            <View className="flex-row items-center flex-1 min-w-0">
                                                 <View className="h-10 w-10 rounded-lg items-center justify-center" style={{ backgroundColor: `${item.color}15` }}>
                                                     <item.icon size={18} color={item.color} />
                                                 </View>
-                                                <View className="ml-3">
-                                                    <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.title}</AppText>
-                                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs">{item.subtitle} • {formatDateBRFromISO(item.date)}</AppText>
+                                                <View className="ml-3 flex-1 min-w-0">
+                                                    <AppText
+                                                        className="text-slate-900 dark:text-slate-100 font-bold"
+                                                        numberOfLines={textClampLines('list')}
+                                                        ellipsizeMode="tail"
+                                                    >
+                                                        {item.title}
+                                                    </AppText>
+                                                    <AppText
+                                                        className="text-slate-500 dark:text-slate-200 text-xs"
+                                                        numberOfLines={textClampLines('list')}
+                                                        ellipsizeMode="tail"
+                                                    >
+                                                        {item.subtitle} • {formatDateBRFromISO(item.date)}
+                                                    </AppText>
                                                 </View>
                                             </View>
-                                            <View className="items-end">
-                                                <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">{item.value}</AppText>
+                                            <View className="items-end min-w-[104px] max-w-[42%]">
+                                                <AppText
+                                                    className="text-slate-900 dark:text-slate-100 font-bold text-base text-right"
+                                                    numberOfLines={1}
+                                                    ellipsizeMode="tail"
+                                                >
+                                                    {item.value}
+                                                </AppText>
                                                 <AppText className={`text-[10px] font-bold uppercase ${statusColorClass(item.status)}`}>
                                                     {statusLabel(item.status)}
                                                 </AppText>
                                             </View>
                                         </View>
 
-                                        <View className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex-row items-center justify-between">
-                                            <AppText className="text-xs text-slate-500 dark:text-slate-200">{item.reminder}</AppText>
-                                            <View className="flex-row items-center gap-2">
+                                        <View className={`mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 ${monthCardStackedLayout ? 'flex-col gap-2' : 'flex-row items-center justify-between'}`}>
+                                            <AppText
+                                                className="text-xs text-slate-500 dark:text-slate-200"
+                                                numberOfLines={monthCardStackedLayout ? textClampLines('list') : 1}
+                                                ellipsizeMode="tail"
+                                            >
+                                                {item.reminder}
+                                            </AppText>
+                                            <View className={`flex-row items-center gap-2 ${monthCardStackedLayout ? 'justify-end' : ''}`}>
                                                 <TouchableOpacity onPress={() => requestDeleteSingle(item)} className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 flex-row items-center">
                                                     <Trash2 size={14} color="#475569" />
                                                     <AppText className="text-slate-700 dark:text-slate-200 font-bold text-xs ml-1">Excluir</AppText>
@@ -1176,7 +1245,7 @@ const Home = () => {
                                                         </AppText>
                                                     </TouchableOpacity>
                                                 ) : (
-                                                    <AppText className="text-teal-600 text-xs font-bold">Concluído</AppText>
+                                                    <AppText className="text-teal-600 text-xs font-bold" numberOfLines={1}>Concluído</AppText>
                                                 )}
                                             </View>
                                         </View>
