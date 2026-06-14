@@ -23,7 +23,7 @@ module Api
         end
 
         render json: {
-          records: records.limit(300).map { |record| serialize_record(record) }
+          records: records.limit(1000).map { |record| serialize_record(record) }
         }, status: :ok
       end
 
