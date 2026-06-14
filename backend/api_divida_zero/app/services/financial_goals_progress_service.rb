@@ -17,7 +17,7 @@
     def funding_snapshot_for_user(user)
       current_balance = current_balance_for_user(user)
       allocated_to_goals = allocated_to_goals_for_user(user)
-      available_for_goal_funding = current_balance - allocated_to_goals
+      available_for_goal_funding = [current_balance - allocated_to_goals, 0].max
 
       {
         current_balance: current_balance,
