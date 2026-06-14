@@ -15,14 +15,18 @@ puts "🌱 Iniciando seed da conta demo unirios..."
 # USUÁRIO
 # Sempre garante senha correta mesmo se usuário já existia
 # -----------------------------------------------------------------------------
-user = User.find_by(email: "unirios@demo.com")
+user = User.find_by(email: "unirios_demo") || User.find_by(email: "unirios@demo.com")
 
 if user
-  user.update_column(:password_digest, BCrypt::Password.create("1234"))
-  puts "👤 Usuário existente encontrado — senha atualizada: #{user.email}"
+  user.update_columns(
+    email:              "unirios_demo",
+    name:               "UniriosDemo",
+    password_digest:    BCrypt::Password.create("1234")
+  )
+  puts "👤 Usuário existente atualizado — login: unirios_demo / senha: 1234"
 else
   user = User.new(
-    email:              "unirios@demo.com",
+    email:              "unirios_demo",
     name:               "UniriosDemo",
     password:           "1234",
     role:               "user",
@@ -31,10 +35,10 @@ else
     profile_frame_key:  "frame_02"
   )
   user.save!(validate: false)
-  puts "👤 Usuário criado: #{user.email} (login: UniriosDemo)"
+  puts "👤 Usuário criado — login: unirios_demo / senha: 1234"
 end
 
-puts "🔐 Verificando autenticação... #{user.authenticate('1234') ? 'OK' : 'FALHOU — verifique BCrypt'}"
+puts "🔐 Verificando autenticação... #{user.authenticate('1234') ? 'OK' : 'FALHOU'}"
 
 if user.financial_records.exists?
   puts "✅ Seed já executado para unirios. Pulando."

@@ -14,12 +14,7 @@ module Api
       end
 
       def login
-        identifier = params.require(:email).to_s.strip
-        user = if identifier.include?("@")
-          User.find_by(email: identifier.downcase)
-        else
-          User.find_by(name: identifier)
-        end
+        user = User.find_by(email: params.require(:email).to_s.strip.downcase)
         password = params.require(:password)
 
         unless user&.authenticate(password)
