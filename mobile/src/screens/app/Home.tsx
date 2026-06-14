@@ -1093,36 +1093,41 @@ const Home = () => {
                                         ))}
                                     </View>
 
-                                    <View className="flex-row flex-wrap justify-between">
-                                        {monthGrid.map((cell, idx) => {
-                                            const isSelected = cell.dateKey === selectedDateKey;
-                                            const isToday = cell.dateKey === todayKey;
-                                            const marks = cell.dateKey ? (entriesByDate[cell.dateKey] ?? []) : [];
-                                            const hasPending = marks.some((m) => m.status === 'pending');
-                                            const hasPaid = marks.some((m) => m.status === 'paid' || m.status === 'received');
+                                    <View>
+                                        {Array.from({ length: Math.ceil(monthGrid.length / 7) }, (_, rowIdx) => (
+                                            <View key={rowIdx} className="flex-row justify-between mb-1">
+                                                {monthGrid.slice(rowIdx * 7, rowIdx * 7 + 7).map((cell, colIdx) => {
+                                                    const idx = rowIdx * 7 + colIdx;
+                                                    const isSelected = cell.dateKey === selectedDateKey;
+                                                    const isToday = cell.dateKey === todayKey;
+                                                    const marks = cell.dateKey ? (entriesByDate[cell.dateKey] ?? []) : [];
+                                                    const hasPending = marks.some((m) => m.status === 'pending');
+                                                    const hasPaid = marks.some((m) => m.status === 'paid' || m.status === 'received');
 
-                                            return (
-                                                <View key={`${cell.dateKey ?? 'empty'}-${idx}`} className="w-8 h-9 mb-1 items-center justify-center relative">
-                                                    {cell.day ? (
-                                                        <TouchableOpacity
-                                                            className={`w-7 h-7 rounded-lg items-center justify-center ${isSelected ? 'bg-primary' : isToday ? 'bg-primary/10 border border-primary/40' : ''}`}
-                                                            onPress={() => openDayDetails(cell.dateKey!)}
-                                                        >
-                                                            <AppText className={`text-sm font-medium ${isSelected ? 'text-white font-bold' : isToday ? 'text-primary font-bold' : 'text-slate-700 dark:text-slate-200'}`}>
-                                                                {cell.day}
-                                                            </AppText>
-                                                        </TouchableOpacity>
-                                                    ) : null}
+                                                    return (
+                                                        <View key={`${cell.dateKey ?? 'empty'}-${idx}`} className="w-8 h-9 items-center justify-center relative">
+                                                            {cell.day ? (
+                                                                <TouchableOpacity
+                                                                    className={`w-7 h-7 rounded-lg items-center justify-center ${isSelected ? 'bg-primary' : isToday ? 'bg-primary/10 border border-primary/40' : ''}`}
+                                                                    onPress={() => openDayDetails(cell.dateKey!)}
+                                                                >
+                                                                    <AppText className={`text-sm font-medium ${isSelected ? 'text-white font-bold' : isToday ? 'text-primary font-bold' : 'text-slate-700 dark:text-slate-200'}`}>
+                                                                        {cell.day}
+                                                                    </AppText>
+                                                                </TouchableOpacity>
+                                                            ) : null}
 
-                                                    {cell.day && (hasPending || hasPaid) ? (
-                                                        <View className="absolute bottom-0 flex-row gap-0.5">
-                                                            {hasPaid ? <View className="w-1.5 h-1.5 rounded-full bg-teal-400" /> : null}
-                                                            {hasPending ? <View className="w-1.5 h-1.5 rounded-full bg-primary" /> : null}
+                                                            {cell.day && (hasPending || hasPaid) ? (
+                                                                <View className="absolute bottom-0 flex-row gap-0.5">
+                                                                    {hasPaid ? <View className="w-1.5 h-1.5 rounded-full bg-teal-400" /> : null}
+                                                                    {hasPending ? <View className="w-1.5 h-1.5 rounded-full bg-primary" /> : null}
+                                                                </View>
+                                                            ) : null}
                                                         </View>
-                                                    ) : null}
-                                                </View>
-                                            );
-                                        })}
+                                                    );
+                                                })}
+                                            </View>
+                                        ))}
                                     </View>
                                 </>
                             )}

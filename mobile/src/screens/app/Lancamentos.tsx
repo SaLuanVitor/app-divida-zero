@@ -836,25 +836,30 @@ const Lancamentos = () => {
                             ))}
                         </View>
 
-                        <View className="flex-row flex-wrap justify-between mb-3">
-                            {monthGrid.map((cell, idx) => {
-                                const isSelected = cell.date && formatDateISO(cell.date) === formatDateISO(startDate);
+                        <View className="mb-3">
+                            {Array.from({ length: Math.ceil(monthGrid.length / 7) }, (_, rowIdx) => (
+                                <View key={rowIdx} className="flex-row justify-between mb-1">
+                                    {monthGrid.slice(rowIdx * 7, rowIdx * 7 + 7).map((cell, colIdx) => {
+                                        const idx = rowIdx * 7 + colIdx;
+                                        const isSelected = cell.date && formatDateISO(cell.date) === formatDateISO(startDate);
 
-                                return (
-                                    <View key={`${cell.day ?? 'x'}-${idx}`} className="w-8 h-9 mb-1 items-center justify-center">
-                                        {cell.day && cell.date ? (
-                                            <TouchableOpacity
-                                                className={`w-7 h-7 rounded-lg items-center justify-center ${isSelected ? 'bg-primary' : ''}`}
-                                                onPress={() => selectDate(cell.date!)}
-                                            >
-                                                <AppText className={`${isSelected ? 'text-white font-bold' : 'text-slate-700 dark:text-slate-200'} text-sm`}>
-                                                    {cell.day}
-                                                </AppText>
-                                            </TouchableOpacity>
-                                        ) : null}
-                                    </View>
-                                );
-                            })}
+                                        return (
+                                            <View key={`${cell.day ?? 'x'}-${idx}`} className="w-8 h-9 items-center justify-center">
+                                                {cell.day && cell.date ? (
+                                                    <TouchableOpacity
+                                                        className={`w-7 h-7 rounded-lg items-center justify-center ${isSelected ? 'bg-primary' : ''}`}
+                                                        onPress={() => selectDate(cell.date!)}
+                                                    >
+                                                        <AppText className={`${isSelected ? 'text-white font-bold' : 'text-slate-700 dark:text-slate-200'} text-sm`}>
+                                                            {cell.day}
+                                                        </AppText>
+                                                    </TouchableOpacity>
+                                                ) : null}
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            ))}
                         </View>
 
                         <View className="flex-row gap-2">
