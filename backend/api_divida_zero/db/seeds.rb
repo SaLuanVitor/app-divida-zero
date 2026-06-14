@@ -4,15 +4,24 @@
 # SEED — Conta Demo "unirios"
 # Usuário com ~14 meses de histórico real (Maio/2025 → Junho/2026)
 # Idempotente: skip se financial_records já existirem para este usuário
+# Guarda: não roda em ambiente de teste (evita poluição do banco de testes CI)
 # =============================================================================
+
+return if Rails.env.test?
 
 puts "🌱 Iniciando seed da conta demo unirios..."
 
 # -----------------------------------------------------------------------------
 # USUÁRIO
+# Sempre garante senha correta mesmo se usuário já existia
 # -----------------------------------------------------------------------------
-user = User.find_by(email: "unirios@demo.com") || begin
-  u = User.new(
+user = User.find_by(email: "unirios@demo.com")
+
+if user
+  user.update_column(:password_digest, BCrypt::Password.create("1234"))
+  puts "👤 Usuário existente encontrado — senha atualizada: #{user.email}"
+else
+  user = User.new(
     email:              "unirios@demo.com",
     name:               "Unirios Demo",
     password:           "1234",
@@ -21,8 +30,8 @@ user = User.find_by(email: "unirios@demo.com") || begin
     profile_icon_key:   "icon_03",
     profile_frame_key:  "frame_02"
   )
-  u.save!(validate: false)
-  u
+  user.save!(validate: false)
+  puts "👤 Usuário criado: #{user.email}"
 end
 
 if user.financial_records.exists?
