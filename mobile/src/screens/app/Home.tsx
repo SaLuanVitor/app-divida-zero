@@ -1295,7 +1295,7 @@ const Home = () => {
                         </TouchableOpacity>
 
                         <View className="px-4 pt-4 pb-3 pr-10 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#121212]">
-                            <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Notificacoes</AppText>
+                            <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Notificações</AppText>
                         </View>
 
                         <View className="flex-1 bg-white dark:bg-[#121212] px-4 pt-3">
