@@ -12,6 +12,7 @@ import { listGamificationEvents } from '../../services/gamification';
 import { GamificationEventDto } from '../../types/gamification';
 import { runWhenIdle } from '../../utils/idle';
 import { useAccessibility } from '../../context/AccessibilityContext';
+import useBackToProfile from '../../hooks/useBackToProfile';
 
 type EventFilter = 'all' | 'gain' | 'loss';
 const CARD_PAGE_SIZE = 10;
@@ -203,6 +204,7 @@ type XpHistoryProps = {
 };
 
 const XpHistory = ({ navigation }: XpHistoryProps) => {
+    const goBackToProfile = useBackToProfile();
     const { darkMode } = useThemeMode();
     const { fontScale, largerTouchTargets } = useAccessibility();
     const [events, setEvents] = useState<GamificationEventDto[]>([]);
@@ -300,13 +302,7 @@ const XpHistory = ({ navigation }: XpHistoryProps) => {
             <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                     <View className="flex-row items-center mb-3">
                         <TouchableOpacity
-                            onPress={() => {
-                                if (navigation?.canGoBack?.()) {
-                                    navigation.goBack();
-                                    return;
-                                }
-                                navigation?.navigate?.('Perfil');
-                            }}
+                            onPress={goBackToProfile}
                             className="p-2 -ml-2 mr-1"
                         >
                             <ArrowLeft size={22} color={iconColor} />
