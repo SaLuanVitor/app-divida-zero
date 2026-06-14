@@ -15,7 +15,14 @@ class DemoSeedService
 
     user = find_or_create_user!
 
-    unless user.financial_records.exists?
+    has_future_records = user.financial_records.where("due_date >= ?", Date.new(2026, 7, 1)).exists?
+    unless has_future_records
+      puts "🔄 Registros futuros (Jul/2026+) ausentes — recriando todos os dados financeiros..."
+      user.financial_records.delete_all
+      user.financial_goals.delete_all
+      user.gamification_events.delete_all
+      user.analytics_events.delete_all
+      AppRating.where(user: user).delete_all
       create_financial_records!(user)
       create_financial_goals!(user)
       create_gamification_events!(user)
