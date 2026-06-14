@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# Cria/atualiza conta demo UniriosDemo com ~14 meses de histórico financeiro.
+# Cria/atualiza conta demo UniriosDemo com ~18 meses de histórico financeiro
+# (Mai/2025 → Out/2026, incluindo meses futuros com registros pendentes).
 # Padrão idêntico ao AdminBootstrapService — chamável via rake app:seed_demo.
 class DemoSeedService
   class SeedError < StandardError; end
@@ -13,14 +14,16 @@ class DemoSeedService
     return false if Rails.env.test?
 
     user = find_or_create_user!
-    return false if user.financial_records.exists?
 
-    create_financial_records!(user)
-    create_financial_goals!(user)
-    create_gamification_events!(user)
-    create_notification_alerts!(user)
-    create_app_rating!(user)
-    create_analytics_events!(user)
+    unless user.financial_records.exists?
+      create_financial_records!(user)
+      create_financial_goals!(user)
+      create_gamification_events!(user)
+      create_app_rating!(user)
+      create_analytics_events!(user)
+    end
+
+    refresh_notifications!(user)
     print_summary(user)
     true
   end
@@ -61,16 +64,13 @@ class DemoSeedService
   # ---------------------------------------------------------------------------
   # HELPERS
   # ---------------------------------------------------------------------------
+  # Mai/2025 → Out/2026 = 18 meses (índices 0..17)
   def months
-    @months ||= (0..13).map { |i| Date.new(2025, 5, 1) + i.months }
+    @months ||= (0..17).map { |i| Date.new(2025, 5, 1) + i.months }
   end
 
   def grp(prefix)
     "#{prefix}_#{SecureRandom.hex(4)}"
-  end
-
-  def paid_status(flow_type)
-    flow_type == "income" ? "received" : "paid"
   end
 
   # ---------------------------------------------------------------------------
@@ -103,6 +103,7 @@ class DemoSeedService
     recs.concat build_home_expenses
     recs.concat build_phone_insurance
     recs.concat build_extra_income
+    recs.concat build_future_extras
 
     puts "📝 Criando #{recs.size} registros financeiros..."
     recs.each do |attrs|
@@ -117,9 +118,10 @@ class DemoSeedService
     puts "✅ #{user.financial_records.count} registros criados."
   end
 
+  # Salário: Mai/2025 → Set/2026 (17 meses)
   def build_salary
     g = grp("salario")
-    months[0..12].map.with_index do |m, i|
+    months[0..16].map.with_index do |m, i|
       due  = m.change(day: 5)
       paid = due <= Date.today
       { title: "Salário #{due.strftime('%b/%Y')}", record_type: "launch", flow_type: "income",
@@ -131,6 +133,7 @@ class DemoSeedService
     end
   end
 
+  # Freelancers históricos + futuros
   def build_freelancers
     data = [
       { month: months[0],  day: 12, amount: 1200.00, title: "Freela — Site institucional cliente A" },
@@ -143,7 +146,9 @@ class DemoSeedService
       { month: months[8],  day: 22, amount: 750.00,  title: "Freela — Dashboards analytics" },
       { month: months[9],  day: 14, amount: 1400.00, title: "Freela — API REST integração ERP" },
       { month: months[11], day: 5,  amount: 2100.00, title: "Freela — App mobile MVP" },
-      { month: months[13], day: 18, amount: 900.00,  title: "Freela — Mentoria React Native (4h)" }
+      { month: months[13], day: 18, amount: 900.00,  title: "Freela — Mentoria React Native (4h)" },
+      { month: months[14], day: 10, amount: 2800.00, title: "Freela — App delivery (MVP)" },
+      { month: months[15], day: 22, amount: 1500.00, title: "Freela — Painel administrativo React" }
     ]
     data.map do |f|
       due  = f[:month].change(day: f[:day])
@@ -155,9 +160,10 @@ class DemoSeedService
     end
   end
 
+  # Aluguel: Mai/2025 → Set/2026 (17 meses)
   def build_rent
     g = grp("aluguel")
-    months[0..12].map.with_index do |m, i|
+    months[0..16].map.with_index do |m, i|
       due  = m.change(day: 10)
       paid = due <= Date.today
       { title: "Aluguel #{due.strftime('%b/%Y')}", record_type: "debt", flow_type: "expense",
@@ -169,6 +175,7 @@ class DemoSeedService
     end
   end
 
+  # Fatura Nubank: Mai/2025 → Out/2026 (18 meses)
   def build_credit_card
     faturas = [
       { month: months[0],  day: 15, amount: 1250.00 }, { month: months[1],  day: 15, amount: 980.00 },
@@ -177,7 +184,9 @@ class DemoSeedService
       { month: months[6],  day: 15, amount: 1380.00 }, { month: months[7],  day: 15, amount: 1650.00 },
       { month: months[8],  day: 15, amount: 890.00 },  { month: months[9],  day: 15, amount: 1100.00 },
       { month: months[10], day: 15, amount: 2200.00 }, { month: months[11], day: 15, amount: 760.00 },
-      { month: months[12], day: 15, amount: 1490.00 }, { month: months[13], day: 15, amount: 830.00 }
+      { month: months[12], day: 15, amount: 1490.00 }, { month: months[13], day: 15, amount: 830.00 },
+      { month: months[14], day: 15, amount: 1120.00 }, { month: months[15], day: 15, amount: 1450.00 },
+      { month: months[16], day: 15, amount: 980.00 },  { month: months[17], day: 15, amount: 1300.00 }
     ]
     faturas.map.with_index do |f, i|
       due  = f[:month].change(day: f[:day])
@@ -191,10 +200,11 @@ class DemoSeedService
     end
   end
 
+  # Mercado: Mai/2025 → Out/2026 (18 meses)
   def build_grocery
-    amounts = [420, 510, 380, 620, 490, 560, 430, 680, 390, 470, 540, 600, 415, 355]
+    amounts = [420, 510, 380, 620, 490, 560, 430, 680, 390, 470, 540, 600, 415, 355, 480, 520, 395, 445]
     g = grp("mercado")
-    months[0..13].map.with_index do |m, i|
+    months[0..17].map.with_index do |m, i|
       due  = m.change(day: 20)
       paid = due <= Date.today
       { title: "Supermercado #{due.strftime('%b/%Y')}", record_type: "launch", flow_type: "expense",
@@ -204,10 +214,11 @@ class DemoSeedService
     end
   end
 
+  # Energia: Mai/2025 → Out/2026 (18 meses)
   def build_energy
-    vals = [130, 145, 220, 190, 115, 155, 168, 210, 140, 175, 195, 122, 160, 138]
+    vals = [130, 145, 220, 190, 115, 155, 168, 210, 140, 175, 195, 122, 160, 138, 148, 205, 172, 135]
     g = grp("energia")
-    months[0..13].map.with_index do |m, i|
+    months[0..17].map.with_index do |m, i|
       due  = m.change(day: 8)
       paid = due <= Date.today
       { title: "Energia Elétrica #{due.strftime('%b/%Y')}", record_type: "debt", flow_type: "expense",
@@ -218,10 +229,11 @@ class DemoSeedService
     end
   end
 
+  # Água: Mai/2025 → Out/2026 (18 meses)
   def build_water
-    vals = [65, 72, 58, 88, 61, 75, 69, 90, 55, 80, 73, 66, 85, 59]
+    vals = [65, 72, 58, 88, 61, 75, 69, 90, 55, 80, 73, 66, 85, 59, 70, 78, 63, 82]
     g = grp("agua")
-    months[0..13].map.with_index do |m, i|
+    months[0..17].map.with_index do |m, i|
       due  = m.change(day: 12)
       paid = due <= Date.today
       { title: "Conta de Água #{due.strftime('%b/%Y')}", record_type: "debt", flow_type: "expense",
@@ -232,9 +244,10 @@ class DemoSeedService
     end
   end
 
+  # Internet: Mai/2025 → Out/2026 (18 meses)
   def build_internet
     g = grp("internet")
-    months[0..13].map.with_index do |m, i|
+    months[0..17].map.with_index do |m, i|
       due  = m.change(day: 18)
       paid = due <= Date.today
       { title: "Internet #{due.strftime('%b/%Y')}", record_type: "debt", flow_type: "expense",
@@ -245,9 +258,10 @@ class DemoSeedService
     end
   end
 
+  # Academia: Mai/2025 → Out/2026 (18 meses)
   def build_gym
     g = grp("academia")
-    months[0..13].map.with_index do |m, i|
+    months[0..17].map.with_index do |m, i|
       due  = m.change(day: 1)
       paid = due <= Date.today
       { title: "Academia #{due.strftime('%b/%Y')}", record_type: "debt", flow_type: "expense",
@@ -257,9 +271,10 @@ class DemoSeedService
     end
   end
 
+  # Netflix: Mai/2025 → Out/2026 (18 meses)
   def build_netflix
     g = grp("netflix")
-    months[0..13].map.with_index do |m, i|
+    months[0..17].map.with_index do |m, i|
       due  = m.change(day: 22)
       paid = due <= Date.today
       { title: "Netflix #{due.strftime('%b/%Y')}", record_type: "launch", flow_type: "expense",
@@ -269,9 +284,10 @@ class DemoSeedService
     end
   end
 
+  # Spotify: Mai/2025 → Out/2026 (18 meses)
   def build_spotify
     g = grp("spotify")
-    months[0..13].map.with_index do |m, i|
+    months[0..17].map.with_index do |m, i|
       due  = m.change(day: 22)
       paid = due <= Date.today
       { title: "Spotify #{due.strftime('%b/%Y')}", record_type: "launch", flow_type: "expense",
@@ -336,7 +352,10 @@ class DemoSeedService
       [2025, 11, 6, 195.00], [2025, 11, 20, 145.00], [2025, 12, 3, 185.00], [2025, 12, 18, 170.00],
       [2026, 1, 8, 200.00], [2026, 1, 22, 155.00], [2026, 2, 5, 180.00], [2026, 2, 20, 165.00],
       [2026, 3, 6, 190.00], [2026, 3, 21, 175.00], [2026, 4, 4, 185.00], [2026, 4, 18, 160.00],
-      [2026, 5, 2, 195.00], [2026, 5, 16, 170.00], [2026, 6, 5, 180.00]
+      [2026, 5, 2, 195.00], [2026, 5, 16, 170.00], [2026, 6, 5, 180.00],
+      [2026, 7, 3, 188.00], [2026, 7, 18, 165.00],
+      [2026, 8, 7, 195.00], [2026, 8, 22, 172.00],
+      [2026, 9, 5, 180.00], [2026, 9, 19, 160.00]
     ]
     data.map do |y, mo, d, amt|
       due  = Date.new(y, mo, d)
@@ -363,7 +382,10 @@ class DemoSeedService
       [2026, 3, 25, 78.00, "Farmácia — protetor + hidratante"],
       [2026, 4, 11, 200.00, "Exame de sangue + urina"],
       [2026, 5, 30, 48.00, "Farmácia — vitaminas complexo B"],
-      [2026, 6, 3, 130.00, "Consulta nutróloga"]
+      [2026, 6, 3, 130.00, "Consulta nutróloga"],
+      [2026, 7, 15, 85.00, "Farmácia — protetor solar FPS 70"],
+      [2026, 8, 20, 220.00, "Dentista — restauração"],
+      [2026, 9, 10, 55.00, "Farmácia — medicamentos mensais"]
     ]
     data.map do |y, mo, d, amt, title|
       due  = Date.new(y, mo, d)
@@ -390,7 +412,10 @@ class DemoSeedService
       [2026, 3, 12, 90.00, "iFood — marmita fitness"], [2026, 3, 28, 120.00, "Almoço cliente (trabalho)"],
       [2026, 4, 6, 55.00, "iFood — yakisoba"], [2026, 4, 20, 75.00, "Restaurante fim de semana"],
       [2026, 5, 9, 82.00, "iFood — frutos do mar"], [2026, 5, 25, 95.00, "Almoço aniversário amigo"],
-      [2026, 6, 4, 68.00, "iFood — refeição executiva"]
+      [2026, 6, 4, 68.00, "iFood — refeição executiva"],
+      [2026, 7, 11, 88.00, "iFood — hambúrguer premium"], [2026, 7, 26, 115.00, "Restaurante com família"],
+      [2026, 8, 8, 72.00, "iFood — marmita fitness"], [2026, 8, 23, 95.00, "Almoço reunião cliente"],
+      [2026, 9, 12, 80.00, "iFood — japonês"], [2026, 9, 27, 130.00, "Jantar comemorativo"]
     ]
     data.map do |y, mo, d, amt, title|
       due  = Date.new(y, mo, d)
@@ -407,7 +432,10 @@ class DemoSeedService
       [2025, 6, 15, 189.90, "Tênis Nike — loja física"], [2025, 8, 10, 249.00, "Jaqueta inverno Renner"],
       [2025, 10, 5, 98.00, "Camisetas básicas (4 un)"], [2025, 11, 28, 320.00, "Conjunto social trabalho"],
       [2026, 2, 20, 159.00, "Tênis casual Adidas"], [2026, 4, 12, 210.00, "Roupas verão — liquidação"],
-      [2026, 6, 8, 135.00, "Calça jeans + bermuda"]
+      [2026, 6, 8, 135.00, "Calça jeans + bermuda"],
+      [2026, 7, 20, 180.00, "Roupas de frio — inverno"],
+      [2026, 8, 15, 225.00, "Tênis corrida — treinos"],
+      [2026, 9, 5, 95.00, "Camisetas básicas (3 un)"]
     ]
     data.map do |y, mo, d, amt, title|
       due  = Date.new(y, mo, d)
@@ -428,9 +456,12 @@ class DemoSeedService
       [2025, 12, 1, 79.90, "Alura — assinatura anual (mensal)"], [2026, 1, 1, 79.90, "Alura — assinatura anual (mensal)"],
       [2026, 2, 1, 79.90, "Alura — assinatura anual (mensal)"], [2026, 3, 1, 79.90, "Alura — assinatura anual (mensal)"],
       [2026, 4, 1, 79.90, "Alura — assinatura anual (mensal)"], [2026, 5, 1, 79.90, "Alura — assinatura anual (mensal)"],
+      [2026, 6, 1, 79.90, "Alura — assinatura anual (mensal)"], [2026, 7, 1, 79.90, "Alura — assinatura anual (mensal)"],
+      [2026, 8, 1, 79.90, "Alura — assinatura anual (mensal)"], [2026, 9, 1, 79.90, "Alura — assinatura anual (mensal)"],
       [2025, 8, 15, 497.00, "Curso React Native — Udemy (compra única)"],
       [2026, 1, 10, 189.00, "Livros técnicos — Amazon"],
-      [2026, 3, 20, 350.00, "Bootcamp Design UX — Origamid"]
+      [2026, 3, 20, 350.00, "Bootcamp Design UX — Origamid"],
+      [2026, 8, 10, 890.00, "Pós-graduação UX Design — 1ª parcela"]
     ]
     data.map.with_index do |row, i|
       y, mo, d, amt, title = row
@@ -450,7 +481,8 @@ class DemoSeedService
       [2025, 5, 165.00], [2025, 6, 188.00], [2025, 7, 142.00], [2025, 8, 210.00],
       [2025, 9, 155.00], [2025, 10, 178.00], [2025, 11, 130.00], [2025, 12, 195.00],
       [2026, 1, 160.00], [2026, 2, 148.00], [2026, 3, 172.00], [2026, 4, 155.00],
-      [2026, 5, 168.00], [2026, 6, 145.00]
+      [2026, 5, 168.00], [2026, 6, 145.00],
+      [2026, 7, 175.00], [2026, 8, 162.00], [2026, 9, 155.00]
     ]
     data.map do |y, mo, amt|
       due  = Date.new(y, mo, 28)
@@ -467,7 +499,8 @@ class DemoSeedService
     data = [
       [2025, 6, 10, 120.00, "Presente aniversário pai"], [2025, 7, 25, 85.00, "Presente namorada — 6 meses"],
       [2025, 10, 12, 160.00, "Presente dia das crianças sobrinho"], [2025, 12, 20, 380.00, "Presentes Natal (família)"],
-      [2026, 2, 14, 95.00, "Presente namorada — Dia dos Namorados"], [2026, 5, 11, 110.00, "Presente Dia das Mães"]
+      [2026, 2, 14, 95.00, "Presente namorada — Dia dos Namorados"], [2026, 5, 11, 110.00, "Presente Dia das Mães"],
+      [2026, 8, 5, 150.00, "Presente aniversário namorada"], [2026, 9, 15, 90.00, "Presente amigo — chá de bebê"]
     ]
     data.map do |y, mo, d, amt, title|
       due  = Date.new(y, mo, d)
@@ -505,7 +538,10 @@ class DemoSeedService
       [2026, 2, 10, 890.00, "Micro-ondas novo — substituição"],
       [2026, 3, 18, 155.00, "Conserto ar condicionado (limpeza)"],
       [2026, 4, 22, 95.00, "Produtos organização — closet"],
-      [2026, 6, 1, 280.00, "Cadeira de escritório nova"]
+      [2026, 6, 1, 280.00, "Cadeira de escritório nova"],
+      [2026, 7, 10, 340.00, "Cobertor + roupa de cama inverno"],
+      [2026, 8, 25, 520.00, "Prateleiras + organização quarto"],
+      [2026, 9, 8, 180.00, "Produtos de limpeza + organização"]
     ]
     data.map do |y, mo, d, amt, title|
       due  = Date.new(y, mo, d)
@@ -517,6 +553,7 @@ class DemoSeedService
     end
   end
 
+  # Seguro celular: Set/2025 → Jun/2026 (10 meses)
   def build_phone_insurance
     g = grp("seguro_celular")
     (0..9).map do |i|
@@ -549,6 +586,52 @@ class DemoSeedService
     end
   end
 
+  # Despesas e receitas futuras específicas
+  def build_future_extras
+    data = [
+      # IPTU parcelado Jul/2026
+      { title: "IPTU 2026 — parcela 1/5", record_type: "debt", flow_type: "expense",
+        category: "moradia", amount: 320.00, due_date: Date.new(2026, 7, 10),
+        status: "pending", priority: "high", recurring: false, recurrence_type: "none",
+        installments_total: 5, installment_number: 1, group_code: grp("iptu_2026"),
+        notes: "IPTU parcelado em 5x" },
+      { title: "IPTU 2026 — parcela 2/5", record_type: "debt", flow_type: "expense",
+        category: "moradia", amount: 320.00, due_date: Date.new(2026, 8, 10),
+        status: "pending", priority: "normal", recurring: false, recurrence_type: "none",
+        installments_total: 5, installment_number: 2, group_code: grp("iptu_2026"),
+        notes: "IPTU parcelado em 5x" },
+      { title: "IPTU 2026 — parcela 3/5", record_type: "debt", flow_type: "expense",
+        category: "moradia", amount: 320.00, due_date: Date.new(2026, 9, 10),
+        status: "pending", priority: "normal", recurring: false, recurrence_type: "none",
+        installments_total: 5, installment_number: 3, group_code: grp("iptu_2026"),
+        notes: "IPTU parcelado em 5x" },
+      # Bônus de meta Jul/2026
+      { title: "Bônus desempenho — Q2 2026", record_type: "launch", flow_type: "income",
+        category: "outros", amount: 700.00, due_date: Date.new(2026, 7, 31),
+        status: "pending", priority: "normal", recurring: false, recurrence_type: "none" },
+      # 13º salário Dez/2026 (previsto)
+      { title: "13º salário 2026 (previsto)", record_type: "launch", flow_type: "income",
+        category: "salario", amount: 1600.00, due_date: Date.new(2026, 12, 20),
+        status: "pending", priority: "high", recurring: false, recurrence_type: "none",
+        notes: "Estimativa proporcional 13º" },
+      # Viagem de férias Jul/2026 planejada
+      { title: "Passagens Gramado — Jul/2026", record_type: "launch", flow_type: "expense",
+        category: "lazer", amount: 680.00, due_date: Date.new(2026, 7, 5),
+        status: "pending", priority: "normal", recurring: false, recurrence_type: "none",
+        group_code: grp("viagem_jul2026") },
+      { title: "Hospedagem Gramado — 4 noites", record_type: "launch", flow_type: "expense",
+        category: "lazer", amount: 1200.00, due_date: Date.new(2026, 7, 8),
+        status: "pending", priority: "normal", recurring: false, recurrence_type: "none",
+        group_code: grp("viagem_jul2026") },
+      # Manutenção preventiva carro Set/2026
+      { title: "Revisão carro — 60.000 km", record_type: "launch", flow_type: "expense",
+        category: "transporte", amount: 890.00, due_date: Date.new(2026, 9, 20),
+        status: "pending", priority: "normal", recurring: false, recurrence_type: "none",
+        notes: "Revisão preventiva programada" }
+    ]
+    data.map { |attrs| { paid_at: nil }.merge(attrs) }
+  end
+
   # ---------------------------------------------------------------------------
   # FINANCIAL GOALS
   # ---------------------------------------------------------------------------
@@ -563,14 +646,14 @@ class DemoSeedService
       last_awarded_milestone: 50
     )
     [
-      [2025, 5, 500.00, "Primeiro aporte reserva"], [2025, 6, 400.00, "Aporte mensal"],
-      [2025, 7, 600.00, "Aporte freela julho"], [2025, 8, 300.00, "Aporte mensal"],
-      [2025, 9, 500.00, "Aporte mensal"], [2025, 10, 400.00, "Aporte mensal"],
-      [2025, 11, 700.00, "Aporte extra — sem gastos extras"], [2025, 12, 300.00, "Aporte dezembro"],
-      [2026, 1, 500.00, "Aporte janeiro"], [2026, 2, 400.00, "Aporte fevereiro"],
-      [2026, 3, 600.00, "Aporte freela março"], [2026, 4, 500.00, "Aporte abril"],
-      [2026, 5, 400.00, "Aporte maio"], [2026, 6, 100.00, "Aporte parcial junho"]
-    ].each { |_y, _mo, amt, notes| g1.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: notes) }
+      [500.00, "Primeiro aporte reserva"], [400.00, "Aporte mensal"],
+      [600.00, "Aporte freela julho"], [300.00, "Aporte mensal"],
+      [500.00, "Aporte mensal"], [400.00, "Aporte mensal"],
+      [700.00, "Aporte extra — sem gastos extras"], [300.00, "Aporte dezembro"],
+      [500.00, "Aporte janeiro"], [400.00, "Aporte fevereiro"],
+      [600.00, "Aporte freela março"], [500.00, "Aporte abril"],
+      [400.00, "Aporte maio"], [100.00, "Aporte parcial junho"]
+    ].each_with_index { |(amt, notes), _| g1.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: notes) }
 
     g2 = user.financial_goals.create!(
       title: "Quitar Saldo Cartão Nubank", description: "Eliminar saldo devedor do Nubank e usar só no débito",
@@ -628,27 +711,21 @@ class DemoSeedService
     events = [
       { event_type: "record_created",    points: 10, ts: Time.new(2025, 5, 1, 9, 0),   meta: { category: "salario" } },
       { event_type: "income_received",   points: 20, ts: Time.new(2025, 5, 6, 8, 0),   meta: { amount: 3200 } },
-      { event_type: "record_created",    points: 10, ts: Time.new(2025, 5, 10, 10, 0), meta: { category: "moradia" } },
       { event_type: "expense_paid",      points: 15, ts: Time.new(2025, 5, 10, 14, 0), meta: { amount: 950 } },
       { event_type: "goal_created",      points: 30, ts: Time.new(2025, 5, 15, 11, 0), meta: { goal: "Reserva de Emergência" } },
-      { event_type: "record_created",    points: 10, ts: Time.new(2025, 6, 1, 9, 0),   meta: {} },
       { event_type: "income_received",   points: 20, ts: Time.new(2025, 6, 5, 8, 0),   meta: { amount: 3200 } },
       { event_type: "income_received",   points: 25, ts: Time.new(2025, 6, 20, 16, 0), meta: { amount: 850, type: "freelancer" } },
       { event_type: "goal_created",      points: 30, ts: Time.new(2025, 6, 1, 10, 0),  meta: { goal: "Viagem Natal" } },
       { event_type: "achievement_unlocked", points: 50, ts: Time.new(2025, 6, 30, 23, 59), meta: { achievement: "primeiro_mes_completo" } },
-      { event_type: "expense_paid",      points: 15, ts: Time.new(2025, 7, 10, 9, 0),  meta: { amount: 950 } },
       { event_type: "income_received",   points: 20, ts: Time.new(2025, 7, 5, 8, 0),   meta: { amount: 3200 } },
       { event_type: "income_received",   points: 35, ts: Time.new(2025, 7, 8, 15, 0),  meta: { amount: 2500, type: "freelancer" } },
       { event_type: "goal_progress_milestone", points: 40, ts: Time.new(2025, 7, 20, 10, 0), meta: { goal: "Reserva de Emergência", milestone: 10 } },
       { event_type: "income_received",   points: 20, ts: Time.new(2025, 8, 5, 8, 0),   meta: { amount: 3200 } },
-      { event_type: "expense_paid",      points: 15, ts: Time.new(2025, 8, 10, 9, 0),  meta: { amount: 950 } },
       { event_type: "achievement_unlocked", points: 75, ts: Time.new(2025, 8, 31, 23, 0), meta: { achievement: "3_meses_sem_atraso" } },
       { event_type: "income_received",   points: 30, ts: Time.new(2025, 8, 31, 10, 0), meta: { amount: 500, type: "bonus" } },
-      { event_type: "record_created",    points: 10, ts: Time.new(2025, 9, 1, 9, 0),   meta: {} },
       { event_type: "income_received",   points: 20, ts: Time.new(2025, 9, 5, 8, 0),   meta: { amount: 3200 } },
       { event_type: "goal_progress_milestone", points: 50, ts: Time.new(2025, 9, 25, 10, 0), meta: { goal: "Reserva de Emergência", milestone: 25 } },
       { event_type: "income_received",   points: 20, ts: Time.new(2025, 10, 5, 8, 0),  meta: { amount: 3200 } },
-      { event_type: "expense_paid",      points: 15, ts: Time.new(2025, 10, 10, 9, 0), meta: { amount: 950 } },
       { event_type: "goal_created",      points: 30, ts: Time.new(2025, 10, 1, 10, 0), meta: { goal: "Quitar Nubank" } },
       { event_type: "achievement_unlocked", points: 100, ts: Time.new(2025, 10, 31, 23, 0), meta: { achievement: "6_meses_ativo" } },
       { event_type: "income_received",   points: 20, ts: Time.new(2025, 11, 5, 8, 0),  meta: { amount: 3200 } },
@@ -659,7 +736,6 @@ class DemoSeedService
       { event_type: "goal_completed",    points: 100, ts: Time.new(2025, 12, 30, 10, 0), meta: { goal: "Viagem Natal/RN" } },
       { event_type: "achievement_unlocked", points: 150, ts: Time.new(2025, 12, 31, 23, 59), meta: { achievement: "ano_completo" } },
       { event_type: "income_received",   points: 20, ts: Time.new(2026, 1, 5, 8, 0),   meta: { amount: 3200 } },
-      { event_type: "expense_paid",      points: 15, ts: Time.new(2026, 1, 10, 9, 0),  meta: { amount: 950 } },
       { event_type: "goal_created",      points: 30, ts: Time.new(2026, 2, 1, 10, 0),  meta: { goal: "MacBook Pro" } },
       { event_type: "income_received",   points: 20, ts: Time.new(2026, 2, 5, 8, 0),   meta: { amount: 3200 } },
       { event_type: "achievement_unlocked", points: 100, ts: Time.new(2026, 2, 28, 23, 0), meta: { achievement: "9_meses_ativo" } },
@@ -667,7 +743,6 @@ class DemoSeedService
       { event_type: "goal_created",      points: 30, ts: Time.new(2026, 3, 1, 10, 0),  meta: { goal: "Pós-graduação" } },
       { event_type: "goal_progress_milestone", points: 60, ts: Time.new(2026, 3, 20, 10, 0), meta: { goal: "Reserva de Emergência", milestone: 60 } },
       { event_type: "income_received",   points: 20, ts: Time.new(2026, 4, 5, 8, 0),   meta: { amount: 3200 } },
-      { event_type: "expense_paid",      points: 15, ts: Time.new(2026, 4, 10, 9, 0),  meta: { amount: 950 } },
       { event_type: "achievement_unlocked", points: 75, ts: Time.new(2026, 4, 30, 23, 0), meta: { achievement: "1_ano_ativo" } },
       { event_type: "income_received",   points: 20, ts: Time.new(2026, 5, 5, 8, 0),   meta: { amount: 3200 } },
       { event_type: "income_received",   points: 35, ts: Time.new(2026, 5, 18, 12, 0), meta: { amount: 2100, type: "freelancer" } },
@@ -680,57 +755,13 @@ class DemoSeedService
     ]
 
     events.each do |e|
-      ts   = e[:ts]
-      ev   = user.gamification_events.create!(
-        event_type:  e[:event_type],
-        points:      e[:points],
-        source_type: "User",
-        source_id:   user.id,
-        metadata:    e[:meta] || {}
+      ev = user.gamification_events.create!(
+        event_type: e[:event_type], points: e[:points],
+        source_type: "User", source_id: user.id, metadata: e[:meta] || {}
       )
-      ev.update_columns(created_at: ts, updated_at: ts)
+      ev.update_columns(created_at: e[:ts], updated_at: e[:ts])
     end
     puts "✅ #{user.gamification_events.count} eventos de gamificação criados."
-  end
-
-  # ---------------------------------------------------------------------------
-  # NOTIFICATIONS
-  # ---------------------------------------------------------------------------
-  def create_notification_alerts!(user)
-    puts "🔔 Criando notificações..."
-    [
-      { alert_type: "overdue",          title: "Parcela em atraso!", window_key: "overdue_amigo_202605",
-        message: "Dívida com João — parcela 3/5 está atrasada há 5 dias. Valor: R$ 400,00",
-        due_count: 1, read_at: nil, metadata: { amount: 400.00, creditor: "João" } },
-      { alert_type: "overdue",          title: "Parcela em atraso!", window_key: "overdue_amigo_202606",
-        message: "Dívida com João — parcela 4/5 está atrasada há 3 dias. Valor: R$ 400,00",
-        due_count: 1, read_at: nil, metadata: { amount: 400.00, creditor: "João" } },
-      { alert_type: "near_due",         title: "Vencimento próximo", window_key: "near_due_nubank_202506",
-        message: "Fatura Nubank vence em 2 dias — R$ 830,00. Não perca o prazo!",
-        due_count: 1, read_at: nil, metadata: { amount: 830.00, days_until: 2 } },
-      { alert_type: "due_today",        title: "Conta vence hoje", window_key: "due_today_samsung_202506",
-        message: "Samsung Galaxy A55 — parcela 10/10 vence hoje. R$ 219,90",
-        due_count: 1, read_at: nil, metadata: { amount: 219.90 } },
-      { alert_type: "weekly_summary",   title: "Resumo da semana", window_key: "weekly_202506_w1",
-        message: "Semana de 02/06 a 08/06: R$ 3.200,00 recebidos, R$ 1.450,00 gastos. Saldo positivo de R$ 1.750,00!",
-        due_count: 0, read_at: Time.new(2026, 6, 9, 9, 0), metadata: { income: 3200, expense: 1450, balance: 1750 } },
-      { alert_type: "weekly_summary",   title: "Resumo da semana", window_key: "weekly_202506_w0",
-        message: "Semana de 26/05 a 01/06: Você pagou 4 contas em dia! Continue assim.",
-        due_count: 4, read_at: Time.new(2026, 6, 3, 10, 0), metadata: { paid_count: 4 } },
-      { alert_type: "daily_ai_message", title: "Dica do dia", window_key: "daily_ai_20260614",
-        message: "Você já economizou R$ 6.700 para sua reserva de emergência! Que tal manter o ritmo e chegar a 70% até julho?",
-        due_count: 0, read_at: nil, metadata: { theme: "constancia", goal_progress: 67 } },
-      { alert_type: "near_due",         title: "Vencimento próximo", window_key: "near_due_seguro_202506",
-        message: "Seguro celular vence em 5 dias — R$ 19,90. Parcela 10/10.",
-        due_count: 1, read_at: nil, metadata: { amount: 19.90 } },
-      { alert_type: "goal_funding",     title: "Meta em andamento", window_key: "goal_funding_emergency_202506",
-        message: "Sua meta 'Reserva de Emergência' está em 67%. Adicione mais R$ 500 este mês para chegar a 72%!",
-        due_count: 0, read_at: Time.new(2026, 6, 12, 8, 30), metadata: { goal: "Reserva de Emergência", progress: 67, suggestion: 500 } },
-      { alert_type: "weekly_summary",   title: "Balanço mensal — Maio", window_key: "monthly_summary_202505",
-        message: "Maio/2026 fechou positivo! Total recebido: R$ 6.720,00 | Total gasto: R$ 4.130,00 | Saldo: R$ 2.590,00",
-        due_count: 0, read_at: Time.new(2026, 6, 1, 9, 0), metadata: { income: 6720, expense: 4130, balance: 2590, month: "Maio/2026" } }
-    ].each { |attrs| user.notification_alerts.create!(attrs) }
-    puts "✅ #{user.notification_alerts.count} notificações criadas."
   end
 
   # ---------------------------------------------------------------------------
@@ -757,28 +788,24 @@ class DemoSeedService
   def create_analytics_events!(user)
     puts "📊 Criando eventos de analytics..."
     sessions = (1..10).map { |i| "seed_session_#{i}_#{SecureRandom.hex(4)}" }
-
     [
-      { event_name: "login_success",            screen: "login",     sid: sessions[0], ts: Time.new(2025, 5, 1, 9, 0) },
-      { event_name: "onboarding_completed",     screen: "onboarding", sid: sessions[0], ts: Time.new(2025, 5, 1, 9, 5) },
-      { event_name: "record_created",           screen: "records",   sid: sessions[0], ts: Time.new(2025, 5, 1, 9, 10) },
-      { event_name: "app_opened",               screen: "home",      sid: sessions[1], ts: Time.new(2025, 6, 1, 8, 0) },
-      { event_name: "login_success",            screen: "login",     sid: sessions[1], ts: Time.new(2025, 6, 1, 8, 1) },
-      { event_name: "goal_created",             screen: "goals",     sid: sessions[1], ts: Time.new(2025, 6, 1, 8, 10) },
-      { event_name: "reports_viewed",           screen: "reports",   sid: sessions[2], ts: Time.new(2025, 8, 15, 20, 0) },
-      { event_name: "app_opened",               screen: "home",      sid: sessions[3], ts: Time.new(2025, 10, 1, 9, 0) },
-      { event_name: "login_success",            screen: "login",     sid: sessions[3], ts: Time.new(2025, 10, 1, 9, 1) },
-      { event_name: "record_paid_or_received",  screen: "records",   sid: sessions[3], ts: Time.new(2025, 10, 5, 9, 5) },
-      { event_name: "reports_viewed",           screen: "reports",   sid: sessions[4], ts: Time.new(2025, 12, 31, 22, 0) },
-      { event_name: "goal_created",             screen: "goals",     sid: sessions[5], ts: Time.new(2026, 2, 1, 10, 0) },
-      { event_name: "app_opened",               screen: "home",      sid: sessions[6], ts: Time.new(2026, 3, 1, 8, 0) },
-      { event_name: "login_success",            screen: "login",     sid: sessions[6], ts: Time.new(2026, 3, 1, 8, 1) },
-      { event_name: "record_created",           screen: "records",   sid: sessions[6], ts: Time.new(2026, 3, 5, 9, 0) },
-      { event_name: "reports_viewed",           screen: "reports",   sid: sessions[7], ts: Time.new(2026, 4, 30, 21, 0) },
-      { event_name: "app_opened",               screen: "home",      sid: sessions[8], ts: Time.new(2026, 6, 13, 8, 0) },
-      { event_name: "login_success",            screen: "login",     sid: sessions[8], ts: Time.new(2026, 6, 13, 8, 1) },
-      { event_name: "record_paid_or_received",  screen: "records",   sid: sessions[8], ts: Time.new(2026, 6, 13, 8, 5) },
-      { event_name: "reports_viewed",           screen: "reports",   sid: sessions[9], ts: Time.new(2026, 6, 14, 7, 30) }
+      { event_name: "login_success",           screen: "login",     sid: sessions[0], ts: Time.new(2025, 5, 1, 9, 0) },
+      { event_name: "onboarding_completed",    screen: "onboarding", sid: sessions[0], ts: Time.new(2025, 5, 1, 9, 5) },
+      { event_name: "record_created",          screen: "records",   sid: sessions[0], ts: Time.new(2025, 5, 1, 9, 10) },
+      { event_name: "app_opened",              screen: "home",      sid: sessions[1], ts: Time.new(2025, 6, 1, 8, 0) },
+      { event_name: "login_success",           screen: "login",     sid: sessions[1], ts: Time.new(2025, 6, 1, 8, 1) },
+      { event_name: "goal_created",            screen: "goals",     sid: sessions[1], ts: Time.new(2025, 6, 1, 8, 10) },
+      { event_name: "reports_viewed",          screen: "reports",   sid: sessions[2], ts: Time.new(2025, 8, 15, 20, 0) },
+      { event_name: "login_success",           screen: "login",     sid: sessions[3], ts: Time.new(2025, 10, 1, 9, 1) },
+      { event_name: "record_paid_or_received", screen: "records",   sid: sessions[3], ts: Time.new(2025, 10, 5, 9, 5) },
+      { event_name: "reports_viewed",          screen: "reports",   sid: sessions[4], ts: Time.new(2025, 12, 31, 22, 0) },
+      { event_name: "goal_created",            screen: "goals",     sid: sessions[5], ts: Time.new(2026, 2, 1, 10, 0) },
+      { event_name: "login_success",           screen: "login",     sid: sessions[6], ts: Time.new(2026, 3, 1, 8, 1) },
+      { event_name: "record_created",          screen: "records",   sid: sessions[6], ts: Time.new(2026, 3, 5, 9, 0) },
+      { event_name: "reports_viewed",          screen: "reports",   sid: sessions[7], ts: Time.new(2026, 4, 30, 21, 0) },
+      { event_name: "login_success",           screen: "login",     sid: sessions[8], ts: Time.new(2026, 6, 13, 8, 1) },
+      { event_name: "record_paid_or_received", screen: "records",   sid: sessions[8], ts: Time.new(2026, 6, 13, 8, 5) },
+      { event_name: "reports_viewed",          screen: "reports",   sid: sessions[9], ts: Time.new(2026, 6, 14, 7, 30) }
     ].each do |e|
       ev = user.analytics_events.create!(event_name: e[:event_name], screen: e[:screen], session_id: e[:sid], metadata: {})
       ev.update_columns(created_at: e[:ts], updated_at: e[:ts])
@@ -787,13 +814,109 @@ class DemoSeedService
   end
 
   # ---------------------------------------------------------------------------
+  # NOTIFICATIONS — Geradas a partir dos dados reais (sempre atualiza)
+  # ---------------------------------------------------------------------------
+  def refresh_notifications!(user)
+    puts "🔔 Atualizando notificações com dados reais..."
+
+    # Remove todas as notificações existentes do usuário demo para garantir dados frescos
+    user.notification_alerts.delete_all
+
+    today = Date.today
+    pending = user.financial_records.where(status: "pending")
+
+    # --- Alertas do serviço padrão (overdue, due_today, near_due) ---
+    NotificationAlertsService.generate_for_user!(user)
+
+    # --- Resumo semanal manual (o job só roda às sextas) ---
+    week_start       = today.beginning_of_week(:monday)
+    week_pending     = pending.where(due_date: week_start..today)
+    week_income      = week_pending.where(flow_type: "income").sum(:amount).to_d
+    week_expense     = week_pending.where(flow_type: "expense").sum(:amount).to_d
+    week_count       = week_pending.count
+    projected_bal    = week_income - week_expense
+
+    # Próximos 7 dias (para o resumo da semana futura)
+    next_7_expense = pending.where(flow_type: "expense", due_date: (today + 1)..(today + 7)).sum(:amount).to_d
+    next_7_income  = pending.where(flow_type: "income",  due_date: (today + 1)..(today + 7)).sum(:amount).to_d
+
+    user.notification_alerts.create!(
+      alert_type: "weekly_summary",
+      title:      "Resumo semanal da conta",
+      window_key: "demo-weekly-#{today.iso8601}",
+      due_count:  week_count,
+      read_at:    nil,
+      metadata:   { week_start: week_start.iso8601, week_end: today.iso8601,
+                    pending_income_total: week_income.to_s("F"),
+                    pending_expense_total: week_expense.to_s("F"),
+                    projected_balance: projected_bal.to_s("F") },
+      message: "Até hoje nesta semana: #{week_count} pendência(s). " \
+               "Entradas pendentes #{fmt_money(week_income)} e saídas pendentes #{fmt_money(week_expense)}. " \
+               "Saldo previsto #{fmt_money(projected_bal)}."
+    )
+
+    # --- Lembrete próximos 7 dias ---
+    upcoming = pending.where(due_date: (today + 1)..(today + 7)).order(:due_date).limit(3)
+    if upcoming.any?
+      titles_list = upcoming.map { |r| "#{r.title} (#{r.due_date.strftime('%d/%m')} — #{fmt_money(r.amount)})" }.join(", ")
+      user.notification_alerts.create!(
+        alert_type: "near_due",
+        title:      "Próximos vencimentos (7 dias)",
+        window_key: "demo-upcoming-#{today.iso8601}",
+        due_count:  upcoming.count,
+        read_at:    nil,
+        metadata:   { next_7_expense: next_7_expense.to_s("F"), next_7_income: next_7_income.to_s("F") },
+        message:    "Nos próximos 7 dias: #{titles_list}."
+      )
+    end
+
+    # --- Mensagem AI do dia ---
+    overdue_count   = pending.where("due_date < ?", today).count
+    goal_pct        = user.financial_goals.where(status: "active").average(:progress_pct).to_i rescue 0
+    ai_message      = build_ai_daily_message(overdue_count, goal_pct, next_7_expense)
+
+    user.notification_alerts.create!(
+      alert_type: "daily_ai_message",
+      title:      "Dica do dia",
+      window_key: "demo-ai-#{today.iso8601}",
+      due_count:  0,
+      read_at:    nil,
+      metadata:   { overdue_count: overdue_count, goal_avg_pct: goal_pct },
+      message:    ai_message
+    )
+
+    puts "✅ #{user.notification_alerts.count} notificações geradas."
+  end
+
+  def build_ai_daily_message(overdue_count, goal_pct, next_7_expense)
+    if overdue_count > 0
+      "Você tem #{overdue_count} conta(s) em atraso. Regularizar agora evita juros e protege seu score. " \
+      "Suas metas estão #{goal_pct}% concluídas em média — continue!"
+    elsif next_7_expense > 1000
+      "Atenção: #{fmt_money(next_7_expense)} em vencimentos nos próximos 7 dias. " \
+      "Separe o valor agora para não ser pego de surpresa. Suas metas estão indo bem (#{goal_pct}%)!"
+    else
+      "Ótima semana! Suas metas estão #{goal_pct}% concluídas. " \
+      "Com disciplina você chega à reserva de emergência completa ainda este ano. Continue assim!"
+    end
+  end
+
+  def fmt_money(value)
+    ActionController::Base.helpers.number_to_currency(
+      value.to_d, unit: "R$ ", separator: ",", delimiter: "."
+    )
+  end
+
+  # ---------------------------------------------------------------------------
   # SUMMARY
   # ---------------------------------------------------------------------------
   def print_summary(user)
-    total_income  = user.financial_records.where(flow_type: "income",   status: "received").sum(:amount)
-    total_expense = user.financial_records.where(flow_type: "expense",  status: "paid").sum(:amount)
+    total_income  = user.financial_records.where(flow_type: "income",  status: "received").sum(:amount)
+    total_expense = user.financial_records.where(flow_type: "expense", status: "paid").sum(:amount)
+    future_exp    = user.financial_records.where(flow_type: "expense", status: "pending").sum(:amount)
     xp_total      = user.gamification_events.sum(:points)
     contribs      = FinancialGoalContribution.joins(:financial_goal).where(financial_goals: { user_id: user.id }).count
+    overdue       = user.financial_records.where(status: "pending").where("due_date < ?", Date.today).count
 
     puts ""
     puts "🎉 =============================================="
@@ -801,14 +924,16 @@ class DemoSeedService
     puts "   Login: unirios_demo | Senha: 1234"
     puts "================================================"
     puts "   📝 Financial Records:   #{user.financial_records.count}"
+    puts "   ⚠️  Em atraso:           #{overdue} registros"
+    puts "   📅 Futuros pendentes:   #{fmt_money(future_exp)}"
     puts "   🎯 Metas:               #{user.financial_goals.count}"
     puts "   💰 Contribuições:       #{contribs}"
     puts "   🎮 Eventos XP:          #{user.gamification_events.count} (#{xp_total} XP)"
     puts "   🔔 Notificações:        #{user.notification_alerts.count}"
     puts "   📊 Analytics:           #{user.analytics_events.count}"
     puts "   ⭐ App Rating:          1"
-    puts "   💵 Total Recebido:      R$ #{format('%.2f', total_income)}"
-    puts "   💸 Total Pago:          R$ #{format('%.2f', total_expense)}"
+    puts "   💵 Total Recebido:      #{fmt_money(total_income)}"
+    puts "   💸 Total Pago:          #{fmt_money(total_expense)}"
     puts "================================================"
   end
 end
