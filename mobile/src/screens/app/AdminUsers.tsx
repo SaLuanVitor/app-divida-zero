@@ -1,22 +1,25 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Search, ShieldCheck, UserCheck, UserX } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import AppText from '../../components/AppText';
 import AppTextInput from '../../components/AppTextInput';
 import Button from '../../components/Button';
-import useBackToProfile from '../../hooks/useBackToProfile';
 import { useThemeMode } from '../../context/ThemeContext';
 import { listAdminUsers, resetAdminUserPassword, updateAdminUserStatus } from '../../services/admin';
 import { useAuth } from '../../context/AuthContext';
+import { isCompactDevice, textClampLines } from '../../utils/responsive';
 
 type FeedbackState = { kind: 'success' | 'error'; message: string } | null;
 
 const AdminUsers = () => {
   const { darkMode } = useThemeMode();
-  const goBackToProfile = useBackToProfile();
+  const navigation = useNavigation<any>();
   const { user: currentUser } = useAuth();
+  const { width } = useWindowDimensions();
+  const compact = isCompactDevice(width);
 
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<number | null>(null);
@@ -86,13 +89,13 @@ const AdminUsers = () => {
     <Layout contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
       <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <View className="flex-row items-center">
-          <TouchableOpacity onPress={goBackToProfile} className="p-2 -ml-2 mr-2">
+          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2">
             <ArrowLeft size={22} color={darkMode ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
           <View className="flex-1 pr-1">
-            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Admin - Usuários</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Gestão de usuários</AppText>
             <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-              Controle de contas ativas/inativas e senha temporária.
+              Ative, inative e redefina senhas com clareza.
             </AppText>
           </View>
         </View>
@@ -115,7 +118,7 @@ const AdminUsers = () => {
             onPress={() => void loadUsers()}
             disabled={!canInteract}
             loading={loading}
-            className="h-10 mt-3"
+            className="mt-3"
           />
         </Card>
 
@@ -131,6 +134,8 @@ const AdminUsers = () => {
               className={`text-sm ${
                 feedback.kind === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
               }`}
+              numberOfLines={textClampLines('card')}
+              ellipsizeMode="tail"
             >
               {feedback.message}
             </AppText>
@@ -149,8 +154,8 @@ const AdminUsers = () => {
               <Card key={item.id} className="p-4 mb-3">
                 <View className="flex-row items-start justify-between">
                   <View className="flex-1 pr-2">
-                    <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.name}</AppText>
-                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">{item.email}</AppText>
+                    <AppText className="text-slate-900 dark:text-slate-100 font-bold" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{item.name}</AppText>
+                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{item.email}</AppText>
                     <View className="flex-row items-center mt-2">
                       {item.active ? <UserCheck size={14} color="#16a34a" /> : <UserX size={14} color="#dc2626" />}
                       <AppText className="text-slate-600 dark:text-slate-200 text-xs ml-1">
@@ -171,21 +176,21 @@ const AdminUsers = () => {
                   </View>
                 </View>
 
-                <View className="flex-row mt-3 gap-2">
+                <View className={`mt-3 gap-2 ${compact ? 'flex-col' : 'flex-row'}`}>
                   <Button
                     title={item.active ? 'Inativar' : 'Ativar'}
                     variant={item.active ? 'outline' : 'primary'}
                     onPress={() => void handleToggleStatus(item)}
                     disabled={disabled || isSelf}
                     loading={disabled}
-                    className="flex-1 h-10"
+                    className={compact ? 'w-full' : 'flex-1'}
                   />
                   <Button
                     title="Senha temporária"
                     variant="outline"
                     onPress={() => void handleTemporaryReset(item)}
                     disabled={disabled}
-                    className="flex-1 h-10"
+                    className={compact ? 'w-full' : 'flex-1'}
                   />
                 </View>
 
@@ -204,3 +209,5 @@ const AdminUsers = () => {
 };
 
 export default AdminUsers;
+
+

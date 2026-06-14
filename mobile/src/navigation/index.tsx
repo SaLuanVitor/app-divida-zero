@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { AuthNavigator } from './AuthNavigator';
 import { AppNavigator } from './AppNavigator';
+import { AdminNavigator } from './AdminNavigator';
 import { useAuth } from '../context/AuthContext';
 import Splash from '../screens/Splash';
 import Onboarding from '../screens/app/Onboarding';
@@ -17,6 +18,7 @@ export const RootNavigator = () => {
     const [showSplash, setShowSplash] = useState(true);
     const [onboardingChecked, setOnboardingChecked] = useState(false);
     const [onboardingSeen, setOnboardingSeen] = useState(false);
+    const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
         // Simular tempo de Splash
@@ -38,6 +40,13 @@ export const RootNavigator = () => {
                 return;
             }
 
+            if (isAdmin) {
+                if (!mounted) return;
+                setOnboardingSeen(true);
+                setOnboardingChecked(true);
+                return;
+            }
+
             const prefs = await getAppPreferences();
             if (!mounted) return;
             setOnboardingSeen(!!prefs.onboarding_seen);
@@ -50,7 +59,7 @@ export const RootNavigator = () => {
         return () => {
             mounted = false;
         };
-    }, [signed]);
+    }, [isAdmin, signed]);
 
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -62,6 +71,8 @@ export const RootNavigator = () => {
                 </Stack.Screen>
             ) : signed && user?.force_password_change ? (
                 <Stack.Screen name="ForcePasswordChange" component={ForcePasswordChange} />
+            ) : signed && isAdmin ? (
+                <Stack.Screen name="Admin" component={AdminNavigator} />
             ) : signed ? (
                 <Stack.Screen name="App" component={AppNavigator} />
             ) : (

@@ -8,6 +8,7 @@ import {
 import AppText from './AppText';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { MOTION } from '../utils/motion';
+import { controlHeight } from '../utils/responsive';
 
 interface ButtonProps extends TouchableOpacityProps {
     title: string;
@@ -62,8 +63,9 @@ const Button: React.FC<ButtonProps> = ({
         md: 48,
         lg: 56,
     };
-    const scaledHeight = Math.round(baseHeightBySize[size] * Math.max(fontScale, 1));
-    const computedHeight = Math.max(scaledHeight, largerTouchTargets ? 56 : 0);
+    const computedHeight = controlHeight(fontScale, largerTouchTargets, baseHeightBySize[size], {
+        minTouchHeight: size === 'sm' ? 40 : 44,
+    });
 
     return (
         <TouchableOpacity
@@ -79,7 +81,7 @@ const Button: React.FC<ButtonProps> = ({
                 (loading || disabled) && 'opacity-60',
                 className
             )}
-            style={[{ minHeight: computedHeight, height: computedHeight }, style]}
+            style={[{ minHeight: computedHeight }, style]}
             {...rest}
         >
             {loading ? (
@@ -88,7 +90,10 @@ const Button: React.FC<ButtonProps> = ({
                 <View className="flex-row items-center justify-center">
                     {icon && <View className="mr-2">{icon}</View>}
                     <AppText
-                        className={cn('text-base font-bold tracking-tight', textVariants[variant], textClassName)}
+                        className={cn('text-base font-bold tracking-tight text-center', textVariants[variant], textClassName)}
+                        numberOfLines={2}
+                        ellipsizeMode="tail"
+                        style={{ flexShrink: 1 }}
                     >
                         {title}
                     </AppText>

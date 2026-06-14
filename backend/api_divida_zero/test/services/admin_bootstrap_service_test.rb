@@ -28,7 +28,7 @@ class AdminBootstrapServiceTest < ActiveSupport::TestCase
     assert user.authenticate("senha_bootstrap_123")
   end
 
-  test "is idempotent for existing admin and does not overwrite password" do
+  test "is idempotent for existing admin and synchronizes password from env" do
     user = User.create!(
       name: "Admin Existente",
       email: "bootstrap_existente",
@@ -45,7 +45,8 @@ class AdminBootstrapServiceTest < ActiveSupport::TestCase
 
     user.reload
     assert_equal "admin", user.role
-    assert user.authenticate("senha_antiga_123")
+    assert_equal true, user.active
+    assert user.authenticate("senha_nova_456")
   end
 
   test "raises when required env is missing" do

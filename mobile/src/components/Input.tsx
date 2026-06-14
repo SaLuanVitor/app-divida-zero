@@ -9,6 +9,7 @@ import AppText from './AppText';
 import AppTextInput from './AppTextInput';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { useThemeMode } from '../context/ThemeContext';
+import { controlHeight } from '../utils/responsive';
 
 interface InputProps extends TextInputProps {
     label?: string;
@@ -46,7 +47,7 @@ const Input: React.FC<InputProps> = ({
 
     const isPassword = secureTextEntry;
     const actualSecureTextEntry = isPassword && !isPasswordVisible;
-    const inputHeight = Math.max(Math.round(56 * Math.max(fontScale, 1)), largerTouchTargets ? 60 : 0);
+    const inputHeight = controlHeight(fontScale, largerTouchTargets, 56, { minTouchHeight: 48 });
     const iconSize = Math.max(20, Math.round(20 * Math.min(fontScale, 1.2)));
 
     const handleFocus: TextInputProps['onFocus'] = (event) => {
@@ -87,6 +88,7 @@ const Input: React.FC<InputProps> = ({
                     className={cn('flex-1 h-full text-slate-900 dark:text-slate-100 text-base font-normal', className)}
                     placeholderTextColor={darkMode ? '#cbd5e1' : '#94a3b8'}
                     accessibilityLabel={label || rest.placeholder || 'Campo de texto'}
+                    style={{ flexShrink: 1 }}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
                     secureTextEntry={actualSecureTextEntry}

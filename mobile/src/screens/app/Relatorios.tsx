@@ -19,9 +19,11 @@ import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { markPerf, measurePerf } from '../../services/perf';
 import { ReportFlowFilter, ReportsSummaryDto, ReportStatusFilter } from '../../types/report';
 import { useThemeMode } from '../../context/ThemeContext';
+import { useAccessibility } from '../../context/AccessibilityContext';
 import { useTutorial } from '../../context/TutorialContext';
 import { exportReportsPdf } from '../../services/reportsExport';
 import { getAppPreferences, updateAppPreferences } from '../../services/preferences';
+import { controlHeight, shouldStackForLargeText, textClampLines, threeColumnItemWidth } from '../../utils/responsive';
 
 type DetailsTab = 'records' | 'categories';
 type PickerMode = 'month' | 'year';
@@ -148,16 +150,22 @@ const TrendChart = React.memo(({
   );
 });
 
-const IndicatorsGrid = React.memo(({ data }: { data: ReportsSummaryDto['period_indicators'] }) => (
+const IndicatorsGrid = React.memo(({
+  data,
+  stacked,
+}: {
+  data: ReportsSummaryDto['period_indicators'];
+  stacked: boolean;
+}) => (
   <>
-    <View className="flex-row gap-3 mb-3">
-      <Card className="flex-1" noPadding><View className="p-4"><Wallet size={18} color="#16a34a" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">Saldo quitado no período</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.settled_balance_total)}</AppText></View></Card>
-      <Card className="flex-1" noPadding><View className="p-4"><Scale size={18} color="#0ea5e9" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">Projeção no período</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.projected_balance_total)}</AppText></View></Card>
+    <View className={`${stacked ? 'gap-3' : 'flex-row gap-3'} mb-3`}>
+      <Card className={stacked ? '' : 'flex-1'} noPadding><View className="p-4"><Wallet size={18} color="#16a34a" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2" numberOfLines={textClampLines('list')} ellipsizeMode="tail">Saldo quitado no período</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg" numberOfLines={1} ellipsizeMode="tail">{formatCurrency(data.settled_balance_total)}</AppText></View></Card>
+      <Card className={stacked ? '' : 'flex-1'} noPadding><View className="p-4"><Scale size={18} color="#0ea5e9" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2" numberOfLines={textClampLines('list')} ellipsizeMode="tail">Projeção no período</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg" numberOfLines={1} ellipsizeMode="tail">{formatCurrency(data.projected_balance_total)}</AppText></View></Card>
     </View>
 
-    <View className="flex-row gap-3 mb-3">
-      <Card className="flex-1" noPadding><View className="p-4"><ArrowUpCircle size={18} color="#16a34a" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">Pendente a receber</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.pending_income_total)}</AppText></View></Card>
-      <Card className="flex-1" noPadding><View className="p-4"><ArrowDownCircle size={18} color="#ef4444" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">Pendente a pagar</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg">{formatCurrency(data.pending_expense_total)}</AppText></View></Card>
+    <View className={`${stacked ? 'gap-3' : 'flex-row gap-3'} mb-3`}>
+      <Card className={stacked ? '' : 'flex-1'} noPadding><View className="p-4"><ArrowUpCircle size={18} color="#16a34a" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2" numberOfLines={textClampLines('list')} ellipsizeMode="tail">Pendente a receber</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg" numberOfLines={1} ellipsizeMode="tail">{formatCurrency(data.pending_income_total)}</AppText></View></Card>
+      <Card className={stacked ? '' : 'flex-1'} noPadding><View className="p-4"><ArrowDownCircle size={18} color="#ef4444" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2" numberOfLines={textClampLines('list')} ellipsizeMode="tail">Pendente a pagar</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg" numberOfLines={1} ellipsizeMode="tail">{formatCurrency(data.pending_expense_total)}</AppText></View></Card>
     </View>
   </>
 ));
@@ -177,7 +185,8 @@ const IndicatorsShimmer = React.memo(() => (
 
 const Relatorios = () => {
   const { darkMode } = useThemeMode();
-  const { isBeginnerTutorialActive } = useTutorial();
+  const { fontScale, largerTouchTargets } = useAccessibility();
+  const { isBeginnerTutorialActive, currentEssentialStepId, refreshTargetMeasure } = useTutorial();
   const { width: screenWidth } = useWindowDimensions();
   const [monthRef, setMonthRef] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [status, setStatus] = useState<ReportStatusFilter>('all');
@@ -196,12 +205,24 @@ const Relatorios = () => {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportFeedback, setExportFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [milestoneMessage, setMilestoneMessage] = useState('');
+  const [periodPickerSectionY, setPeriodPickerSectionY] = useState(0);
   const hasVisibleDataRef = useRef(false);
   const firstSuccessCheckedRef = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const relatoriosGuideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const yearOptions = useMemo(() => Array.from({ length: 9 }, (_, idx) => monthRef.getFullYear() - 4 + idx), [monthRef]);
   const hasFilter = status !== 'all' || flowType !== 'all' || !!category;
   const chartWidth = useMemo(() => Math.max(260, Math.min(screenWidth - 88, 560)), [screenWidth]);
+  const controlHeightMd = useMemo(
+    () => controlHeight(fontScale, largerTouchTargets, 40, { minTouchHeight: 40 }),
+    [fontScale, largerTouchTargets]
+  );
+  const gridPickerWidth = useMemo(() => threeColumnItemWidth(Math.min(screenWidth - 64, 420), 8), [screenWidth]);
+  const stackedCards = useMemo(
+    () => shouldStackForLargeText(fontScale, screenWidth, { compactWidth: 400, scaleThreshold: 1.15 }),
+    [fontScale, screenWidth]
+  );
   const activeFilters = useMemo(() => ({
     year: monthRef.getFullYear(),
     month: monthRef.getMonth() + 1,
@@ -238,6 +259,33 @@ const Relatorios = () => {
     setShowCategoryPicker(false);
     setShowPeriodPicker(false);
   }, [isBeginnerTutorialActive]);
+
+  useEffect(() => {
+    if (!isBeginnerTutorialActive || currentEssentialStepId !== 'relatorios_overview') return;
+
+    let attempts = 0;
+    const maxAttempts = 6;
+
+    const syncReportsSpotlight = () => {
+      attempts += 1;
+      const targetY = Math.max(periodPickerSectionY - 24, 0);
+      scrollRef.current?.scrollTo({ y: targetY, animated: true });
+      setTimeout(() => refreshTargetMeasure(), 220);
+
+      if (attempts < maxAttempts) {
+        relatoriosGuideTimerRef.current = setTimeout(syncReportsSpotlight, 260);
+      }
+    };
+
+    relatoriosGuideTimerRef.current = setTimeout(syncReportsSpotlight, 120);
+
+    return () => {
+      if (relatoriosGuideTimerRef.current) {
+        clearTimeout(relatoriosGuideTimerRef.current);
+        relatoriosGuideTimerRef.current = null;
+      }
+    };
+  }, [currentEssentialStepId, isBeginnerTutorialActive, periodPickerSectionY, refreshTargetMeasure]);
 
   useEffect(() => {
     if (!exportFeedback) return;
@@ -389,7 +437,7 @@ const Relatorios = () => {
 
   return (
     <>
-      <Layout scrollable contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black">
+      <Layout scrollable contentContainerClassName="p-4 bg-[#f8f7f5] dark:bg-black" scrollRef={scrollRef}>
         <View className="flex-row items-center justify-between mb-1">
           <AppText className="text-slate-900 dark:text-slate-100 text-2xl font-bold">Relatórios</AppText>
           <ScreenHelpButton
@@ -407,7 +455,8 @@ const Relatorios = () => {
         <Card className="mb-3" noPadding>
           <View className="p-3">
             <TouchableOpacity
-              className={`h-11 rounded-xl border flex-row items-center justify-center ${exportingPdf ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700' : 'bg-primary/10 border-primary/30'}`}
+              className={`rounded-xl border flex-row items-center justify-center ${exportingPdf ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700' : 'bg-primary/10 border-primary/30'}`}
+              style={{ minHeight: controlHeightMd }}
               onPress={() => void handleExportPdf()}
               disabled={exportingPdf || isInitialEmptyLoading}
             >
@@ -425,7 +474,7 @@ const Relatorios = () => {
                 accessibilityRole="button"
                 accessibilityLabel="Mês anterior dos relatórios"
               ><ChevronLeft size={16} color={darkMode ? '#e2e8f0' : '#1f2937'} /></TouchableOpacity>
-            <TutorialTarget targetId="relatorios-period-picker">
+            <TutorialTarget targetId="relatorios-period-picker" onLayout={(event) => setPeriodPickerSectionY(event.nativeEvent.layout.y)}>
               <TouchableOpacity
                 className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
                 onPress={() => { setPickerYear(monthRef.getFullYear()); setPickerMode('month'); setShowPeriodPicker(true); }}
@@ -478,12 +527,13 @@ const Relatorios = () => {
           </Card>
         ) : null}
 
-        {isRefreshingPeriod ? <IndicatorsShimmer /> : <IndicatorsGrid data={data.period_indicators} />}
+        {isRefreshingPeriod ? <IndicatorsShimmer /> : <IndicatorsGrid data={data.period_indicators} stacked={stackedCards} />}
 
         <Card className="mb-3" noPadding><View className="p-4">
-          <View className="flex-row items-center gap-2 mb-2"><Calendar size={18} color="#f48c25" /><AppText className="text-slate-900 dark:text-slate-100 font-bold">Saldo mensal com filtros</AppText></View>
-          <AppText className="text-2xl text-slate-900 dark:text-slate-100 font-extrabold">{formatCurrency(data.monthly_summary.balance)}</AppText>
-          <AppText className="text-xs text-slate-500 dark:text-slate-200 mt-1">Entradas: {formatCurrency(data.monthly_summary.income_total)} | Saídas: {formatCurrency(data.monthly_summary.expense_total)}</AppText>
+          <View className="flex-row items-center gap-2 mb-2"><Calendar size={18} color="#f48c25" /><AppText className="text-slate-900 dark:text-slate-100 font-bold" numberOfLines={textClampLines('title')} ellipsizeMode="tail">Saldo mensal com filtros</AppText></View>
+          <AppText className="text-2xl text-slate-900 dark:text-slate-100 font-extrabold" numberOfLines={1} ellipsizeMode="tail">{formatCurrency(data.monthly_summary.balance)}</AppText>
+          <AppText className="text-xs text-slate-500 dark:text-slate-200 mt-1" numberOfLines={textClampLines('list')} ellipsizeMode="tail">Entradas: {formatCurrency(data.monthly_summary.income_total)}</AppText>
+          <AppText className="text-xs text-slate-500 dark:text-slate-200 mt-1" numberOfLines={textClampLines('list')} ellipsizeMode="tail">Saídas: {formatCurrency(data.monthly_summary.expense_total)}</AppText>
           <AppText className="text-xs text-slate-500 dark:text-slate-200 mt-1">{data.monthly_summary.records_count} registros</AppText>
         </View></Card>
 
@@ -499,12 +549,12 @@ const Relatorios = () => {
             <TouchableOpacity className={`px-3 py-2 rounded-full border ${flowType === 'income' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setFlowType('income')}><AppText className={`text-xs font-bold ${flowType === 'income' ? 'text-white' : 'text-slate-600 dark:text-slate-200'}`}>Entradas</AppText></TouchableOpacity>
             <TouchableOpacity className={`px-3 py-2 rounded-full border ${flowType === 'expense' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setFlowType('expense')}><AppText className={`text-xs font-bold ${flowType === 'expense' ? 'text-white' : 'text-slate-600 dark:text-slate-200'}`}>Saídas</AppText></TouchableOpacity>
           </View>
-          <View className="flex-row items-center">
-            <TouchableOpacity className="flex-1 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 justify-center" onPress={() => setShowCategoryPicker(true)}>
-              <AppText className="text-slate-700 dark:text-slate-200 text-sm">{category || 'Todas as categorias'}</AppText>
+          <View className={`${stackedCards ? 'flex-col gap-2' : 'flex-row items-center'}`}>
+            <TouchableOpacity className={`${stackedCards ? 'w-full' : 'flex-1'} rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 justify-center`} style={{ minHeight: controlHeightMd }} onPress={() => setShowCategoryPicker(true)}>
+              <AppText className="text-slate-700 dark:text-slate-200 text-sm" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{category || 'Todas as categorias'}</AppText>
             </TouchableOpacity>
-            <TouchableOpacity className={`ml-2 px-4 h-10 rounded-xl border border-slate-200 dark:border-slate-700 items-center justify-center ${hasFilter ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`} onPress={clearFilters}>
-              <AppText className="text-slate-700 dark:text-slate-200 text-xs font-bold">Limpar</AppText>
+            <TouchableOpacity className={`${stackedCards ? 'w-full' : 'ml-2'} px-4 rounded-xl border border-slate-200 dark:border-slate-700 items-center justify-center ${hasFilter ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`} style={{ minHeight: controlHeightMd }} onPress={clearFilters}>
+              <AppText className="text-slate-700 dark:text-slate-200 text-xs font-bold" numberOfLines={1}>Limpar</AppText>
             </TouchableOpacity>
           </View>
           <View className="mt-2 rounded-lg bg-slate-50 dark:bg-[#1a1a1a] border border-slate-100 dark:border-slate-800 px-3 py-2">
@@ -584,8 +634,8 @@ const Relatorios = () => {
 
             <Card className="mb-3" noPadding><View className="p-4">
               <View className="flex-row gap-2 mb-3">
-                <TouchableOpacity className={`flex-1 h-10 rounded-xl border items-center justify-center ${tab === 'records' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setTab('records')}><AppText className={`font-bold text-sm ${tab === 'records' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Lançamentos</AppText></TouchableOpacity>
-                <TouchableOpacity className={`flex-1 h-10 rounded-xl border items-center justify-center ${tab === 'categories' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setTab('categories')}><AppText className={`font-bold text-sm ${tab === 'categories' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Categorias</AppText></TouchableOpacity>
+                <TouchableOpacity className={`flex-1 rounded-xl border items-center justify-center ${tab === 'records' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ minHeight: controlHeightMd }} onPress={() => setTab('records')}><AppText className={`font-bold text-sm ${tab === 'records' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Lançamentos</AppText></TouchableOpacity>
+                <TouchableOpacity className={`flex-1 rounded-xl border items-center justify-center ${tab === 'categories' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ minHeight: controlHeightMd }} onPress={() => setTab('categories')}><AppText className={`font-bold text-sm ${tab === 'categories' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Categorias</AppText></TouchableOpacity>
               </View>
               {data.monthly_summary.records_count === 0 ? (
                 <View className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] border border-slate-100 dark:border-slate-800 p-3">
@@ -604,12 +654,12 @@ const Relatorios = () => {
               {data.monthly_summary.records_count > 0 && tab === 'records' ? (
                 data.detailed_records.map((item) => (
                   <View key={item.id} className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] border border-slate-100 dark:border-slate-800 p-3 mb-2">
-                    <View className="flex-row items-start justify-between">
+                    <View className="flex-row items-start justify-between gap-2">
                       <View className="flex-1 pr-2">
-                        <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{item.title}</AppText>
-                        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">{item.category || 'Sem categoria'} | {dateBr(item.due_date)}</AppText>
+                        <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{item.title}</AppText>
+                        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{item.category || 'Sem categoria'} | {dateBr(item.due_date)}</AppText>
                       </View>
-                      <View className="items-end"><AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{formatCurrency(item.amount)}</AppText><AppText className={`text-[10px] font-bold uppercase ${item.status === 'pending' ? 'text-primary' : 'text-teal-500'}`}>{item.status === 'pending' ? 'Pendente' : item.status === 'received' ? 'Recebido' : 'Pago'}</AppText></View>
+                      <View className="items-end min-w-[96px] max-w-[42%]"><AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold text-right" numberOfLines={1} ellipsizeMode="tail">{formatCurrency(item.amount)}</AppText><AppText className={`text-[10px] font-bold uppercase ${item.status === 'pending' ? 'text-primary' : 'text-teal-500'}`} numberOfLines={1}>{item.status === 'pending' ? 'Pendente' : item.status === 'received' ? 'Recebido' : 'Pago'}</AppText></View>
                     </View>
                   </View>
                 ))
@@ -646,16 +696,16 @@ const Relatorios = () => {
           <View className="w-full max-w-[420px] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
             <View className="flex-row items-center justify-between mb-3"><AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Navegar por período</AppText><TouchableOpacity className="p-1" onPress={() => setShowPeriodPicker(false)}><X size={18} color="#64748b" /></TouchableOpacity></View>
             <View className="flex-row gap-2 mb-3">
-              <TouchableOpacity className={`flex-1 h-10 rounded-xl items-center justify-center border ${pickerMode === 'month' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setPickerMode('month')}><AppText className={`font-bold text-sm ${pickerMode === 'month' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Meses</AppText></TouchableOpacity>
-              <TouchableOpacity className={`flex-1 h-10 rounded-xl items-center justify-center border ${pickerMode === 'year' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => setPickerMode('year')}><AppText className={`font-bold text-sm ${pickerMode === 'year' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Anos</AppText></TouchableOpacity>
+              <TouchableOpacity className={`flex-1 rounded-xl items-center justify-center border ${pickerMode === 'month' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ minHeight: controlHeightMd }} onPress={() => setPickerMode('month')}><AppText className={`font-bold text-sm ${pickerMode === 'month' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Meses</AppText></TouchableOpacity>
+              <TouchableOpacity className={`flex-1 rounded-xl items-center justify-center border ${pickerMode === 'year' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ minHeight: controlHeightMd }} onPress={() => setPickerMode('year')}><AppText className={`font-bold text-sm ${pickerMode === 'year' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Anos</AppText></TouchableOpacity>
             </View>
             {pickerMode === 'month' ? (
               <>
                 <View className="flex-row items-center justify-between mb-3"><TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerYear((x) => x - 1)}><ChevronLeft size={14} color={darkMode ? '#e2e8f0' : '#334155'} /></TouchableOpacity><AppText className="text-slate-900 dark:text-slate-100 font-bold">{pickerYear}</AppText><TouchableOpacity className="p-2 rounded-full bg-slate-100 dark:bg-slate-800" onPress={() => setPickerYear((x) => x + 1)}><ChevronRight size={14} color={darkMode ? '#e2e8f0' : '#334155'} /></TouchableOpacity></View>
-                <View className="flex-row flex-wrap justify-between">{monthNames.map((label, idx) => { const active = monthRef.getFullYear() === pickerYear && monthRef.getMonth() === idx; return <TouchableOpacity key={label} className={`w-[31%] mb-2 h-10 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => { setMonthRef(new Date(pickerYear, idx, 1)); setShowPeriodPicker(false); }}><AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</AppText></TouchableOpacity>; })}</View>
+                <View className="flex-row flex-wrap justify-between">{monthNames.map((label, idx) => { const active = monthRef.getFullYear() === pickerYear && monthRef.getMonth() === idx; return <TouchableOpacity key={label} className={`mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ width: gridPickerWidth, minHeight: controlHeightMd }} onPress={() => { setMonthRef(new Date(pickerYear, idx, 1)); setShowPeriodPicker(false); }}><AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{label}</AppText></TouchableOpacity>; })}</View>
               </>
             ) : (
-              <View className="flex-row flex-wrap justify-between">{yearOptions.map((year) => { const active = monthRef.getFullYear() === year; return <TouchableOpacity key={year} className={`w-[31%] mb-2 h-10 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} onPress={() => { setPickerYear(year); setMonthRef((p) => new Date(year, p.getMonth(), 1)); setPickerMode('month'); }}><AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText></TouchableOpacity>; })}</View>
+              <View className="flex-row flex-wrap justify-between">{yearOptions.map((year) => { const active = monthRef.getFullYear() === year; return <TouchableOpacity key={year} className={`mb-2 rounded-xl items-center justify-center border ${active ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ width: gridPickerWidth, minHeight: controlHeightMd }} onPress={() => { setPickerYear(year); setMonthRef((p) => new Date(year, p.getMonth(), 1)); setPickerMode('month'); }}><AppText className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{year}</AppText></TouchableOpacity>; })}</View>
             )}
           </View>
         </View>

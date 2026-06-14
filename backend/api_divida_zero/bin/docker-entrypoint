@@ -3,7 +3,8 @@
 # If running the web process (rails server or puma), prepare DB and ensure admin bootstrap.
 if { [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; } || [[ " $* " == *" puma "* ]]; then
   ./bin/rails db:prepare
-  ./bin/rails app:bootstrap_admin
+  ./bin/rails app:bootstrap_admin || true
+  ./bin/rails db:seed
 fi
 
 exec "${@}"

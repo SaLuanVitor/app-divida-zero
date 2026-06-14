@@ -102,7 +102,7 @@ const STEP_MEASURE_FAILURE_THRESHOLD: Partial<Record<string, number>> = {
 };
 
 export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, currentRouteName }) => {
-  const { signed } = useAuth();
+  const { signed, user } = useAuth();
   const { darkMode } = useThemeMode();
   const { fontScale } = useAccessibility();
   const { closeOverlay, setOverlayBlocked } = useOverlay();
@@ -122,6 +122,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   const measureRequestRef = useRef(0);
 
   const deviceClass = useMemo(() => resolveTutorialDeviceClass(windowWidth), [windowWidth]);
+  const tutorialAllowed = signed && user?.role !== 'admin';
   const tooltipMetrics = useMemo(() => getTooltipMetrics(deviceClass), [deviceClass]);
   const isEssentialActive = trackState === 'essential';
   const isTutorialActive = isEssentialActive;
@@ -478,7 +479,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
   }, [closeOverlay, isEssentialActive, setOverlayBlocked]);
 
   useEffect(() => {
-    if (!signed) {
+    if (!tutorialAllowed) {
       hasBootstrappedRef.current = false;
       setTrackState('idle');
       setMissionsDone([]);
@@ -534,12 +535,13 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
     return () => {
       mounted = false;
     };
-  }, [persistTutorialState, signed, startEssentialTutorial]);
+  }, [persistTutorialState, startEssentialTutorial, tutorialAllowed]);
 
   useEffect(() => {
+    if (!tutorialAllowed) return () => undefined;
     const unsubscribe = subscribePreferencesChanges((nextPrefs) => {
       if (
-        signed &&
+        tutorialAllowed &&
         !isEssentialActive &&
         nextPrefs.onboarding_seen &&
         nextPrefs.onboarding_mode === 'beginner' &&
@@ -553,7 +555,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       }
     });
     return unsubscribe;
-  }, [isEssentialActive, signed, startEssentialTutorial]);
+  }, [isEssentialActive, startEssentialTutorial, tutorialAllowed]);
 
   useEffect(() => {
     if (!isEssentialActive || !currentStep) return;
@@ -625,17 +627,19 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       unregisterTarget,
       refreshTargetMeasure,
       startBeginnerTutorial: async (options?: { replay?: boolean }) => {
+        if (!tutorialAllowed) return;
         await startEssentialTutorial({ replay: options?.replay, source: 'manual' });
       },
       startAdvancedTutorial: async (options?: { replay?: boolean }) => {
+        if (!tutorialAllowed) return;
         await completeTutorial();
       },
       stopTutorial,
       beginnerCompleted,
       advancedCompleted,
       advancedDoneTasks: missionsDone,
-      isTutorialActive,
-      isBeginnerTutorialActive,
+      isTutorialActive: tutorialAllowed ? isTutorialActive : false,
+      isBeginnerTutorialActive: tutorialAllowed ? isBeginnerTutorialActive : false,
       tutorialTrackState: trackState,
       tutorialMissionsDone: missionsDone,
       tutorialDeviceClass: deviceClass,
@@ -656,6 +660,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       currentStep?.id,
       completeTutorial,
       startEssentialTutorial,
+      tutorialAllowed,
     ]
   );
 
@@ -664,7 +669,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, cu
       {children}
 
       <Modal
-        visible={isEssentialActive}
+        visible={tutorialAllowed && isEssentialActive}
         transparent
         animationType="fade"
         statusBarTranslucent
