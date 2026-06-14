@@ -14,22 +14,11 @@ class DemoSeedService
     return false if Rails.env.test?
 
     user = find_or_create_user!
-
-    has_future_records = user.financial_records.where("due_date >= ?", Date.new(2026, 7, 1)).exists?
-    unless has_future_records
-      puts "🔄 Registros futuros (Jul/2026+) ausentes — recriando todos os dados financeiros..."
-      user.financial_records.delete_all
-      user.financial_goals.delete_all
-      user.gamification_events.delete_all
-      user.analytics_events.delete_all
-      AppRating.where(user: user).delete_all
-      create_financial_records!(user)
-      create_financial_goals!(user)
-      create_gamification_events!(user)
-      create_app_rating!(user)
-      create_analytics_events!(user)
-    end
-
+    create_financial_records!(user)
+    create_financial_goals!(user)
+    create_gamification_events!(user)
+    create_app_rating!(user)
+    create_analytics_events!(user)
     refresh_notifications!(user)
     print_summary(user)
     true
@@ -112,17 +101,26 @@ class DemoSeedService
     recs.concat build_extra_income
     recs.concat build_future_extras
 
-    puts "📝 Criando #{recs.size} registros financeiros..."
+    puts "📝 Sincronizando #{recs.size} registros financeiros (aditivo)..."
+    created = 0
     recs.each do |attrs|
-      user.financial_records.create!(attrs.merge(
+      full_attrs = attrs.merge(
         recurring:          attrs[:recurring]          || false,
         recurrence_type:    attrs[:recurrence_type]    || "none",
         recurrence_count:   attrs[:recurrence_count]   || 1,
         installments_total: attrs[:installments_total] || 1,
         installment_number: attrs[:installment_number] || 1
-      ))
+      )
+      record = user.financial_records.find_or_initialize_by(
+        title:    full_attrs[:title],
+        due_date: full_attrs[:due_date]
+      )
+      next unless record.new_record?
+      record.assign_attributes(full_attrs)
+      record.save!
+      created += 1
     end
-    puts "✅ #{user.financial_records.count} registros criados."
+    puts "✅ #{created} novos registros criados (#{user.financial_records.count} total)."
   end
 
   # Salário: Mai/2025 → Set/2026 (17 meses)
@@ -643,67 +641,79 @@ class DemoSeedService
   # FINANCIAL GOALS
   # ---------------------------------------------------------------------------
   def create_financial_goals!(user)
+    return puts "🎯 Metas já existem (#{user.financial_goals.count}) — pulando." if user.financial_goals.count >= 5
+
     puts "🎯 Criando metas financeiras..."
 
-    g1 = user.financial_goals.create!(
-      title: "Reserva de Emergência", description: "Meta de ter 3 salários guardados para emergências",
-      goal_type: "save", target_amount: 10_000.00, current_amount: 6_700.00,
-      progress_pct: 67, status: "active",
-      start_date: Date.new(2025, 5, 1), target_date: Date.new(2026, 12, 31),
-      last_awarded_milestone: 50
-    )
-    [
-      [500.00, "Primeiro aporte reserva"], [400.00, "Aporte mensal"],
-      [600.00, "Aporte freela julho"], [300.00, "Aporte mensal"],
-      [500.00, "Aporte mensal"], [400.00, "Aporte mensal"],
-      [700.00, "Aporte extra — sem gastos extras"], [300.00, "Aporte dezembro"],
-      [500.00, "Aporte janeiro"], [400.00, "Aporte fevereiro"],
-      [600.00, "Aporte freela março"], [500.00, "Aporte abril"],
-      [400.00, "Aporte maio"], [100.00, "Aporte parcial junho"]
-    ].each_with_index { |(amt, notes), _| g1.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: notes) }
-
-    g2 = user.financial_goals.create!(
-      title: "Quitar Saldo Cartão Nubank", description: "Eliminar saldo devedor do Nubank e usar só no débito",
-      goal_type: "debt", target_amount: 3_500.00, current_amount: 1_400.00,
-      progress_pct: 40, status: "active",
-      start_date: Date.new(2025, 10, 1), target_date: Date.new(2026, 9, 30),
-      last_awarded_milestone: 25
-    )
-    [200, 300, 250, 200, 150, 300].each_with_index do |amt, i|
-      g2.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: "Pagamento extra fatura #{i + 1}")
+    g1 = user.financial_goals.find_or_create_by!(title: "Reserva de Emergência") do |g|
+      g.description = "Meta de ter 3 salários guardados para emergências"
+      g.goal_type = "save"; g.target_amount = 10_000.00; g.current_amount = 6_700.00
+      g.progress_pct = 67; g.status = "active"
+      g.start_date = Date.new(2025, 5, 1); g.target_date = Date.new(2026, 12, 31)
+      g.last_awarded_milestone = 50
+    end
+    if g1.financial_goal_contributions.empty?
+      [
+        [500.00, "Primeiro aporte reserva"], [400.00, "Aporte mensal"],
+        [600.00, "Aporte freela julho"], [300.00, "Aporte mensal"],
+        [500.00, "Aporte mensal"], [400.00, "Aporte mensal"],
+        [700.00, "Aporte extra — sem gastos extras"], [300.00, "Aporte dezembro"],
+        [500.00, "Aporte janeiro"], [400.00, "Aporte fevereiro"],
+        [600.00, "Aporte freela março"], [500.00, "Aporte abril"],
+        [400.00, "Aporte maio"], [100.00, "Aporte parcial junho"]
+      ].each { |amt, notes| g1.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: notes) }
     end
 
-    g3 = user.financial_goals.create!(
-      title: "Viagem Férias — Natal/RN", description: "Guardar para viagem de férias em janeiro de 2026",
-      goal_type: "specific", target_amount: 3_100.00, current_amount: 3_100.00,
-      progress_pct: 100, status: "completed",
-      start_date: Date.new(2025, 6, 1), target_date: Date.new(2026, 1, 1),
-      completed_at: Time.new(2025, 12, 30, 10, 0, 0), last_awarded_milestone: 100
-    )
-    [400, 350, 500, 400, 450, 500, 500].each_with_index do |amt, i|
-      g3.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: "Aporte viagem #{i + 1}")
+    g2 = user.financial_goals.find_or_create_by!(title: "Quitar Saldo Cartão Nubank") do |g|
+      g.description = "Eliminar saldo devedor do Nubank e usar só no débito"
+      g.goal_type = "debt"; g.target_amount = 3_500.00; g.current_amount = 1_400.00
+      g.progress_pct = 40; g.status = "active"
+      g.start_date = Date.new(2025, 10, 1); g.target_date = Date.new(2026, 9, 30)
+      g.last_awarded_milestone = 25
+    end
+    if g2.financial_goal_contributions.empty?
+      [200, 300, 250, 200, 150, 300].each_with_index do |amt, i|
+        g2.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: "Pagamento extra fatura #{i + 1}")
+      end
     end
 
-    g4 = user.financial_goals.create!(
-      title: "MacBook Pro M4", description: "Comprar MacBook para trabalho freelancer",
-      goal_type: "specific", target_amount: 15_000.00, current_amount: 4_500.00,
-      progress_pct: 30, status: "active",
-      start_date: Date.new(2026, 2, 1), target_date: Date.new(2026, 12, 31),
-      last_awarded_milestone: 25
-    )
-    [800, 700, 900, 800, 700, 600].each_with_index do |amt, i|
-      g4.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: "Poupança MacBook #{i + 1}")
+    g3 = user.financial_goals.find_or_create_by!(title: "Viagem Férias — Natal/RN") do |g|
+      g.description = "Guardar para viagem de férias em janeiro de 2026"
+      g.goal_type = "specific"; g.target_amount = 3_100.00; g.current_amount = 3_100.00
+      g.progress_pct = 100; g.status = "completed"
+      g.start_date = Date.new(2025, 6, 1); g.target_date = Date.new(2026, 1, 1)
+      g.completed_at = Time.new(2025, 12, 30, 10, 0, 0); g.last_awarded_milestone = 100
+    end
+    if g3.financial_goal_contributions.empty?
+      [400, 350, 500, 400, 450, 500, 500].each_with_index do |amt, i|
+        g3.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: "Aporte viagem #{i + 1}")
+      end
     end
 
-    g5 = user.financial_goals.create!(
-      title: "Pós-graduação em UX Design", description: "Guardar para curso de pós no segundo semestre 2026",
-      goal_type: "save", target_amount: 8_000.00, current_amount: 1_600.00,
-      progress_pct: 20, status: "active",
-      start_date: Date.new(2026, 3, 1), target_date: Date.new(2026, 7, 31),
-      last_awarded_milestone: 0
-    )
-    [400, 300, 450, 450].each_with_index do |amt, i|
-      g5.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: "Aporte pós-graduação #{i + 1}")
+    g4 = user.financial_goals.find_or_create_by!(title: "MacBook Pro M4") do |g|
+      g.description = "Comprar MacBook para trabalho freelancer"
+      g.goal_type = "specific"; g.target_amount = 15_000.00; g.current_amount = 4_500.00
+      g.progress_pct = 30; g.status = "active"
+      g.start_date = Date.new(2026, 2, 1); g.target_date = Date.new(2026, 12, 31)
+      g.last_awarded_milestone = 25
+    end
+    if g4.financial_goal_contributions.empty?
+      [800, 700, 900, 800, 700, 600].each_with_index do |amt, i|
+        g4.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: "Poupança MacBook #{i + 1}")
+      end
+    end
+
+    g5 = user.financial_goals.find_or_create_by!(title: "Pós-graduação em UX Design") do |g|
+      g.description = "Guardar para curso de pós no segundo semestre 2026"
+      g.goal_type = "save"; g.target_amount = 8_000.00; g.current_amount = 1_600.00
+      g.progress_pct = 20; g.status = "active"
+      g.start_date = Date.new(2026, 3, 1); g.target_date = Date.new(2026, 7, 31)
+      g.last_awarded_milestone = 0
+    end
+    if g5.financial_goal_contributions.empty?
+      [400, 300, 450, 450].each_with_index do |amt, i|
+        g5.financial_goal_contributions.create!(kind: "deposit", amount: amt, notes: "Aporte pós-graduação #{i + 1}")
+      end
     end
 
     total_contribs = FinancialGoalContribution.joins(:financial_goal).where(financial_goals: { user_id: user.id }).count
@@ -714,6 +724,8 @@ class DemoSeedService
   # GAMIFICATION
   # ---------------------------------------------------------------------------
   def create_gamification_events!(user)
+    return puts "🎮 Gamificação já existe (#{user.gamification_events.count}) — pulando." if user.gamification_events.count >= 40
+
     puts "🎮 Criando eventos de gamificação..."
     events = [
       { event_type: "record_created",    points: 10, ts: Time.new(2025, 5, 1, 9, 0),   meta: { category: "salario" } },
@@ -793,6 +805,8 @@ class DemoSeedService
   # ANALYTICS
   # ---------------------------------------------------------------------------
   def create_analytics_events!(user)
+    return puts "📊 Analytics já existe (#{user.analytics_events.count}) — pulando." if user.analytics_events.count >= 15
+
     puts "📊 Criando eventos de analytics..."
     sessions = (1..10).map { |i| "seed_session_#{i}_#{SecureRandom.hex(4)}" }
     [
