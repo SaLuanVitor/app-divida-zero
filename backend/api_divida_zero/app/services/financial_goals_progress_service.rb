@@ -1,6 +1,6 @@
 ﻿class FinancialGoalsProgressService
   MILESTONES = [25, 50, 75, 100].freeze
-  MILESTONE_POINTS = {
+  MILESTONE_BASE_POINTS = {
     25 => 40,
     50 => 60,
     75 => 90,
@@ -15,12 +15,13 @@
     end
 
     def funding_snapshot_for_user(user)
-      settled_global_balance = settled_global_balance_for_user(user)
+      current_balance = current_balance_for_user(user)
       allocated_to_goals = allocated_to_goals_for_user(user)
-      available_for_goal_funding = settled_global_balance - allocated_to_goals
+      available_for_goal_funding = current_balance - allocated_to_goals
 
       {
-        settled_global_balance: settled_global_balance,
+        current_balance: current_balance,
+        settled_global_balance: current_balance, # retrocompatibilidade
         allocated_to_goals: allocated_to_goals,
         available_for_goal_funding: available_for_goal_funding
       }
@@ -41,7 +42,8 @@
 
       xp_feedbacks = []
       reached_milestones = MILESTONES.select { |milestone| progress_pct >= milestone }
-      xp_feedbacks.concat(sync_progress_events!(goal, reached_milestones))
+      already_completed = goal.completed_at.present? && previous_status == "completed"
+      xp_feedbacks.concat(sync_progress_events!(goal, reached_milestones)) unless already_completed
       goal.update!(last_awarded_milestone: reached_milestones.max.to_i)
 
       if previous_status != "completed" && completed_now
@@ -103,15 +105,31 @@
 
     private
 
-    def settled_global_balance_for_user(user)
+    def current_balance_for_user(user)
       totals = user.financial_records
-                   .where.not(status: "pending")
+                   .where("due_date <= ?", Date.today)
                    .group(:flow_type)
                    .sum(:amount)
 
       income = totals.fetch("income", 0).to_d
       expense = totals.fetch("expense", 0).to_d
       income - expense
+    end
+
+    def settled_global_balance_for_user(user)
+      current_balance_for_user(user)
+    end
+
+    def milestone_points_for(milestone, target_amount)
+      base = MILESTONE_BASE_POINTS[milestone]
+      multiplier = case target_amount.to_d
+                   when (0...500)     then 1.0
+                   when (500...2000)  then 1.5
+                   when (2000...5000) then 2.0
+                   when (5000...10_000) then 3.0
+                   else 4.0
+                   end
+      (base * multiplier).round
     end
 
     def allocated_to_goals_for_user(user)
@@ -148,7 +166,7 @@
         xp_feedback = GamificationService.award!(
           user: goal.user,
           event_type: "goal_progress_milestone",
-          points: MILESTONE_POINTS[milestone],
+          points: milestone_points_for(milestone, goal.target_amount),
           source: goal,
           metadata: {
             goal_id: goal.id,
@@ -168,7 +186,7 @@
           xp_feedback = GamificationService.award!(
             user: goal.user,
             event_type: "goal_completed",
-            points: MILESTONE_POINTS[100],
+            points: milestone_points_for(100, goal.target_amount),
             source: goal,
             metadata: {
               goal_id: goal.id,

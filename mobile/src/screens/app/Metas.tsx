@@ -337,7 +337,7 @@ const Metas = () => {
                             {formatCurrency(fundingSnapshot.available_for_goal_funding)}
                         </AppText>
                         <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
-                            Quitado global: {formatCurrency(fundingSnapshot.settled_global_balance)} • Alocado em metas: {formatCurrency(fundingSnapshot.allocated_to_goals)}
+                            Saldo até hoje: {formatCurrency(fundingSnapshot.settled_global_balance)} • Alocado em metas: {formatCurrency(fundingSnapshot.allocated_to_goals)}
                         </AppText>
                     </View>
                 </Card>
