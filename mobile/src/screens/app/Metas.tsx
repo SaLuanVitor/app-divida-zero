@@ -537,7 +537,16 @@ const Metas = () => {
                                     </AppText>
                                 </AppText>
                             </View>
-                        ) : null}
+                        ) : (
+                            <View className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a1a1a] px-3 py-2 mb-3">
+                                <AppText className="text-slate-600 dark:text-slate-200 text-xs">
+                                    Disponível para retirar:{' '}
+                                    <AppText className="font-bold text-slate-900 dark:text-slate-100">
+                                        {formatCurrency(goalPendingContribution.current_amount)}
+                                    </AppText>
+                                </AppText>
+                            </View>
+                        )}
 
                         <AppText className="text-slate-600 dark:text-slate-200 text-xs mb-1">Valor</AppText>
                         <AppTextInput
