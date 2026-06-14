@@ -23,7 +23,7 @@ if user
 else
   user = User.new(
     email:              "unirios@demo.com",
-    name:               "Unirios Demo",
+    name:               "UniriosDemo",
     password:           "1234",
     role:               "user",
     active:             true,
@@ -31,8 +31,10 @@ else
     profile_frame_key:  "frame_02"
   )
   user.save!(validate: false)
-  puts "👤 Usuário criado: #{user.email}"
+  puts "👤 Usuário criado: #{user.email} (login: UniriosDemo)"
 end
+
+puts "🔐 Verificando autenticação... #{user.authenticate('1234') ? 'OK' : 'FALHOU — verifique BCrypt'}"
 
 if user.financial_records.exists?
   puts "✅ Seed já executado para unirios. Pulando."
