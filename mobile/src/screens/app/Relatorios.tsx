@@ -153,14 +153,16 @@ const TrendChart = React.memo(({
 const IndicatorsGrid = React.memo(({
   data,
   stacked,
+  labelSuffix = 'no período',
 }: {
   data: ReportsSummaryDto['period_indicators'];
   stacked: boolean;
+  labelSuffix?: string;
 }) => (
   <>
     <View className={`${stacked ? 'gap-3' : 'flex-row gap-3'} mb-3`}>
-      <Card className={stacked ? '' : 'flex-1'} noPadding><View className="p-4"><Wallet size={18} color="#16a34a" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2" numberOfLines={textClampLines('list')} ellipsizeMode="tail">Saldo quitado no período</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg" numberOfLines={1} ellipsizeMode="tail">{formatCurrency(data.settled_balance_total)}</AppText></View></Card>
-      <Card className={stacked ? '' : 'flex-1'} noPadding><View className="p-4"><Scale size={18} color="#0ea5e9" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2" numberOfLines={textClampLines('list')} ellipsizeMode="tail">Projeção no período</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg" numberOfLines={1} ellipsizeMode="tail">{formatCurrency(data.projected_balance_total)}</AppText></View></Card>
+      <Card className={stacked ? '' : 'flex-1'} noPadding><View className="p-4"><Wallet size={18} color="#16a34a" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{`Saldo quitado ${labelSuffix}`}</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg" numberOfLines={1} ellipsizeMode="tail">{formatCurrency(data.settled_balance_total)}</AppText></View></Card>
+      <Card className={stacked ? '' : 'flex-1'} noPadding><View className="p-4"><Scale size={18} color="#0ea5e9" /><AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{`Projeção ${labelSuffix}`}</AppText><AppText className="text-slate-900 dark:text-slate-100 font-bold text-lg" numberOfLines={1} ellipsizeMode="tail">{formatCurrency(data.projected_balance_total)}</AppText></View></Card>
     </View>
 
     <View className={`${stacked ? 'gap-3' : 'flex-row gap-3'} mb-3`}>
@@ -202,6 +204,7 @@ const Relatorios = () => {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [tab, setTab] = useState<DetailsTab>('records');
   const [selectedTrendKey, setSelectedTrendKey] = useState<string | null>(null);
+  const [showGlobal, setShowGlobal] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportFeedback, setExportFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [milestoneMessage, setMilestoneMessage] = useState('');
@@ -527,7 +530,29 @@ const Relatorios = () => {
           </Card>
         ) : null}
 
+        <AppText className="text-slate-500 dark:text-slate-200 text-xs font-semibold uppercase tracking-wide mb-2 mt-1">Período selecionado</AppText>
         {isRefreshingPeriod ? <IndicatorsShimmer /> : <IndicatorsGrid data={data.period_indicators} stacked={stackedCards} />}
+
+        <Card className="mb-3" noPadding>
+          <TouchableOpacity
+            className="p-4 flex-row items-center justify-between"
+            onPress={() => setShowGlobal((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel="Ver situação financeira geral"
+          >
+            <View className="flex-row items-center gap-2">
+              <Scale size={18} color="#f48c25" />
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold">Situação Financeira Geral</AppText>
+            </View>
+            <ChevronRight size={16} color={darkMode ? '#e2e8f0' : '#334155'} style={{ transform: [{ rotate: showGlobal ? '90deg' : '0deg' }] }} />
+          </TouchableOpacity>
+          {showGlobal ? (
+            <View className="px-4 pb-4">
+              <AppText className="text-slate-500 dark:text-slate-200 text-xs mb-3">Totais acumulados de todos os períodos, incluindo pendentes.</AppText>
+              <IndicatorsGrid data={data.global_indicators} stacked={stackedCards} labelSuffix="geral" />
+            </View>
+          ) : null}
+        </Card>
 
         <Card className="mb-3" noPadding><View className="p-4">
           <View className="flex-row items-center gap-2 mb-2"><Calendar size={18} color="#f48c25" /><AppText className="text-slate-900 dark:text-slate-100 font-bold" numberOfLines={textClampLines('title')} ellipsizeMode="tail">Saldo mensal com filtros</AppText></View>
