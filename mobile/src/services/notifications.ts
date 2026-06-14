@@ -714,7 +714,7 @@ export const buildManualNotificationScenarioFromAccount = async ({
   userName?: string;
 } = {}): Promise<ManualNotificationScenarioStep[]> => {
   const [recordsResult, prefs] = await Promise.all([
-    listFinancialRecords(undefined, undefined, { force: false }),
+    listFinancialRecords(undefined, undefined, { force: true }),
     getAppPreferences(),
   ]);
 
