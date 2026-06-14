@@ -7,7 +7,7 @@
   "deploy": {
     "runtime": "V2",
     "numReplicas": 1,
-    "preDeployCommand": "bundle exec rails db:prepare && bundle exec rails app:bootstrap_admin && bundle exec rails db:seed",
+    "preDeployCommand": "bundle exec rails db:prepare && bundle exec rails app:bootstrap_admin; bundle exec rails db:seed",
     "startCommand": "bundle exec puma -C config/puma.rb",
     "healthcheckPath": "/up",
     "sleepApplication": false,
