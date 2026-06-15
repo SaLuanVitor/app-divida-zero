@@ -574,7 +574,8 @@ class DemoSeedService
 
   def build_extra_income
     data = [
-      [2025, 8, 31, 500.00,  "Bônus desempenho — Q2 empresa"],
+      [2025, 5, 1,  18000.00, "Saldo anterior — conta poupança transferido"],
+      [2025, 8, 31, 500.00,   "Bônus desempenho — Q2 empresa"],
       [2025, 12, 20, 1200.00, "13º salário (proporcional)"],
       [2026, 3, 15, 280.00,  "Restituição IR 2025"],
       [2026, 4, 10, 180.00,  "Cashback Nubank acumulado"],
