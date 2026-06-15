@@ -334,10 +334,10 @@ const Metas = () => {
                             Saldo disponível para metas
                         </AppText>
                         <AppText className="text-slate-900 dark:text-slate-100 text-xl font-black mt-1">
-                            {formatCurrency(fundingSnapshot.available_for_goal_funding)}
+                            {formatCurrency(Math.max(0, Number(fundingSnapshot.available_for_goal_funding || 0)))}
                         </AppText>
                         <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
-                            Saldo até hoje: {formatCurrency(fundingSnapshot.settled_global_balance)} • Alocado em metas: {formatCurrency(fundingSnapshot.allocated_to_goals)}
+                            Saldo até hoje: {formatCurrency(Math.max(0, Number(fundingSnapshot.settled_global_balance || 0)))} • Alocado em metas: {formatCurrency(fundingSnapshot.allocated_to_goals)}
                         </AppText>
                     </View>
                 </Card>
