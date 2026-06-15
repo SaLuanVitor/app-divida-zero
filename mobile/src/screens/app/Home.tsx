@@ -236,6 +236,7 @@ const Home = () => {
     const [records, setRecords] = useState<FinancialRecordDto[]>([]);
     const [allRecords, setAllRecords] = useState<FinancialRecordDto[]>([]);
     const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
+    const [allocatedToGoals, setAllocatedToGoals] = useState<number>(0);
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState<FeedbackState | null>(null);
     const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
@@ -428,6 +429,7 @@ const Home = () => {
                 getGamificationSummary({ force }),
             ]);
             setGoals(Array.isArray(goalsResult.goals) ? goalsResult.goals : []);
+            setAllocatedToGoals(Number(goalsResult.allocated_to_goals ?? 0));
             setGamificationSummary(normalizeGamificationSummary(summaryResult.summary));
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível carregar a gamificação global.';
@@ -569,7 +571,7 @@ const Home = () => {
     );
     const pendingEntriesCount = useMemo(() => entries.filter((item) => item.status === 'pending').length, [entries]);
     const monthlyBalanceValue = useMemo(() => calculateSettledBalance(records), [records]);
-    const totalBalanceValue = useMemo(() => calculateSettledBalance(allRecords), [allRecords]);
+    const totalBalanceValue = useMemo(() => Math.max(0, calculateSettledBalance(allRecords) - allocatedToGoals), [allRecords, allocatedToGoals]);
     const localNextBestAction = useMemo<NextActionCard>(() => {
         if (pendingEntriesCount > 0) {
             return {
