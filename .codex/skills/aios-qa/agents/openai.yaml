@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS QA"
+  short_description: "Ativar AIOS QA para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-qa para ativar AIOS QA neste contexto."

@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Master"
+  short_description: "Ativar AIOS Master para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-master para ativar AIOS Master neste contexto."

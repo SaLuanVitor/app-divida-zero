@@ -1,0 +1,69 @@
+import { XpFeedbackDto } from './gamification';
+
+export type FinancialGoalType = 'save' | 'debt' | 'specific';
+export type FinancialGoalStatus = 'active' | 'completed';
+
+export interface FinancialGoalDto {
+  id: number;
+  title: string;
+  description?: string;
+  target_amount: string;
+  current_amount: string;
+  remaining_amount: string;
+  progress_pct: number;
+  goal_type: FinancialGoalType;
+  status: FinancialGoalStatus;
+  start_date: string;
+  target_date?: string | null;
+  completed_at?: string | null;
+}
+
+export interface FinancialGoalFundingSnapshotDto {
+  settled_global_balance: string;
+  allocated_to_goals: string;
+  available_for_goal_funding: string;
+}
+
+export type FinancialGoalContributionKind = 'deposit' | 'withdraw';
+
+export interface FinancialGoalContributionDto {
+  id: number;
+  financial_goal_id: number;
+  kind: FinancialGoalContributionKind;
+  amount: string;
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface CreateFinancialGoalPayload {
+  title: string;
+  description?: string;
+  target_amount: number;
+  start_date: string;
+  target_date?: string;
+  goal_type: FinancialGoalType;
+}
+
+export interface UpdateFinancialGoalPayload extends CreateFinancialGoalPayload {}
+
+export interface CreateFinancialGoalResponse {
+  message: string;
+  goal: FinancialGoalDto;
+  xp_feedback?: XpFeedbackDto | null;
+}
+
+export interface CreateFinancialGoalContributionPayload {
+  kind: FinancialGoalContributionKind;
+  amount: number;
+  notes?: string;
+}
+
+export interface CreateFinancialGoalContributionResponse {
+  message: string;
+  contribution: FinancialGoalContributionDto;
+  linked_record_id?: number | null;
+  goal: FinancialGoalDto;
+  settled_global_balance: string;
+  allocated_to_goals: string;
+  available_for_goal_funding: string;
+}

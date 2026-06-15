@@ -1,0 +1,41 @@
+development:
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV.fetch("POSTGRES_HOST", "127.0.0.1") %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+  username: <%= ENV.fetch("POSTGRES_USER", "postgres") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "postgres") %>
+  database: <%= ENV.fetch("POSTGRES_DB", "app_divida_zero_development") %>
+  migrations_paths: db/migrate
+
+test:
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV.fetch("POSTGRES_HOST", "127.0.0.1") %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+  username: <%= ENV.fetch("POSTGRES_USER", "postgres") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "postgres") %>
+  database: <%= ENV.fetch("POSTGRES_TEST_DB", "app_divida_zero_test") %>
+  migrations_paths: db/migrate
+
+production:
+  primary: &production_primary
+    adapter: postgresql
+    encoding: unicode
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    url: <%= ENV["DATABASE_URL"] %>
+    migrations_paths: db/migrate
+  cache:
+    <<: *production_primary
+    url: <%= ENV["DATABASE_CACHE_URL"] || ENV["DATABASE_URL"] %>
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *production_primary
+    url: <%= ENV["DATABASE_QUEUE_URL"] || ENV["DATABASE_URL"] %>
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *production_primary
+    url: <%= ENV["DATABASE_CABLE_URL"] || ENV["DATABASE_URL"] %>
+    migrations_paths: db/cable_migrate

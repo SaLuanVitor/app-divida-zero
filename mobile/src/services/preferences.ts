@@ -1,0 +1,316 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppPreferences } from '../types/settings';
+
+const APP_PREFERENCES_KEY = '@DividaZero:appPreferences';
+const USER_STORAGE_KEY = '@DividaZero:user';
+const TUTORIAL_SCOPE_KEY_PREFIX = '@DividaZero:appPreferences:tutorial:user:';
+const TUTORIAL_MIGRATION_OWNER_KEY = '@DividaZero:appPreferences:tutorial:migrationOwner';
+const FONT_SCALE_OPTIONS: Array<AppPreferences['font_scale']> = [0.9, 1, 1.15, 1.3];
+type PreferencesListener = (prefs: AppPreferences) => void;
+type TutorialScopedPreferences = Pick<
+  AppPreferences,
+  | 'onboarding_seen'
+  | 'onboarding_mode'
+  | 'onboarding_primary_goal'
+  | 'advanced_quick_guide_seen'
+  | 'first_success_milestone_done'
+  | 'tutorial_reopen_enabled'
+  | 'tutorial_active_mode'
+  | 'tutorial_beginner_completed'
+  | 'tutorial_advanced_completed'
+  | 'tutorial_last_step'
+  | 'tutorial_advanced_tasks_done'
+  | 'tutorial_version'
+  | 'tutorial_track_state'
+  | 'tutorial_missions_done'
+  | 'tutorial_general_version'
+  | 'tutorial_general_track_state'
+>;
+
+const listeners = new Set<PreferencesListener>();
+
+const tutorialScopedDefaults: TutorialScopedPreferences = {
+  onboarding_seen: false,
+  onboarding_mode: null,
+  onboarding_primary_goal: null,
+  advanced_quick_guide_seen: false,
+  first_success_milestone_done: false,
+  tutorial_reopen_enabled: true,
+  tutorial_active_mode: null,
+  tutorial_beginner_completed: false,
+  tutorial_advanced_completed: false,
+  tutorial_last_step: null,
+  tutorial_advanced_tasks_done: [],
+  tutorial_version: 2,
+  tutorial_track_state: 'idle',
+  tutorial_missions_done: [],
+  tutorial_general_version: 1,
+  tutorial_general_track_state: 'idle',
+};
+
+export const defaultAppPreferences: AppPreferences = {
+  notifications_enabled: true,
+  device_push_enabled: false,
+  notification_permission_prompted: false,
+  notify_due_today: true,
+  notify_due_tomorrow: true,
+  notify_weekly_summary: true,
+  notify_daily_ai_message: true,
+  notify_xp_and_badges: true,
+  ai_assistant_enabled: true,
+  dark_mode: false,
+  large_text: false,
+  font_scale: 1,
+  reduce_motion: false,
+  larger_touch_targets: false,
+  onboarding_seen: false,
+  onboarding_mode: null,
+  onboarding_primary_goal: null,
+  advanced_quick_guide_seen: false,
+  first_success_milestone_done: false,
+  tutorial_reopen_enabled: true,
+  tutorial_active_mode: null,
+  tutorial_beginner_completed: false,
+  tutorial_advanced_completed: false,
+  tutorial_last_step: null,
+  tutorial_advanced_tasks_done: [],
+  tutorial_version: 2,
+  tutorial_track_state: 'idle',
+  tutorial_missions_done: [],
+  tutorial_general_version: 1,
+  tutorial_general_track_state: 'idle',
+};
+
+const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): AppPreferences => {
+  const candidateScale = Number(raw?.font_scale);
+  const normalizedScale =
+    FONT_SCALE_OPTIONS.find((value) => value === candidateScale) ??
+    (raw?.large_text ? 1.15 : 1);
+  const largeText = typeof raw?.large_text === 'boolean' ? raw.large_text : normalizedScale > 1;
+
+  return {
+    ...defaultAppPreferences,
+    ...raw,
+    notify_daily_ai_message:
+      typeof raw?.notify_daily_ai_message === 'boolean' ? raw.notify_daily_ai_message : true,
+    ai_assistant_enabled:
+      typeof raw?.ai_assistant_enabled === 'boolean' ? raw.ai_assistant_enabled : true,
+    font_scale: normalizedScale,
+    large_text: largeText,
+    reduce_motion: typeof raw?.reduce_motion === 'boolean' ? raw.reduce_motion : false,
+    larger_touch_targets: typeof raw?.larger_touch_targets === 'boolean' ? raw.larger_touch_targets : false,
+    onboarding_mode:
+      raw?.onboarding_mode === 'beginner' || raw?.onboarding_mode === 'advanced'
+        ? raw.onboarding_mode
+        : null,
+    onboarding_primary_goal:
+      raw?.onboarding_primary_goal === 'organize_month' ||
+      raw?.onboarding_primary_goal === 'pay_off_debt' ||
+      raw?.onboarding_primary_goal === 'create_goal'
+        ? raw.onboarding_primary_goal
+        : null,
+    advanced_quick_guide_seen:
+      typeof raw?.advanced_quick_guide_seen === 'boolean' ? raw.advanced_quick_guide_seen : false,
+    first_success_milestone_done:
+      typeof raw?.first_success_milestone_done === 'boolean' ? raw.first_success_milestone_done : false,
+    tutorial_active_mode:
+      raw?.tutorial_active_mode === 'beginner' || raw?.tutorial_active_mode === 'advanced'
+        ? raw.tutorial_active_mode
+        : null,
+    tutorial_beginner_completed:
+      typeof raw?.tutorial_beginner_completed === 'boolean' ? raw.tutorial_beginner_completed : false,
+    tutorial_advanced_completed:
+      typeof raw?.tutorial_advanced_completed === 'boolean' ? raw.tutorial_advanced_completed : false,
+    tutorial_last_step:
+      typeof raw?.tutorial_last_step === 'string' || raw?.tutorial_last_step === null
+        ? raw.tutorial_last_step
+        : null,
+    tutorial_advanced_tasks_done: Array.isArray(raw?.tutorial_advanced_tasks_done)
+      ? raw.tutorial_advanced_tasks_done.filter((item): item is string => typeof item === 'string')
+      : [],
+    tutorial_version: typeof raw?.tutorial_version === 'number' ? raw.tutorial_version : 2,
+    tutorial_track_state:
+      raw?.tutorial_track_state === 'idle' ||
+      raw?.tutorial_track_state === 'essential' ||
+      raw?.tutorial_track_state === 'contextual' ||
+      raw?.tutorial_track_state === 'paused' ||
+      raw?.tutorial_track_state === 'completed'
+        ? raw.tutorial_track_state
+        : 'idle',
+    tutorial_missions_done: Array.isArray(raw?.tutorial_missions_done)
+      ? raw.tutorial_missions_done.filter((item): item is string => typeof item === 'string')
+      : [],
+    tutorial_general_version:
+      typeof raw?.tutorial_general_version === 'number' ? raw.tutorial_general_version : 1,
+    tutorial_general_track_state:
+      raw?.tutorial_general_track_state === 'idle' ||
+      raw?.tutorial_general_track_state === 'essential' ||
+      raw?.tutorial_general_track_state === 'paused' ||
+      raw?.tutorial_general_track_state === 'completed'
+        ? raw.tutorial_general_track_state
+        : raw?.tutorial_track_state === 'essential'
+        ? 'essential'
+        : raw?.tutorial_track_state === 'paused'
+        ? 'paused'
+        : raw?.tutorial_track_state === 'completed'
+        ? 'completed'
+        : 'idle',
+  };
+};
+
+const emitPreferences = (prefs: AppPreferences) => {
+  listeners.forEach((listener) => {
+    try {
+      listener(prefs);
+    } catch {
+      // Ignore listener failures to keep persistence stable.
+    }
+  });
+};
+
+const scopedTutorialKeyForUser = (userId: string | number) => `${TUTORIAL_SCOPE_KEY_PREFIX}${String(userId)}`;
+
+const pickTutorialScopedPreferences = (prefs: AppPreferences): TutorialScopedPreferences => ({
+  onboarding_seen: prefs.onboarding_seen,
+  onboarding_mode: prefs.onboarding_mode,
+  onboarding_primary_goal: prefs.onboarding_primary_goal,
+  advanced_quick_guide_seen: prefs.advanced_quick_guide_seen,
+  first_success_milestone_done: prefs.first_success_milestone_done,
+  tutorial_reopen_enabled: prefs.tutorial_reopen_enabled,
+  tutorial_active_mode: prefs.tutorial_active_mode,
+  tutorial_beginner_completed: prefs.tutorial_beginner_completed,
+  tutorial_advanced_completed: prefs.tutorial_advanced_completed,
+  tutorial_last_step: prefs.tutorial_last_step,
+  tutorial_advanced_tasks_done: prefs.tutorial_advanced_tasks_done,
+  tutorial_version: prefs.tutorial_version,
+  tutorial_track_state: prefs.tutorial_track_state,
+  tutorial_missions_done: prefs.tutorial_missions_done,
+  tutorial_general_version: prefs.tutorial_general_version,
+  tutorial_general_track_state: prefs.tutorial_general_track_state,
+});
+
+const readCurrentUserIdFromStorage = async (): Promise<string | null> => {
+  const rawUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
+  if (!rawUser) return null;
+
+  try {
+    const parsed = JSON.parse(rawUser) as { id?: number | string } | null;
+    if (!parsed?.id && parsed?.id !== 0) return null;
+    return String(parsed.id);
+  } catch {
+    return null;
+  }
+};
+
+const readScopedTutorialPreferences = async (userId: string): Promise<TutorialScopedPreferences | null> => {
+  const rawScoped = await AsyncStorage.getItem(scopedTutorialKeyForUser(userId));
+  if (!rawScoped) return null;
+
+  try {
+    const parsedScoped = JSON.parse(rawScoped) as Partial<AppPreferences>;
+    const normalized = normalizePreferences(parsedScoped);
+    return pickTutorialScopedPreferences(normalized);
+  } catch {
+    return null;
+  }
+};
+
+const readTutorialMigrationOwner = async (): Promise<string | null> => {
+  const rawOwner = await AsyncStorage.getItem(TUTORIAL_MIGRATION_OWNER_KEY);
+  if (!rawOwner) return null;
+
+  try {
+    const parsed = JSON.parse(rawOwner) as { userId?: string | number } | null;
+    if (!parsed?.userId && parsed?.userId !== 0) return null;
+    return String(parsed.userId);
+  } catch {
+    return null;
+  }
+};
+
+const writeScopedTutorialPreferences = async (
+  userId: string,
+  scopedPreferences: TutorialScopedPreferences,
+  markAsMigrationOwner = false
+) => {
+  await AsyncStorage.setItem(scopedTutorialKeyForUser(userId), JSON.stringify(scopedPreferences));
+
+  if (markAsMigrationOwner) {
+    await AsyncStorage.setItem(TUTORIAL_MIGRATION_OWNER_KEY, JSON.stringify({ userId }));
+  }
+};
+
+export const getAppPreferences = async (): Promise<AppPreferences> => {
+  const [rawGlobal, currentUserId] = await Promise.all([
+    AsyncStorage.getItem(APP_PREFERENCES_KEY),
+    readCurrentUserIdFromStorage(),
+  ]);
+
+  let basePreferences = defaultAppPreferences;
+  try {
+    if (rawGlobal) {
+      const parsedGlobal = JSON.parse(rawGlobal) as Partial<AppPreferences>;
+      basePreferences = normalizePreferences(parsedGlobal);
+    }
+  } catch {
+    basePreferences = defaultAppPreferences;
+  }
+
+  if (!currentUserId) return basePreferences;
+
+  const scopedTutorial = await readScopedTutorialPreferences(currentUserId);
+  if (scopedTutorial) {
+    const merged = normalizePreferences({
+      ...basePreferences,
+      ...scopedTutorial,
+    });
+
+    return merged;
+  }
+
+  const tutorialMigrationOwner = await readTutorialMigrationOwner();
+  if (!tutorialMigrationOwner) {
+    const legacyTutorial = pickTutorialScopedPreferences(basePreferences);
+    await writeScopedTutorialPreferences(currentUserId, legacyTutorial, true);
+    return normalizePreferences({
+      ...basePreferences,
+      ...legacyTutorial,
+    });
+  }
+
+  const merged = normalizePreferences({
+    ...basePreferences,
+    ...tutorialScopedDefaults,
+  });
+
+  return merged;
+};
+
+export const saveAppPreferences = async (next: AppPreferences) => {
+  const normalized = normalizePreferences(next);
+  const currentUserId = await readCurrentUserIdFromStorage();
+
+  await AsyncStorage.setItem(APP_PREFERENCES_KEY, JSON.stringify(normalized));
+  if (currentUserId) {
+    await writeScopedTutorialPreferences(currentUserId, pickTutorialScopedPreferences(normalized));
+  }
+  emitPreferences(normalized);
+};
+
+export const updateAppPreferences = async (partial: Partial<AppPreferences>) => {
+  const current = await getAppPreferences();
+  const next = normalizePreferences({
+    ...current,
+    ...partial,
+  });
+  await saveAppPreferences(next);
+  return next;
+};
+
+export const subscribePreferencesChanges = (listener: PreferencesListener) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+

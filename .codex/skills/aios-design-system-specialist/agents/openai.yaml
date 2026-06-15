@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "AIOS Design System Specialist"
+  short_description: "Ativar AIOS Design System Specialist para tarefas especializadas deste projeto."
+  default_prompt: "Use $aios-design-system-specialist para ativar AIOS Design System Specialist neste contexto."

@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-native",
+    "jsxImportSource": "nativewind",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "paths": {
+      "~/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "nativewind-env.d.ts"
+  ],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "jest.setup.ts"
+  ],
+  "extends": "expo/tsconfig.base"
+}
