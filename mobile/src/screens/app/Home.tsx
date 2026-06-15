@@ -571,7 +571,7 @@ const Home = () => {
     );
     const pendingEntriesCount = useMemo(() => entries.filter((item) => item.status === 'pending').length, [entries]);
     const monthlyBalanceValue = useMemo(() => calculateSettledBalance(records), [records]);
-    const totalBalanceValue = useMemo(() => Math.max(0, calculateSettledBalance(allRecords) - allocatedToGoals), [allRecords, allocatedToGoals]);
+    const totalBalanceValue = useMemo(() => calculateSettledBalance(allRecords) - allocatedToGoals, [allRecords, allocatedToGoals]);
     const localNextBestAction = useMemo<NextActionCard>(() => {
         if (pendingEntriesCount > 0) {
             return {
