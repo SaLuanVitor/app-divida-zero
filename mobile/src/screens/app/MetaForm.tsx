@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Pressable, Keyboard, FlatList, useWindowDimensions } from 'react-native';
+import { View, TouchableOpacity, Pressable, Keyboard, FlatList, useWindowDimensions, Modal } from 'react-native';
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Landmark, PiggyBank, Target, Trophy, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -589,36 +589,40 @@ const MetaForm = () => {
                 </View>
             ) : null}
 
-            {feedback ? (
-                <View pointerEvents="box-none" className="absolute left-4 right-4 z-[70]" style={{ bottom: overlayBottomInset }}>
-                    <View
-                        className={`rounded-xl border px-4 py-3 ${
-                            feedback.kind === 'success'
-                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                        }`}
-                    >
-                        <AppText
-                            className={`font-bold text-sm ${
-                                feedback.kind === 'success'
-                                    ? 'text-emerald-800 dark:text-emerald-300'
-                                    : 'text-red-800 dark:text-red-300'
-                            }`}
-                        >
-                            {feedback.title}
-                        </AppText>
-                        <AppText
-                            className={`text-xs mt-1 ${
-                                feedback.kind === 'success'
-                                    ? 'text-emerald-700 dark:text-emerald-300'
-                                    : 'text-red-700 dark:text-red-300'
-                            }`}
-                        >
-                            {feedback.message}
-                        </AppText>
-                    </View>
+            <Modal visible={!!feedback} transparent animationType="none" statusBarTranslucent onRequestClose={() => setFeedback(null)}>
+                <View pointerEvents="box-none" className="flex-1">
+                    {feedback ? (
+                        <View pointerEvents="box-none" className="absolute left-4 right-4" style={{ bottom: overlayBottomInset }}>
+                            <View
+                                className={`rounded-xl border px-4 py-3 ${
+                                    feedback.kind === 'success'
+                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                                }`}
+                            >
+                                <AppText
+                                    className={`font-bold text-sm ${
+                                        feedback.kind === 'success'
+                                            ? 'text-emerald-800 dark:text-emerald-300'
+                                            : 'text-red-800 dark:text-red-300'
+                                    }`}
+                                >
+                                    {feedback.title}
+                                </AppText>
+                                <AppText
+                                    className={`text-xs mt-1 ${
+                                        feedback.kind === 'success'
+                                            ? 'text-emerald-700 dark:text-emerald-300'
+                                            : 'text-red-700 dark:text-red-300'
+                                    }`}
+                                >
+                                    {feedback.message}
+                                </AppText>
+                            </View>
+                        </View>
+                    ) : null}
                 </View>
-            ) : null}
+            </Modal>
 
             {xpPopup ? (
                 <View className="absolute inset-0 z-[60]">
