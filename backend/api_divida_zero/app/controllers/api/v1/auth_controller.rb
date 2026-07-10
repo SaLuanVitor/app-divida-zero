@@ -10,6 +10,8 @@ module Api
         user = User.new(register_params)
         user.save!
 
+        WelcomeMailer.welcome(user).deliver_later
+
         render_auth_payload(user, status: :created)
       end
 
@@ -51,6 +53,8 @@ module Api
             reset_password_token_digest: Digest::SHA256.hexdigest(raw_token),
             reset_password_sent_at: Time.current
           )
+
+          PasswordResetMailer.reset_email(user, raw_token).deliver_later
 
           response = { message: "Se o usuário existir, as instruções foram enviadas." }
           response[:dev_reset_token] = raw_token if Rails.env.development? || Rails.env.test?
