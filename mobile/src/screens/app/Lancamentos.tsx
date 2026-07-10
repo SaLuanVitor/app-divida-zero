@@ -1,11 +1,12 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Alert, ActivityIndicator, Pressable, Keyboard, FlatList, useWindowDimensions } from 'react-native';
+import { View, TouchableOpacity, Alert, ActivityIndicator, Keyboard, FlatList, useWindowDimensions } from 'react-native';
 import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, ChevronRight, Trophy, Target, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Button from '../../components/Button';
+import AppOverlay from '../../components/AppOverlay';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import ScreenHelpButton from '../../components/ScreenHelpButton';
 import { useThemeMode } from '../../context/ThemeContext';
@@ -798,9 +799,9 @@ const Lancamentos = () => {
                 </View>
             </Layout>
 
-            {showDatePicker ? (
-                <View className="absolute inset-0 z-[120]">
-                    <Pressable className="absolute inset-0 bg-black/20" onPress={closeDatePicker} />
+            <AppOverlay visible={showDatePicker} backdropClassName="bg-black/20" onBackdropPress={closeDatePicker}>
+                {showDatePicker ? (
+                    <>
                     <View
                         className="absolute left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3"
                         style={{ bottom: overlayBottomInset }}
@@ -866,12 +867,9 @@ const Lancamentos = () => {
                             <Button title="Fechar" variant="outline" onPress={closeDatePicker} className="flex-1" />
                         </View>
                     </View>
-                </View>
-            ) : null}
 
-            {showDatePicker && showPeriodPicker ? (
-                <View className="absolute inset-0 z-[60]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={closePeriodPicker} />
+                    <AppOverlay visible={showPeriodPicker} backdropClassName="bg-black/30" onBackdropPress={closePeriodPicker}>
+                        {showPeriodPicker ? (
                     <View className="absolute left-4 right-4 top-[24%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                         <View className="flex-row items-center justify-between mb-3">
                             <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Selecionar período</AppText>
@@ -954,12 +952,14 @@ const Lancamentos = () => {
                             />
                         )}
                     </View>
-                </View>
-            ) : null}
+                        ) : null}
+                    </AppOverlay>
+                    </>
+                ) : null}
+            </AppOverlay>
 
-            {xpPopup ? (
-                <View className="absolute inset-0 z-50">
-                    <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
+            <AppOverlay visible={!!xpPopup} backdropClassName="bg-black/35" onBackdropPress={() => setXpPopup(null)}>
+                {xpPopup ? (
                     <View className="absolute left-5 right-5 top-[22%] bg-white dark:bg-[#121212] rounded-3xl border border-orange-100 dark:border-slate-700 p-5">
                         <View className="items-center">
                             <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border border-primary/20 mb-3">
@@ -993,8 +993,8 @@ const Lancamentos = () => {
                             <Button title="Continuar" onPress={() => setXpPopup(null)} className="mt-4 w-full" />
                         </View>
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
         </>
     );
 };

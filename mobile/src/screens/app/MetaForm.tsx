@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Pressable, Keyboard, FlatList, useWindowDimensions, Modal } from 'react-native';
+import { View, TouchableOpacity, Keyboard, FlatList, useWindowDimensions } from 'react-native';
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Landmark, PiggyBank, Target, Trophy, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Button from '../../components/Button';
+import AppOverlay from '../../components/AppOverlay';
+import AppToast from '../../components/AppToast';
 import { useThemeMode } from '../../context/ThemeContext';
 import { createFinancialGoal, updateFinancialGoal } from '../../services/financialGoals';
 import { CreateFinancialGoalPayload, FinancialGoalDto, FinancialGoalType } from '../../types/financialGoal';
@@ -403,9 +405,9 @@ const MetaForm = () => {
                 </View>
             </Layout>
 
-            {showDatePicker ? (
-                <View className="absolute inset-0 z-[120]">
-                    <Pressable className="absolute inset-0 bg-black/20" onPress={closeDatePicker} />
+            <AppOverlay visible={showDatePicker} backdropClassName="bg-black/20" onBackdropPress={closeDatePicker}>
+                {showDatePicker ? (
+                    <>
                     <View
                         className="absolute left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3"
                         style={{ bottom: overlayBottomInset }}
@@ -498,12 +500,9 @@ const MetaForm = () => {
                             <Button title="Fechar" onPress={closeDatePicker} className="flex-1" />
                         </View>
                     </View>
-                </View>
-            ) : null}
 
-            {showDatePicker && showPeriodPicker ? (
-                <View className="absolute inset-0 z-[60]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={closePeriodPicker} />
+                    <AppOverlay visible={showPeriodPicker} backdropClassName="bg-black/30" onBackdropPress={closePeriodPicker}>
+                        {showPeriodPicker ? (
                     <View className="absolute left-4 right-4 top-[24%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                         <View className="flex-row items-center justify-between mb-3">
                             <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Selecionar período</AppText>
@@ -586,47 +585,24 @@ const MetaForm = () => {
                             />
                         )}
                     </View>
-                </View>
-            ) : null}
+                        ) : null}
+                    </AppOverlay>
+                    </>
+                ) : null}
+            </AppOverlay>
 
-            <Modal visible={!!feedback} transparent animationType="none" statusBarTranslucent onRequestClose={() => setFeedback(null)}>
-                <View pointerEvents="box-none" className="flex-1">
-                    {feedback ? (
-                        <View pointerEvents="box-none" className="absolute left-4 right-4" style={{ bottom: overlayBottomInset }}>
-                            <View
-                                className={`rounded-xl border px-4 py-3 ${
-                                    feedback.kind === 'success'
-                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                                }`}
-                            >
-                                <AppText
-                                    className={`font-bold text-sm ${
-                                        feedback.kind === 'success'
-                                            ? 'text-emerald-800 dark:text-emerald-300'
-                                            : 'text-red-800 dark:text-red-300'
-                                    }`}
-                                >
-                                    {feedback.title}
-                                </AppText>
-                                <AppText
-                                    className={`text-xs mt-1 ${
-                                        feedback.kind === 'success'
-                                            ? 'text-emerald-700 dark:text-emerald-300'
-                                            : 'text-red-700 dark:text-red-300'
-                                    }`}
-                                >
-                                    {feedback.message}
-                                </AppText>
-                            </View>
-                        </View>
-                    ) : null}
-                </View>
-            </Modal>
+            <AppToast
+                visible={!!feedback}
+                kind={feedback?.kind ?? 'success'}
+                title={feedback?.title}
+                message={feedback?.message}
+                position="bottom"
+                bottomInset={overlayBottomInset}
+                onRequestClose={() => setFeedback(null)}
+            />
 
-            {xpPopup ? (
-                <View className="absolute inset-0 z-[60]">
-                    <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
+            <AppOverlay visible={!!xpPopup} backdropClassName="bg-black/35" onBackdropPress={() => setXpPopup(null)}>
+                {xpPopup ? (
                     <View className="absolute left-5 right-5 top-[22%] bg-white dark:bg-[#121212] rounded-3xl border border-orange-100 dark:border-slate-700 p-5">
                         <View className="items-center">
                             <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border border-primary/20 mb-3">
@@ -675,8 +651,8 @@ const MetaForm = () => {
                             />
                         </View>
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
         </>
     );
 };

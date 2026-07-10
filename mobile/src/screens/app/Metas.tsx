@@ -1,12 +1,14 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import AppTextInput from '../../components/AppTextInput';
-import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, Modal } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2, ChevronRight } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import AppOverlay from '../../components/AppOverlay';
+import AppToast from '../../components/AppToast';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import ScreenHelpButton from '../../components/ScreenHelpButton';
 import { useBottomInset } from '../../context/BottomInsetContext';
@@ -487,44 +489,18 @@ const Metas = () => {
                 ) : null}
             </Layout>
 
-            <Modal visible={!!feedback} transparent animationType="none" statusBarTranslucent onRequestClose={() => setFeedback(null)}>
-                <View pointerEvents="box-none" className="flex-1">
-                    {feedback ? (
-                        <View pointerEvents="box-none" className="absolute left-4 right-4" style={{ bottom: overlayBottomInset }}>
-                            <View
-                                className={`rounded-xl border px-4 py-3 ${
-                                    feedback.kind === 'success'
-                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                                }`}
-                            >
-                                <AppText
-                                    className={`font-bold text-sm ${
-                                        feedback.kind === 'success'
-                                            ? 'text-emerald-800 dark:text-emerald-300'
-                                            : 'text-red-800 dark:text-red-300'
-                                    }`}
-                                >
-                                    {feedback.title}
-                                </AppText>
-                                <AppText
-                                    className={`text-xs mt-1 ${
-                                        feedback.kind === 'success'
-                                            ? 'text-emerald-700 dark:text-emerald-300'
-                                            : 'text-red-700 dark:text-red-300'
-                                    }`}
-                                >
-                                    {feedback.message}
-                                </AppText>
-                            </View>
-                        </View>
-                    ) : null}
-                </View>
-            </Modal>
+            <AppToast
+                visible={!!feedback}
+                kind={feedback?.kind ?? 'success'}
+                title={feedback?.title}
+                message={feedback?.message}
+                position="bottom"
+                bottomInset={overlayBottomInset}
+                onRequestClose={() => setFeedback(null)}
+            />
 
-            {goalPendingContribution ? (
-                <View className="absolute inset-0 z-[66]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={() => closeContributionModal()} />
+            <AppOverlay visible={!!goalPendingContribution} backdropClassName="bg-black/30" onBackdropPress={() => closeContributionModal()}>
+                {goalPendingContribution ? (
                     <View className="absolute left-4 right-4 top-[26%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">
                             {contributionKind === 'deposit' ? 'Adicionar valor' : 'Retirar valor'}
@@ -591,12 +567,11 @@ const Metas = () => {
                             onPress={() => closeContributionModal()}
                         />
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {goalPendingDelete ? (
-                <View className="absolute inset-0 z-[65]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={() => !deleteLoading && setGoalPendingDelete(null)} />
+            <AppOverlay visible={!!goalPendingDelete} backdropClassName="bg-black/30" onBackdropPress={() => !deleteLoading && setGoalPendingDelete(null)}>
+                {goalPendingDelete ? (
                     <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Excluir meta</AppText>
                         <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2 mb-4">
@@ -618,8 +593,8 @@ const Metas = () => {
                             onPress={() => setGoalPendingDelete(null)}
                         />
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
         </>
     );
 };
