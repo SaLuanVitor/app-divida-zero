@@ -5,20 +5,30 @@ require "json"
 module Ai
   class Client
     DEFAULT_MODEL = "gpt-4.1-mini".freeze
+    DEFAULT_BASE_URL = "https://api.openai.com/v1".freeze
+    APP_TITLE = "App Divida Zero".freeze
+    APP_REFERER = "https://appdividazero.com.br".freeze
 
     class << self
       def generate_json(feature:, system_prompt:, user_prompt:, fallback:, response_guard:)
         started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        api_key = ENV["OPENAI_API_KEY"].to_s.strip
-        model = ENV["OPENAI_MODEL"].to_s.strip.presence || DEFAULT_MODEL
-        provider = "openai"
+        api_key = resolve_api_key
+        model = resolve_model
+        base_url = resolve_base_url
+        provider = resolve_provider(base_url)
 
         return fallback_response(fallback, feature, started_at, model, provider) if api_key.blank?
 
-        uri = URI.parse("https://api.openai.com/v1/chat/completions")
+        uri = URI.parse("#{base_url}/chat/completions")
         request = Net::HTTP::Post.new(uri)
         request["Authorization"] = "Bearer #{api_key}"
         request["Content-Type"] = "application/json"
+
+        if provider == "openrouter"
+          request["HTTP-Referer"] = APP_REFERER
+          request["X-Title"] = APP_TITLE
+        end
+
         request.body = {
           model: model,
           temperature: 0.4,
@@ -55,6 +65,23 @@ module Ai
       end
 
       private
+
+      def resolve_api_key
+        ENV["AI_API_KEY"].to_s.strip.presence || ENV["OPENAI_API_KEY"].to_s.strip
+      end
+
+      def resolve_model
+        ENV["AI_MODEL"].to_s.strip.presence || ENV["OPENAI_MODEL"].to_s.strip.presence || DEFAULT_MODEL
+      end
+
+      def resolve_base_url
+        raw = ENV["AI_BASE_URL"].to_s.strip.presence || DEFAULT_BASE_URL
+        raw.chomp("/")
+      end
+
+      def resolve_provider(base_url)
+        base_url.to_s.include?("openrouter") ? "openrouter" : "openai"
+      end
 
       def fallback_response(fallback, feature, started_at, model, provider, error_message = nil)
         fallback_payload =
