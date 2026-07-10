@@ -26,6 +26,8 @@ import Button from '../../components/Button';
 import ProfileAvatar from '../../components/ProfileAvatar';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import ScreenHelpButton from '../../components/ScreenHelpButton';
+import AppOverlay from '../../components/AppOverlay';
+import AppToast from '../../components/AppToast';
 import { useAuth } from '../../context/AuthContext';
 import { useOverlay } from '../../context/OverlayContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
@@ -1375,9 +1377,8 @@ const Home = () => {
                 </View>
             </Modal>
 
-            {showDayDetails ? (
-                <View className="absolute inset-0 z-[120]">
-                    <Pressable className="absolute inset-0 bg-black/20" onPress={closeOverlay} />
+            <AppOverlay visible={showDayDetails} backdropClassName="bg-black/20" onBackdropPress={closeOverlay}>
+                {showDayDetails ? (
                     <View
                         className="absolute left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3 max-h-[70%]"
                         style={{ bottom: overlayBottomInset }}
@@ -1426,12 +1427,11 @@ const Home = () => {
                             ))
                         )}
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {showConfirm ? (
-                <View className="absolute inset-0 z-[60]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={() => !actionLoading && setConfirmState(null)} />
+            <AppOverlay visible={showConfirm} backdropClassName="bg-black/30" onBackdropPress={() => !actionLoading && setConfirmState(null)}>
+                {showConfirm ? (
                     <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">{confirmState?.title}</AppText>
                         <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2 mb-4">{confirmState?.message}</AppText>
@@ -1452,12 +1452,11 @@ const Home = () => {
                             className="h-11"
                         />
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {showXpPopup ? (
-                <View className="absolute inset-0 z-[62]">
-                    <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
+            <AppOverlay visible={showXpPopup} backdropClassName="bg-black/35" onBackdropPress={() => setXpPopup(null)}>
+                {showXpPopup ? (
                     <View className="absolute left-5 right-5 top-[24%] bg-white dark:bg-[#121212] rounded-3xl border border-orange-100 dark:border-slate-700 p-5">
                         <View className="items-center">
                             <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border border-primary/20 mb-3">
@@ -1485,12 +1484,11 @@ const Home = () => {
                             <Button title="Continuar" onPress={() => setXpPopup(null)} className="h-12 mt-4 w-full" />
                         </View>
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {showPeriodSelector ? (
-                <View className="absolute inset-0 z-[65]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={closePeriodPicker} />
+            <AppOverlay visible={showPeriodSelector} backdropClassName="bg-black/30" onBackdropPress={closePeriodPicker}>
+                {showPeriodSelector ? (
                     <View className="absolute left-4 right-4 top-[24%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                         <View className="flex-row items-center justify-between mb-3">
                             <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Navegar por período</AppText>
@@ -1573,51 +1571,44 @@ const Home = () => {
                             />
                         )}
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            <Modal visible={!!feedback} transparent animationType="none" statusBarTranslucent onRequestClose={() => setFeedback(null)}>
-                <View pointerEvents="box-none" className="flex-1">
-                    {feedback ? (
-                        <View className="absolute top-16 left-4 right-4">
-                            <View className={`rounded-xl border px-4 py-3 ${feedback.kind === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
-                                <AppText className={`font-bold text-sm ${feedback.kind === 'success' ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>
-                                    {feedback.title}
-                                </AppText>
-                                <AppText className={`text-xs mt-1 ${feedback.kind === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-                                    {feedback.message}
-                                </AppText>
-                            </View>
-                        </View>
-                    ) : null}
-                </View>
-            </Modal>
+            <AppToast
+                visible={!!feedback}
+                kind={feedback?.kind ?? 'success'}
+                title={feedback?.title}
+                message={feedback?.message}
+                position="top"
+                onRequestClose={() => setFeedback(null)}
+            />
 
-            <Modal visible={!!undoState} transparent animationType="none" statusBarTranslucent onRequestClose={() => setUndoState(null)}>
-                <View pointerEvents="box-none" className="flex-1">
-                    {undoState ? (
-                        <View pointerEvents="box-none" className="absolute left-4 right-4" style={{ bottom: overlayBottomInset }}>
-                            <View className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-4 py-3 flex-row items-center justify-between">
-                                <View className="flex-1 pr-3">
-                                    <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">
-                                        {undoState.entry.icon === CircleDollarSign ? 'Marcado como recebido' : 'Marcado como pago'}
-                                    </AppText>
-                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
-                                        Toque em desfazer para voltar este registro para pendente.
-                                    </AppText>
-                                </View>
-                                <TouchableOpacity
-                                    className="px-3 py-2 rounded-lg bg-primary"
-                                    disabled={undoLoading}
-                                    onPress={undoPay}
-                                >
-                                    <AppText className="text-white text-xs font-bold">{undoLoading ? '...' : 'Desfazer'}</AppText>
-                                </TouchableOpacity>
-                            </View>
+            <AppToast
+                visible={!!undoState}
+                position="bottom"
+                bottomInset={overlayBottomInset}
+                onRequestClose={() => setUndoState(null)}
+            >
+                {undoState ? (
+                    <View className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-4 py-3 flex-row items-center justify-between">
+                        <View className="flex-1 pr-3">
+                            <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">
+                                {undoState.entry.icon === CircleDollarSign ? 'Marcado como recebido' : 'Marcado como pago'}
+                            </AppText>
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
+                                Toque em desfazer para voltar este registro para pendente.
+                            </AppText>
                         </View>
-                    ) : null}
-                </View>
-            </Modal>
+                        <TouchableOpacity
+                            className="px-3 py-2 rounded-lg bg-primary"
+                            disabled={undoLoading}
+                            onPress={undoPay}
+                        >
+                            <AppText className="text-white text-xs font-bold">{undoLoading ? '...' : 'Desfazer'}</AppText>
+                        </TouchableOpacity>
+                    </View>
+                ) : null}
+            </AppToast>
         </>
     );
 };

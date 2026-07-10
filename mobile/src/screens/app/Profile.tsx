@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import AppOverlay from '../../components/AppOverlay';
 import ProfileAvatar from '../../components/ProfileAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
@@ -819,9 +820,8 @@ const Profile = () => {
                 </View>
             </Modal>
 
-            {showAvatarPicker ? (
-                <View className="absolute inset-0 z-[58]">
-                    <Pressable className="absolute inset-0 bg-black/40" onPress={() => !savingAppearance && setShowAvatarPicker(false)} />
+            <AppOverlay visible={showAvatarPicker} backdropClassName="bg-black/40" onBackdropPress={() => !savingAppearance && setShowAvatarPicker(false)}>
+                {showAvatarPicker ? (
                     <View
                         className="absolute bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4"
                         style={{ left: modalSideInset, right: modalSideInset, top: pickerTopInset, bottom: pickerBottomInset }}
@@ -971,12 +971,11 @@ const Profile = () => {
                             />
                         </View>
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {showLogoutConfirm ? (
-                <View className="absolute inset-0 z-50">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={() => !logoutLoading && setShowLogoutConfirm(false)} />
+            <AppOverlay visible={showLogoutConfirm} backdropClassName="bg-black/30" onBackdropPress={() => !logoutLoading && setShowLogoutConfirm(false)}>
+                {showLogoutConfirm ? (
                     <View className="absolute left-4 right-4 top-[38%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Sair da conta</AppText>
                         <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2 mb-4">
@@ -1006,8 +1005,8 @@ const Profile = () => {
                             onPress={() => setShowLogoutConfirm(false)}
                         />
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
         </>
     );
 };
