@@ -1576,40 +1576,48 @@ const Home = () => {
                 </View>
             ) : null}
 
-            {feedback ? (
-                <View className="absolute top-16 left-4 right-4 z-[70]">
-                    <View className={`rounded-xl border px-4 py-3 ${feedback.kind === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
-                        <AppText className={`font-bold text-sm ${feedback.kind === 'success' ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>
-                            {feedback.title}
-                        </AppText>
-                        <AppText className={`text-xs mt-1 ${feedback.kind === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-                            {feedback.message}
-                        </AppText>
-                    </View>
-                </View>
-            ) : null}
-
-            {undoState ? (
-                <View pointerEvents="box-none" className="absolute left-4 right-4 z-[72]" style={{ bottom: overlayBottomInset }}>
-                    <View className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-4 py-3 flex-row items-center justify-between">
-                        <View className="flex-1 pr-3">
-                            <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">
-                                {undoState.entry.icon === CircleDollarSign ? 'Marcado como recebido' : 'Marcado como pago'}
-                            </AppText>
-                            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
-                                Toque em desfazer para voltar este registro para pendente.
-                            </AppText>
+            <Modal visible={!!feedback} transparent animationType="none" statusBarTranslucent onRequestClose={() => setFeedback(null)}>
+                <View pointerEvents="box-none" className="flex-1">
+                    {feedback ? (
+                        <View className="absolute top-16 left-4 right-4">
+                            <View className={`rounded-xl border px-4 py-3 ${feedback.kind === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
+                                <AppText className={`font-bold text-sm ${feedback.kind === 'success' ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>
+                                    {feedback.title}
+                                </AppText>
+                                <AppText className={`text-xs mt-1 ${feedback.kind === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+                                    {feedback.message}
+                                </AppText>
+                            </View>
                         </View>
-                        <TouchableOpacity
-                            className="px-3 py-2 rounded-lg bg-primary"
-                            disabled={undoLoading}
-                            onPress={undoPay}
-                        >
-                            <AppText className="text-white text-xs font-bold">{undoLoading ? '...' : 'Desfazer'}</AppText>
-                        </TouchableOpacity>
-                    </View>
+                    ) : null}
                 </View>
-            ) : null}
+            </Modal>
+
+            <Modal visible={!!undoState} transparent animationType="none" statusBarTranslucent onRequestClose={() => setUndoState(null)}>
+                <View pointerEvents="box-none" className="flex-1">
+                    {undoState ? (
+                        <View pointerEvents="box-none" className="absolute left-4 right-4" style={{ bottom: overlayBottomInset }}>
+                            <View className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-4 py-3 flex-row items-center justify-between">
+                                <View className="flex-1 pr-3">
+                                    <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">
+                                        {undoState.entry.icon === CircleDollarSign ? 'Marcado como recebido' : 'Marcado como pago'}
+                                    </AppText>
+                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
+                                        Toque em desfazer para voltar este registro para pendente.
+                                    </AppText>
+                                </View>
+                                <TouchableOpacity
+                                    className="px-3 py-2 rounded-lg bg-primary"
+                                    disabled={undoLoading}
+                                    onPress={undoPay}
+                                >
+                                    <AppText className="text-white text-xs font-bold">{undoLoading ? '...' : 'Desfazer'}</AppText>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ) : null}
+                </View>
+            </Modal>
         </>
     );
 };
