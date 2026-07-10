@@ -34,6 +34,11 @@ Rails.application.configure do
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
 
+  # Do not send real emails in development — accumulate them in the log instead.
+  # (forgot_password ainda expõe dev_reset_token na resposta em dev, então o
+  # reset funciona sem depender de entrega real de email.)
+  config.action_mailer.delivery_method = :test
+
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
 

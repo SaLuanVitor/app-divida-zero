@@ -1,0 +1,11 @@
+<p>Olá, <%= @user.name %>,</p>
+
+<p>Recebemos uma solicitação para redefinir a senha da sua conta no App Dívida Zero.</p>
+
+<p>Abra o app, acesse a tela de <strong>Redefinir senha</strong> e informe o código abaixo junto com sua nova senha:</p>
+
+<p style="font-size: 24px; font-weight: bold; letter-spacing: 2px;"><%= @token %></p>
+
+<p>Este código é válido por <strong><%= @valid_for_minutes %> minutos</strong>.</p>
+
+<p>Se você não solicitou essa alteração, pode ignorar este email — sua senha permanecerá inalterada.</p>
