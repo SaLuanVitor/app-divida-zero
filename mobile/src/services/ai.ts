@@ -1,5 +1,6 @@
 import api from './api';
-import { featurePhaseConfig } from '../config/featurePhase';
+import { isAiSurfaceEnabled, AiSurfaceKey } from '../config/featurePhase';
+import { AxiosError } from 'axios';
 import {
   AiAlert,
   AiCategorizeSuggestion,
@@ -8,6 +9,9 @@ import {
   AiResponseMeta,
   DailyMessageDto,
 } from '../types/ai';
+
+const RETRY_DELAYS = [1000, 3000, 8000];
+const AI_TIMEOUT = 30000;
 
 const toConfidence = (value: unknown) => {
   const parsed = Number(value);
@@ -20,15 +24,51 @@ const toMeta = (data: any): AiResponseMeta => ({
   source: data?.source === 'llm' ? 'llm' : 'fallback',
 });
 
-const assertAiMobileCallsEnabled = () => {
-  if (!featurePhaseConfig.aiEnabledInMobileCalls) {
-    throw new Error('AI mobile calls are disabled in phase 1.');
+const assertAiSurfaceEnabled = (surface: AiSurfaceKey) => {
+  if (!isAiSurfaceEnabled(surface)) {
+    throw new Error(`AI surface "${surface}" is disabled in phase 1.`);
   }
 };
 
+const isRetryable = (error: unknown): boolean => {
+  if (error instanceof AxiosError) {
+    if (!error.response) return true;
+    const { status } = error.response;
+    return status >= 500 || status === 429;
+  }
+  return false;
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+    try {
+      const result = await Promise.race([
+        fn(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('AI request timed out')), AI_TIMEOUT),
+        ),
+      ]);
+      return result;
+    } catch (error) {
+      lastError = error;
+      if (!isRetryable(error) || attempt === RETRY_DELAYS.length) {
+        throw error;
+      }
+      const delay = RETRY_DELAYS[attempt] + Math.random() * 500;
+      await sleep(delay);
+    }
+  }
+
+  throw lastError;
+}
+
 export const getAiNextAction = async () => {
-  assertAiMobileCallsEnabled();
-  const { data } = await api.post('/ai/next_action');
+  assertAiSurfaceEnabled('nextAction');
+  const { data } = await withRetry(() => api.post('/ai/next_action'));
   const action: AiNextAction = {
     title: String(data?.next_action?.title || 'Proximo passo'),
     description: String(data?.next_action?.description || 'Revise seus pendentes de hoje.'),
@@ -39,8 +79,8 @@ export const getAiNextAction = async () => {
 };
 
 export const getAiAlerts = async () => {
-  assertAiMobileCallsEnabled();
-  const { data } = await api.post('/ai/alerts');
+  assertAiSurfaceEnabled('alerts');
+  const { data } = await withRetry(() => api.post('/ai/alerts'));
   const alerts = Array.isArray(data?.alerts)
     ? data.alerts.map((item: any): AiAlert => ({
         type: item?.type === 'delay' || item?.type === 'habit' ? item.type : 'cashflow',
@@ -53,8 +93,8 @@ export const getAiAlerts = async () => {
 };
 
 export const getAiCategorizeRecord = async (payload: { title: string; amount: number | string; note?: string }) => {
-  assertAiMobileCallsEnabled();
-  const { data } = await api.post('/ai/categorize_record', payload);
+  assertAiSurfaceEnabled('categorizeRecord');
+  const { data } = await withRetry(() => api.post('/ai/categorize_record', payload));
   const suggestion: AiCategorizeSuggestion = {
     suggested_category: String(data?.suggestion?.suggested_category || 'Sem categoria'),
     suggested_flow_type: data?.suggestion?.suggested_flow_type === 'income' ? 'income' : 'expense',
@@ -65,8 +105,8 @@ export const getAiCategorizeRecord = async (payload: { title: string; amount: nu
 };
 
 export const getAiReportsBriefing = async () => {
-  assertAiMobileCallsEnabled();
-  const { data } = await api.post('/ai/reports_briefing');
+  assertAiSurfaceEnabled('reportsBriefing');
+  const { data } = await withRetry(() => api.post('/ai/reports_briefing'));
   const actions =
     Array.isArray(data?.briefing?.actions) && data.briefing.actions.length
       ? data.briefing.actions.map((item: unknown) => String(item)).slice(0, 2)
@@ -86,8 +126,8 @@ export const sendAiFeedback = async (payload: {
   useful?: boolean;
   comment?: string;
 }) => {
-  assertAiMobileCallsEnabled();
-  const { data } = await api.post('/ai/feedback', payload);
+  assertAiSurfaceEnabled('nextAction');
+  const { data } = await withRetry(() => api.post('/ai/feedback', payload));
   return {
     id: Number(data?.id || 0),
     message: String(data?.message || 'Feedback enviado.'),
@@ -95,8 +135,8 @@ export const sendAiFeedback = async (payload: {
 };
 
 export const getDailyMessageToday = async () => {
-  assertAiMobileCallsEnabled();
-  const { data } = await api.get('/daily_message/today');
+  assertAiSurfaceEnabled('dailyMessage');
+  const { data } = await withRetry(() => api.get('/daily_message/today'));
   const parsed: DailyMessageDto = {
     id: Number(data?.id || 0),
     date: String(data?.date || new Date().toISOString().slice(0, 10)),
