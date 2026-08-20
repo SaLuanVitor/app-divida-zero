@@ -4,9 +4,17 @@ import * as DocumentPicker from 'expo-document-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { bankStatementsApi } from '../../services/bankStatements';
 
+const STEP_LABELS: Record<string, string> = {
+  parsing: 'Lendo extrato...',
+  categorizing: 'Categorizando transações...',
+  deduplicating: 'Verificando duplicatas...',
+  done: 'Concluído',
+};
+
 export default function BankImportScreen({ navigation }: any) {
   const [uploading, setUploading] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [step, setStep] = useState<string>('parsing');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handlePickFile = async () => {
@@ -31,7 +39,8 @@ export default function BankImportScreen({ navigation }: any) {
       }
 
       setUploading(true);
-      setStatus(null);
+      setProgress(0);
+      setStep('parsing');
       setErrorMessage(null);
       const response = await bankStatementsApi.upload({
         uri: file.uri,
@@ -50,7 +59,12 @@ export default function BankImportScreen({ navigation }: any) {
     const interval = setInterval(async () => {
       try {
         const res = await bankStatementsApi.getStatus(id);
-        setStatus(res.data.status);
+        if (typeof res.data.progress === 'number') {
+          setProgress(res.data.progress);
+        }
+        if (res.data.step) {
+          setStep(res.data.step);
+        }
 
         if (res.data.status === 'done') {
           clearInterval(interval);
@@ -90,8 +104,13 @@ export default function BankImportScreen({ navigation }: any) {
       {uploading ? (
         <View className="items-center py-8">
           <ActivityIndicator size="large" color="#3b82f6" />
-          <Text className="mt-4 text-gray-600">Processando extrato...</Text>
-          {status && <Text className="text-sm text-gray-400 mt-2">Status: {status}</Text>}
+          <Text className="mt-4 text-gray-600">
+            {STEP_LABELS[step] || 'Processando extrato...'}
+          </Text>
+          <Text className="text-sm text-gray-400 mt-2">{progress}%</Text>
+          <View className="w-full h-2.5 bg-gray-200 rounded-full mt-3 overflow-hidden">
+            <View className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }} />
+          </View>
         </View>
       ) : (
         <TouchableOpacity

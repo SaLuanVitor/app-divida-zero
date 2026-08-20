@@ -39,7 +39,7 @@ module Bank
     OFX
 
     test "parses OFX file and returns transactions" do
-      Tempfile.create(["extrato", ".ofx"], encoding: "UTF-8") do |f|
+      Tempfile.create([ "extrato", ".ofx" ], encoding: "UTF-8") do |f|
         f.write(SAMPLE_OFX)
         f.rewind
         result = OfxParser.new.parse(f.path)
@@ -52,7 +52,7 @@ module Bank
     end
 
     test "parses income transaction correctly" do
-      Tempfile.create(["extrato", ".ofx"], encoding: "UTF-8") do |f|
+      Tempfile.create([ "extrato", ".ofx" ], encoding: "UTF-8") do |f|
         f.write(SAMPLE_OFX)
         f.rewind
         result = OfxParser.new.parse(f.path)
@@ -63,7 +63,7 @@ module Bank
 
     test "raises error for invalid file" do
       assert_raises(Bank::UnsupportedFormatError) do
-        Tempfile.create(["invalid", ".ofx"]) do |f|
+        Tempfile.create([ "invalid", ".ofx" ]) do |f|
           f.write("not an ofx file")
           f.rewind
           OfxParser.new.parse(f.path)

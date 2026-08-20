@@ -61,12 +61,13 @@
       post "whatsapp/webhook", to: "whatsapp#webhook"
 
       namespace :bank do
-        resources :statements, only: [] do
+        resources :statements, only: [], param: :batch_id do
           collection do
             post :upload
           end
           member do
             get :status
+            delete :destroy
           end
         end
         resources :transactions, only: [] do

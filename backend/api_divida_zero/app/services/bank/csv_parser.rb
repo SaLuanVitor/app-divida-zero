@@ -3,11 +3,11 @@ require "csv"
 module Bank
   class CsvParser
     COLUMN_PATTERNS = {
-      date: [/data|date|vencimento|lançamento|lança/i],
-      description: [/descriç|descricao|historico|histórico|nome|titulo|título|identificação|estabelecimento/i],
-      amount: [/valor|value|amount|montante/i],
-      type: [/tipo|type|crédito|débito|entrada|saída|flow|natureza/i],
-      category: [/categoria|category|grupo/i]
+      date: [ /data|date|vencimento|lançamento|lança/i ],
+      description: [ /descriç|descricao|historico|histórico|nome|titulo|título|identificação|estabelecimento/i ],
+      amount: [ /valor|value|amount|montante/i ],
+      type: [ /tipo|type|crédito|débito|entrada|saída|flow|natureza/i ],
+      category: [ /categoria|category|grupo/i ]
     }.freeze
 
     def parse(file_path)
@@ -60,9 +60,9 @@ module Bank
       flow_type = if col_map[:type]
                     type_val = row[col_map[:type]].to_s.downcase
                     type_val.match?(/(crédito|credito|entrada|receita|income)/i) ? "income" : "expense"
-                  else
+      else
                     raw_amount.start_with?("-") ? "expense" : "income"
-                  end
+      end
 
       {
         description: row[col_map[:description]].to_s.strip.presence || "Transação sem descrição",

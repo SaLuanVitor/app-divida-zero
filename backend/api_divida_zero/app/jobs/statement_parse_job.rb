@@ -15,6 +15,8 @@ class StatementParseJob < ApplicationJob
   end
 
   def perform(batch_id:, file_path:, user_id:)
+    update_progress(batch_id, step: "parsing", progress: 10)
+
     parse_result = Bank::StatementParsingService.process(
       batch_id: batch_id,
       file_path: file_path,
@@ -30,6 +32,7 @@ class StatementParseJob < ApplicationJob
     transactions = ImportedTransaction.where(import_batch_id: batch_id)
     user = User.find(user_id)
 
+    update_progress(batch_id, step: "categorizing", progress: 30)
     categorized = Bank::AiCategorizationService.categorize_batch(
       user,
       transactions.map { |t| {
@@ -47,21 +50,25 @@ class StatementParseJob < ApplicationJob
       )
     end
 
-    deduped_transactions = ImportedTransaction.where(import_batch_id: batch_id).map { |t|
-      { id: t.id, description: t.description, amount: t.amount,
-        date: t.date, flow_type: t.flow_type, fit_id: t.fit_id }
-    }
-    with_dedup = Bank::DeduplicationService.detect(user, deduped_transactions)
+    update_progress(batch_id, step: "deduplicating", progress: 60)
+    ImportedTransaction.where(import_batch_id: batch_id).find_in_batches(batch_size: BATCH_SIZE) do |batch|
+      deduped_transactions = batch.map { |t|
+        { id: t.id, description: t.description, amount: t.amount,
+          date: t.date, flow_type: t.flow_type, fit_id: t.fit_id }
+      }
+      with_dedup = Bank::DeduplicationService.detect(user, deduped_transactions)
 
-    with_dedup.each do |txn|
-      ImportedTransaction.where(id: txn[:id]).update_all(
-        status: txn[:status],
-        duplicate_reason: txn[:duplicate_reason],
-        duplicate_of_id: txn[:duplicate_of_id]
-      )
+      with_dedup.each do |txn|
+        ImportedTransaction.where(id: txn[:id]).update_all(
+          status: txn[:status],
+          duplicate_reason: txn[:duplicate_reason],
+          duplicate_of_id: txn[:duplicate_of_id]
+        )
+      end
     end
 
-    ready_count = with_dedup.count { |t| t[:status] == "pending" }
+    update_progress(batch_id, step: "done", progress: 100)
+    ready_count = transactions.pending.count
     NotificationAlertsService.notify(
       user: user,
       type: "import_ready",
@@ -71,7 +78,13 @@ class StatementParseJob < ApplicationJob
 
   private
 
+  BATCH_SIZE = 50
+
   def batch_cache_key(batch_id)
     "bank_import_batch:#{batch_id}"
+  end
+
+  def update_progress(batch_id, step:, progress:)
+    Rails.cache.write(batch_cache_key(batch_id), { step: step, progress: progress }, expires_in: 24.hours)
   end
 end

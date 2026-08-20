@@ -3,7 +3,7 @@ require "test_helper"
 module Bank
   class CsvParserTest < ActiveSupport::TestCase
     test "parses CSV with comma delimiter" do
-      Tempfile.create(["extrato", ".csv"], encoding: "UTF-8") do |f|
+      Tempfile.create([ "extrato", ".csv" ], encoding: "UTF-8") do |f|
         f.write("data,descricao,valor\n10/07/2026,Supermercado,-150.50\n12/07/2026,Salario,5000.00\n")
         f.rewind
         result = CsvParser.new.parse(f.path)
@@ -15,7 +15,7 @@ module Bank
     end
 
     test "parses CSV with semicolon delimiter" do
-      Tempfile.create(["extrato", ".csv"], encoding: "UTF-8") do |f|
+      Tempfile.create([ "extrato", ".csv" ], encoding: "UTF-8") do |f|
         f.write("data;descricao;valor\n10/07/2026;Supermercado;-150.50\n")
         f.rewind
         result = CsvParser.new.parse(f.path)
@@ -25,7 +25,7 @@ module Bank
     end
 
     test "parses income transaction from CSV" do
-      Tempfile.create(["extrato", ".csv"], encoding: "UTF-8") do |f|
+      Tempfile.create([ "extrato", ".csv" ], encoding: "UTF-8") do |f|
         f.write("data,descricao,valor\n12/07/2026,Salario,5000.00\n")
         f.rewind
         result = CsvParser.new.parse(f.path)
@@ -35,7 +35,7 @@ module Bank
     end
 
     test "detects flow type from type column" do
-      Tempfile.create(["extrato", ".csv"], encoding: "UTF-8") do |f|
+      Tempfile.create([ "extrato", ".csv" ], encoding: "UTF-8") do |f|
         f.write("data,descricao,valor,tipo\n10/07/2026,Supermercado,150.50,Débito\n12/07/2026,Salario,5000.00,Crédito\n")
         f.rewind
         result = CsvParser.new.parse(f.path)
@@ -46,7 +46,7 @@ module Bank
 
     test "raises error for invalid CSV" do
       assert_raises(Bank::UnsupportedFormatError) do
-        Tempfile.create(["invalid", ".csv"]) do |f|
+        Tempfile.create([ "invalid", ".csv" ]) do |f|
           f.write("no delimiter here at all")
           f.rewind
           CsvParser.new.parse(f.path)

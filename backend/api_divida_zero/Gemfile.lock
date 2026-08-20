@@ -179,6 +179,7 @@ GEM
     minitest (6.0.2)
       drb (~> 2.0)
       prism (~> 1.5)
+    minitest-mock (5.27.0)
     msgpack (1.8.0)
     net-imap (0.6.3)
       date
@@ -389,6 +390,7 @@ DEPENDENCIES
   jbuilder
   jwt (~> 2.9)
   kamal
+  minitest-mock
   nokogiri (~> 1.18)
   pg (~> 1.5)
   propshaft

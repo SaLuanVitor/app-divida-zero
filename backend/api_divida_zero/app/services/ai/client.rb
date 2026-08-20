@@ -19,6 +19,42 @@ module Ai
 
         return fallback_response(fallback, feature, started_at, model, provider) if api_key.blank?
 
+        attempts = 0
+        last_error = nil
+
+        begin
+          attempts += 1
+          perform_request(
+            feature: feature,
+            system_prompt: system_prompt,
+            user_prompt: user_prompt,
+            response_guard: response_guard,
+            started_at: started_at,
+            api_key: api_key,
+            model: model,
+            base_url: base_url,
+            provider: provider
+          )
+        rescue StandardError => error
+          last_error = error.message.to_s.slice(0, 180)
+          retry if attempts < 3 && retryable?(error)
+          fallback_response(fallback, feature, started_at, model, provider, last_error)
+        end
+      end
+
+      private
+
+      RETRYABLE_ERRORS = [
+        Errno::ECONNRESET, Errno::ETIMEDOUT, Errno::EPIPE,
+        Timeout::Error, Net::OpenTimeout, Net::ReadTimeout,
+        Net::HTTPTooManyRequests, Net::HTTPServerError
+      ].freeze
+
+      def retryable?(error)
+        RETRYABLE_ERRORS.any? { |klass| error.is_a?(klass) }
+      end
+
+      def perform_request(feature:, system_prompt:, user_prompt:, response_guard:, started_at:, api_key:, model:, base_url:, provider:)
         uri = URI.parse("#{base_url}/chat/completions")
         request = Net::HTTP::Post.new(uri)
         request["Authorization"] = "Bearer #{api_key}"
@@ -60,11 +96,7 @@ module Ai
           total_tokens: usage["total_tokens"].to_i,
           latency_ms: elapsed_ms(started_at)
         }
-      rescue StandardError => error
-        fallback_response(fallback, feature, started_at, model, provider, error.message.to_s.slice(0, 180))
       end
-
-      private
 
       def resolve_api_key
         ENV["AI_API_KEY"].to_s.strip.presence || ENV["OPENAI_API_KEY"].to_s.strip

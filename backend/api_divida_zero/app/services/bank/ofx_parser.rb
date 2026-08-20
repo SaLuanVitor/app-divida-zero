@@ -68,7 +68,7 @@ module Bank
     end
 
     def normalize_description(name, memo)
-      desc = [name, memo].compact.map(&:strip).reject(&:empty?)
+      desc = [ name, memo ].compact.map(&:strip).reject(&:empty?)
       desc.any? ? desc.join(" - ") : "Transação sem descrição"
     end
   end

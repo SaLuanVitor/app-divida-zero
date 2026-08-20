@@ -1,6 +1,4 @@
 module Bank
-  class UnsupportedFormatError < StandardError; end
-
   class FormatDetector
     def self.detect(file_path)
       content = File.read(file_path, 1024)

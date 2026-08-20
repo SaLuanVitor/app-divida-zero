@@ -10,8 +10,13 @@ module Api
                                        .order(date: :desc)
                                        .limit(200)
 
+          grouped = transactions.group_by(&:date).map do |date, items|
+            { date: date, transactions: items.map { |t| serialize(t) } }
+          end
+
           render json: {
-            transactions: transactions.map { |t| serialize(t) }
+            groups: grouped,
+            total: transactions.size
           }, status: :ok
         end
 
