@@ -29,13 +29,13 @@ services:
       PORT: 3000
       RAILS_MAX_THREADS: 5
       DATABASE_URL: postgresql://postgres:postgres@db:5432/app_divida_zero_production
-      ADMIN_EMAIL: admin@dividazero.com
-      ADMIN_PASSWORD: ADMIN_PASSWORD=<definir no .env>
-      ADMIN_NAME: Administrador
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@dividazero.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no .env}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrador}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       POSTGRES_DB: app_divida_zero_production
-      SECRET_KEY_BASE: ***REMOVED***
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Defina SECRET_KEY_BASE no .env}
       DISABLE_DATABASE_ENVIRONMENT_CHECK: "1"
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -64,9 +64,9 @@ services:
       RAILS_ENV: development
       PORT: 3001
       RAILS_MAX_THREADS: 5
-      ADMIN_EMAIL: admin@dividazero.com
-      ADMIN_PASSWORD: ADMIN_PASSWORD=<definir no .env>
-      ADMIN_NAME: Administrador
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@dividazero.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no .env}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrador}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       POSTGRES_DB: app_divida_zero_development
