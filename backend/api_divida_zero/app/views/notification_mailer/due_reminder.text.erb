@@ -1,0 +1,14 @@
+Olá, <%= @user.name %>!
+
+Você tem <%= @due_count %> conta(s) pendente(s) perto do vencimento.
+
+<% if @pending_records.any? %>
+Contas pendentes:
+<% @pending_records.each do |record| %>
+  - <%= record.title %>: <%= number_to_currency(record.amount, unit: "R$ ", separator: ",", delimiter: ".") %> (vence <%= l(record.due_date) %>)
+<% end %>
+<% end %>
+
+Acesse o App Dívida Zero para mais detalhes.
+
+Para desativar essas notificações, ajuste suas preferências no app.
