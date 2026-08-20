@@ -17,6 +17,10 @@ import {
     Star,
     X,
     Pencil,
+    Users,
+    UserPlus,
+    MessageCircle,
+    Landmark,
 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -121,10 +125,14 @@ const Profile = () => {
     const avatarPickerScrollRef = useRef<ScrollView>(null);
 
     const menuItems = [
+        { label: 'Minha família', icon: Users, color: '#f48c25', route: 'Familia' },
+        { label: 'Convites pendentes', icon: UserPlus, color: '#22c55e', route: 'Convites Pendentes' },
         { label: 'Dados do usuário', icon: UserIcon, color: '#3b82f6', route: 'Dados Pessoais' },
         { label: 'Configurações do app', icon: Settings, color: '#64748b', route: 'Configuracoes App' },
         { label: 'Notificações', icon: Bell, color: '#f59e0b', route: 'Notificacoes' },
         { label: 'Envio de notificações', icon: Bell, color: '#f97316', route: 'Envio Notificacoes' },
+        { label: 'WhatsApp', icon: MessageCircle, color: '#22c55e', route: 'WhatsApp' },
+        { label: 'Importar extrato', icon: Landmark, color: '#3b82f6', route: 'BankImport' },
         { label: 'Avaliar aplicativo', icon: Star, color: '#f48c25', route: 'Avaliacao App' },
         ...(user?.role === 'admin'
             ? [{ label: 'Painel Admin', icon: Shield, color: '#0ea5e9', route: 'Admin Dashboard' }]
@@ -230,7 +238,7 @@ const Profile = () => {
     }, [user?.email]);
     const memberSinceLabel = useMemo(() => {
         const candidates: Array<string | undefined> = [];
-        const userCreatedAt = (user as any)?.created_at as string | undefined;
+        const userCreatedAt = user?.created_at;
         if (userCreatedAt) candidates.push(userCreatedAt);
 
         if (events.length > 0) {
