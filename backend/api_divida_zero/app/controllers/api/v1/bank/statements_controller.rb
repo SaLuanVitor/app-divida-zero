@@ -38,6 +38,15 @@ module Api
           batch_id = params[:batch_id]
           return render json: { error: "batch_id é obrigatório." }, status: :unprocessable_entity if batch_id.blank?
 
+          failed = Rails.cache.read(batch_cache_key(batch_id))
+          if failed
+            return render json: {
+              batch_id: batch_id,
+              status: "error",
+              error: failed[:error]
+            }, status: :ok
+          end
+
           has_batch = SolidQueue::Job.where("arguments LIKE ?", "%#{batch_id}%").exists? ||
                       @current_user.imported_transactions.where(import_batch_id: batch_id).exists?
 
@@ -65,6 +74,10 @@ module Api
         end
 
         private
+
+        def batch_cache_key(batch_id)
+          "bank_import_batch:#{batch_id}"
+        end
 
         def render_json_error(message, status)
           render json: { error: message }, status: status
