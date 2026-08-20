@@ -3,11 +3,11 @@
 **Implementation:** Implementar `WhatsAppDispatchJob` com fila dedicada `whatsapp` no Solid Queue. Finalizar `WhatsAppChannel` com adapter real do provider.
 
 **Acceptance Criteria:**
-- [ ] `WhatsAppDispatchJob` criado (fila: `whatsapp`)
-- [ ] Pipeline: recebe `notification_alert_id` → verifica opt-in → DND → daily cap → rate limit → envia
-- [ ] `WhatsAppChannel` usa adapter real do provider (não mais stub)
-- [ ] Retry: 429 → backoff exponencial (5s, 10s, 20s), 5xx → retry 3x
-- [ ] 429 excessivo (3+) → auto-DND (desliga WA do usuário)
+- [x] `WhatsAppDispatchJob` criado (fila: `whatsapp`)
+- [x] Pipeline: recebe `notification_alert_id` → verifica opt-in → DND → daily cap → rate limit → envia
+- [x] `WhatsAppChannel` usa adapter real do provider (não mais stub)
+- [x] Retry: 429 → backoff exponencial (5s, 10s, 20s), 5xx → retry 3x
+- [x] 429 excessivo (3+) → auto-DND (desliga WA do usuário)
 - [ ] Falha permanente → `WhatsAppMessage.status = "failed"` com error_message
 - [ ] 3 threads na fila `whatsapp` (config em solid_queue.yml)
 - [ ] Testes de dispatch com adapter mockado

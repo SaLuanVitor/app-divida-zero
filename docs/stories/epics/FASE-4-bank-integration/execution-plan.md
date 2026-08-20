@@ -46,18 +46,18 @@ Upload OFX/CSV → FileUploadController
 ## Subfases Detalhadas
 
 ### Subfase 4a1 — Upload + Parsing
-- [ ] Modelo `ImportedTransaction` (dados brutos + status pending/duplicate/accepted/rejected)
-- [ ] Serviço `StatementParsingService` com strategy:
+- [x] Modelo `ImportedTransaction` (dados brutos + status pending/duplicate/accepted/rejected)
+- [x] Serviço `StatementParsingService` com strategy:
   - `OfxParser` (OFX/QFX via parser Ruby)
   - `CsvParser` (CSV com header detection)
   - extensível para OF direto no futuro
-- [ ] `POST /bank/statements/upload` (multipart, retorna job_id)
-- [ ] `GET /bank/statements/:id/status` (progress polling)
+- [x] `POST /bank/statements/upload` (multipart, retorna job_id)
+- [x] `GET /bank/statements/:id/status` (progress polling)
 - [ ] Validação de formato + LGPD: dados não persistem até usuário aceitar explicitamente
 
 ### Subfase 4a2 — IA Categorização + Dedup
-- [ ] `AiCategorizationService` reutiliza `Ai::Client` existente + novo prompt `categorize_bank_transaction`
-- [ ] `DeduplicationService`:
+- [x] `AiCategorizationService` reutiliza `Ai::Client` existente + novo prompt `categorize_bank_transaction`
+- [x] `DeduplicationService`:
   - Match exato: amount + date + description idêntico → `duplicate`
   - Match fuzzy: amount + date ±3 dias + description similar → `possible_duplicate`
   - Compara com `FinancialRecord.where(user:, due_date: range, amount:)`
@@ -66,16 +66,16 @@ Upload OFX/CSV → FileUploadController
 
 ### Subfase 4a3 — Revisão + Conversão
 - [ ] `GET /bank/transactions/pending` (lista agrupada por data)
-- [ ] `POST /bank/transactions/accept` (lote: aceita selecionadas → cria FinancialRecord)
-- [ ] `POST /bank/transactions/reject` (marca como rejeitada)
-- [ ] `POST /bank/transactions/merge/:id` (mescla duplicata com registro existente)
-- [ ] Gatilhos pós-aceitação: gamificação, goals, achievements (mesmo flow do create manual)
+- [x] `POST /bank/transactions/accept` (lote: aceita selecionadas → cria FinancialRecord)
+- [x] `POST /bank/transactions/reject` (marca como rejeitada)
+- [x] `POST /bank/transactions/merge/:id` (mescla duplicata com registro existente)
+- [x] Gatilhos pós-aceitação: gamificação, goals, achievements (mesmo flow do create manual)
 
 ### Subfase 4a4 — Mobile
-- [ ] Tela "Importar Extrato" (file picker para OFX/CSV)
+- [x] Tela "Importar Extrato" (file picker para OFX/CSV)
 - [ ] Progresso do parsing (barra + etapa atual)
-- [ ] Lista de transações pendentes com cards (descrição, valor, data, categoria sugerida)
-- [ ] Ação em lote: "Aceitar selecionadas" / "Rejeitar"
+- [x] Lista de transações pendentes com cards (descrição, valor, data, categoria sugerida)
+- [x] Ação em lote: "Aceitar selecionadas" / "Rejeitar"
 - [ ] Indicador de duplicatas (amarelo = possível dup, vermelho = dup confirmada)
 
 ### Subfase 4b — Open Finance Direto (futuro)

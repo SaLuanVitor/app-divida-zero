@@ -3,13 +3,13 @@
 **Description:** Criar classe base abstrata `ApplicationChannel` com interface `deliver`, `valid_recipient?`, `rate_limiter`, `channel_name`. Refatorar `EmailChannel` e `PushChannel` para herdar da base. Criar `WhatsAppChannel` como stub.
 
 **Acceptance Criteria:**
-- [ ] `ApplicationChannel` (base class) com interface definida em `app/channels/application_channel.rb`
-- [ ] `EmailChannel` refatorado para herdar de `ApplicationChannel`
-- [ ] `PushChannel` refatorado para herdar de `ApplicationChannel`
-- [ ] `WhatsappChannel` criado como stub (herda, mas `deliver` apenas loga)
-- [ ] `PushDispatchJob` e `EmailDispatchJob` refatorados para usar `PushChannel` e `EmailChannel`
+- [x] `ApplicationChannel` (base class) com interface definida em `app/channels/application_channel.rb`
+- [x] `EmailChannel` refatorado para herdar de `ApplicationChannel`
+- [x] `PushChannel` refatorado para herdar de `ApplicationChannel`
+- [x] `WhatsappChannel` criado como stub (herda, mas `deliver` apenas loga)
+- [x] `PushDispatchJob` e `EmailDispatchJob` refatorados para usar `PushChannel` e `EmailChannel`
 - [ ] Testes unitários de cada canal
-- [ ] Testes de regressão: push e email continuam funcionando
+- [x] Testes de regressão: push e email continuam funcionando
 
 **Technical Notes:**
 - Seguir padrão de channel da architecture.md ADR-001

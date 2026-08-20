@@ -3,13 +3,13 @@
 **Description:** Adicionar campos `phone`, `phone_verified`, `wa_opt_in_at`, `wa_notification_preferences` (JSONB) no User. Criar endpoints de gerenciamento de preferências WA. Seguir padrão de `push_preferences` / `email_notification_preferences`.
 
 **Acceptance Criteria:**
-- [ ] Migration: add `phone` (string, unique), `phone_verified` (boolean, default false), `wa_opt_in_at` (datetime) ao users
-- [ ] Migration: add `wa_notification_preferences` (jsonb, default `{}`, null false) ao users
-- [ ] Model User: `WA_PREFERENCE_DEFAULTS`, `wa_preferences_with_defaults`, `update_wa_preferences!`, `wa_enabled_for_alert?`
-- [ ] `WA_PREFERENCE_DEFAULTS` = `{ wa_notifications_enabled: false, wa_due_reminders: true, wa_weekly_summary: true }`
-- [ ] Endpoint `PATCH /api/v1/auth/whatsapp_notifications` (mesmo padrão de email_notifications)
-- [ ] `me` endpoint retorna `wa_preferences`
-- [ ] NÃO enviar WA sem `wa_notifications_enabled == true` (validação no model)
+- [x] Migration: add `phone` (string, unique), `phone_verified` (boolean, default false), `wa_opt_in_at` (datetime) ao users
+- [x] Migration: add `wa_notification_preferences` (jsonb, default `{}`, null false) ao users
+- [x] Model User: `WA_PREFERENCE_DEFAULTS`, `wa_preferences_with_defaults`, `update_wa_preferences!`, `wa_enabled_for_alert?`
+- [x] `WA_PREFERENCE_DEFAULTS` = `{ wa_notifications_enabled: false, wa_due_reminders: true, wa_weekly_summary: true }`
+- [x] Endpoint `PATCH /api/v1/auth/whatsapp_notifications` (mesmo padrão de email_notifications)
+- [x] `me` endpoint retorna `wa_preferences`
+- [x] NÃO enviar WA sem `wa_notifications_enabled == true` (validação no model)
 - [ ] Testes de autorização e persistência
 
 **Technical Notes:**

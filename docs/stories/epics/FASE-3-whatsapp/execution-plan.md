@@ -69,15 +69,15 @@ Por app:
 Pesquisar provedor, criar abstração de canal de notificação, refatorar canais existentes.
 
 ### Acceptance Criteria
-- [ ] Pesquisa comparativa Z-API / Twilio / Meta Cloud API documentada
-- [ ] Provedor escolhido com justificativa (custo, facilidade, limites)
-- [ ] Abstraction `NotificationChannel` criada (base + interface)
-- [ ] `EmailChannel` implementado usando a abstração
-- [ ] `PushChannel` implementado usando a abstração
-- [ ] `WhatsAppChannel` esboço (stub) criado
-- [ ] Provider SDK integrado (gem/client HTTP)
+- [x] Pesquisa comparativa Z-API / Twilio / Meta Cloud API documentada
+- [x] Provedor escolhido com justificativa (custo, facilidade, limites)
+- [x] Abstraction `NotificationChannel` criada (base + interface)
+- [x] `EmailChannel` implementado usando a abstração
+- [x] `PushChannel` implementado usando a abstração
+- [x] `WhatsAppChannel` esboço (stub) criado
+- [x] Provider SDK integrado (gem/client HTTP)
 - [ ] Testes unitários da abstração
-- [ ] `WHATSAPP_PROVIDER`, `WHATSAPP_API_KEY` no .env.example
+- [x] `WHATSAPP_PROVIDER`, `WHATSAPP_API_KEY` no .env.example
 
 ### Arquitetura: NotificationChannel
 
@@ -113,20 +113,20 @@ Cada canal implementa:
 Adicionar campo phone no User, verificação via código SMS/WhatsApp, preferências WA, prevenção de bloqueio.
 
 ### Acceptance Criteria
-- [ ] Migration: `phone`, `phone_verified`, `wa_opt_in_at` no User
-- [ ] Migration: `wa_notification_preferences` (JSONB) no User
-- [ ] Migration: `whatsapp_messages` (tabela de tracking)
-- [ ] Verificação de telefone (enviar código via provider)
-- [ ] Endpoint `PATCH auth/phone` (enviar código)
-- [ ] Endpoint `POST auth/phone/verify` (confirmar código)
-- [ ] Endpoint `PATCH auth/whatsapp_notifications` (preferências)
-- [ ] `User.wa_enabled_for_alert?` (similar email_enabled_for_alert?)
-- [ ] Toggle WA no `me` endpoint (mobile exibe)
+- [x] Migration: `phone`, `phone_verified`, `wa_opt_in_at` no User
+- [x] Migration: `wa_notification_preferences` (JSONB) no User
+- [x] Migration: `whatsapp_messages` (tabela de tracking)
+- [x] Verificação de telefone (enviar código via provider)
+- [x] Endpoint `PATCH auth/phone` (enviar código)
+- [x] Endpoint `POST auth/phone/verify` (confirmar código)
+- [x] Endpoint `PATCH auth/whatsapp_notifications` (preferências)
+- [x] `User.wa_enabled_for_alert?` (similar email_enabled_for_alert?)
+- [x] Toggle WA no `me` endpoint (mobile exibe)
 - [ ] Rate limiter: máx 3 tentativas de verificação/hora por IP
-- [ ] Não enviar WA sem opt-in explícito (validação no channel)
-- [ ] `WhatsAppRateLimiter` funcional (token bucket)
-- [ ] Limite diário por usuário (10msgs/dia)
-- [ ] DND automático (22h-8h)
+- [x] Não enviar WA sem opt-in explícito (validação no channel)
+- [x] `WhatsAppRateLimiter` funcional (token bucket)
+- [x] Limite diário por usuário (10msgs/dia)
+- [x] DND automático (22h-8h)
 - [ ] Testes de autorização e opt-in
 
 ### Data Model
@@ -186,14 +186,14 @@ Criar templates HSM, integrar com NotificationAlertsService, dispatch automatiza
 
 ### Acceptance Criteria
 - [ ] Templates HSM criados no provedor: `due_reminder`, `weekly_summary`, `overdue_alert`
-- [ ] `WhatsAppTemplate` model (cache local dos templates)
-- [ ] `WhatsAppDispatchJob` (enviar mensagem via channel)
-- [ ] `WhatsAppAlertsService` ou bridge no `NotificationAlertsService`
-- [ ] Message queue: fila `whatsapp` dedicada no Solid Queue
-- [ ] Retry com backoff exponencial (429: 5s, 10s, 20s)
-- [ ] Monitoramento: daily quality score job
+- [x] `WhatsAppTemplate` model (cache local dos templates)
+- [x] `WhatsAppDispatchJob` (enviar mensagem via channel)
+- [x] `WhatsAppAlertsService` ou bridge no `NotificationAlertsService`
+- [x] Message queue: fila `whatsapp` dedicada no Solid Queue
+- [x] Retry com backoff exponencial (429: 5s, 10s, 20s)
+- [x] Monitoramento: daily quality score job
 - [ ] Dead letter: falhas permanentes vão para `WhatsAppMessage.status = "failed"`
-- [ ] Limite diário global (ENV: `WHATSAPP_DAILY_CAP`, default 500)
+- [x] Limite diário global (ENV: `WHATSAPP_DAILY_CAP`, default 500)
 - [ ] Dashboard de mensagens WA (admin)
 - [ ] Testes de envio real com template
 

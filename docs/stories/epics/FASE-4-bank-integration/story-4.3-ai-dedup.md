@@ -10,17 +10,17 @@
 
 ## Acceptance Criteria
 
-- [ ] AC-01: `Bank::AiCategorizationService` categoriza lote de 20 transações em 1 chamada OpenAI
-- [ ] AC-02: Prompt envia description + amount de cada transação para IA sugerir categoria
-- [ ] AC-03: Fallback: sem IA, todas categorizadas como "Outros", confidence 0.4
-- [ ] AC-04: Em test mode, usa `fake_categorize` (sem chamada externa)
-- [ ] AC-05: `Bank::DeduplicationService.detect` compara com FinancialRecord dos últimos 6 meses
-- [ ] AC-06: Exact match (amount + date + description >90%) marca como duplicate
-- [ ] AC-07: Fuzzy match (amount + date ±3d + description >70%) marca como duplicate
-- [ ] AC-08: FIT ID match (se disponível) marca como duplicate
-- [ ] AC-09: Sem match, status = pending
-- [ ] AC-10: Duplicatas têm `duplicate_reason` e `duplicate_of_id` preenchidos
-- [ ] AC-11: `Ai::PromptBuilder.categorize_bank_transactions` criado com system_prompt específico
+- [x] AC-01: `Bank::AiCategorizationService` categoriza lote de 20 transações em 1 chamada OpenAI
+- [x] AC-02: Prompt envia description + amount de cada transação para IA sugerir categoria
+- [x] AC-03: Fallback: sem IA, todas categorizadas como "Outros", confidence 0.4
+- [x] AC-04: Em test mode, usa `fake_categorize` (sem chamada externa)
+- [x] AC-05: `Bank::DeduplicationService.detect` compara com FinancialRecord dos últimos 6 meses
+- [x] AC-06: Exact match (amount + date + description >90%) marca como duplicate
+- [x] AC-07: Fuzzy match (amount + date ±3d + description >70%) marca como duplicate
+- [x] AC-08: FIT ID match (se disponível) marca como duplicate
+- [x] AC-09: Sem match, status = pending
+- [x] AC-10: Duplicatas têm `duplicate_reason` e `duplicate_of_id` preenchidos
+- [x] AC-11: `Ai::PromptBuilder.categorize_bank_transactions` criado com system_prompt específico
 - [ ] AC-12: Testes unitários com mock da OpenAI + fixtures de dedup
 
 ---

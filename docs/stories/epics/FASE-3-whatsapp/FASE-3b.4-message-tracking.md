@@ -3,10 +3,10 @@
 **Description:** Criar modelo `WhatsAppMessage` para rastrear mensagens enviadas, status, erros, provider_message_id. Incluir webhook para atualização de status.
 
 **Acceptance Criteria:**
-- [ ] Migration: criar `whatsapp_messages` (user, provider_message_id, template_name, status, category, error_message, sent_at, metadata)
-- [ ] Model `WhatsAppMessage` com enum de status: pending → sent → delivered → read → failed | rejected
-- [ ] Endpoint webhook `POST /api/v1/whatsapp/webhook` para receber status updates do provider
-- [ ] Webhook autenticado por token secreto (`WHATSAPP_WEBHOOK_SECRET`)
+- [x] Migration: criar `whatsapp_messages` (user, provider_message_id, template_name, status, category, error_message, sent_at, metadata)
+- [x] Model `WhatsAppMessage` com enum de status: pending → sent → delivered → read → failed | rejected
+- [x] Endpoint webhook `POST /api/v1/whatsapp/webhook` para receber status updates do provider
+- [x] Webhook autenticado por token secreto (`WHATSAPP_WEBHOOK_SECRET`)
 - [ ] Testes de criação, transição de status, webhook
 
 **Technical Notes:**
