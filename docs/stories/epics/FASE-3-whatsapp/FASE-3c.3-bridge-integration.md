@@ -3,11 +3,11 @@
 **Description:** Integrar WhatsAppDispatchJob no NotificationAlertsService. Configurar recurring.yml para jobs WA. Garantir que falha no WA não quebra push/email.
 
 **Acceptance Criteria:**
-- [ ] `NotificationAlertsService` dispara `WhatsAppDispatchJob` junto com push/email
-- [ ] Falha no WA não afeta push/email (begin/rescue isolado por job)
+- [x] `NotificationAlertsService` dispara `WhatsAppDispatchJob` junto com push/email
+- [x] Falha no WA não afeta push/email (begin/rescue isolado por job)
 - [ ] `recurring.yml` com `generate_whatsapp_alerts` (mesmo schedule que push/email)
-- [ ] `WhatsappDailyCapResetJob` para resetar contagem diária à meia-noite
-- [ ] `WhatsappTemplateSyncJob` agendado diariamente
+- [x] `WhatsappDailyCapResetJob` para resetar contagem diária à meia-noite
+- [x] `WhatsappTemplateSyncJob` agendado diariamente
 - [ ] `WHATSAPP_DAILY_CAP` no `docker-compose.yml` e `.env.example`
 - [ ] Testes de integração: alert → dispatch → WA (mockado)
 

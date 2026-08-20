@@ -10,18 +10,18 @@
 
 ## Acceptance Criteria
 
-- [ ] AC-01: `GET /api/v1/bank/transactions/pending` lista transações pending + duplicate
-- [ ] AC-02: Lista ordenada por data decrescente, limite 200
-- [ ] AC-03: Cada item retorna: id, description, amount, date, flow_type, suggested_category, ai_confidence, status, duplicate_reason, duplicate_of_id
-- [ ] AC-04: `POST /api/v1/bank/transactions/accept` aceita lote (array de IDs)
-- [ ] AC-05: Aceitar cria `FinancialRecord` para cada transação
-- [ ] AC-06: `FinancialRecord` criado com: title=description, amount, due_date=date, flow_type, category=suggested_category, record_type="launch"
-- [ ] AC-07: Após aceitar, `ImportedTransaction.status = "accepted"` e `financial_record_id` preenchido
-- [ ] AC-08: Aceitar dispara gamificação (+30 XP por transação)
-- [ ] AC-09: Aceitar recalcula goals e achievements
-- [ ] AC-10: `POST /api/v1/bank/transactions/reject` marca lote como rejected
-- [ ] AC-11: `POST /api/v1/bank/transactions/:id/merge` vincula duplicata a FinancialRecord existente
-- [ ] AC-12: Requer autenticação JWT em todos os endpoints
+- [x] AC-01: `GET /api/v1/bank/transactions/pending` lista transações pending + duplicate
+- [x] AC-02: Lista ordenada por data decrescente, limite 200
+- [x] AC-03: Cada item retorna: id, description, amount, date, flow_type, suggested_category, ai_confidence, status, duplicate_reason, duplicate_of_id
+- [x] AC-04: `POST /api/v1/bank/transactions/accept` aceita lote (array de IDs)
+- [x] AC-05: Aceitar cria `FinancialRecord` para cada transação
+- [x] AC-06: `FinancialRecord` criado com: title=description, amount, due_date=date, flow_type, category=suggested_category, record_type="launch"
+- [x] AC-07: Após aceitar, `ImportedTransaction.status = "accepted"` e `financial_record_id` preenchido
+- [x] AC-08: Aceitar dispara gamificação (+30 XP por transação)
+- [x] AC-09: Aceitar recalcula goals e achievements
+- [x] AC-10: `POST /api/v1/bank/transactions/reject` marca lote como rejected
+- [x] AC-11: `POST /api/v1/bank/transactions/:id/merge` vincula duplicata a FinancialRecord existente
+- [x] AC-12: Requer autenticação JWT em todos os endpoints
 - [ ] AC-13: Testes de controller + integração
 
 ---

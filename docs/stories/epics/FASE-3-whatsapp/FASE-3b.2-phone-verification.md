@@ -3,13 +3,13 @@
 **Description:** Implementar fluxo de verificação de telefone: enviar código via WhatsApp/provider, confirmar código, limite de tentativas (3/hora).
 
 **Acceptance Criteria:**
-- [ ] Endpoint `PATCH /api/v1/auth/phone` — solicita código de verificação (envia via WA)
-- [ ] Endpoint `POST /api/v1/auth/phone/verify` — confirma código
-- [ ] Código de 6 dígitos, expira em 10 minutos
+- [x] Endpoint `PATCH /api/v1/auth/phone` — solicita código de verificação (envia via WA)
+- [x] Endpoint `POST /api/v1/auth/phone/verify` — confirma código
+- [x] Código de 6 dígitos, expira em 10 minutos
 - [ ] Máx 3 tentativas de verificação por hora por IP
-- [ ] Máx 3 envios de código por hora por telefone
-- [ ] `phone_verified = true` após confirmação bem-sucedida
-- [ ] Opt-in (`wa_notifications_enabled`) ativado automaticamente após verificação
+- [x] Máx 3 envios de código por hora por telefone
+- [x] `phone_verified = true` após confirmação bem-sucedida
+- [x] Opt-in (`wa_notifications_enabled`) ativado automaticamente após verificação
 - [ ] Testes de fluxo completo + rate limit
 
 **Technical Notes:**

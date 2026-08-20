@@ -3,13 +3,13 @@
 **Description:** Adicionar tela de configuração de WhatsApp no mobile: input de telefone com máscara, fluxo de verificação, toggles de preferências WA.
 
 **Acceptance Criteria:**
-- [ ] Input de telefone com máscara (+55 XX XXXXX-XXXX)
-- [ ] Botão "Verificar Telefone" → envia código via API
-- [ ] Tela de input de código (6 dígitos) com validação
-- [ ] Feedback visual: código enviado, código inválido, limite excedido
-- [ ] Toggles WA: "Receber notificações WhatsApp", "Lembretes de vencimento", "Resumo semanal"
-- [ ] Opt-in default OFF (precisa ativar explicitamente)
-- [ ] Indicador visual de telefone verificado/não verificado
+- [x] Input de telefone com máscara (+55 XX XXXXX-XXXX)
+- [x] Botão "Verificar Telefone" → envia código via API
+- [x] Tela de input de código (6 dígitos) com validação
+- [x] Feedback visual: código enviado, código inválido, limite excedido
+- [x] Toggles WA: "Receber notificações WhatsApp", "Lembretes de vencimento", "Resumo semanal"
+- [x] Opt-in default OFF (precisa ativar explicitamente)
+- [x] Indicador visual de telefone verificado/não verificado
 - [ ] Testes unitários dos componentes
 
 **Technical Notes:**

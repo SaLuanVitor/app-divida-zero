@@ -10,17 +10,17 @@
 
 ## Acceptance Criteria
 
-- [ ] AC-01: `POST /api/v1/bank/statements/upload` aceita multipart file
-- [ ] AC-02: Valida extensão: apenas .ofx, .qfx, .csv
-- [ ] AC-03: Valida tamanho máximo: 10MB
-- [ ] AC-04: Retorna 202 + `batch_id` + `status: "processing"`
-- [ ] AC-05: Salva arquivo em `tmp/imports/{batch_id}/{filename}`
-- [ ] AC-06: Enfileira `StatementParseJob` com `batch_id`, `file_path`, `user_id`
-- [ ] AC-07: `GET /api/v1/bank/statements/:batch_id/status` retorna progresso
+- [x] AC-01: `POST /api/v1/bank/statements/upload` aceita multipart file
+- [x] AC-02: Valida extensão: apenas .ofx, .qfx, .csv
+- [x] AC-03: Valida tamanho máximo: 10MB
+- [x] AC-04: Retorna 202 + `batch_id` + `status: "processing"`
+- [x] AC-05: Salva arquivo em `tmp/imports/{batch_id}/{filename}`
+- [x] AC-06: Enfileira `StatementParseJob` com `batch_id`, `file_path`, `user_id`
+- [x] AC-07: `GET /api/v1/bank/statements/:batch_id/status` retorna progresso
 - [ ] AC-08: Status possíveis: `processing` → `done` | `error`
 - [ ] AC-09: Se job falha, retorna status `error` com mensagem
-- [ ] AC-10: Extensão inválida retorna 422 com mensagem amigável
-- [ ] AC-11: Requer autenticação JWT (401 se sem token)
+- [x] AC-10: Extensão inválida retorna 422 com mensagem amigável
+- [x] AC-11: Requer autenticação JWT (401 se sem token)
 - [ ] AC-12: Testes de controller (upload válido, inválido, sem arquivo)
 
 ---

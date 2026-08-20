@@ -3,10 +3,10 @@
 **Description:** Criar modelo `WhatsAppTemplate` para cache local dos templates HSM aprovados. Criar templates `due_reminder`, `weekly_summary`, `overdue_alert` no provedor.
 
 **Acceptance Criteria:**
-- [ ] Migration: criar `whatsapp_templates` (provider_template_id, name, language, components, status, last_synced_at)
-- [ ] Model `WhatsAppTemplate` com validações e scopes por status
+- [x] Migration: criar `whatsapp_templates` (provider_template_id, name, language, components, status, last_synced_at)
+- [x] Model `WhatsAppTemplate` com validações e scopes por status
 - [ ] Templates HSM criados no provedor: `due_reminder`, `weekly_summary`, `overdue_alert`
-- [ ] Job `WhatsappTemplateSyncJob` para sincronizar templates do provider (agendado via recurring.yml)
+- [x] Job `WhatsappTemplateSyncJob` para sincronizar templates do provider (agendado via recurring.yml)
 - [ ] Fallback: se template não estiver aprovado, não enviar WA (loga warning)
 - [ ] Testes de model, sync, template validation
 

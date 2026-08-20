@@ -10,14 +10,14 @@
 
 ## Acceptance Criteria
 
-- [ ] AC-01: Migration `CreateImportedTransactions` criada com todos os campos do schema
-- [ ] AC-02: Model `ImportedTransaction` com `belongs_to :user`
-- [ ] AC-03: Scopes `pending`, `duplicate`, `accepted`, `rejected`, `from_batch`, `pending_or_duplicate`
-- [ ] AC-04: Validações: `description`, `amount`, `date`, `import_batch_id` obrigatórios
-- [ ] AC-05: Índices: `[user_id, status]`, `[user_id, date]`, `[import_batch_id]`, `[amount, date, description]`
-- [ ] AC-06: Índice único para `[user_id, fit_id]` (where `fit_id IS NOT NULL`)
-- [ ] AC-07: `db:migrate` roda sem erros em SQLite e PostgreSQL
-- [ ] AC-08: `db:rollback` funciona corretamente
+- [x] AC-01: Migration `CreateImportedTransactions` criada com todos os campos do schema
+- [x] AC-02: Model `ImportedTransaction` com `belongs_to :user`
+- [x] AC-03: Scopes `pending`, `duplicate`, `accepted`, `rejected`, `from_batch`, `pending_or_duplicate`
+- [x] AC-04: Validações: `description`, `amount`, `date`, `import_batch_id` obrigatórios
+- [x] AC-05: Índices: `[user_id, status]`, `[user_id, date]`, `[import_batch_id]`, `[amount, date, description]`
+- [x] AC-06: Índice único para `[user_id, fit_id]` (where `fit_id IS NOT NULL`)
+- [x] AC-07: `db:migrate` roda sem erros em SQLite e PostgreSQL
+- [x] AC-08: `db:rollback` funciona corretamente
 
 ## Files
 

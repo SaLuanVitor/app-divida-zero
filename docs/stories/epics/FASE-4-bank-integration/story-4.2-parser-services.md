@@ -10,18 +10,18 @@
 
 ## Acceptance Criteria
 
-- [ ] AC-01: `Bank::FormatDetector` identifica corretamente OFX vs CSV vs unknown
-- [ ] AC-02: `Bank::OfxParser` parseia OFX 1.x (SGML) e retorna transações normalizadas
-- [ ] AC-03: `Bank::OfxParser` parseia OFX 2.x (XML/QFX) e retorna transações normalizadas
-- [ ] AC-04: `Bank::CsvParser` detecta encoding (UTF-8, ISO-8859-1, Windows-1252)
-- [ ] AC-05: `Bank::CsvParser` detecta delimitador (, ; tab)
-- [ ] AC-06: `Bank::CsvParser` detecta colunas por padrões de header (data, valor, descrição)
-- [ ] AC-07: `Bank::CsvParser` parseia CSV de Nubank, Inter, Itaú, Bradesco
-- [ ] AC-08: `Bank::StatementParsingService` orquestra detector + parser + retorno
-- [ ] AC-09: Formato inválido levanta `Bank::UnsupportedFormatError`
-- [ ] AC-10: Transações sem descrição viram "Transação sem descrição"
+- [x] AC-01: `Bank::FormatDetector` identifica corretamente OFX vs CSV vs unknown
+- [x] AC-02: `Bank::OfxParser` parseia OFX 1.x (SGML) e retorna transações normalizadas
+- [x] AC-03: `Bank::OfxParser` parseia OFX 2.x (XML/QFX) e retorna transações normalizadas
+- [x] AC-04: `Bank::CsvParser` detecta encoding (UTF-8, ISO-8859-1, Windows-1252)
+- [x] AC-05: `Bank::CsvParser` detecta delimitador (, ; tab)
+- [x] AC-06: `Bank::CsvParser` detecta colunas por padrões de header (data, valor, descrição)
+- [x] AC-07: `Bank::CsvParser` parseia CSV de Nubank, Inter, Itaú, Bradesco
+- [x] AC-08: `Bank::StatementParsingService` orquestra detector + parser + retorno
+- [x] AC-09: Formato inválido levanta `Bank::UnsupportedFormatError`
+- [x] AC-10: Transações sem descrição viram "Transação sem descrição"
 - [ ] AC-11: `gem "ofx"` adicionada ao Gemfile e instalada
-- [ ] AC-12: Testes unitários para cada parser com fixtures reais
+- [x] AC-12: Testes unitários para cada parser com fixtures reais
 
 ## Files
 
