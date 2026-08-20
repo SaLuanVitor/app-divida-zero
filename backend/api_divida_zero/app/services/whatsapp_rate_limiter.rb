@@ -1,12 +1,17 @@
 require "active_support/cache"
+require "singleton"
 
 class WhatsappRateLimiter
   include Singleton
 
-  GLOBAL_BUCKET_KEY = "wa_rate_limiter:global"
+  PREFIX = "wa_rate_limiter"
+  GLOBAL_BUCKET_KEY = "#{PREFIX}:global"
+  BUCKET_TTL = 1.hour
 
   def initialize
-    @cache = ActiveSupport::Cache::MemoryStore.new(size: 8.megabytes)
+    # Rails.cache usa Solid Cache (compartilhado entre workers) em produção;
+    # em desenvolvimento/teste cai para memory/null store.
+    @cache = Rails.cache
     @mutex = Mutex.new
   end
 
@@ -24,36 +29,47 @@ class WhatsappRateLimiter
 
   def reset!
     @mutex.synchronize do
-      @cache.clear
+      if @cache.respond_to?(:delete_matched)
+        @cache.delete_matched("#{PREFIX}:*")
+      else
+        @cache.delete(GLOBAL_BUCKET_KEY)
+      end
     end
   end
 
   def stats
     {
       global_tokens: read_tokens(GLOBAL_BUCKET_KEY),
-      cache_entries: @cache.instance_variable_get(:@data)&.size || 0
+      cache_entries: cache_entries_count
     }
   end
 
   private
+
+  def cache_entries_count
+    return unless @cache.respond_to?(:instance_variable_get)
+
+    data = @cache.instance_variable_get(:@data)
+    data&.size
+  end
 
   def bucket_allowed?(key, max_size, refill_rate)
     now = Time.current.to_f
     entry = @cache.read(key)
 
     if entry.nil?
-      @cache.write(key, { tokens: max_size - 1, last_refill: now }, expires_in: 1.hour)
+      @cache.write(key, { tokens: max_size - 1, last_refill: now }, expires_in: BUCKET_TTL)
       return true
     end
 
     elapsed = now - entry[:last_refill]
-    tokens = [entry[:tokens] + (elapsed * refill_rate), max_size].min
+    tokens = [ entry[:tokens] + (elapsed * refill_rate), max_size ].min
 
     if tokens >= 1
-      @cache.write(key, { tokens: tokens - 1, last_refill: now }, expires_in: 1.hour)
+      @cache.write(key, { tokens: tokens - 1, last_refill: now }, expires_in: BUCKET_TTL)
       true
     else
-      @cache.write(key, { tokens: tokens, last_refill: entry[:last_refill] }, expires_in: 1.hour)
+      @cache.write(key, { tokens: tokens, last_refill: entry[:last_refill] }, expires_in: BUCKET_TTL)
       false
     end
   end
@@ -64,7 +80,7 @@ class WhatsappRateLimiter
 
     elapsed = Time.current.to_f - entry[:last_refill]
     tokens = entry[:tokens] + (elapsed * refill_rate)
-    [tokens, burst_size].min.round(2)
+    [ tokens, burst_size ].min.round(2)
   end
 
   def retry_after(global_allowed, phone_allowed)
@@ -73,12 +89,12 @@ class WhatsappRateLimiter
     entry = @cache.read(GLOBAL_BUCKET_KEY)
     return 1 unless entry
 
-    tokens_needed = [1 - (entry[:tokens] + (Time.current.to_f - entry[:last_refill]) * refill_rate), 0].max
+    tokens_needed = [ 1 - (entry[:tokens] + (Time.current.to_f - entry[:last_refill]) * refill_rate), 0 ].max
     (tokens_needed / refill_rate).ceil
   end
 
   def phone_key(phone)
-    "wa_rate_limiter:phone:#{phone.to_s.strip}"
+    "#{PREFIX}:phone:#{phone.to_s.strip}"
   end
 
   def burst_size
