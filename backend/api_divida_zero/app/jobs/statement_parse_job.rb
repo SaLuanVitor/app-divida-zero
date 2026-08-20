@@ -5,6 +5,7 @@ class StatementParseJob < ApplicationJob
   discard_on StandardError do |job, error|
     args = job.arguments.first
     ImportedTransaction.where(import_batch_id: args[:batch_id]).destroy_all
+    Rails.cache.write(batch_cache_key(args[:batch_id]), { status: "error", error: error.message }, expires_in: 24.hours)
     user = User.find(args[:user_id])
     NotificationAlertsService.notify(
       user: user,
@@ -66,5 +67,11 @@ class StatementParseJob < ApplicationJob
       type: "import_ready",
       message: "#{ready_count} transações importadas. Revise e aceite."
     )
+  end
+
+  private
+
+  def batch_cache_key(batch_id)
+    "bank_import_batch:#{batch_id}"
   end
 end
