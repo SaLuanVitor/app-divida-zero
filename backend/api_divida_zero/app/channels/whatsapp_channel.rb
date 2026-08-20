@@ -55,6 +55,15 @@ class WhatsappChannel < ApplicationChannel
       @rate_limiter ||= WhatsappRateLimiter.instance
     end
 
+    def template_for(alert_type)
+      case alert_type.to_s
+      when "due_today" then "due_reminder"
+      when "near_due" then "due_reminder"
+      when "overdue" then "overdue_alert"
+      when "weekly_summary" then "weekly_summary"
+      end
+    end
+
     private
 
     def dnd_active?(user)
@@ -74,15 +83,6 @@ class WhatsappChannel < ApplicationChannel
       end
     end
 
-    def template_for(alert_type)
-      case alert_type.to_s
-      when "due_today" then "due_reminder"
-      when "near_due" then "due_reminder"
-      when "overdue" then "overdue_alert"
-      when "weekly_summary" then "weekly_summary"
-      end
-    end
-
     def build_params(alert)
       case alert.alert_type
       when "weekly_summary"
@@ -93,7 +93,7 @@ class WhatsappChannel < ApplicationChannel
           alert.metadata["projected_balance"]
         ]
       else
-        [alert.user.name, alert.due_count.to_s]
+        [ alert.user.name, alert.due_count.to_s ]
       end
     end
 
