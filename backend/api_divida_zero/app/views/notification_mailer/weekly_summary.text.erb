@@ -1,0 +1,14 @@
+Olá, <%= @user.name %>!
+
+Aqui está o resumo da sua semana financeira.
+<% if @week_start && @week_end %>
+Período: <%= l(@week_start) %> a <%= l(@week_end) %>
+<% end %>
+
+Entradas pendentes: <%= number_to_currency(@pending_income_total.to_d, unit: "R$ ", separator: ",", delimiter: ".") %>
+Saídas pendentes: <%= number_to_currency(@pending_expense_total.to_d, unit: "R$ ", separator: ",", delimiter: ".") %>
+Saldo previsto: <%= number_to_currency(@projected_balance.to_d, unit: "R$ ", separator: ",", delimiter: ".") %>
+
+Acesse o App Dívida Zero para mais detalhes.
+
+Para desativar essas notificações, ajuste suas preferências no app.

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2>Olá, <%= @user.name %>!</h2>
+  <p>Dando um toque gentil sobre as contas que estão por vir. Nada de preocupação — só para ajudar você a se planejar.</p>
+  <p>Você tem <strong><%= @due_count %></strong> conta(s) pendente(s) perto do vencimento:</p>
+
+  <% if @pending_records.any? %>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
+      <thead>
+        <tr style="background: #f3f4f6; text-align: left;">
+          <th style="padding: 8px; border-bottom: 1px solid #ddd;">Descrição</th>
+          <th style="padding: 8px; border-bottom: 1px solid #ddd;">Valor</th>
+          <th style="padding: 8px; border-bottom: 1px solid #ddd;">Vencimento</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @pending_records.each do |record| %>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;"><%= record.title %></td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;"><%= number_to_currency(record.amount, unit: "R$ ", separator: ",", delimiter: ".") %></td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;"><%= l(record.due_date) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <p style="margin-top: 24px;">
+    <a href="<%= ENV.fetch("MAILER_DEFAULT_HOST", "http://localhost:3000") %>" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+      Ver no App
+    </a>
+  </p>
+
+  <p style="color: #6b7280; font-size: 12px; margin-top: 32px;">
+    Para desativar essas notificações, ajuste suas preferências no App Dívida Zero.
+  </p>
+</body>
+</html>
