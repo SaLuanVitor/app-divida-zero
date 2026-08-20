@@ -9,10 +9,6 @@ export default function BankReviewScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
 
-  useEffect(() => {
-    loadTransactions();
-  }, []);
-
   const loadTransactions = async () => {
     try {
       const res = await bankStatementsApi.getPending();
@@ -23,6 +19,10 @@ export default function BankReviewScreen({ navigation }: any) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadTransactions();
+  }, []);
 
   const toggleSelect = (id: number) => {
     setSelected(prev => {
