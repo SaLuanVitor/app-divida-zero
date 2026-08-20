@@ -1,6 +1,8 @@
 require "test_helper"
 
 class NotificationAlertsServiceTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   setup do
     @user = User.create!(
       name: "Usuario Alertas",
@@ -72,10 +74,18 @@ class NotificationAlertsServiceTest < ActiveSupport::TestCase
     assert_includes types, "overdue"
   end
 
+  test "generate_for_user enqueues push dispatch for newly created alerts" do
+    now = Time.zone.parse("2026-03-30 06:10:00")
+
+    assert_enqueued_jobs 3, only: PushDispatchJob do
+      NotificationAlertsService.generate_for_user!(@user, now: now)
+    end
+  end
+
   test "generate_for_user creates weekly summary only on friday with current-week records" do
     friday_now = Time.zone.parse("2026-04-03 09:10:00")
 
-    assert_difference("NotificationAlert.count", 2) do
+    assert_difference("NotificationAlert.count", 3) do
       NotificationAlertsService.generate_for_user!(@user, now: friday_now)
     end
 
@@ -87,5 +97,8 @@ class NotificationAlertsServiceTest < ActiveSupport::TestCase
     assert_equal "0.0", weekly.metadata["pending_income_total"].to_s
     assert_equal "350.0", weekly.metadata["pending_expense_total"].to_s
     assert_equal "-350.0", weekly.metadata["projected_balance"].to_s
+
+    evolution = @user.notification_alerts.find_by!(alert_type: "weekly_evolution")
+    assert_equal "2026-03-30", evolution.metadata["week_start"]
   end
 end
