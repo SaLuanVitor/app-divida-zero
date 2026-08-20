@@ -39,6 +39,7 @@ export interface FinancialRecordDto {
   group_code?: string;
   financial_goal_id?: number;
   financial_goal_contribution_id?: number;
+  user_name?: string;
 }
 
 
