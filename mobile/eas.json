@@ -9,7 +9,12 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://app-divida-zero-production-5333.up.railway.app/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://app-divida-zero-production-5333.up.railway.app/api/v1",
+        "EXPO_PUBLIC_AI_SURFACE_DAILY_MESSAGE": "true",
+        "EXPO_PUBLIC_AI_SURFACE_NEXT_ACTION": "true",
+        "EXPO_PUBLIC_AI_SURFACE_ALERTS": "true",
+        "EXPO_PUBLIC_AI_SURFACE_REPORTS_BRIEFING": "true",
+        "EXPO_PUBLIC_AI_SURFACE_CATEGORIZE_RECORD": "true"
       }
     },
     "production": {
@@ -17,7 +22,12 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://app-divida-zero-production-5333.up.railway.app/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://app-divida-zero-production-5333.up.railway.app/api/v1",
+        "EXPO_PUBLIC_AI_SURFACE_DAILY_MESSAGE": "true",
+        "EXPO_PUBLIC_AI_SURFACE_NEXT_ACTION": "true",
+        "EXPO_PUBLIC_AI_SURFACE_ALERTS": "true",
+        "EXPO_PUBLIC_AI_SURFACE_REPORTS_BRIEFING": "true",
+        "EXPO_PUBLIC_AI_SURFACE_CATEGORIZE_RECORD": "true"
       }
     }
   }

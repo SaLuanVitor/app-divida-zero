@@ -27,14 +27,17 @@ import { AppState, LogBox, View } from 'react-native';
 import {
   ensurePostLoginNotificationPermission,
   getDeviceNotificationRuntimeStatus,
+  getNotificationsNativeModule,
   initializeNotificationLayer,
   syncScheduledLocalNotifications,
 } from './src/services/notifications';
+import { registerRemotePushToken } from './src/services/devicePush';
 import { useAuth } from './src/context/AuthContext';
 import { getAppPreferences } from './src/services/preferences';
 import { listFinancialRecords } from './src/services/financialRecords';
 import { trackAnalyticsEvent } from './src/services/analytics';
 import { TutorialProvider } from './src/context/TutorialContext';
+import { navigateSafely } from './src/navigation/navigationRef';
 
 if (__DEV__) {
   LogBox.ignoreLogs([
@@ -56,6 +59,20 @@ function AppContent() {
         console.info(`[notifications] runtime indisponível: ${runtimeStatus.reason}`);
       }
     });
+
+    const Notifications = getNotificationsNativeModule();
+    if (Notifications?.addNotificationResponseReceivedListener) {
+      const subscription = Notifications.addNotificationResponseReceivedListener(
+        (response: { notification: { request: { content: { data: Record<string, unknown> } } } }) => {
+          const kind = response?.notification?.request?.content?.data?.kind;
+          const target = typeof kind === 'string' && ['due_today', 'due_tomorrow', 'weekly_summary'].includes(kind)
+            ? 'Inicio'
+            : 'Inicio';
+          navigateSafely(target);
+        }
+      );
+      return () => subscription.remove();
+    }
   }, []);
 
   React.useEffect(() => {
@@ -64,6 +81,7 @@ function AppContent() {
     const syncNotifications = async () => {
       try {
         await ensurePostLoginNotificationPermission();
+        await registerRemotePushToken().catch(() => {});
         await trackAnalyticsEvent({
           event_name: 'app_opened',
           screen: 'AppRoot',

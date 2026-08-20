@@ -4,6 +4,7 @@ import { User, AuthResponse } from '../types/auth';
 import api, { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, setUnauthorizedHandler } from '../services/api';
 import { trackAnalyticsEventDeferred } from '../services/analytics';
 import { getCurrentUser } from '../services/account';
+import { unregisterRemotePushToken } from '../services/devicePush';
 
 const USER_KEY = '@DividaZero:user';
 const LEGACY_USER_KEY = '@DívidaZero:user';
@@ -150,6 +151,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     async function signOut() {
+        await unregisterRemotePushToken();
         await invalidateSession();
     }
 

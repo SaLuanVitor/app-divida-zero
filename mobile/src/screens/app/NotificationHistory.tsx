@@ -77,7 +77,9 @@ const NotificationHistory = () => {
   useEffect(() => {
     if (!items.length || unreadCount === 0) return;
 
-    markNotificationHistorySeen().catch(() => {});
+    markNotificationHistorySeen().catch((e) => {
+      if (__DEV__) console.warn('[NotificationHistory] mark seen failed', e);
+    });
     setItems((current) => current.map((item) => ({ ...item, read: true })));
   }, [items, unreadCount]);
 
