@@ -14,7 +14,7 @@ module Api
       }.freeze
 
       def index
-        records = @current_user.financial_records.order(:due_date)
+        records = scoped_records.order(:due_date)
 
         if params[:year].present? && params[:month].present?
           year = params[:year].to_i
@@ -435,7 +435,8 @@ module Api
           notes: record.notes,
           group_code: record.group_code,
           financial_goal_id: record.financial_goal_id,
-          financial_goal_contribution_id: record.financial_goal_contribution_id
+          financial_goal_contribution_id: record.financial_goal_contribution_id,
+          user_name: record.user.name
         }
       end
 
@@ -474,6 +475,19 @@ module Api
         xp_feedback[:summary] = current_summary
         xp_feedback[:leveled_up] = true if current_summary[:level].to_i > original_level
         xp_feedback
+      end
+
+      def scoped_records
+        household = @current_user.households.first
+        if household
+          FinancialRecord.includes(:user).where(user: @current_user).or(FinancialRecord.includes(:user).where(household: household))
+        else
+          @current_user.financial_records.includes(:user)
+        end
+      end
+
+      def current_household
+        @current_user.households.first
       end
     end
   end

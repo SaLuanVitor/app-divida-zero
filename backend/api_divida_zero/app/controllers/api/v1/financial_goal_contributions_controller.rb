@@ -17,7 +17,9 @@ module Api
       end
 
       def create
-        contribution = @goal.financial_goal_contributions.new(contribution_params)
+        return unless authorize_household_member!(@goal)
+
+        contribution = @goal.financial_goal_contributions.new(contribution_params.merge(user: @current_user))
         funding_before = FinancialGoalsProgressService.funding_snapshot_for_user(@current_user)
 
         if contribution.kind == "deposit" && contribution.amount.to_d > funding_before[:available_for_goal_funding].to_d
@@ -45,7 +47,7 @@ module Api
           message: contribution_message(contribution.kind),
           contribution: contribution.reload.serialize,
           linked_record_id: linked_record.id,
-          goal: @goal.reload.serialize,
+          goal: @goal.reload.serialize(current_user: @current_user),
           settled_global_balance: funding_after[:settled_global_balance].to_s("F"),
           allocated_to_goals: funding_after[:allocated_to_goals].to_s("F"),
           available_for_goal_funding: funding_after[:available_for_goal_funding].to_s("F")
@@ -63,7 +65,12 @@ module Api
       private
 
       def set_goal
-        @goal = @current_user.financial_goals.find(params[:financial_goal_id])
+        household = @current_user.households.first
+        @goal = if household
+          FinancialGoal.where(user: @current_user).or(FinancialGoal.where(household: household)).find(params[:financial_goal_id])
+        else
+          @current_user.financial_goals.find(params[:financial_goal_id])
+        end
       end
 
       def contribution_params
@@ -128,6 +135,14 @@ module Api
       end
       def authenticate_access_token!
         super
+      end
+
+      def authorize_household_member!(goal)
+        return true unless goal.household_id.present?
+        return true if goal.household&.member?(@current_user)
+
+        render json: { error: "Você não é membro desta família." }, status: :forbidden
+        false
       end
     end
   end
