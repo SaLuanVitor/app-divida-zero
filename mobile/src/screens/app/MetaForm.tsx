@@ -15,9 +15,11 @@ import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamific
 import { getAppPreferences, updateAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
+import { getMyHousehold } from '../../services/household';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
 import { controlHeight, threeColumnItemWidth } from '../../utils/responsive';
+import { Household } from '../../types/household';
 
 type GoalDateField = 'start' | 'target';
 type FeedbackState = {
@@ -93,6 +95,9 @@ const MetaForm = () => {
     const [targetDate, setTargetDate] = useState<Date | null>(null);
     const [goalType, setGoalType] = useState<FinancialGoalType>('save');
     const [activeDateField, setActiveDateField] = useState<GoalDateField>('start');
+    const [shareWithFamily, setShareWithFamily] = useState(false);
+    const [household, setHousehold] = useState<Household | null>(null);
+    const [householdLoading, setHouseholdLoading] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [pickerMonth, setPickerMonth] = useState(() => {
         const baseDate = goal?.start_date ? new Date(`${goal.start_date}T00:00:00`) : new Date();
@@ -143,9 +148,22 @@ const MetaForm = () => {
     useEffect(() => {
         if (formMode === 'create') {
             applyGoalState(undefined);
-            return;
+        } else {
+            applyGoalState(goal);
         }
-        applyGoalState(goal);
+
+        if (formMode === 'create') {
+            setHouseholdLoading(true);
+            getMyHousehold()
+                .then((result) => {
+                    if (result.household) {
+                        setHousehold(result.household);
+                        setShareWithFamily(false);
+                    }
+                })
+                .catch(() => {})
+                .finally(() => setHouseholdLoading(false));
+        }
     }, [applyGoalState, formMode, formNonce, goal?.id]);
 
     const goBackToGoals = () => {
@@ -245,6 +263,7 @@ const MetaForm = () => {
             start_date: formatDateISO(startDate),
             target_date: targetDate ? formatDateISO(targetDate) : undefined,
             goal_type: goalType,
+            household_id: shareWithFamily && household ? household.id : undefined,
         };
 
         setSubmitting(true);
@@ -394,6 +413,44 @@ const MetaForm = () => {
                         value={description}
                         onChangeText={setDescription}
                     />
+
+                    {household && formMode === 'create' ? (
+                        <TouchableOpacity
+                            className={`flex-row items-center justify-between rounded-xl border px-4 py-3 mb-4 ${
+                                shareWithFamily
+                                    ? 'bg-primary/10 border-primary/30'
+                                    : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'
+                            }`}
+                            onPress={() => setShareWithFamily(!shareWithFamily)}
+                            accessibilityRole="switch"
+                            accessibilityState={{ checked: shareWithFamily }}
+                        >
+                            <View className="flex-1">
+                                <AppText className="text-slate-900 dark:text-slate-100 font-bold text-sm">
+                                    Compartilhar com a família
+                                </AppText>
+                                <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">
+                                    {household.members
+                                        .filter((m) => m.name)
+                                        .slice(0, 3)
+                                        .map((m) => m.name.split(' ')[0])
+                                        .join(', ')}
+                                    {household.members.length > 3 ? ' e mais' : ''}
+                                </AppText>
+                            </View>
+                            <View
+                                className={`w-12 h-7 rounded-full items-center justify-center ${
+                                    shareWithFamily ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
+                                }`}
+                            >
+                                <View
+                                    className={`w-5 h-5 rounded-full bg-white shadow-sm ${
+                                        shareWithFamily ? 'self-end mr-0.5' : 'self-start ml-0.5'
+                                    }`}
+                                />
+                            </View>
+                        </TouchableOpacity>
+                    ) : null}
 
                     <Button
                         title={submitting ? 'Salvando...' : goal ? 'Salvar alterações' : 'Salvar meta'}

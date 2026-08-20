@@ -3,6 +3,11 @@ import { XpFeedbackDto } from './gamification';
 export type FinancialGoalType = 'save' | 'debt' | 'specific';
 export type FinancialGoalStatus = 'active' | 'completed';
 
+export interface ContributorInfo {
+  id: number;
+  name: string;
+}
+
 export interface FinancialGoalDto {
   id: number;
   title: string;
@@ -16,6 +21,11 @@ export interface FinancialGoalDto {
   start_date: string;
   target_date?: string | null;
   completed_at?: string | null;
+  user_name?: string;
+  shared?: boolean;
+  household_id?: number | null;
+  contributors?: ContributorInfo[];
+  can_contribute?: boolean;
 }
 
 export interface FinancialGoalFundingSnapshotDto {
@@ -42,6 +52,7 @@ export interface CreateFinancialGoalPayload {
   start_date: string;
   target_date?: string;
   goal_type: FinancialGoalType;
+  household_id?: number;
 }
 
 export interface UpdateFinancialGoalPayload extends CreateFinancialGoalPayload {}
