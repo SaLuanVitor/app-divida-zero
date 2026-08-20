@@ -4,7 +4,7 @@ require "securerandom"
 module Api
   module V1
     class AuthController < ApplicationController
-      before_action :authenticate_access_token!, only: [:me, :update_profile, :change_password]
+      before_action :authenticate_access_token!, only: [:me, :update_profile, :change_password, :update_email_notifications, :update_wa_notifications, :send_phone_code, :verify_phone]
 
       def register
         user = User.new(register_params)
@@ -91,7 +91,11 @@ module Api
       end
 
       def me
-        render json: { user: @current_user.public_payload }, status: :ok
+        render json: {
+          user: @current_user.public_payload,
+          email_preferences: @current_user.email_preferences_with_defaults,
+          wa_preferences: @current_user.wa_preferences_with_defaults
+        }, status: :ok
       end
 
       def update_profile
@@ -107,6 +111,60 @@ module Api
           message: "Dados do usuário atualizados com sucesso.",
           user: @current_user.public_payload
         }, status: :ok
+      end
+
+      def update_email_notifications
+        @current_user.update_email_preferences!(params[:email_notification_preferences])
+
+        render json: {
+          message: "Preferências de e-mail atualizadas.",
+          email_preferences: @current_user.email_preferences_with_defaults
+        }, status: :ok
+      end
+
+      def update_wa_notifications
+        @current_user.update_wa_preferences!(params[:wa_notification_preferences])
+
+        render json: {
+          message: "Preferências de WhatsApp atualizadas.",
+          wa_preferences: @current_user.wa_preferences_with_defaults
+        }, status: :ok
+      end
+
+      def send_phone_code
+        phone = params[:phone].to_s.strip
+
+        if phone.blank?
+          return render json: { error: "Telefone é obrigatório." }, status: :unprocessable_entity
+        end
+
+        result = WhatsappVerificationService.send_code(@current_user, phone: phone)
+
+        if result[:success]
+          render json: { message: result[:message] }, status: :ok
+        else
+          render json: { error: result[:error] }, status: :unprocessable_entity
+        end
+      end
+
+      def verify_phone
+        phone = params[:phone].to_s.strip
+        code = params[:code].to_s.strip
+
+        if phone.blank? || code.blank?
+          return render json: { error: "Telefone e código são obrigatórios." }, status: :unprocessable_entity
+        end
+
+        result = WhatsappVerificationService.verify_code(@current_user, phone: phone, code: code)
+
+        if result[:success]
+          render json: {
+            message: result[:message],
+            wa_preferences: @current_user.wa_preferences_with_defaults
+          }, status: :ok
+        else
+          render json: { error: result[:error] }, status: :unprocessable_entity
+        end
       end
 
       def change_password

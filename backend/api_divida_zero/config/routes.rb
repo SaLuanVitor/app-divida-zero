@@ -10,11 +10,28 @@
       post "auth/reset_password", to: "auth#reset_password"
       get "auth/me", to: "auth#me"
       patch "auth/profile", to: "auth#update_profile"
+      patch "auth/email_notifications", to: "auth#update_email_notifications"
+      patch "auth/whatsapp_notifications", to: "auth#update_wa_notifications"
+      patch "auth/phone", to: "auth#send_phone_code"
+      post "auth/phone/verify", to: "auth#verify_phone"
       patch "auth/change_password", to: "auth#change_password"
+
+      resource :household, only: %i[show create update destroy], controller: "households" do
+        resources :invitations, only: %i[index create destroy], controller: "household_invitations"
+      end
+      resources :invitations, only: [], param: :token do
+        member do
+          post :accept
+          post :decline
+        end
+      end
+      get "invitations/pending", to: "invitations#pending"
       get "gamification/summary", to: "gamification#summary"
       get "gamification/events", to: "gamification#events"
       get "notifications/history", to: "notifications#history"
       patch "notifications/read_all", to: "notifications#read_all"
+      post "devices", to: "devices#create"
+      delete "devices", to: "devices#destroy"
       post "app_ratings", to: "app_ratings#create"
       get "app_ratings/me", to: "app_ratings#me"
       get "app_ratings/summary", to: "app_ratings#summary"
@@ -40,6 +57,30 @@
           patch :status, action: :update_status
         end
       end
+      get "whatsapp/webhook", to: "whatsapp#verify"
+      post "whatsapp/webhook", to: "whatsapp#webhook"
+
+      namespace :bank do
+        resources :statements, only: [] do
+          collection do
+            post :upload
+          end
+          member do
+            get :status
+          end
+        end
+        resources :transactions, only: [] do
+          collection do
+            get :pending
+            post :accept
+            post :reject
+          end
+          member do
+            post :merge
+          end
+        end
+      end
+
       resources :financial_goals, only: [:index, :create, :update, :destroy] do
         resources :contributions,
                   only: [:index, :create, :destroy],
