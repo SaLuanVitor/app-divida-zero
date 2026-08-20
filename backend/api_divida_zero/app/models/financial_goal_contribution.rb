@@ -2,6 +2,7 @@ class FinancialGoalContribution < ApplicationRecord
   KINDS = %w[deposit withdraw].freeze
 
   belongs_to :financial_goal
+  belongs_to :user, optional: true
 
   validates :kind,
             presence: { message: "Tipo do aporte é obrigatório." },
@@ -22,6 +23,7 @@ class FinancialGoalContribution < ApplicationRecord
       kind: kind,
       amount: amount.to_s,
       notes: notes,
+      user_name: user&.name,
       created_at: created_at
     }
   end
