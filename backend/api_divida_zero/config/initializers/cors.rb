@@ -1,6 +1,8 @@
-﻿Rails.application.config.middleware.insert_before 0, Rack::Cors do
+﻿allowed_origins = ENV.fetch("CORS_ALLOWED_ORIGINS", "http://localhost:8081,http://localhost:3000").split(",").map(&:strip)
+
+Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins "*"
+    origins(*allowed_origins) if allowed_origins.present?
 
     resource "*",
              headers: :any,
