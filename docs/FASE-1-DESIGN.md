@@ -20,12 +20,12 @@ Achado-chave do diagnóstico: **muita coisa já está pronta**, só falta o "úl
 - Habilitar entrega em produção: `config.action_mailer.delivery_method = :smtp`, `perform_deliveries = true`, `raise_delivery_errors = true`, `default_url_options = { host: ENV["MAILER_DEFAULT_HOST"] }`.
 
 **Tarefas:**
-- [ ] `PasswordResetMailer#reset_email(user, raw_token)` — corpo com link/token e validade de 30min. Views html+text.
-- [ ] Ligar em `AuthController#forgot_password`: enviar o email quando `user` existe. Manter `dev_reset_token` **só** em dev/test (não vazar em prod).
-- [ ] `WelcomeMailer#welcome(user)` — enviado no `register` (async via `deliver_later` → solid_queue).
-- [ ] `ApplicationMailer`: `default from: ENV["MAILER_FROM"]`, layout.
+- [x] `PasswordResetMailer#reset_email(user, raw_token)` — corpo com link/token e validade de 30min. Views html+text.
+- [x] Ligar em `AuthController#forgot_password`: enviar o email quando `user` existe. Manter `dev_reset_token` **só** em dev/test (não vazar em prod).
+- [x] `WelcomeMailer#welcome(user)` — enviado no `register` (async via `deliver_later` → solid_queue).
+- [x] `ApplicationMailer`: `default from: ENV["MAILER_FROM"]`, layout.
 - [ ] (Opcional) alerta de vencimento/semanal por email — opt-in em preferências, disparado junto dos jobs (ver seção 2).
-- [ ] Teste de mailer (`test/mailers/`) + envio real de verificação em staging.
+- [x] Teste de mailer (`test/mailers/`) — testes existem + validar entrega em staging.
 
 **Arquivos:** `app/mailers/*`, `app/views/*_mailer/*`, `config/environments/production.rb`, `app/controllers/api/v1/auth_controller.rb`.
 
@@ -35,7 +35,7 @@ Achado-chave do diagnóstico: **muita coisa já está pronta**, só falta o "úl
 
 **Estado atual:** mobile agenda notificações **locais** (`expo-notifications`) no device. Jobs backend criam alertas **in-app** (`NotificationAlert`, lidos via `GET /notifications/history`). **Não há push remoto** nem registro de token.
 
-**⚠️ Pré-requisito:** Expo Push exige um **projeto EAS** (`app.json` → `extra.eas.projectId`). Hoje **não há** projectId configurado. Passo zero: `eas init` / configurar projectId (gratuito, conta Expo).
+**⚠️ Pré-requisito:** Expo Push exige um **projeto EAS** (`app.json` → `extra.eas.projectId`). ✅ projectId já configurado (`5a8a7f70-d513-49fe-a04d-fb97c24e6eea`).
 
 **Desenho (server dispara via Expo Push API):**
 - Modelo `DeviceToken` (`user_id`, `expo_push_token` único, `platform`, `last_seen_at`). Migration.
@@ -57,11 +57,10 @@ Achado-chave do diagnóstico: **muita coisa já está pronta**, só falta o "úl
 **Estado atual:** mobile esconde IA via `EXPO_PUBLIC_PHASE_1_MODE=true` ([featurePhase.ts]). Backend `Ai::Client` chama **OpenAI `gpt-4.1-mini`** se `OPENAI_API_KEY` presente; senão fallback canned. `Ai::UsageGuard` + modelo `ai_usage_counter` já existem para limitar custo.
 
 **Desenho (provedor: OpenRouter free, via endpoint compatível OpenAI):**
-- [ ] **Parametrizar `Ai::Client`**: hoje a URL da OpenAI é fixa (`https://api.openai.com/v1/chat/completions`, `ENV["OPENAI_API_KEY"]`, `DEFAULT_MODEL=gpt-4.1-mini`). Introduzir `ENV["AI_BASE_URL"]` (default OpenAI p/ retrocompat), `ENV["AI_API_KEY"]`, `ENV["AI_MODEL"]`. Para OpenRouter: `AI_BASE_URL=https://openrouter.ai/api/v1`, `AI_MODEL=meta-llama/llama-3.3-70b-instruct:free` (ou outro `:free`), header opcional `HTTP-Referer`/`X-Title`. Refactor pequeno e seguro, com teste.
+- [x] **Parametrizar `Ai::Client`**: `ENV["AI_BASE_URL"]`, `ENV["AI_API_KEY"]`, `ENV["AI_MODEL"]` introduzidos. OpenRouter testado via `AI_BASE_URL=https://openrouter.ai/api/v1`. Com testes.
 - [ ] Setar `AI_API_KEY` (key grátis do OpenRouter) no ambiente de produção (Railway). **Custo zero** dentro do free tier; `UsageGuard` mantém o teto.
-- [ ] Reativação **gradual** por superfície (conforme ADR-0001), uma de cada vez, com revisão de copy/UX:
-  1. `daily_message` (mensagem diária) → 2. `next_action` → 3. `alerts` → 4. `reports_briefing` → 5. `categorize_record` (esta última é a base do auto-registro da Fase 4).
-- [ ] Em vez de flipar `PHASE_1_MODE` global de uma vez, considerar flags por-superfície (estender `featurePhase.ts`) para rollout controlado.
+- [x] Reativação **gradual** por superfície (conforme ADR-0001) — `featurePhase.ts` com flags individuais para cada superfície.
+- [x] Flags por-superfície implementadas em `featurePhase.ts` + `eas.json` com 5 surfaces habilitadas.
 - [ ] Rodar bateria de testes + checklist manual Android (`docs/qa/`) antes de liberar.
 
 **Arquivos:** `mobile/src/config/featurePhase.ts` (+ consumidores), env de produção; `Ai::UsageGuard` (revisar limites).
