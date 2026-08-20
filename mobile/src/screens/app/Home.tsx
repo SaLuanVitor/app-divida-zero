@@ -57,6 +57,8 @@ import {
 } from '../../services/notificationCenter';
 import { NotificationHistoryItem } from '../../types/notificationCenter';
 import { getLocalDailyMessage } from '../../services/localDailyMessage';
+import { getDailyMessageToday, getAiNextAction } from '../../services/ai';
+import { isAiSurfaceEnabled } from '../../config/featurePhase';
 import { shouldStackForLargeText, textClampLines, threeColumnItemWidth } from '../../utils/responsive';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
@@ -72,6 +74,7 @@ type CalendarEntry = {
     reminder: string;
     icon: React.ComponentType<{ size?: number; color?: string }>;
     color: string;
+    userName?: string;
 };
 
 type FeedbackState = {
@@ -209,6 +212,7 @@ const toCalendarEntry = (record: FinancialRecordDto): CalendarEntry => {
         reminder: recurrenceLabel(record),
         icon,
         color,
+        userName: record.user_name,
     };
 };
 
@@ -262,8 +266,28 @@ const Home = () => {
     const [notificationsPopupLoading, setNotificationsPopupLoading] = useState(false);
     const [notificationItems, setNotificationItems] = useState<NotificationHistoryItem[]>([]);
     const [onboardingPrimaryGoal, setOnboardingPrimaryGoal] = useState<'organize_month' | 'pay_off_debt' | 'create_goal' | null>(null);
-    const dailyMessage = useMemo(() => getLocalDailyMessage(), []);
+    const dailyMessageSurfaceEnabled = isAiSurfaceEnabled('dailyMessage');
+    const nextActionSurfaceEnabled = isAiSurfaceEnabled('nextAction');
+    const [dailyMessage, setDailyMessage] = useState(() => getLocalDailyMessage());
+    const [nextBestAction, setNextBestAction] = useState<NextActionCard | null>(null);
     const compactPillHeight = Math.max(Math.round(36 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 36);
+
+    useEffect(() => {
+        if (!dailyMessageSurfaceEnabled) return;
+
+        let active = true;
+        getDailyMessageToday()
+            .then((message) => {
+                if (active) setDailyMessage(message);
+            })
+            .catch(() => {
+                if (active) setDailyMessage(getLocalDailyMessage());
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [dailyMessageSurfaceEnabled]);
     const searchInputHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 48 : 44);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
     const pickerGridWidth = useMemo(() => threeColumnItemWidth(Math.min(windowWidth - 48, 420), 8), [windowWidth]);
@@ -621,6 +645,54 @@ const Home = () => {
             onPress: () => navigation.navigate('MetaForm'),
         };
     }, [goals, navigation, onboardingPrimaryGoal, pendingEntriesCount]);
+
+    const resolveNextActionPress = useCallback(
+        (cta: string): (() => void) => {
+            const normalized = cta.trim().toLowerCase();
+            if (normalized.includes('pendent')) {
+                return () => setMonthListFilter('pending');
+            }
+            if (normalized.includes('meta')) {
+                return () => navigation.navigate('MetaForm');
+            }
+            if (normalized.includes('dívida') || normalized.includes('divida')) {
+                return () => navigation.navigate('Lancamentos', { mode: 'debt' });
+            }
+            if (normalized.includes('lanç') || normalized.includes('lanc')) {
+                return () => navigation.navigate('Lancamentos');
+            }
+            return () => setMonthListFilter('pending');
+        },
+        [navigation]
+    );
+
+    useEffect(() => {
+        if (!nextActionSurfaceEnabled) {
+            setNextBestAction(null);
+            return;
+        }
+
+        let active = true;
+        getAiNextAction()
+            .then(({ action }) => {
+                if (!active) return;
+                setNextBestAction({
+                    title: action.title,
+                    description: action.description,
+                    cta: action.cta,
+                    onPress: resolveNextActionPress(action.cta),
+                });
+            })
+            .catch(() => {
+                if (active) setNextBestAction(null);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [nextActionSurfaceEnabled, resolveNextActionPress, pendingEntriesCount, goals.length, onboardingPrimaryGoal]);
+
+    const displayNextBestAction = nextBestAction ?? localNextBestAction;
 
     const visibleEntries = useMemo(() => {
         let base = entries;
@@ -1013,16 +1085,16 @@ const Home = () => {
 
                         <View className="mt-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/25 p-4">
                             <AppText className="text-[11px] text-primary font-extrabold uppercase mb-1">Próxima ação recomendada</AppText>
-                            <AppText className="text-slate-900 dark:text-slate-100 text-[15px] font-extrabold">{localNextBestAction.title}</AppText>
-                            <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1 leading-5">{localNextBestAction.description}</AppText>
+                            <AppText className="text-slate-900 dark:text-slate-100 text-[15px] font-extrabold">{displayNextBestAction.title}</AppText>
+                            <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1 leading-5">{displayNextBestAction.description}</AppText>
                             <TouchableOpacity
                                 className="mt-3 px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center self-start"
                                 style={{ minHeight: compactPillHeight, height: compactPillHeight }}
-                                onPress={localNextBestAction.onPress}
+                                onPress={displayNextBestAction.onPress}
                                 accessibilityRole="button"
-                                accessibilityLabel={localNextBestAction.cta}
+                                accessibilityLabel={displayNextBestAction.cta}
                             >
-                                <AppText className="text-primary text-xs font-bold">{localNextBestAction.cta}</AppText>
+                                <AppText className="text-primary text-xs font-bold">{displayNextBestAction.cta}</AppText>
                             </TouchableOpacity>
                         </View>
 
@@ -1215,7 +1287,7 @@ const Home = () => {
                                                         numberOfLines={textClampLines('list')}
                                                         ellipsizeMode="tail"
                                                     >
-                                                        {item.subtitle} • {formatDateBRFromISO(item.date)}
+                                                        {item.subtitle}{item.userName && item.userName !== user?.name ? ` · por ${item.userName}` : ''} • {formatDateBRFromISO(item.date)}
                                                     </AppText>
                                                 </View>
                                             </View>
@@ -1406,6 +1478,11 @@ const Home = () => {
                                         </AppText>
                                     </View>
                                     <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">{item.subtitle}</AppText>
+                                    {item.userName && item.userName !== user?.name && (
+                                        <AppText className="text-slate-400 dark:text-slate-500 text-[10px] mt-0.5">
+                                            por {item.userName}
+                                        </AppText>
+                                    )}
                                     <View className="flex-row items-center justify-between mt-2">
                                         <AppText className="text-slate-500 dark:text-slate-200 text-xs">{item.reminder}</AppText>
                                         <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.value}</AppText>
