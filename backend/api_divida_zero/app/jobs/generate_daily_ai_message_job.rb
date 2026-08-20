@@ -10,7 +10,8 @@ class GenerateDailyAiMessageJob < ApplicationJob
       end
 
     Ai::DailyMessageGenerator.generate_for(date: date)
-  rescue StandardError
+  rescue StandardError => e
+    Rails.logger.error "[DailyMessageJob] Error for date=#{date_iso8601}: #{e.message}"
     Ai::DailyMessageGenerator.generate_for(date: Date.current)
   end
 end
