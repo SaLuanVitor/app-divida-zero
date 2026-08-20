@@ -7,6 +7,7 @@ import { bankStatementsApi } from '../../services/bankStatements';
 export default function BankImportScreen({ navigation }: any) {
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handlePickFile = async () => {
     try {
@@ -30,6 +31,8 @@ export default function BankImportScreen({ navigation }: any) {
       }
 
       setUploading(true);
+      setStatus(null);
+      setErrorMessage(null);
       const response = await bankStatementsApi.upload({
         uri: file.uri,
         name: file.name,
@@ -56,11 +59,17 @@ export default function BankImportScreen({ navigation }: any) {
         } else if (res.data.status === 'error') {
           clearInterval(interval);
           setUploading(false);
-          Alert.alert('Erro', 'Falha ao processar o extrato.');
+          setErrorMessage('Falha ao processar o extrato. Tente novamente com outro arquivo.');
+          Alert.alert(
+            'Erro no processamento',
+            'O servidor não conseguiu processar o extrato. Verifique se o arquivo está válido e tente novamente.'
+          );
         }
       } catch {
         clearInterval(interval);
         setUploading(false);
+        setErrorMessage('Não foi possível verificar o status do processamento. Tente novamente.');
+        Alert.alert('Erro', 'Falha ao consultar o status do processamento.');
       }
     }, 3000);
   };
@@ -71,6 +80,12 @@ export default function BankImportScreen({ navigation }: any) {
       <Text className="text-gray-500 mb-6">
         Exporte seu extrato bancário (OFX ou CSV) e importe automaticamente.
       </Text>
+
+      {errorMessage && (
+        <View className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+          <Text className="text-red-700">{errorMessage}</Text>
+        </View>
+      )}
 
       {uploading ? (
         <View className="items-center py-8">
