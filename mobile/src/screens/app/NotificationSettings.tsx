@@ -13,6 +13,7 @@ import {
   requestDeviceNotificationPermission,
   syncScheduledLocalNotifications,
 } from '../../services/notifications';
+import { syncRemotePushPreferences } from '../../services/devicePush';
 import { useThemeMode } from '../../context/ThemeContext';
 import { listFinancialRecords } from '../../services/financialRecords';
 import { useAccessibility } from '../../context/AccessibilityContext';
@@ -103,6 +104,7 @@ const NotificationSettings = () => {
         prefs: next,
         records: allRecords.records,
       });
+      await syncRemotePushPreferences(next);
     } catch {
       // Preference should remain saved even if sync fails temporarily.
     }
