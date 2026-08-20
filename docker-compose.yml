@@ -3,35 +3,40 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: app_divida_zero_development
+      POSTGRES_DB: app_divida_zero_production
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d app_divida_zero_development"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  api:
+  api-prod:
     build:
       context: ./backend/api_divida_zero
       dockerfile: Dockerfile.dev
     restart: unless-stopped
+    env_file:
+      - ./backend/api_divida_zero/.env
     depends_on:
       db:
         condition: service_healthy
     environment:
-      RAILS_ENV: development
+      RAILS_ENV: production
       PORT: 3000
       RAILS_MAX_THREADS: 5
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/app_divida_zero_production
+      ADMIN_EMAIL: admin@dividazero.com
+      ADMIN_PASSWORD: ADMIN_PASSWORD=<definir no .env>
+      ADMIN_NAME: Administrador
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
-      POSTGRES_DB: app_divida_zero_development
-      POSTGRES_TEST_DB: app_divida_zero_test
+      POSTGRES_DB: app_divida_zero_production
+      SECRET_KEY_BASE: ***REMOVED***
+      DISABLE_DATABASE_ENVIRONMENT_CHECK: "1"
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -41,7 +46,40 @@ services:
       - bundle_cache:/usr/local/bundle
     command: >
       bash -lc "rm -f /rails/tmp/pids/server.pid &&
-      bundle exec rails db:prepare &&
+      bundle exec rails db:create db:schema:load &&
+      bundle exec rails app:bootstrap_admin &&
+      bundle exec rails server -b 0.0.0.0 -p 3000"
+
+  api-dev:
+    build:
+      context: ./backend/api_divida_zero
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    env_file:
+      - ./backend/api_divida_zero/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: development
+      PORT: 3001
+      RAILS_MAX_THREADS: 5
+      ADMIN_EMAIL: admin@dividazero.com
+      ADMIN_PASSWORD: ADMIN_PASSWORD=<definir no .env>
+      ADMIN_NAME: Administrador
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: app_divida_zero_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./backend/api_divida_zero:/rails
+      - bundle_cache:/usr/local/bundle
+    command: >
+      bash -lc "rm -f /rails/tmp/pids/server.pid &&
+      bundle exec rails db:create db:schema:load &&
       bundle exec rails app:bootstrap_admin &&
       bundle exec rails server -b 0.0.0.0 -p 3000"
 
