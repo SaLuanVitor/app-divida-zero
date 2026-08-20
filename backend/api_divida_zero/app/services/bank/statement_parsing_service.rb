@@ -3,10 +3,10 @@ module Bank
     def self.process(batch_id:, file_path:, user_id:)
       format = Bank::FormatDetector.detect(file_path)
       parser = case format
-               when :ofx then Bank::OfxParser.new
-               when :csv then Bank::CsvParser.new
-               else raise Bank::UnsupportedFormatError
-               end
+      when :ofx then Bank::OfxParser.new
+      when :csv then Bank::CsvParser.new
+      else raise Bank::UnsupportedFormatError
+      end
 
       raw_transactions = parser.parse(file_path)
       source = format == :ofx ? "ofx_upload" : "csv_upload"

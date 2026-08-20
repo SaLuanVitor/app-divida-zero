@@ -16,6 +16,7 @@ module Api
           return render_json_error("Arquivo muito grande. Máximo: 10MB.", :unprocessable_entity) if file.size > MAX_FILE_SIZE
 
           batch_id = SecureRandom.uuid
+          Rails.cache.write(batch_cache_key(batch_id), { step: "parsing", progress: 0 }, expires_in: 24.hours)
           temp_dir = Rails.root.join("tmp", "imports", batch_id)
           FileUtils.mkdir_p(temp_dir)
           temp_path = temp_dir.join(file.original_filename)
@@ -34,11 +35,24 @@ module Api
           }, status: :accepted
         end
 
+        def destroy
+          batch_id = params[:batch_id]
+          return render_json_error("batch_id é obrigatório.", :unprocessable_entity) if batch_id.blank?
+
+          deleted = @current_user.imported_transactions
+                                 .where(import_batch_id: batch_id)
+                                 .destroy_all
+
+          render json: { deleted: deleted.size }, status: :ok
+        end
+
         def status
           batch_id = params[:batch_id]
           return render json: { error: "batch_id é obrigatório." }, status: :unprocessable_entity if batch_id.blank?
 
-          failed = Rails.cache.read(batch_cache_key(batch_id))
+          batch_cache = Rails.cache.read(batch_cache_key(batch_id))
+          failed = batch_cache if batch_cache&.dig(:error)
+
           if failed
             return render json: {
               batch_id: batch_id,
@@ -47,7 +61,11 @@ module Api
             }, status: :ok
           end
 
-          has_batch = SolidQueue::Job.where("arguments LIKE ?", "%#{batch_id}%").exists? ||
+          queued = false
+          if SolidQueue::Job.table_exists?
+            queued = SolidQueue::Job.where("arguments LIKE ?", "%#{batch_id}%").exists?
+          end
+          has_batch = batch_cache.present? || queued ||
                       @current_user.imported_transactions.where(import_batch_id: batch_id).exists?
 
           unless has_batch
@@ -60,13 +78,16 @@ module Api
             return render json: {
               batch_id: batch_id,
               status: "processing",
-              progress: 0
+              step: batch_cache&.dig(:step) || "parsing",
+              progress: batch_cache&.dig(:progress) || 0
             }, status: :ok
           end
 
           render json: {
             batch_id: batch_id,
             status: "done",
+            step: batch_cache&.dig(:step) || "done",
+            progress: batch_cache&.dig(:progress) || 100,
             total: transactions.count,
             pending: transactions.pending.count,
             duplicates: transactions.duplicate.count

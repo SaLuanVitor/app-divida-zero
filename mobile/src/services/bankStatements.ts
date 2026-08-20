@@ -23,9 +23,21 @@ export interface UploadResponse {
 export interface StatusResponse {
   batch_id: string;
   status: 'processing' | 'done' | 'error';
+  step?: 'parsing' | 'categorizing' | 'deduplicating' | 'done';
+  progress?: number;
   total?: number;
   pending?: number;
   duplicates?: number;
+}
+
+export interface PendingGroup {
+  date: string;
+  transactions: ImportedTransaction[];
+}
+
+export interface PendingResponse {
+  groups: PendingGroup[];
+  total: number;
 }
 
 export const bankStatementsApi = {
@@ -40,8 +52,11 @@ export const bankStatementsApi = {
   getStatus: (batchId: string) =>
     api.get<StatusResponse>(`/bank/statements/${batchId}/status`),
 
+  deleteBatch: (batchId: string) =>
+    api.delete(`/bank/statements/${batchId}`),
+
   getPending: () =>
-    api.get<{ transactions: ImportedTransaction[] }>('/bank/transactions/pending'),
+    api.get<PendingResponse>('/bank/transactions/pending'),
 
   accept: (transactionIds: number[]) =>
     api.post('/bank/transactions/accept', { transaction_ids: transactionIds }),

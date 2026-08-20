@@ -12,15 +12,15 @@
 
 - [x] AC-01: Tela "Importar Extrato" acessível pelo menu Profile
 - [x] AC-02: File picker para selecionar arquivos .ofx, .qfx, .csv
-- [ ] AC-03: Upload com barra de progresso visível
+- [x] AC-03: Upload com barra de progresso visível (etapa + % via polling de status)
 - [x] AC-04: Polling automático de status a cada 3s
 - [x] AC-05: Ao finalizar, navega para tela de revisão
-- [x] AC-06: Tela de revisão lista transações pending + duplicate
-- [ ] AC-07: Duplicatas sinalizadas com ícone + reason (amarelo = fuzzy, vermelho = exact)
+- [x] AC-06: Tela de revisão lista transações pending + duplicate (agrupadas por data)
+- [x] AC-07: Duplicatas sinalizadas com ícone + reason (amarelo = fuzzy, vermelho = exact)
 - [x] AC-08: Checkbox de seleção individual + "Selecionar todas"
 - [x] AC-09: Botão "Aceitar selecionadas" + "Rejeitar" em lote
-- [ ] AC-10: Confirmação antes de aceitar/rejeitar
-- [ ] AC-11: Após aceitar, feedback de sucesso + atualização automática da lista
+- [x] AC-10: Confirmação antes de aceitar/rejeitar
+- [x] AC-11: Após aceitar, feedback de sucesso + atualização automática da lista
 - [x] AC-12: Tratamento de erros: upload inválido, timeout, falha de parsing
 - [x] AC-13: Guia "Como exportar extrato" com passo-a-passo por banco (modal)
 

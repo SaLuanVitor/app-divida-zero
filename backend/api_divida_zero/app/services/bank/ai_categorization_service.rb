@@ -26,7 +26,7 @@ module Bank
         feature: "categorize_bank_transactions",
         system_prompt: system_prompt,
         user_prompt: prompt,
-        fallback: ->(feat) { {"transactions" => build_fallback_array(transactions)} },
+        fallback: ->(feat) { { "transactions" => build_fallback_array(transactions) } },
         response_guard: method(:guard).to_proc
       )
 

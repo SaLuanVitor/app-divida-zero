@@ -21,7 +21,7 @@
 - [x] AC-09: Sem match, status = pending
 - [x] AC-10: Duplicatas têm `duplicate_reason` e `duplicate_of_id` preenchidos
 - [x] AC-11: `Ai::PromptBuilder.categorize_bank_transactions` criado com system_prompt específico
-- [ ] AC-12: Testes unitários com mock da OpenAI + fixtures de dedup
+- [x] AC-12: Testes unitários com mock da OpenAI + fixtures de dedup (via `minitest/mock` stub em `Ai::Client.generate_json`)
 
 ---
 

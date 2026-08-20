@@ -46,3 +46,7 @@ production:
   monitor_whatsapp_quality:
     class: WhatsappQualityMonitorJob
     schedule: "0 8 * * *"
+
+  cleanup_imported_transaction_data:
+    class: CleanupImportedTransactionDataJob
+    schedule: "0 3 * * 1"

@@ -1,0 +1,216 @@
+name: fase-1-completion
+id: fase-1-completion
+version: 1.0
+description: Completar os gaps restantes da Fase 1 do Dívida Zero — Email, Push Notifications e IA Reativação
+
+icon: 🎯
+author: aiox-master
+created: 2026-07-10
+
+# === TEAM ===
+agents:
+  - id: aiox-dev
+    role: implementation
+    surface: fullstack
+  - id: aiox-qa
+    role: validation
+    surface: testing
+
+# === PHASES ===
+phases:
+  - id: phase-1-foundation
+    name: Fundação Paralela
+    description: Tarefas sem dependências externas, executáveis em paralelo
+    parallel: true
+    steps:
+      - id: email-specs
+        name: Specs dos Mailers
+        description: Criar testes para PasswordResetMailer e WelcomeMailer
+        agent: aiox-dev
+        validation: aiox-qa
+        estimate: 2h
+        files:
+          - backend/api_divida_zero/test/mailers/password_reset_mailer_test.rb
+          - backend/api_divida_zero/test/mailers/welcome_mailer_test.rb
+        acceptance:
+          - PasswordResetMailer envia email com token de reset
+          - WelcomeMailer envia email de boas-vindas
+          - Templates HTML+Text renderizam corretamente
+        command: npm test -- --test-path-pattern=mailers
+
+      - id: push-eas-projectid
+        name: Validar EAS Project ID
+        description: Verificar e ajustar projectId no app.json e eas.json
+        agent: aiox-dev
+        estimate: 30min
+        files:
+          - mobile/app.json
+          - mobile/eas.json
+        acceptance:
+          - projectId corresponde ao projeto EAS real
+          - eas.json tem perfil de produção configurado
+
+      - id: ia-cron-dispatch
+        name: Cron de Dispatch Diário
+        description: Configurar job recorrente no config/recurring.yml para chamar DailyMessageService
+        agent: aiox-dev
+        estimate: 2h
+        files:
+          - backend/api_divida_zero/config/recurring.yml
+        acceptance:
+          - Job executa DailyMessageService diariamente
+          - Respeita UsageGuard e tetos de uso
+          - Logging adequado
+
+      - id: ia-retry-backoff
+        name: Retry/Backoff no Cliente Mobile
+        description: Implementar retry exponencial no ai.ts para falhas de rede/API
+        agent: aiox-dev
+        estimate: 1.5h
+        files:
+          - mobile/src/services/ai.ts
+        acceptance:
+          - Retry em 3 tentativas com backoff exponencial
+          - Timeout configurável por chamada
+          - Fallback gracioso para experiência offline
+
+      - id: ia-unit-tests
+        name: Testes Unitários do AI Service
+        description: Specs para Ai::Client, UsageGuard e controller de IA
+        agent: aiox-dev
+        validation: aiox-qa
+        estimate: 3h
+        files:
+          - backend/api_divida_zero/test/services/ai_client_test.rb
+          - backend/api_divida_zero/test/services/usage_guard_test.rb
+          - backend/api_divida_zero/test/controllers/ai_controller_test.rb
+        acceptance:
+          - Ai::Client com/sem resposta da API
+          - UsageGuard respeita tetos
+          - Controller responde 5 endpoints corretamente
+        command: npm test -- --test-path-pattern=ai
+
+      - id: ia-rollout-gradual
+        name: Rollout Gradual por Superfície
+        description: Implementar feature flags por superfície no featurePhase.ts
+        agent: aiox-dev
+        estimate: 2h
+        files:
+          - mobile/src/config/featurePhase.ts
+          - mobile/src/config/__tests__/featurePhase.test.ts
+        acceptance:
+          - daily_message, next_action, alerts, reports_briefing, categorize_record têm flags individuais
+          - PHASE_1_MODE=false libera superfícies gradualmente
+          - Testes atualizados
+
+  - id: phase-2-integration
+    name: Integração e Validação
+    description: Depende da fundação — validar integrações reais
+    parallel: true
+    steps:
+      - id: push-device-token
+        name: Testar Registro de Device Token
+        description: Garantir que mobile registra expoPushToken no backend corretamente
+        agent: aiox-dev
+        estimate: 2h
+        files:
+          - mobile/src/services/devicePush.ts
+          - mobile/src/services/__tests__/devicePush.test.ts
+        depends_on:
+          - push-eas-projectid
+        acceptance:
+          - Token registra no backend via DevicesController
+          - Refresh automático ao renovar token
+          - Testes de registro e re-registro
+
+      - id: email-smtp-staging
+        name: Validar SMTP em Staging
+        description: Configurar env vars Resend e disparar email de teste real
+        agent: aiox-dev
+        estimate: 1h
+        files:
+          - backend/api_divida_zero/config/environments/production.rb
+        depends_on:
+          - email-specs
+        acceptance:
+          - Email de reset chega no destinatário
+          - Email de boas-vindas chega no destinatário
+          - Logs de entrega no servidor
+
+  - id: phase-3-polish
+    name: Polish Mobile
+    description: Refinamentos na experiência de push notifications
+    parallel: false
+    steps:
+      - id: push-deep-link
+        name: Deep-Link Handler
+        description: Implementar handler para tap em notificação abrir tela correta
+        agent: aiox-dev
+        estimate: 2h
+        files:
+          - mobile/src/services/notifications.ts
+          - mobile/App.tsx
+        depends_on:
+          - push-device-token
+        acceptance:
+          - Tap em notificação de débito abre tela de débitos
+          - Tap em notificação de resumo abre Home
+          - Fallback para Home se tipo desconhecido
+
+      - id: push-badge
+        name: Badge Count
+        description: Configurar contador de notificações no ícone do app
+        agent: aiox-dev
+        estimate: 1h
+        files:
+          - mobile/src/services/notifications.ts
+        depends_on:
+          - push-device-token
+        acceptance:
+          - Badge incrementa ao receber notificação
+          - Badge zera ao abrir o app
+
+      - id: push-sound
+        name: Configurar Som
+        description: Adicionar som personalizado às notificações
+        agent: aiox-dev
+        estimate: 30min
+        files:
+          - mobile/src/services/notifications.ts
+          - mobile/app.json
+        depends_on:
+          - push-device-token
+        acceptance:
+          - Notificação toca som configurado
+          - Fallback para som padrão do sistema
+
+      - id: push-e2e
+        name: E2E Push Notification
+        description: Teste end-to-end do fluxo completo de push
+        agent: aiox-qa
+        estimate: 3h
+        files:
+          - mobile/__tests__/e2e/push-notification.e2e.ts
+        depends_on:
+          - push-deep-link
+          - push-badge
+          - push-sound
+        acceptance:
+          - Fluxo completo: backend gera alerta → Expo push → dispositivo recebe → tap abre tela correta
+          - Badge count funciona
+          - Som toca corretamente
+
+# === QUALITY GATES ===
+quality_gates:
+  - phase: phase-1-foundation
+    gates:
+      - npm run lint
+      - npm run typecheck
+  - phase: phase-2-integration
+    gates:
+      - npm test
+  - phase: phase-3-polish
+    gates:
+      - npm run lint
+      - npm run typecheck
+      - npm test

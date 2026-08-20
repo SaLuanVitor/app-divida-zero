@@ -22,7 +22,7 @@
 - [x] AC-10: `POST /api/v1/bank/transactions/reject` marca lote como rejected
 - [x] AC-11: `POST /api/v1/bank/transactions/:id/merge` vincula duplicata a FinancialRecord existente
 - [x] AC-12: Requer autenticação JWT em todos os endpoints
-- [ ] AC-13: Testes de controller + integração
+- [x] AC-13: Testes de controller + integração (pending agrupado por data, accept, reject, merge, gamificação)
 
 ---
 

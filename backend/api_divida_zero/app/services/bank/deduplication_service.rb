@@ -58,7 +58,7 @@ module Bank
     def self.similarity(a, b)
       return 0.0 if a.nil? || b.nil?
 
-      max_len = [a.length, b.length].max
+      max_len = [ a.length, b.length ].max
       return 1.0 if max_len.zero?
 
       1.0 - levenshtein(a, b).to_f / max_len
@@ -78,9 +78,9 @@ module Bank
           temp = matrix[j]
           matrix[j] = if a[i - 1] == b[j - 1]
                         prev
-                      else
-                        [matrix[j] + 1, matrix[j - 1] + 1, prev + 1].min
-                      end
+          else
+                        [ matrix[j] + 1, matrix[j - 1] + 1, prev + 1 ].min
+          end
           prev = temp
         end
       end

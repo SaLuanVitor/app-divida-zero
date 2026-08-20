@@ -20,7 +20,7 @@
 - [x] AC-08: `Bank::StatementParsingService` orquestra detector + parser + retorno
 - [x] AC-09: Formato inválido levanta `Bank::UnsupportedFormatError`
 - [x] AC-10: Transações sem descrição viram "Transação sem descrição"
-- [ ] AC-11: `gem "ofx"` adicionada ao Gemfile e instalada
+- [x] AC-11: Parsing OFX via Nokogiri custom (SGML→XML), sem `gem "ofx"` — decisão aprovada pelo dono (2026-08-20): implementação atual testada e validada, evita dependência externa
 - [x] AC-12: Testes unitários para cada parser com fixtures reais
 
 ## Files
@@ -28,6 +28,8 @@
 ### Gemfile
 
 ```ruby
+# NOTA (2026-08-20): gem "ofx" NÃO utilizada. OfxParser usa Nokogiri custom
+# (SGML→XML) — decisão aprovada pelo dono. Documentação original abaixo:
 gem "ofx", "~> 2.2"
 ```
 

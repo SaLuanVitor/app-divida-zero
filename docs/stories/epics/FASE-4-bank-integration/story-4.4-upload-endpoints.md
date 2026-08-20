@@ -17,11 +17,11 @@
 - [x] AC-05: Salva arquivo em `tmp/imports/{batch_id}/{filename}`
 - [x] AC-06: Enfileira `StatementParseJob` com `batch_id`, `file_path`, `user_id`
 - [x] AC-07: `GET /api/v1/bank/statements/:batch_id/status` retorna progresso
-- [ ] AC-08: Status possíveis: `processing` → `done` | `error`
-- [ ] AC-09: Se job falha, retorna status `error` com mensagem
+- [x] AC-08: Status possíveis: `processing` → `done` | `error`
+- [x] AC-09: Se job falha, retorna status `error` com mensagem (via cache `bank_import_batch:{batch_id}`)
 - [x] AC-10: Extensão inválida retorna 422 com mensagem amigável
 - [x] AC-11: Requer autenticação JWT (401 se sem token)
-- [ ] AC-12: Testes de controller (upload válido, inválido, sem arquivo)
+- [x] AC-12: Testes de controller (upload válido, inválido, sem arquivo) + delete de lote (LGPD)
 
 ---
 
