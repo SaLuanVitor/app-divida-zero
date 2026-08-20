@@ -6,6 +6,21 @@ class WhatsappDispatchJob < ApplicationJob
   discard_on StandardError do |job, error|
     alert = NotificationAlert.find_by(id: job.arguments.first)
     Rails.logger.error "[WhatsAppDispatch] Permanently failed for alert #{alert&.id}: #{error.message}"
+    next unless alert
+
+    message = WhatsappMessage.find_by(notification_alert_id: alert.id)
+    if message
+      message.update!(status: "failed", error_message: error.message) if message.can_transition_to?("failed")
+    else
+      WhatsappMessage.create!(
+        user: alert.user,
+        notification_alert: alert,
+        template_name: WhatsappChannel.template_for(alert.alert_type),
+        status: "failed",
+        category: "utility",
+        error_message: error.message
+      )
+    end
   end
 
   def perform(notification_alert_id)
