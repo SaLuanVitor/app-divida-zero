@@ -1,10 +1,12 @@
+require "openssl"
+
 module Api
   module V1
     class WhatsappController < ApplicationController
-      before_action :verify_webhook_token
+      before_action :verify_webhook_signature, only: :webhook
 
       def webhook
-        payload = JSON.parse(request.body.read)
+        payload = JSON.parse(request.raw_post)
         status_updates = extract_status_updates(payload)
 
         status_updates.each do |update|
@@ -20,7 +22,7 @@ module Api
         challenge = params["hub.challenge"]
         verify_token = params["hub.verify_token"]
 
-        if verify_token == ENV.fetch("WHATSAPP_WEBHOOK_SECRET")
+        if verify_token.present? && secure_compare(verify_token, webhook_secret)
           render plain: challenge
         else
           head :forbidden
@@ -29,14 +31,26 @@ module Api
 
       private
 
-      def verify_webhook_token
-        return if request.method == "GET"
+      def verify_webhook_signature
+        return head :forbidden if webhook_secret.blank?
 
-        token = request.headers["X-Webhook-Token"] || params[:token]
-        expected = ENV.fetch("WHATSAPP_WEBHOOK_SECRET", nil)
-        return if expected.blank? || token == expected
+        signature = request.headers["X-Hub-Signature-256"].to_s
+        expected = OpenSSL::HMAC.hexdigest("SHA256", webhook_secret, request.raw_post)
+        provided = signature.split("=", 2).last.to_s.downcase
 
-        head :unauthorized
+        head :unauthorized unless secure_compare(expected, provided)
+      end
+
+      def webhook_secret
+        ENV.fetch("WHATSAPP_WEBHOOK_SECRET", "")
+      end
+
+      def secure_compare(left, right)
+        return false unless left.bytesize == right.bytesize
+
+        ActiveSupport::SecurityUtils.secure_compare(left, right)
+      rescue ArgumentError
+        false
       end
 
       def extract_status_updates(payload)
