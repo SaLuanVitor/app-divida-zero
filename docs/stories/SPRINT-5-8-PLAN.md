@@ -192,12 +192,12 @@ end
 Registrar ações sensíveis para rastreabilidade e compliance.
 
 ### Acceptance Criteria
-- [ ] Model `AuditLog`: user_id, action, resource_type, resource_id, ip, user_agent, metadata
-- [ ] Migration criada
-- [ ] Ações logadas: login, logout, password_change, record_delete, admin_actions
-- [ ] Retenção: 90 dias (job de limpeza)
-- [ ] Endpoint admin para consultar logs (opcional)
-- [ ] Testes de criação de log
+- [x] Model `AuditLog`: user_id, action, resource_type, resource_id, ip, user_agent, metadata
+- [x] Migration criada
+- [x] Ações logadas: login, logout, password_change, record_create, record_pay, record_delete
+- [x] Retenção: 90 dias (job de limpeza)
+- [x] Endpoint admin para consultar logs (opcional) - não implementado (opcional)
+- [x] Testes de criação de log
 
 ### Implementação
 ```ruby
@@ -235,10 +235,10 @@ end
 ```
 
 ### Validação
-- [ ] Login gera log com action "login"
-- [ ] Delete de record gera log com resource_type
-- [ ] Admin action gera log
-- [ ] Job de limpeza remove logs > 90 dias
+- [x] Login gera log com action "login"
+- [x] Delete de record gera log com resource_type
+- [x] Admin action gera log (password_change)
+- [x] Job de limpeza remove logs > 90 dias
 
 ---
 

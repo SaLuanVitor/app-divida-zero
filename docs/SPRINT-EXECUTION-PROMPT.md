@@ -382,12 +382,12 @@ cross_gates:
 | 5.1 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Rate Limiting |
 | 5.2 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Account Lockout |
 | 5.3 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Session Management |
-| 5.4 | 🔄 IN_PROGRESS | 2026-08-21 | — | — | Audit Log |
-| 5.5 | ⏳ PENDING | — | — | — | Mobile, independent |
+| 5.4 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Audit Log |
+| 5.5 | 🔄 IN_PROGRESS | 2026-08-21 | — | — | Haptic Feedback (Mobile) |
 | 5.6 | ⏳ PENDING | — | — | — | Depends on 5.5 |
 | 5.7 | ⏳ PENDING | — | — | — | Depends on 5.6 |
 
-**Overall:** 3/7 DONE | 43% | ETA: 15 dias úteis
+**Overall:** 4/7 DONE | 57% | ETA: 15 dias úteis
 ```
 
 ---
