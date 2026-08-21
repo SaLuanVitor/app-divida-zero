@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { View, TouchableOpacity, Switch } from 'react-native';
-import { ArrowLeft, Bell } from 'lucide-react-native';
+import { ArrowLeft, Bell, Mail } from 'lucide-react-native';
 import AppText from '../../components/AppText';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
@@ -18,8 +18,17 @@ import { useThemeMode } from '../../context/ThemeContext';
 import { listFinancialRecords } from '../../services/financialRecords';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import useBackToProfile from '../../hooks/useBackToProfile';
+import {
+  EmailPreferences,
+  getEmailPreferences,
+  updateEmailPreferences,
+} from '../../services/emailPreferences';
 
 type SaveMessageKind = 'success' | 'error' | '';
+type EmailPreferenceKey =
+  | 'email_notifications_enabled'
+  | 'email_due_reminders'
+  | 'email_weekly_summary';
 type NotificationPreferenceKey =
   | 'notifications_enabled'
   | 'device_push_enabled'
@@ -33,12 +42,18 @@ const NotificationSettings = () => {
   const goBackToProfile = useBackToProfile();
 
   const [prefs, setPrefs] = useState<AppPreferences>(defaultAppPreferences);
+  const [emailPrefs, setEmailPrefs] = useState<EmailPreferences>({
+    email_notifications_enabled: true,
+    email_due_reminders: true,
+    email_weekly_summary: true,
+  });
   const [message, setMessage] = useState('');
   const [messageKind, setMessageKind] = useState<SaveMessageKind>('');
   const [permissionStatus, setPermissionStatus] = useState<'granted' | 'denied' | 'undetermined' | 'unavailable'>(
     'undetermined'
   );
   const [loading, setLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
   const [runtimeAvailable, setRuntimeAvailable] = useState(true);
   const [runtimeReason, setRuntimeReason] = useState<NotificationRuntimeReason>('available');
   const rowHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
@@ -59,6 +74,11 @@ const NotificationSettings = () => {
         if ((status === 'denied' || status === 'unavailable') && nextPrefs.device_push_enabled) {
           nextPrefs.device_push_enabled = false;
           await saveAppPreferences(nextPrefs);
+        }
+
+        const storedEmailPrefs = await getEmailPreferences();
+        if (storedEmailPrefs) {
+          setEmailPrefs(storedEmailPrefs);
         }
 
         setPrefs(nextPrefs);
@@ -205,6 +225,32 @@ const NotificationSettings = () => {
     </View>
   );
 
+  const updateEmail = async (key: EmailPreferenceKey, value: boolean) => {
+    try {
+      setEmailLoading(true);
+      const next = { ...emailPrefs, [key]: value };
+
+      if (key === 'email_notifications_enabled' && !value) {
+        next.email_due_reminders = false;
+        next.email_weekly_summary = false;
+      }
+
+      if (key !== 'email_notifications_enabled' && value) {
+        next.email_notifications_enabled = true;
+      }
+
+      await updateEmailPreferences(next);
+      setEmailPrefs(next);
+      setMessageKind('success');
+      setMessage('Preferências de e-mail salvas.');
+    } catch {
+      setMessageKind('error');
+      setMessage('Não foi possível salvar a preferência de e-mail agora.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   return (
     <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
       <View className="bg-white dark:bg-[#121212] px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -215,7 +261,7 @@ const NotificationSettings = () => {
           <View className="flex-1 pr-1">
             <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">Notificações</AppText>
             <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-              Somente no aplicativo. No celular apenas com sua permissão.
+              Gerencie como deseja receber alertas.
             </AppText>
           </View>
         </View>
@@ -225,13 +271,13 @@ const NotificationSettings = () => {
         <Card className="p-4">
           <View className="flex-row items-center mb-2">
             <Bell size={16} color="#64748b" />
-            <AppText className="text-slate-700 dark:text-slate-200 font-bold ml-2">Canal de notificação</AppText>
+            <AppText className="text-slate-700 dark:text-slate-200 font-bold ml-2">Notificações no celular</AppText>
           </View>
 
           <View className="mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a1a1a] p-3">
-            <AppText className="text-slate-900 dark:text-slate-100 font-semibold text-sm">Canal único: aplicativo</AppText>
+            <AppText className="text-slate-900 dark:text-slate-100 font-semibold text-sm">Push + Local</AppText>
             <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
-              Este app não envia e-mail nem SMS. O alerta aparece no app e, opcionalmente, no celular.
+              Alertas aparecem no app e, opcionalmente, como notificação no celular.
             </AppText>
             <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">{permissionLabel}</AppText>
           </View>
@@ -272,7 +318,43 @@ const NotificationSettings = () => {
           />
         </Card>
 
-        {loading ? <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">Carregando preferências...</AppText> : null}
+        <Card className="p-4 mt-4">
+          <View className="flex-row items-center mb-2">
+            <Mail size={16} color="#64748b" />
+            <AppText className="text-slate-700 dark:text-slate-200 font-bold ml-2">Notificações por e-mail</AppText>
+          </View>
+
+          <View className="mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a1a1a] p-3">
+            <AppText className="text-slate-900 dark:text-slate-100 font-semibold text-sm">E-mail</AppText>
+            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">
+              Receba lembretes de vencimento e resumo semanal no seu e-mail cadastrado.
+            </AppText>
+          </View>
+
+          <Item
+            title="Ativar e-mail"
+            subtitle="Liga ou desliga todas as notificações por e-mail."
+            value={emailPrefs.email_notifications_enabled}
+            onChange={(value) => updateEmail('email_notifications_enabled', value)}
+            disabled={emailLoading}
+          />
+          <Item
+            title="Lembrete de vencimento"
+            subtitle="E-mail quando houver contas vencendo ou em atraso."
+            value={emailPrefs.email_due_reminders}
+            onChange={(value) => updateEmail('email_due_reminders', value)}
+            disabled={!emailPrefs.email_notifications_enabled || emailLoading}
+          />
+          <Item
+            title="Resumo semanal"
+            subtitle="E-mail com resumo dos movimentos financeiros da semana."
+            value={emailPrefs.email_weekly_summary}
+            onChange={(value) => updateEmail('email_weekly_summary', value)}
+            disabled={!emailPrefs.email_notifications_enabled || emailLoading}
+          />
+        </Card>
+
+        {loading || emailLoading ? <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">Carregando preferências...</AppText> : null}
 
         {message ? (
           <View
