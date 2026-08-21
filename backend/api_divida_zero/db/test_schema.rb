@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_21_032442) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_105529) do
   create_table "ai_feedbacks", force: :cascade do |t|
     t.bigint "ai_interaction_id", null: false
     t.text "comment"
@@ -284,6 +284,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_032442) do
     t.index ["user_id", "created_at"], name: "index_notification_alerts_on_user_id_and_created_at"
     t.index ["user_id", "read_at"], name: "index_notification_alerts_on_user_id_and_read_at"
     t.index ["user_id"], name: "index_notification_alerts_on_user_id"
+  end
+
+  create_table "token_blacklists", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.string "token_digest"
+    t.datetime "updated_at", null: false
+    t.index ["token_digest"], name: "index_token_blacklists_on_token_digest", unique: true
   end
 
   create_table "users", force: :cascade do |t|

@@ -399,6 +399,74 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
+  # LOGOUT TESTS
+  test "logout revokes access token" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+    access_token = tokens[:access_token]
+
+    post "/api/v1/auth/logout", headers: auth_header(access_token), params: { refresh_token: tokens[:refresh_token] }
+
+    assert_response :ok
+    body = JSON.parse(response.body)
+    assert_equal "Logout realizado com sucesso.", body["message"]
+
+    # Verify access token is blacklisted
+    assert TokenBlacklist.revoked?(access_token)
+  end
+
+  test "logout revokes refresh token" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+    refresh_token = tokens[:refresh_token]
+
+    post "/api/v1/auth/logout", headers: auth_header(tokens[:access_token]), params: { refresh_token: refresh_token }
+
+    assert_response :ok
+    assert TokenBlacklist.revoked?(refresh_token)
+  end
+
+  test "logout without refresh token only revokes access token" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    post "/api/v1/auth/logout", headers: auth_header(tokens[:access_token])
+
+    assert_response :ok
+    assert TokenBlacklist.revoked?(tokens[:access_token])
+    assert_not TokenBlacklist.revoked?(tokens[:refresh_token])
+  end
+
+  test "revoked access token returns unauthorized on subsequent requests" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    # Logout
+    post "/api/v1/auth/logout", headers: auth_header(tokens[:access_token]), params: { refresh_token: tokens[:refresh_token] }
+    assert_response :ok
+
+    # Try to use access token again
+    get "/api/v1/auth/me", headers: auth_header(tokens[:access_token])
+    assert_response :unauthorized
+    body = JSON.parse(response.body)
+    assert_equal "Token revogado. Faça login novamente.", body["error"]
+  end
+
+  test "revoked refresh token returns unauthorized on refresh" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    # Logout
+    post "/api/v1/auth/logout", headers: auth_header(tokens[:access_token]), params: { refresh_token: tokens[:refresh_token] }
+    assert_response :ok
+
+    # Try to refresh with revoked token
+    post "/api/v1/auth/refresh", params: { refresh_token: tokens[:refresh_token] }
+    assert_response :unauthorized
+    body = JSON.parse(response.body)
+    assert_equal "Refresh token revogado. Faça login novamente.", body["error"]
+  end
+
+  test "logout requires authentication" do
+    post "/api/v1/auth/logout"
+    assert_response :unauthorized
+  end
+
   private
 
   def auth_header(token)

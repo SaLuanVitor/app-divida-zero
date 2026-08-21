@@ -48,6 +48,13 @@
 
   def authenticate_access_token!
     token = request.headers["Authorization"].to_s.split(" ").last
+    return render json: { error: "Não autorizado." }, status: :unauthorized if token.blank?
+
+    # Check if token is blacklisted (revoked via logout)
+    if TokenBlacklist.revoked?(token)
+      return render json: { error: "Token revogado. Faça login novamente." }, status: :unauthorized
+    end
+
     payload = JsonWebToken.decode(token, expected_type: "access")
     @current_user = User.find(payload["sub"])
 

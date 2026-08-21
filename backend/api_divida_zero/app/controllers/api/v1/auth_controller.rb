@@ -43,6 +43,12 @@ module Api
 
       def refresh
         refresh_token = params[:refresh_token].presence || bearer_token
+
+        # Check if refresh token is blacklisted
+        if TokenBlacklist.revoked?(refresh_token)
+          return render json: { error: "Refresh token revogado. Faça login novamente." }, status: :unauthorized
+        end
+
         payload = JsonWebToken.decode(refresh_token, expected_type: "refresh")
         user = User.find(payload["sub"])
         unless user.active?
@@ -52,6 +58,25 @@ module Api
         render_auth_payload(user)
       rescue JWT::DecodeError, ActiveRecord::RecordNotFound
         render json: { error: "Refresh token inválido." }, status: :unauthorized
+      end
+
+      def logout
+        # Allow logout even with revoked token (to clean up refresh token)
+        # But require access token to be present in header
+        access_token = request.headers["Authorization"].to_s.split(" ").last
+        return render json: { error: "Não autorizado." }, status: :unauthorized if access_token.blank?
+
+        refresh_token = params[:refresh_token].presence
+
+        if access_token.present?
+          TokenBlacklist.add!(access_token)
+        end
+
+        if refresh_token.present?
+          TokenBlacklist.add!(refresh_token)
+        end
+
+        render json: { message: "Logout realizado com sucesso." }, status: :ok
       end
 
       def forgot_password
