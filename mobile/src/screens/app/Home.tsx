@@ -48,6 +48,7 @@ import { FinancialGoalDto } from '../../types/financialGoal';
 import { runWhenIdle } from '../../utils/idle';
 import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
+import { useHaptics } from '../../hooks/useHaptics';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { markPerf, measurePerf } from '../../services/perf';
 import {
@@ -231,6 +232,7 @@ const Home = () => {
     const { darkMode } = useThemeMode();
     const { fontScale, largerTouchTargets } = useAccessibility();
     const { isBeginnerTutorialActive, currentEssentialStepId, refreshTargetMeasure } = useTutorial();
+    const { pay, receive, deleteRecord, light } = useHaptics();
     const insets = useSafeAreaInsets();
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
@@ -888,6 +890,14 @@ const Home = () => {
 
     const executePay = async (entry: CalendarEntry) => {
         const result = await payFinancialRecord(entry.id);
+
+        // Haptic feedback based on flow type
+        if (entry.icon === CircleDollarSign) {
+            receive(); // income = receive
+        } else {
+            pay(); // expense/debt = pay
+        }
+
         await Promise.all([
             loadMonthlyRecords({ force: true }),
             loadGlobalGamification({ force: true }),
@@ -959,6 +969,10 @@ const Home = () => {
 
     const executeDelete = async (entry: CalendarEntry, scope: 'single' | 'group') => {
         const result = await deleteFinancialRecord(entry.id, scope);
+
+        // Haptic feedback for deletion
+        deleteRecord();
+
         await Promise.all([
             loadMonthlyRecords({ force: true }),
             loadGlobalGamification({ force: true }),

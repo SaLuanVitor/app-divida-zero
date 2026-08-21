@@ -12,6 +12,7 @@ import AppToast from '../../components/AppToast';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import ScreenHelpButton from '../../components/ScreenHelpButton';
 import { useBottomInset } from '../../context/BottomInsetContext';
+import { useHaptics } from '../../hooks/useHaptics';
 import {
     createFinancialGoalContribution,
     deleteFinancialGoal,
@@ -58,6 +59,7 @@ const Metas = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { overlayBottomInset } = useBottomInset();
+    const { success, error, warning, deleteRecord } = useHaptics();
 
     const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
     const [loading, setLoading] = useState(false);
@@ -207,6 +209,7 @@ const Metas = () => {
         try {
             await deleteFinancialGoal(goalPendingDelete.id);
             await loadGoals();
+            deleteRecord(); // Haptic feedback for deletion
             pushFeedback('success', 'Meta removida', 'A meta foi removida com sucesso.');
             setGoalPendingDelete(null);
         } catch (error: any) {
@@ -261,6 +264,14 @@ const Metas = () => {
             const monthlyHistoryHint = result.linked_record_id
                 ? ' O registro já foi lançado no histórico mensal.'
                 : '';
+
+            // Haptic feedback based on contribution kind
+            if (contributionKind === 'deposit') {
+                success(); // positive haptic for deposit
+            } else {
+                warning(); // different haptic for withdrawal
+            }
+
             pushFeedback(
                 'success',
                 contributionKind === 'deposit' ? 'Valor adicionado' : 'Valor retirado',
