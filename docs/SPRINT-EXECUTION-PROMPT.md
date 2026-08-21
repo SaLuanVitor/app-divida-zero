@@ -381,13 +381,13 @@ cross_gates:
 |-------|--------|---------|-----------|-------|-------|
 | 5.1 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Rate Limiting |
 | 5.2 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Account Lockout |
-| 5.3 | 🔄 IN_PROGRESS | 2026-08-21 | — | — | Session Management |
-| 5.4 | ⏳ PENDING | — | — | — | Depends on 5.3 |
+| 5.3 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Session Management |
+| 5.4 | 🔄 IN_PROGRESS | 2026-08-21 | — | — | Audit Log |
 | 5.5 | ⏳ PENDING | — | — | — | Mobile, independent |
 | 5.6 | ⏳ PENDING | — | — | — | Depends on 5.5 |
 | 5.7 | ⏳ PENDING | — | — | — | Depends on 5.6 |
 
-**Overall:** 2/7 DONE | 29% | ETA: 15 dias úteis
+**Overall:** 3/7 DONE | 43% | ETA: 15 dias úteis
 ```
 
 ---

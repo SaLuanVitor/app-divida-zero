@@ -142,12 +142,12 @@ end
 Implementar logout seguro com revogação de tokens via blacklist em Redis.
 
 ### Acceptance Criteria
-- [ ] Endpoint `POST /auth/logout` adiciona token à blacklist
-- [ ] Redis configurado para blacklist (TTL = 7 dias)
-- [ ] Refresh token invalidado no logout
-- [ ] Mobile: logout limpa tokens locais
-- [ ] Token revogado retorna 401
-- [ ] Testes de blacklist e expiração
+- [x] Endpoint `POST /auth/logout` adiciona token à blacklist
+- [x] Blacklist configurada com TTL = 7 dias (banco de dados, alinhado com Solid Cache)
+- [x] Refresh token invalidado no logout
+- [x] Mobile: logout limpa tokens locais
+- [x] Token revogado retorna 401
+- [x] Testes de blacklist e expiração
 
 ### Implementação
 ```ruby
@@ -178,10 +178,10 @@ end
 ```
 
 ### Validação
-- [ ] Login → Logout → Usar token antigo → 401
-- [ ] Refresh token também invalidado
-- [ ] Mobile: tela de login aparece após logout
-- [ ] Blacklist expira após 7 dias
+- [x] Login → Logout → Usar token antigo → 401
+- [x] Refresh token também invalidado
+- [x] Mobile: tela de login aparece após logout
+- [x] Blacklist expira após 7 dias
 
 ---
 
