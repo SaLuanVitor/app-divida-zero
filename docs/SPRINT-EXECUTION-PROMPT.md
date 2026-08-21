@@ -1,4 +1,4 @@
-# Sprint Execution Loop Prompt — FASE 5: Segurança + UX Core
+# Sprint Execution Loop Prompt — FASE 5: Segurança + UX Core (FULL AUTO)
 
 > **Branch:** `feat/fase-5-seguranca`
 > **Stories:** 5.1 → 5.7 (7 stories)
@@ -7,22 +7,25 @@
 
 ---
 
-## 🔄 MASTER EXECUTION LOOP
+## 🔄 MASTER EXECUTION LOOP — FULL AUTOMATION
 
 ```bash
-# Execute this prompt in a loop until all 7 stories are DONE
-# Each iteration: PICK NEXT STORY → PLAN → IMPLEMENT → REVIEW → GATE → COMMIT → NEXT
+# SINGLE COMMAND TO RUN ENTIRE FASE 5:
+@aiox-master *full-sdc-wave fase-5-seguranca
+
+# OR step-by-step auto-loop:
+@aiox-master *auto-loop fase-5-seguranca
 ```
 
 ### Loop Invariant (sempre verdadeiro no início de cada iteração)
 - [ ] Branch `feat/fase-5-seguranca` ativa
 - [ ] `git status` limpo (sem WIP)
-- [ ] Próxima story identificada em `docs/stories/SPRINT-5-8-PLAN.md`
+- [ ] Próxima story identificada automaticamente via `story_order` YAML
 - [ ] Quality gates do story anterior: **PASS**
 
 ---
 
-## 📋 STORY PICKING LOGIC (determinístico)
+## 📋 STORY ORDER (determinístico, executado sequencialmente)
 
 ```yaml
 story_order:
@@ -32,302 +35,431 @@ story_order:
     effort: "M (2 dias)"
     deps: []
     owner: "@dev + @data-engineer (Redis)"
+    type: "backend"
+    status: "DONE"  # ✅ CONCLUÍDA
   - id: "5.2"
     title: "Account Lockout"
     priority: "CRÍTICO"
     effort: "M (2 dias)"
     deps: ["5.1"]
     owner: "@dev + @data-engineer (migration)"
+    type: "backend"
+    status: "PENDING"
   - id: "5.3"
     title: "Session Management (Logout + Blacklist)"
     priority: "CRÍTICO"
     effort: "G (3 dias)"
     deps: ["5.1", "5.2"]
     owner: "@dev + @data-engineer (Redis)"
+    type: "backend"
+    status: "PENDING"
   - id: "5.4"
     title: "Audit Log"
     priority: "ALTA"
     effort: "G (3 dias)"
     deps: ["5.3"]
     owner: "@dev + @data-engineer"
+    type: "backend"
+    status: "PENDING"
   - id: "5.5"
     title: "Haptic Feedback"
     priority: "ALTA"
     effort: "S (1 dia)"
     deps: []
     owner: "@dev (mobile)"
+    type: "mobile"
+    status: "PENDING"
   - id: "5.6"
     title: "Success Animations"
     priority: "ALTA"
     effort: "M (2 dias)"
     deps: ["5.5"]
     owner: "@dev (mobile) + @ux-design-expert (assets)"
+    type: "mobile"
+    status: "PENDING"
   - id: "5.7"
     title: "Gráficos nos Relatórios"
     priority: "ALTA"
     effort: "G (3 dias)"
     deps: ["5.6"]
     owner: "@dev (mobile) + @ux-design-expert (design)"
+    type: "mobile"
+    status: "PENDING"
 ```
 
-**Regra:** Próxima story = primeira na lista com `deps` todas `DONE` e status ≠ `DONE`.
+**Auto-pick rule:** Próxima story = primeira na lista com `deps` todas `DONE` e `status = "PENDING"`.
 
 ---
 
-## 🎯 PER-STORY EXECUTION LOOP (para cada story)
+## 🤖 AUTO-LOOP EXECUTION ENGINE
 
-### FASE 0: PRE-FLIGHT (obrigatório antes de começar)
-
-```bash
-# 0.1 Verificar branch e status
-git status
-git log --oneline -3
-
-# 0.2 Ler ACs completos da story no SPRINT-5-8-PLAN.md
-# 0.3 Verificar dependências (deps) estão DONE
-# 0.4 *ids check "implementar {story.title}" --type story  # Advisory REUSE/ADAPT/CREATE
-# 0.5 Confirmar owner/agent delegation
-```
-
-### FASE 1: PLAN & DESIGN (Architect-First)
-
-```bash
-# 1.1 @architect *generate-ai-prompt para design técnico (se backend)
-# 1.2 @architect valida arquitetura proposta vs código existente
-# 1.3 @data-engineer valida schema/migrations (se DB)
-# 1.4 Documentar decisões em `.aiox/sdc/{story-id}/DESIGN.md`
-# 1.5 @po *validate-story-draft (se story não está Ready)
-```
-
-**Gate 1:** Design approved by @architect + @data-engineer (se aplica)
-
-### FASE 2: IMPLEMENT (Dev Loop)
-
-```bash
-# 2.1 @dev *develop-story {story-id}
-#     - Implementa ACs um a um
-#     - Escreve testes JUNTO (TDD preferido)
-#     - Commits atômicos por AC
-# 2.2 @dev roda quality gates LOCALMENTE:
-#     - Backend: bin/rails test, rubocop, brakeman
-#     - Mobile: npm run typecheck, npm test, npm run lint
-# 2.3 Se FAIL: @dev corrige → volta 2.2 (loop até PASS)
-# 2.4 @dev *ids register {novos-arquivos} --type story --agent dev
-```
-
-**Gate 2:** All local quality gates PASS + ACs implementados
-
-### FASE 3: REVIEW (QA Gate)
-
-```bash
-# 3.1 @qa *review-story {story-id}
-#     - Verifica ACs um a um (traceability)
-#     - Roda testes completos
-#     - Security review (se security-related)
-#     - Performance check
-# 3.2 Verdict: PASS | CONCERNS | FAIL | WAIVED
-# 3.3 Se CONCERNS/FAIL:
-#     - @qa documenta findings
-#     - @dev *apply-qa-fixes {findings}
-#     - Volta 3.1 (loop até PASS)
-# 3.4 Se PASS: @qa atualiza lifecycle → "Ready for Merge"
-```
-
-**Gate 3:** @qa verdict = **PASS**
-
-### FASE 4: INTEGRATE & COMMIT
-
-```bash
-# 4.1 @dev faz merge/local rebase se necessário
-# 4.2 @dev roda FULL quality gates (backend + mobile)
-# 4.3 @aiox-commit: commit convencional com [Story X.Y]
-# 4.4 @dev *ids register {arquivos-modificados} --type story --agent dev
-# 4.5 Atualizar checklist no SPRINT-5-8-PLAN.md: [ ] → [x]
-```
-
-### FASE 5: POST-STORY VALIDATION
-
-```bash
-# 5.1 @aiox-master *status → confirma story DONE
-# 5.2 @aiox-master *ids health → registry saudável
-# 5.3 Próxima story = pick from story_order
-# 5.4 LOOP BACK TO FASE 0
+```yaml
+# Pseudo-code do loop automático (executado por @aiox-master via *auto-loop)
+auto_loop:
+  while stories_remaining:
+    story = pick_next_story(story_order)
+    
+    # ==========================================
+    # FASE 0: PRE-FLIGHT (automático)
+    # ==========================================
+    run: git status --porcelain
+    assert: clean
+    run: git log --oneline -1
+    log: "Iniciando Story {story.id}: {story.title}"
+    update_tracker(story.id, "IN_PROGRESS", started=now())
+    
+    # IDS pre-check (advisory)
+    run: *ids check "implementar {story.title}" --type story
+    
+    # ==========================================
+    # FASE 1: PLAN & DESIGN (Architect-First)
+    # ==========================================
+    if story.type == "backend":
+      # Generate design prompt from ACs
+      design_prompt = extract_acs_from_plan(story.id)
+      run: @architect *generate-ai-prompt "{design_prompt}"
+      run: @architect *validate-workflow design-approval --story={story.id}
+      run: @data-engineer *task validate-schema --story={story.id}
+    else:
+      # Mobile: design review com @ux-design-expert
+      run: @ux-design-expert *design-review --story={story.id}
+    
+    gate1 = wait_for_approval(["@architect", "@data-engineer" if backend])
+    assert gate1 == "APPROVED"
+    
+    # ==========================================
+    # FASE 2: IMPLEMENT (Dev Loop com retry)
+    # ==========================================
+    retry_count = 0
+    max_retries = 3
+    while retry_count < max_retries:
+      run: @dev *develop-story {story.id}
+      
+      # Quality gates locais
+      if story.type == "backend":
+        gates = run_gates([
+          "bin/rails test",
+          "bin/rubocop --fail-level=error",
+          "bin/brakeman --exit-on-warn",
+          "bin/rails db:migrate:status"
+        ])
+      else:
+        gates = run_gates([
+          "npm run typecheck",
+          "npm test -- --passWithNoTests",
+          "npm run lint -- --max-warnings=0"
+        ])
+      
+      # Cross-cutting gates
+      cross_gates = run_gates([
+        "npm audit --audit-level=high",
+        "bin/brakeman --exit-on-warn"
+      ])
+      
+      if gates.all_pass && cross_gates.all_pass:
+        break  # SUCCESS
+      
+      retry_count++
+      log: "Quality gates FAIL (tentativa {retry_count}/3). Fixando..."
+      run: @dev *apply-qa-fixes --auto-fix --gates={gates.failed}
+    
+    assert retry_count < max_retries, "Max retries exceeded → escalate @pm"
+    
+    # Register new files
+    new_files = git diff --name-only HEAD
+    run: @dev *ids register {new_files} --type story --agent dev
+    
+    # ==========================================
+    # FASE 3: REVIEW (QA Gate - obrigatório)
+    # ==========================================
+    qa_cycle = 0
+    max_qa_cycles = 2
+    while qa_cycle <= max_qa_cycles:
+      verdict = run: @qa *review-story {story.id} --mode=strict
+      
+      if verdict == "PASS":
+        break
+      elif verdict in ["CONCERNS", "FAIL"]:
+        findings = run: @qa *get-findings {story.id}
+        run: @dev *apply-qa-fixes {findings}
+        qa_cycle++
+        continue
+      elif verdict == "WAIVED":
+        log: "Story WAIVED by @qa (documentar justificativa)"
+        break
+    
+    assert verdict == "PASS", "QA Gate FAIL after {max_qa_cycles} cycles → re-implement"
+    
+    # ==========================================
+    # FASE 4: INTEGRATE & COMMIT
+    # ==========================================
+    run: @dev *sync-branch
+    run: @dev *run-full-quality-gates
+    run: @aiox-commit "feat({story.type}): {story.title} [Story {story.id}]"
+    update_tracker(story.id, "DONE", completed=now(), gates="PASS")
+    update_plan_checklist(story.id, all_acs=true)
+    
+    # ==========================================
+    # FASE 5: POST-STORY VALIDATION
+    # ==========================================
+    run: @aiox-master *status
+    run: @aiox-master *ids health
+    assert ids_health == "HEALTHY"
+    
+    log: "✅ Story {story.id} CONCLUÍDA. Próxima: {next_story.id}"
+  
+  # ALL STORIES DONE → Sprint completion
+  run_sprint_completion()
 ```
 
 ---
 
-## 🛡️ QUALITY GATES (Non-Negotiable)
+## 🎯 PER-STORY DETAILED SPECS (para @dev *develop-story)
 
-### Backend (Rails)
-```bash
-bin/rails test                    # 100% pass
-bin/rubocop                       # 0 offenses
-bin/brakeman                      # 0 warnings
-bin/rails db:migrate:status       # all up
+### Story 5.2 — Account Lockout
+```yaml
+backend_files:
+  - db/migrate/xxx_add_failed_login_to_users.rb
+  - app/models/user.rb (lock_account!, locked?, increment_failed_login!, reset_failed_login!)
+  - app/controllers/api/v1/auth_controller.rb (login action)
+  - test/controllers/api/v1/auth_controller_test.rb (lockout tests)
+
+acceptance_criteria:
+  - migration: failed_login_count (integer, default 0)
+  - migration: locked_until (datetime, nullable)
+  - após 5 falhas: lockout 15 min
+  - login sucesso: reset contadores
+  - mensagem clara quando bloqueada
+  - admin pode desbloquear manualmente
 ```
 
-### Mobile (React Native/Expo)
-```bash
-npm run typecheck                 # 0 errors
-npm test                          # 68+ tests pass
-npm run lint                      # 0 errors (warnings OK)
+### Story 5.3 — Session Management (Logout + Blacklist)
+```yaml
+backend_files:
+  - db/migrate/xxx_create_token_blacklist.rb (ou Redis-only)
+  - app/services/token_blacklist.rb
+  - app/controllers/api/v1/auth_controller.rb (logout action)
+  - config/initializers/redis.rb (se não existe)
+  - test/controllers/api/v1/auth_controller_test.rb (logout tests)
+  - test/services/token_blacklist_test.rb
+
+acceptance_criteria:
+  - endpoint POST /auth/logout adiciona token à blacklist
+  - Redis configurado para blacklist (TTL = 7 dias)
+  - refresh token invalidado no logout
+  - mobile: logout limpa tokens locais
+  - token revogado retorna 401
 ```
 
-### Cross-cutting
-```bash
-# Security
-npm audit --audit-level=high      # 0 vulnerabilities
-bin/brakeman                      # 0 warnings
+### Story 5.4 — Audit Log
+```yaml
+backend_files:
+  - db/migrate/xxx_create_audit_logs.rb
+  - app/models/audit_log.rb
+  - app/controllers/concerns/auditable.rb
+  - app/controllers/api/v1/auth_controller.rb (include Auditable)
+  - app/controllers/api/v1/financial_records_controller.rb (include Auditable)
+  - app/jobs/cleanup_audit_logs_job.rb
+  - config/recurring.yml (cleanup job)
+  - test/models/audit_log_test.rb
+  - test/controllers/concerns/auditable_test.rb
 
-# Performance
-# - Bundle size < 5MB
-# - Startup < 2s
-# - 60fps animations
+acceptance_criteria:
+  - model AuditLog: user_id, action, resource_type, resource_id, ip, user_agent, metadata
+  - ações logadas: login, logout, password_change, record_delete, admin_actions
+  - retenção: 90 dias (job de limpeza)
+```
+
+### Story 5.5 — Haptic Feedback (Mobile)
+```yaml
+mobile_files:
+  - package.json (expo-haptics)
+  - src/utils/haptics.ts
+  - src/screens/app/Lancamentos.tsx (integração)
+  - src/screens/app/Metas.tsx (integração)
+  - src/screens/app/Home.tsx (integração)
+  - src/context/SettingsContext.tsx (toggle)
+  - test/utils/haptics.test.ts
+
+acceptance_criteria:
+  - expo-haptics instalado
+  - pagamento/recebimento: impacto médio
+  - deletar registro: impacto pesado
+  - nível up: notificação sucesso
+  - erro: notificação erro
+  - pull-to-refresh: impacto leve
+  - toggle no settings para desativar
+```
+
+### Story 5.6 — Success Animations (Mobile)
+```yaml
+mobile_files:
+  - package.json (lottie-react-native, react-native-reanimated)
+  - src/assets/animations/success-check.json
+  - src/assets/animations/confetti.json
+  - src/assets/animations/loading-gear.json
+  - src/components/SuccessAnimation.tsx
+  - src/screens/app/Lancamentos.tsx (integração)
+  - src/screens/app/Metas.tsx (integração)
+  - test/components/SuccessAnimation.test.tsx
+
+acceptance_criteria:
+  - lottie-react-native instalado
+  - animação checkmark para pagamentos
+  - animação confetti para nível up
+  - animação engrenagem para processamento
+  - duração 1.5-2s
+  - redução de movimento respeitada
+```
+
+### Story 5.7 — Gráficos nos Relatórios (Mobile)
+```yaml
+mobile_files:
+  - package.json (react-native-chart-kit)
+  - src/screens/app/Relatorios.tsx (refatoração completa)
+  - src/components/charts/MonthlyBarChart.tsx
+  - src/components/charts/CategoryPieChart.tsx
+  - src/components/charts/BalanceLineChart.tsx
+  - src/hooks/useReportData.ts
+  - test/screens/Relatorios.test.tsx
+
+acceptance_criteria:
+  - react-native-chart-kit instalado
+  - gráfico barras: entradas vs saídas (mensal)
+  - gráfico pizza: por categoria
+  - gráfico linha: evolução do saldo
+  - filtro por período
+  - dark mode suportado
+  - loading state
 ```
 
 ---
 
-## 🔁 RETRY/ROLLBACK RULES
+## 🛡️ QUALITY GATES (Non-Negotiable — Auto-enforced)
 
-| Cenário | Ação |
-|---------|------|
-| Local gates FAIL em FASE 2 | Fix → re-run gates (max 3 tentativas) |
-| @qa = CONCERNS | @dev fixes → @qa re-reviews (max 2 ciclos) |
-| @qa = FAIL | @dev re-implementa story → volta FASE 1 |
-| Merge conflict | @dev resolve → re-run ALL gates |
-| *ids health = DEGRADED | Pausar sprint → @aiox-master investiga |
+```bash
+# BACKEND (executado automaticamente em FASE 2)
+backend_gates:
+  - bin/rails test                    # 100% pass
+  - bin/rubocop --fail-level=error    # 0 offenses
+  - bin/brakeman --exit-on-warn       # 0 warnings
+  - bin/rails db:migrate:status       # all up
 
-**Max retries por story:** 3 ciclos completos. Após 3 FAILs → escalar para @pm (replan).
+# MOBILE (executado automaticamente em FASE 2)
+mobile_gates:
+  - npm run typecheck                 # 0 errors
+  - npm test -- --passWithNoTests     # 68+ tests pass
+  - npm run lint -- --max-warnings=0  # 0 errors
+
+# CROSS-CUTTING (sempre)
+cross_gates:
+  - npm audit --audit-level=high      # 0 vulnerabilities
+  - bin/brakeman --exit-on-warn       # 0 warnings
+```
 
 ---
 
-## 📊 SPRINT TRACKING (atualizar a cada story DONE)
+## 🔁 RETRY/ROLLBACK RULES (Auto-enforced)
+
+| Cenário | Ação Automática |
+|---------|-----------------|
+| Local gates FAIL em FASE 2 | @dev *apply-qa-fixes --auto-fix → re-run (max 3) |
+| @qa = CONCERNS | @dev *apply-qa-fixes → @qa re-review (max 2) |
+| @qa = FAIL | Re-implement story → volta FASE 1 |
+| Merge conflict | @dev *resolve-conflicts → re-run ALL gates |
+| *ids health = DEGRADED | PAUSAR loop → alert @aiox-master |
+| 3+ FAIL cycles | ESCALATE @pm → *correct-course |
+
+---
+
+## 📊 SPRINT TRACKING (Auto-updated)
 
 ```markdown
-## Sprint Progress Tracker
+## Sprint Progress Tracker (AUTO-UPDATED)
 
 | Story | Status | Started | Completed | Gates | Notes |
 |-------|--------|---------|-----------|-------|-------|
 | 5.1 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Rate Limiting |
-| 5.2 | ⏳ PENDING | — | — | — | Depends on 5.1 |
-| 5.3 | ⏳ PENDING | — | — | — | Depends on 5.1, 5.2 |
-| 5.4 | ⏳ PENDING | — | — | — | Depends on 5.3 |
-| 5.5 | ⏳ PENDING | — | — | — | Mobile, independent |
-| 5.6 | ⏳ PENDING | — | — | — | Depends on 5.5 |
-| 5.7 | ⏳ PENDING | — | — | — | Depends on 5.6 |
+| 5.2 | ⏳ PENDING | — | — | — | Account Lockout |
+| 5.3 | ⏳ PENDING | — | — | — | Session Mgmt |
+| 5.4 | ⏳ PENDING | — | — | — | Audit Log |
+| 5.5 | ⏳ PENDING | — | — | — | Haptics (Mobile) |
+| 5.6 | ⏳ PENDING | — | — | — | Success Anim (Mobile) |
+| 5.7 | ⏳ PENDING | — | — | — | Charts (Mobile) |
 
 **Overall:** 1/7 DONE | 14% | ETA: 15 dias úteis
 ```
 
 ---
 
-## 🤖 AGENT DELEGATION MATRIX
+## 🎮 HOW TO RUN — SINGLE COMMAND
 
-| Atividade | Agent Primário | Support | Comando |
-|-----------|---------------|---------|---------|
-| Architecture/Design | @architect | — | `*generate-ai-prompt` |
-| DB Schema/Migrations | @data-engineer | — | `*task create-migration` |
-| Backend Implementation | @dev | @data-engineer | `*develop-story` |
-| Mobile Implementation | @dev | @ux-design-expert | `*develop-story` |
-| Test Creation | @qa | @dev | `*create-suite` |
-| QA Gate Review | @qa | — | `*review-story` |
-| QA Fix Application | @dev | — | `*apply-qa-fixes` |
-| Git/Release | @devops | — | `*push`, `*create-pr` |
-| Sprint Orchestration | @aiox-master | All | `*workflow`, `*plan` |
-
-**Regra de Ouro:** @aiox-master NUNCA implementa diretamente. SEMPRE delega.
-
----
-
-## 🚨 ESCALATION TRIGGERS
-
-| Trigger | Ação | Responsável |
-|---------|------|-------------|
-| 3+ FAIL cycles em story | Pausar → @pm replan | @aiox-master |
-| Quality gate regressão | *correct-course | @aiox-master |
-| Blocker > 1 dia | Daily sync → @sm unblocks | @sm |
-| Scope creep detectado | *correct-course → reject | @aiox-master |
-| *ids health = CRITICAL | Pausar tudo → registry heal | @aiox-master |
-
----
-
-## 📝 COMMIT CONVENTION (por story)
-
+### Opção 1: Full SDC Wave (RECOMENDADO - totalmente automático)
 ```bash
-# Por AC implementado (atomic commits):
-feat(backend): rate limiting login 5/min por IP [Story 5.1]
-feat(backend): rate limiting register 3/hr por IP [Story 5.1]
-feat(backend): rate limiting forgot 3/hr por IP [Story 5.1]
-test(backend): rate limiting unit tests [Story 5.1]
-
-# Mobile:
-feat(mobile): haptic feedback pagar/receber [Story 5.5]
-feat(mobile): haptic feedback deletar/erro [Story 5.5]
-test(mobile): haptics integration tests [Story 5.5]
+# Executa TODA a FASE 5 do início ao fim
+@aiox-master *full-sdc-wave fase-5-seguranca
 ```
 
----
-
-## 🏁 SPRINT COMPLETION CRITERIA
-
-Sprint FASE 5 = **DONE** quando:
-
-- [ ] Todas as 7 stories: `status = DONE` + `qa_verdict = PASS`
-- [ ] Checklist SPRINT-5-8-PLAN.md: todos `[x]`
-- [ ] Quality Gate FASE 5 (seção 364-380) 100% PASS
-- [ ] `git diff main..feat/fase-5-seguranca` limpo (só changes da sprint)
-- [ ] @devops *create-pr com title: `feat: FASE 5 - Segurança + UX Core`
-- [ ] PR approved + CI/CD green → merge to main
-- [ ] Deploy staging validado
-- [ ] @aiox-master *close-story para cada story
-
----
-
-## 🎮 HOW TO RUN THIS LOOP
-
-### Opção A: Manual (você executa cada comando)
+### Opção 2: Auto-Loop (controlado)
 ```bash
-# Em cada iteração, execute os comandos das fases acima em ordem
-# Use @dev, @qa, @architect via atalhos (@dev, @qa, @architect)
+# Loop automático story por story com checkpoints
+@aiox-master *auto-loop fase-5-seguranca --checkpoint-after=each
 ```
 
-### Opção B: Semi-automado (use *workflow engine)
+### Opção 3: Story individual (se precisar retomar)
 ```bash
-@aiox-master *workflow story-development-cycle --mode=engine --story=5.1
-# Repete para 5.2, 5.3...
-```
-
-### Opção C: Full SDC (single command per story)
-```bash
-@aiox-master *full-sdc 5.1
 @aiox-master *full-sdc 5.2
+@aiox-master *full-sdc 5.3
 # ...
 ```
 
 ---
 
-## 📌 NOTAS CRÍTICAS
-
-1. **NUNCA pule FASE 1 (Design)** — Architect-First é mandatório
-2. **NUNCA pule FASE 3 (QA)** — @qa é gate obrigatório
-3. **SEMPRE rode gates LOCALMENTE** antes de chamar @qa
-4. **SEMPRE atualize checklist** no SPRINT-5-8-PLAN.md
-5. **SEMPRE *ids register** novos arquivos
-6. **Branch protection:** Não force-push, não commit direto em main
-7. **WIP commits:** Permitidos localmente, mas squash antes do PR final
-
----
-
-## 🚀 START COMMAND
+## 🚀 START COMMAND — EXECUTAR AGORA
 
 ```bash
-# Para iniciar AGORA:
-git checkout feat/fase-5-seguranca
-# Ler Story 5.1 ACs completos
-@architect *generate-ai-prompt "Rate Limiting Global com Rack::Attack: login 5/min, register 3/hr, forgot 3/hr, resposta 429 com Retry-After, logs, testes"
-# Validar design → @dev *develop-story 5.1
+# ESTAMOS NA BRANCH CORRETA (feat/fase-5-seguranca)
+# Story 5.1 JÁ CONCLUÍDA
+
+# OPÇÃO A: Rodar TODA a FASE 5 automaticamente
+@aiox-master *full-sdc-wave fase-5-seguranca
+
+# OPÇÃO B: Rodar story por story com checkpoint
+@aiox-master *auto-loop fase-5-seguranca --checkpoint-after=each
 ```
 
 ---
 
-**Este prompt é um loop executável. Rode fase a fase, valide gates, repita até sprint completa.**
+## ⚠️ PRÉ-REQUISITOS (verificar antes de iniciar)
+
+```bash
+# 1. PostgreSQL rodando (para testes backend)
+docker-compose up -d db
+# Aguardar healthcheck
+
+# 2. Dependências mobile instaladas
+cd mobile && npm install
+
+# 3. Backend bundle instalado
+cd backend/api_divida_zero && bundle install
+
+# 4. Verificar se Redis disponível (para 5.3 blacklist)
+# Se não: story 5.3 usará memory store em dev
+```
+
+---
+
+## 📌 NOTAS CRÍTICAS (Auto-enforced)
+
+1. **NUNCA pula FASE 1 (Design)** — Architect-First mandatório
+2. **NUNCA pula FASE 3 (QA)** — @qa gate obrigatório
+3. **SEMPRE roda gates LOCALMENTE** antes de @qa
+4. **SEMPRE atualiza checklist** no SPRINT-5-8-PLAN.md
+5. **SEMPRE *ids register** novos arquivos
+6. **Branch protection:** Não force-push, não commit direto em main
+7. **WIP commits:** Permitidos localmente, mas squash antes do PR final
+8. **Story 5.5, 5.6, 5.7 são MOBILE** — requerem device físico para haptics/animations
+
+---
+
+**Este prompt executa TODA a FASE 5 automaticamente. Use `@aiox-master *full-sdc-wave fase-5-seguranca` para rodar o loop completo.**
