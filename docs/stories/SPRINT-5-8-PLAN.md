@@ -91,13 +91,13 @@ end
 Implementar bloqueio temporário de conta após múltiplas falhas de login.
 
 ### Acceptance Criteria
-- [ ] Migration: `failed_login_count` (integer, default 0)
-- [ ] Migration: `locked_until` (datetime, nullable)
-- [ ] Após 5 falhas: lockout 15 minutos
-- [ ] Login bem-sucedido: reset contadores
-- [ ] Mensagem clara quando conta está bloqueada
-- [ ] Admin pode desbloquear manualmente
-- [ ] Testes de lockout e unlock
+- [x] Migration: `failed_login_count` (integer, default 0)
+- [x] Migration: `locked_until` (datetime, nullable)
+- [x] Após 5 falhas: lockout 15 minutos
+- [x] Login bem-sucedido: reset contadores
+- [x] Mensagem clara quando conta está bloqueada
+- [x] Admin pode desbloquear manualmente
+- [x] Testes de lockout e unlock
 
 ### Implementação
 ```ruby
@@ -128,10 +128,10 @@ end
 ```
 
 ### Validação
-- [ ] 5 logins falhos → conta bloqueada por 15 min
-- [ ] Login correto após bloqueio → contadores resetados
-- [ ] Mensagem "Conta bloqueada. Tente novamente em X minutos."
-- [ ] Admin pode desbloquear via endpoint
+- [x] 5 logins falhos → conta bloqueada por 15 min
+- [x] Login correto após bloqueio → contadores resetados
+- [x] Mensagem "Conta bloqueada. Tente novamente em X minutos."
+- [x] Admin pode desbloquear via endpoint
 
 ---
 

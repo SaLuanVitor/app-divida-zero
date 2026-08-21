@@ -380,14 +380,14 @@ cross_gates:
 | Story | Status | Started | Completed | Gates | Notes |
 |-------|--------|---------|-----------|-------|-------|
 | 5.1 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Rate Limiting |
-| 5.2 | ⏳ PENDING | — | — | — | Account Lockout |
-| 5.3 | ⏳ PENDING | — | — | — | Session Mgmt |
-| 5.4 | ⏳ PENDING | — | — | — | Audit Log |
-| 5.5 | ⏳ PENDING | — | — | — | Haptics (Mobile) |
-| 5.6 | ⏳ PENDING | — | — | — | Success Anim (Mobile) |
-| 5.7 | ⏳ PENDING | — | — | — | Charts (Mobile) |
+| 5.2 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Account Lockout |
+| 5.3 | 🔄 IN_PROGRESS | 2026-08-21 | — | — | Session Management |
+| 5.4 | ⏳ PENDING | — | — | — | Depends on 5.3 |
+| 5.5 | ⏳ PENDING | — | — | — | Mobile, independent |
+| 5.6 | ⏳ PENDING | — | — | — | Depends on 5.5 |
+| 5.7 | ⏳ PENDING | — | — | — | Depends on 5.6 |
 
-**Overall:** 1/7 DONE | 14% | ETA: 15 dias úteis
+**Overall:** 2/7 DONE | 29% | ETA: 15 dias úteis
 ```
 
 ---
