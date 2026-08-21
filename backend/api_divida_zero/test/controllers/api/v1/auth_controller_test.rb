@@ -10,6 +10,13 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
       password: @password,
       password_confirmation: @password
     )
+
+    # Disable Rack::Attack for these tests to avoid rate limiting interference
+    Rack::Attack.enabled = false
+  end
+
+  teardown do
+    Rack::Attack.enabled = true
   end
 
   test "register creates user and returns token pair" do
@@ -69,6 +76,64 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     post "/api/v1/auth/login", params: { email: @user.email, password: "senha_errada" }
 
     assert_response :unauthorized
+  end
+
+  test "login increments failed_login_count on invalid password" do
+    assert_equal 0, @user.failed_login_count
+
+    post "/api/v1/auth/login", params: { email: @user.email, password: "wrong_password" }
+    assert_response :unauthorized
+
+    @user.reload
+    assert_equal 1, @user.failed_login_count
+  end
+
+  test "login locks account after 5 failed attempts" do
+    5.times do
+      post "/api/v1/auth/login", params: { email: @user.email, password: "wrong_password" }
+      assert_response :unauthorized
+    end
+
+    @user.reload
+    assert @user.locked?
+    assert @user.locked_until.present?
+    assert_equal 0, @user.failed_login_count
+  end
+
+  test "login with correct password unlocks locked account" do
+    @user.update!(failed_login_count: 5)
+    @user.lock_account!
+
+    post "/api/v1/auth/login", params: { email: @user.email, password: @password }
+
+    assert_response :ok
+    @user.reload
+    assert_equal 0, @user.failed_login_count
+    assert_nil @user.locked_until
+    body = JSON.parse(response.body)
+    assert body["access_token"].present?
+  end
+
+  test "login with wrong password keeps locked account locked" do
+    @user.update!(failed_login_count: 5)
+    @user.lock_account!
+
+    post "/api/v1/auth/login", params: { email: @user.email, password: "wrong_password" }
+
+    assert_response :forbidden
+    body = JSON.parse(response.body)
+    assert_match(/Conta bloqueada. Tente novamente em \d+ minutos./, body["error"])
+  end
+
+  test "successful login resets failed_login_count and locked_until" do
+    @user.update!(failed_login_count: 3, locked_until: 10.minutes.from_now)
+
+    post "/api/v1/auth/login", params: { email: @user.email, password: @password }
+
+    assert_response :ok
+    @user.reload
+    assert_equal 0, @user.failed_login_count
+    assert_nil @user.locked_until
   end
 
   test "login blocks inactive account" do

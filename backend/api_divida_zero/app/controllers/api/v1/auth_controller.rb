@@ -20,8 +20,18 @@ module Api
         password = params.require(:password)
 
         unless user&.authenticate(password)
+          # Wrong password: check if locked, then increment failed count
+          if user&.locked?
+            minutes = ((user.locked_until - Time.current) / 60).ceil
+            return render json: { error: "Conta bloqueada. Tente novamente em #{minutes} minutos." }, status: :forbidden
+          end
+          user&.increment_failed_login!
           return render json: { error: "Usuário ou senha inválidos." }, status: :unauthorized
         end
+
+        # Correct password: reset any lockout/failed attempts
+        user.reset_failed_login!
+
         unless user.active?
           return render json: { error: "Conta inativa. Entre em contato com o administrador." }, status: :forbidden
         end

@@ -177,6 +177,30 @@
     }
   end
 
+  def locked?
+    locked_until.present? && locked_until > Time.current
+  end
+
+  def lock_account!
+    update!(
+      failed_login_count: 0,
+      locked_until: 15.minutes.from_now
+    )
+  end
+
+  def increment_failed_login!
+    new_count = failed_login_count + 1
+    if new_count >= 5
+      lock_account!
+    else
+      update!(failed_login_count: new_count)
+    end
+  end
+
+  def reset_failed_login!
+    update!(failed_login_count: 0, locked_until: nil) if failed_login_count > 0 || locked_until.present?
+  end
+
   private
 
   def normalize_email

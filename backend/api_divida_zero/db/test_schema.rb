@@ -10,10 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_000001) do
-  # These are extensions that must be enabled in order to support this database
-  
-
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_032442) do
   create_table "ai_feedbacks", force: :cascade do |t|
     t.bigint "ai_interaction_id", null: false
     t.text "comment"
@@ -294,8 +291,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_000001) do
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.json "email_notification_preferences", default: {}, null: false
+    t.integer "failed_login_count", default: 0, null: false
     t.boolean "force_password_change", default: false, null: false
     t.datetime "last_login_at"
+    t.datetime "locked_until"
     t.string "name", null: false
     t.string "password_digest", null: false
     t.string "phone"
