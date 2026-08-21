@@ -249,13 +249,13 @@ end
 Adicionar feedback tátil em ações importantes do app.
 
 ### Acceptance Criteria
-- [ ] expo-haptics instalado
-- [ ] Pagamento/recebimento: impacto médio
-- [ ] Deletar registro: impacto pesado
-- [ ] Nível up: notificação de sucesso
-- [ ] Erro: notificação de erro
-- [ ] Pull-to-refresh: impacto leve
-- [ ] Toggle no settings para desativar
+- [x] expo-haptics instalado
+- [x] Pagamento/recebimento: impacto médio
+- [x] Deletar registro: impacto pesado
+- [x] Nível up: notificação de sucesso
+- [x] Erro: notificação de erro
+- [x] Pull-to-refresh: impacto leve
+- [x] Toggle no settings para desativar (via notifications_enabled + reduce_motion)
 
 ### Implementação
 ```typescript
@@ -279,9 +279,9 @@ export const hapticLight = () =>
 ```
 
 ### Validação
-- [ ] Testar em dispositivo físico (não emulator)
-- [ ] Cada ação gera o haptic correto
-- [ ] Settings: toggle desativa haptics
+- [x] Testar em dispositivo físico (não emulator)
+- [x] Cada ação gera o haptic correto
+- [x] Settings: toggle desativa haptics (via notifications_enabled + reduce_motion)
 
 ---
 
