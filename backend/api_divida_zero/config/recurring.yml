@@ -50,3 +50,8 @@ production:
   cleanup_imported_transaction_data:
     class: CleanupImportedTransactionDataJob
     schedule: "0 3 * * 1"
+
+  cleanup_audit_logs:
+    class: CleanupAuditLogsJob
+    args: [90]
+    schedule: "0 3 * * *"

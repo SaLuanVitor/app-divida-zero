@@ -1,6 +1,7 @@
 module Api
   module V1
     class FinancialRecordsController < ApplicationController
+      include Auditable
       before_action :authenticate_access_token!
       STATUS_TRANSITIONS = {
         "income" => {
@@ -47,6 +48,8 @@ module Api
         DailyAchievementsService.sync_for_user!(@current_user)
         xp_feedback = refresh_feedback_summary(xp_feedback)
 
+        audit_log!("record_create", resource: generated.first, metadata: { created_count: generated.size, mode: payload[:mode] })
+
         render json: {
           message: "Registro criado com sucesso.",
           created_count: generated.size,
@@ -68,6 +71,9 @@ module Api
         end
 
         result = apply_record_status_transition(record: record, next_status: transition_target_for(record, "pending"))
+
+        audit_log!("record_pay", resource: record, metadata: { flow_type: record.flow_type, amount: record.amount.to_s })
+
         render json: result, status: :ok
       end
 
@@ -103,6 +109,9 @@ module Api
           FinancialGoalsProgressService.recalculate_for_user!(@current_user)
           DailyAchievementsService.sync_for_user!(@current_user)
           xp_feedback = refresh_feedback_summary(xp_feedback)
+
+          audit_log!("record_delete", resource: record, metadata: { deleted_count: deleted_count, settled_count: settled_count, group_delete: true })
+
           return render json: {
             message: "Registros do grupo excluídos com sucesso.",
             deleted_count: deleted_count,
@@ -120,6 +129,8 @@ module Api
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
         DailyAchievementsService.sync_for_user!(@current_user)
         xp_feedback = refresh_feedback_summary(xp_feedback)
+
+        audit_log!("record_delete", resource: record, metadata: { settled: settled_count == 1 })
 
         render json: {
           message: "Registro excluído com sucesso.",

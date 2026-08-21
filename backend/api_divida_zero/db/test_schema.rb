@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_21_105529) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_120334) do
   create_table "ai_feedbacks", force: :cascade do |t|
     t.bigint "ai_interaction_id", null: false
     t.text "comment"
@@ -87,6 +87,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_105529) do
     t.index ["created_at"], name: "index_app_ratings_on_created_at"
     t.index ["user_id", "created_at"], name: "index_app_ratings_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_app_ratings_on_user_id", unique: true
+  end
+
+  create_table "audit_logs", force: :cascade do |t|
+    t.string "action", null: false
+    t.datetime "created_at", null: false
+    t.string "ip"
+    t.text "metadata"
+    t.integer "resource_id"
+    t.string "resource_type"
+    t.datetime "updated_at", null: false
+    t.text "user_agent"
+    t.integer "user_id"
+    t.index ["action"], name: "index_audit_logs_on_action"
+    t.index ["created_at"], name: "index_audit_logs_on_created_at"
+    t.index ["resource_type", "resource_id"], name: "index_audit_logs_on_resource_type_and_resource_id"
+    t.index ["user_id", "created_at"], name: "index_audit_logs_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_audit_logs_on_user_id"
   end
 
   create_table "daily_ai_messages", force: :cascade do |t|
@@ -361,6 +378,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_105529) do
   add_foreign_key "ai_usage_counters", "users"
   add_foreign_key "analytics_events", "users"
   add_foreign_key "app_ratings", "users"
+  add_foreign_key "audit_logs", "users"
   add_foreign_key "device_tokens", "users"
   add_foreign_key "financial_goal_contributions", "financial_goals"
   add_foreign_key "financial_goal_contributions", "users"

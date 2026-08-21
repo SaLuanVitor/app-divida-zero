@@ -4,6 +4,7 @@ require "securerandom"
 module Api
   module V1
     class AuthController < ApplicationController
+      include Auditable
       before_action :authenticate_access_token!, only: [:me, :update_profile, :change_password, :update_email_notifications, :update_wa_notifications, :send_phone_code, :verify_phone]
 
       def register
@@ -37,6 +38,8 @@ module Api
         end
 
         user.update!(last_login_at: Time.current)
+
+        audit_log!("login", resource: user, metadata: { ip: request.remote_ip })
 
         render_auth_payload(user)
       end
@@ -75,6 +78,8 @@ module Api
         if refresh_token.present?
           TokenBlacklist.add!(refresh_token)
         end
+
+        audit_log!("logout", metadata: { ip: request.remote_ip })
 
         render json: { message: "Logout realizado com sucesso." }, status: :ok
       end
@@ -218,6 +223,8 @@ module Api
         @current_user.password_confirmation = new_password
         @current_user.force_password_change = false
         @current_user.save!
+
+        audit_log!("password_change", resource: @current_user)
 
         render json: { message: "Senha alterada com sucesso." }, status: :ok
       end
