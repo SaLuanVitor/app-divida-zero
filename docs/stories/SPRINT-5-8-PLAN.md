@@ -32,13 +32,13 @@ FASE 5 (Semanas 1-3)  ──→  FASE 6 (Semanas 4-5)  ──→  FASE 7 (Semana
 Implementar rate limiting em todos os endpoints de autenticação para prevenir ataques de força bruta.
 
 ### Acceptance Criteria
-- [ ] Rack::Attack configurado no backend
-- [ ] Login: 5 tentativas/minuto por IP
-- [ ] Register: 3 registros/hora por IP
-- [ ] Forgot Password: 3 requisições/hora por IP
-- [ ] Resposta 429 com header `Retry-After`
-- [ ] Logs de rate limit para monitoramento
-- [ ] Testes unitários para cada limite
+- [x] Rack::Attack configurado no backend
+- [x] Login: 5 tentativas/minuto por IP
+- [x] Register: 3 registros/hora por IP
+- [x] Forgot Password: 3 requisições/hora por IP
+- [x] Resposta 429 com header `Retry-After`
+- [x] Logs de rate limit para monitoramento
+- [x] Testes unitários para cada limite
 
 ### Implementação
 ```ruby
@@ -77,10 +77,10 @@ end
 ```
 
 ### Validação
-- [ ] Testar com curl: 6 logins em 1 min → 429 na 6ª tentativa
-- [ ] Verificar header Retry-After
-- [ ] Testar que endpoints normais não são afetados
-- [ ] Logs aparecem no stdout
+- [x] Testar com curl: 6 logins em 1 min → 429 na 6ª tentativa
+- [x] Verificar header Retry-After
+- [x] Testar que endpoints normais não são afetados
+- [x] Logs aparecem no stdout
 
 ---
 

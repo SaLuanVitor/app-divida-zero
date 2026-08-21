@@ -208,7 +208,7 @@ bin/brakeman                      # 0 warnings
 
 | Story | Status | Started | Completed | Gates | Notes |
 |-------|--------|---------|-----------|-------|-------|
-| 5.1 | 🔄 IN_PROGRESS | 2026-08-21 | — | — | Rate Limiting |
+| 5.1 | ✅ DONE | 2026-08-21 | 2026-08-21 | PASS | Rate Limiting |
 | 5.2 | ⏳ PENDING | — | — | — | Depends on 5.1 |
 | 5.3 | ⏳ PENDING | — | — | — | Depends on 5.1, 5.2 |
 | 5.4 | ⏳ PENDING | — | — | — | Depends on 5.3 |
@@ -216,7 +216,7 @@ bin/brakeman                      # 0 warnings
 | 5.6 | ⏳ PENDING | — | — | — | Depends on 5.5 |
 | 5.7 | ⏳ PENDING | — | — | — | Depends on 5.6 |
 
-**Overall:** 0/7 DONE | 0% | ETA: 15 dias úteis
+**Overall:** 1/7 DONE | 14% | ETA: 15 dias úteis
 ```
 
 ---
