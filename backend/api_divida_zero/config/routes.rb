@@ -61,6 +61,10 @@
       get "whatsapp/webhook", to: "whatsapp#verify"
       post "whatsapp/webhook", to: "whatsapp#webhook"
 
+      namespace :webhooks do
+        post "pluggy", to: "pluggy_webhooks#receive"
+      end
+
       namespace :bank do
         resources :statements, only: [], param: :batch_id do
           collection do
@@ -79,6 +83,14 @@
           end
           member do
             post :merge
+          end
+        end
+      end
+
+      namespace :financial do
+        resources :connections, only: [:create, :show, :destroy] do
+          member do
+            post :sync
           end
         end
       end

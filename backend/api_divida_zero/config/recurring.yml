@@ -19,6 +19,11 @@ development:
   generate_weekly_summary_alerts:
     class: GenerateWeeklySummaryAlertsJob
     schedule: "0 9 * * 5"
+  financial_sync_polling:
+    class: FinancialSyncJob
+    schedule: "0 */6 * * *"
+    args:
+      - all_connections: true
 
 production:
   generate_daily_ai_message:
