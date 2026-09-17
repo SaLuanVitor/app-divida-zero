@@ -1,0 +1,46 @@
+<table class="sync-logs-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Conexão</th>
+      <th>Usuário</th>
+      <th>Tipo</th>
+      <th>Status</th>
+      <th>Início</th>
+      <th>Fim</th>
+      <th>Criados</th>
+      <th>Atualizados</th>
+      <th>Erros</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% recent_syncs.each do |sync| %>
+      <tr>
+        <td><%= sync.id %></td>
+        <td>
+          <%= sync.financial_connection.provider_institution_id.humanize %>
+          <br><small><%= sync.financial_connection.provider.humanize %></small>
+        </td>
+        <td><%= sync.financial_connection.user.name %></td>
+        <td><%= sync.sync_type.humanize %></td>
+        <td><span class="status-badge status-<%= sync.status %>"><%= sync.status.humanize %></span></td>
+        <td><%= sync.started_at&.strftime('%d/%m %H:%M') %></td>
+        <td><%= sync.finished_at&.strftime('%d/%m %H:%M') || '—' %></td>
+        <td><%= sync.records_created %></td>
+        <td><%= sync.records_updated %></td>
+        <td>
+          <% if sync.failed? %>
+            <span class="status-badge status-failed"><%= sync.error_code %></span>
+            <br><small><%= truncate(sync.error_message, length: 50) %></small>
+          <% else %>
+            —
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<% if recent_syncs.empty? %>
+  <p style="text-align: center; color: #64748b; padding: 20px;">Nenhuma sincronização registrada</p>
+<% end %>

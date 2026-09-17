@@ -1,0 +1,20 @@
+<div class="metric-card">
+  <h3>Conexões Bancárias</h3>
+  <div class="metric-value <%= connections_stats[:percentage] >= 80 ? 'warning' : (connections_stats[:percentage] >= 70 ? 'caution' : 'success') %>">
+    <%= connections_stats[:total] %> / <%= connections_stats[:max_total] %>
+  </div>
+  <div class="metric-bar">
+    <div class="metric-bar-fill <%= connections_stats[:percentage] >= 80 ? 'warning' : (connections_stats[:percentage] >= 70 ? 'caution' : 'normal') %>"
+         style="width: <%= [connections_stats[:percentage], 100].min %>%"></div>
+  </div>
+  <div class="metric-detail">
+    <%= connections_stats[:percentage] %>% utilizado
+    <% if connections_stats[:by_provider].any? %>
+      <br><small>
+        <% connections_stats[:by_provider].each do |provider, count| %>
+          <%= provider.humanize %>: <%= count %><br>
+        <% end %>
+      </small>
+    <% end %>
+  </div>
+</div>

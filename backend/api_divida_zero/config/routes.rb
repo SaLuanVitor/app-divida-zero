@@ -41,6 +41,11 @@
         patch "users/:id/status", to: "users#update_status"
         patch "users/:id/reset_password", to: "users#reset_password"
         get "analytics/overview", to: "analytics#overview"
+        namespace :financial do
+          get "/", to: "financial#index"
+          get "connections", to: "financial#connections"
+          get "sync_logs", to: "financial#sync_logs"
+        end
       end
       get "reports/summary", to: "reports#summary"
       post "analytics/events", to: "analytics#create"
