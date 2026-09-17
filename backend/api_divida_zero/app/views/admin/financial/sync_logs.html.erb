@@ -1,0 +1,143 @@
+<div class="admin-page">
+  <div class="page-header">
+    <h1>Logs de Sincronização</h1>
+  </div>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Conexão</th>
+        <th>Usuário</th>
+        <th>Tipo</th>
+        <th>Status</th>
+        <th>Início</th>
+        <th>Fim</th>
+        <th>Duração</th>
+        <th>Criados</th>
+        <th>Atualizados</th>
+        <th>Erros</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @syncs.each do |sync| %>
+        <tr>
+          <td><%= sync.id %></td>
+          <td>
+            <%= sync.financial_connection.provider_institution_id.humanize %>
+            <br><small><%= sync.financial_connection.provider.humanize %></small>
+          </td>
+          <td><%= sync.financial_connection.user.name %></td>
+          <td><%= sync.sync_type.humanize %></td>
+          <td><span class="status-badge status-<%= sync.status %>"><%= sync.status.humanize %></span></td>
+          <td><%= sync.started_at&.strftime('%d/%m %H:%M:%S') %></td>
+          <td><%= sync.finished_at&.strftime('%d/%m %H:%M:%S') || '—' %></td>
+          <td><%= sync.duration_seconds ? "#{sync.duration_seconds}s" : '—' %></td>
+          <td><%= sync.records_created %></td>
+          <td><%= sync.records_updated %></td>
+          <td>
+            <% if sync.failed? %>
+              <span class="status-badge status-failed"><%= sync.error_code %></span>
+              <br><small><%= truncate(sync.error_message, length: 60) %></small>
+            <% else %>
+              —
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= paginate @syncs %>
+
+  <% if @syncs.empty? %>
+    <p style="text-align: center; color: #64748b; padding: 40px;">Nenhum log de sincronização encontrado</p>
+  <% end %>
+</div>
+
+<style>
+.admin-page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+  font-size: 12px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.admin-table tr:hover {
+  background: #f8fafc;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-completed { background: #dcfce7; color: #166534; }
+.status-failed { background: #fef2f2; color: #991b1b; }
+.status-processing { background: #fef3c7; color: #92400e; }
+.status-pending { background: #e2e8f0; color: #475569; }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.pagination a, .pagination span {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #475569;
+}
+
+.pagination .current {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #3b82f6;
+}
+
+.pagination .gap {
+  color: #94a3b8;
+}
+</style>

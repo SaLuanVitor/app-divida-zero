@@ -118,4 +118,103 @@ class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::Integratio
 
     assert_response :accepted
   end
+
+  test 'should return 403 when connection limit exceeded' do
+    FeatureFlag.enable('open_finance')
+
+    # Create 3 connections (free plan limit)
+    3.times do |i|
+      FinancialConnection.create!(
+        user: @user,
+        provider: :pluggy,
+        provider_item_id: "item_#{i}",
+        provider_institution_id: 'nubank',
+        status: :active
+      )
+    end
+
+    adapter_mock = Minitest::Mock.new
+    adapter_mock.expect :create_connection, { connect_token: 'token', connect_url: 'url', item_id: 'item_new' }, [@user]
+
+    FinancialProviders::Factory.stub :build, adapter_mock do
+      post api_v1_financial_connections_url, headers: @headers, params: { institution_id: 'nubank' }, as: :json
+    end
+
+    assert_response :forbidden
+    json = JSON.parse(response.body)
+    assert json['limit_exceeded']
+    assert_equal 'connections', json['resource']
+  end
+
+  test 'should return limits info in create response' do
+    FeatureFlag.enable('open_finance')
+
+    adapter_mock = Minitest::Mock.new
+    adapter_mock.expect :create_connection, { connect_token: 'token_123', connect_url: 'https://connect.pluggy.ai/?connectToken=token_123', item_id: 'item_456' }, [@user]
+
+    FinancialProviders::Factory.stub :build, adapter_mock do
+      post api_v1_financial_connections_url, headers: @headers, params: { institution_id: 'nubank' }, as: :json
+    end
+
+    assert_response :created
+    json = JSON.parse(response.body)
+    assert json['limits']
+    assert json['limits']['connections']
+    assert json['limits']['connections']['used']
+    assert json['limits']['connections']['limit']
+    assert json['limits']['connections']['remaining']
+    assert json['limits']['connections']['percentage']
+    assert json['limits']['connections']['status']
+  end
+
+  test 'should return limits info in show response' do
+    FeatureFlag.enable('open_finance')
+
+    connection = FinancialConnection.create!(
+      user: @user,
+      provider: :pluggy,
+      provider_item_id: 'item_123',
+      provider_institution_id: 'nubank',
+      status: :active
+    )
+
+    get api_v1_financial_connection_url(connection), headers: @headers
+    assert_response :ok
+
+    json = JSON.parse(response.body)
+    assert json['limits']
+    assert json['limits']['connections']
+    assert json['limits']['accounts']
+    assert json['limits']['syncs']
+  end
+
+  test 'should return 403 when sync limit exceeded' do
+    FeatureFlag.enable('open_finance')
+
+    connection = FinancialConnection.create!(
+      user: @user,
+      provider: :pluggy,
+      provider_item_id: 'item_123',
+      provider_institution_id: 'nubank',
+      status: :active
+    )
+
+    # Create 2 syncs today (free plan limit is 2)
+    2.times do
+      FinancialSync.create!(
+        financial_connection: connection,
+        provider: 'pluggy',
+        sync_type: :full,
+        status: :completed,
+        started_at: Time.current
+      )
+    end
+
+    post sync_api_v1_financial_connection_url(connection), headers: @headers
+
+    assert_response :forbidden
+    json = JSON.parse(response.body)
+    assert json['limit_exceeded']
+    assert_equal 'syncs', json['resource']
+  end
 end

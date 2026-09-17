@@ -1,0 +1,19 @@
+<div class="metric-card">
+  <h3>Sincronização</h3>
+  <div class="metric-value <%= errors_24h > 0 ? 'danger' : 'success' %>">
+    <%= last_sync ? last_sync.strftime('%H:%M') : '—' %>
+  </div>
+  <div class="metric-detail">
+    Último sync bem-sucedido<br>
+    <span class="<%= errors_24h > 0 ? 'danger' : 'success' %>">
+      Erros (24h): <%= errors_24h %>
+    </span>
+  </div>
+  <div class="metric-bar" style="margin-top: 8px;">
+    <div class="metric-bar-fill <%= queue_depth > 10 ? 'warning' : 'normal' %>"
+         style="width: <%= [queue_depth * 10, 100].min %>%"></div>
+  </div>
+  <div class="metric-detail">
+    Fila: <%= queue_depth %> jobs pendentes
+  </div>
+</div>

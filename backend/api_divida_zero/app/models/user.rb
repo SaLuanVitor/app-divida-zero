@@ -16,6 +16,10 @@
   has_many :device_tokens, dependent: :destroy
   has_many :whatsapp_messages, dependent: :destroy
   has_many :imported_transactions, dependent: :destroy
+  has_many :financial_connections, dependent: :destroy
+  has_many :financial_accounts, through: :financial_connections
+  has_many :financial_syncs, through: :financial_connections
+  belongs_to :plan, optional: true
 
   WA_PREFERENCE_DEFAULTS = {
     "wa_notifications_enabled" => false,
@@ -66,6 +70,7 @@
   validates :role, inclusion: { in: ROLES, message: "Papel inválido." }
 
   scope :admins, -> { where(role: "admin") }
+  scope :active, -> { where(active: true) }
   scope :active_users, -> { where(active: true) }
 
   def push_preferences_with_defaults
@@ -175,6 +180,10 @@
       profile_icon_key: profile_icon_key.presence || ProfileAppearanceCatalog::DEFAULT_ICON_KEY,
       profile_frame_key: profile_frame_key.presence || ProfileAppearanceCatalog::DEFAULT_FRAME_KEY
     }
+  end
+
+  def admin?
+    role == 'admin'
   end
 
   def locked?
