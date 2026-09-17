@@ -106,3 +106,24 @@ jobs:
 
       - name: Run tests
         run: npm run test -- --runInBand
+
+  coderabbit:
+    name: CodeRabbit Review
+    needs: charset
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup CodeRabbit
+        uses: coderabbit-ai/coderabbit-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: .coderabbit.yaml
+          fail-on-critical: true
