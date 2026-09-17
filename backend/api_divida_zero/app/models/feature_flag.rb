@@ -1,0 +1,46 @@
+class FeatureFlag < ApplicationRecord
+  validates :key, presence: true, uniqueness: true
+  validates :enabled, inclusion: { in: [true, false] }
+
+  scope :enabled, -> { where(enabled: true) }
+  scope :disabled, -> { where(enabled: false) }
+
+  def self.enabled?(key)
+    where(key: key, enabled: true).exists?
+  end
+
+  def self.disabled?(key)
+    where(key: key, enabled: false).exists? || !exists?(key: key)
+  end
+
+  def self.enable(key, description: nil)
+    find_or_create_by(key: key) do |flag|
+      flag.enabled = true
+      flag.description = description
+    end
+  end
+
+  def self.disable(key)
+    where(key: key).update_all(enabled: false)
+  end
+
+  # Feature flags iniciais
+  INITIAL_FLAGS = {
+    open_finance: { enabled: true, description: 'Integração Open Finance via Pluggy' },
+    bank_sync: { enabled: true, description: 'Sincronização bancária automática' },
+    investments: { enabled: false, description: 'Suporte a investimentos' },
+    credit_cards: { enabled: true, description: 'Suporte a cartões de crédito' },
+    family: { enabled: false, description: 'Funcionalidades de família' },
+    ai_analysis: { enabled: true, description: 'Análise por IA de transações' },
+    manual_import: { enabled: true, description: 'Importação manual OFX/CSV' }
+  }.freeze
+
+  def self.seed_initial!
+    INITIAL_FLAGS.each do |key, config|
+      find_or_create_by(key: key) do |flag|
+        flag.enabled = config[:enabled]
+        flag.description = config[:description]
+      end
+    end
+  end
+end
