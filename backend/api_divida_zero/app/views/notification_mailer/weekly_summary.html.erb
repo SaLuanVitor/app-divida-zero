@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2>Olá, <%= @user.name %>!</h2>
+  <p>Aqui está o resumo da sua semana financeira.</p>
+
+  <% if @week_start && @week_end %>
+    <p style="color: #6b7280;">Período: <strong><%= l(@week_start) %></strong> a <strong><%= l(@week_end) %></strong></p>
+  <% end %>
+
+  <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
+    <tr>
+      <td style="padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0;">
+        <strong>Entradas pendentes</strong><br>
+        <span style="font-size: 18px; color: #16a34a;">
+          <%= number_to_currency(@pending_income_total.to_d, unit: "R$ ", separator: ",", delimiter: ".") %>
+        </span>
+      </td>
+      <td style="padding: 12px; background: #fef2f2; border: 1px solid #fecaca;">
+        <strong>Saídas pendentes</strong><br>
+        <span style="font-size: 18px; color: #dc2626;">
+          <%= number_to_currency(@pending_expense_total.to_d, unit: "R$ ", separator: ",", delimiter: ".") %>
+        </span>
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin-top: 16px; font-size: 16px;">
+    <strong>Saldo previsto:</strong>
+    <span style="color: <%= @projected_balance.to_d >= 0 ? "#16a34a" : "#dc2626" %>;">
+      <%= number_to_currency(@projected_balance.to_d, unit: "R$ ", separator: ",", delimiter: ".") %>
+    </span>
+  </p>
+
+  <p style="margin-top: 24px;">
+    <a href="<%= ENV.fetch("MAILER_DEFAULT_HOST", "http://localhost:3000") %>" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+      Ver no App
+    </a>
+  </p>
+
+  <p style="color: #6b7280; font-size: 12px; margin-top: 32px;">
+    Para desativar essas notificações, ajuste suas preferências no App Dívida Zero.
+  </p>
+</body>
+</html>

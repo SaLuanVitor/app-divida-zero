@@ -3,7 +3,11 @@
   STATUSES = %w[active completed].freeze
 
   belongs_to :user
+  belongs_to :household, optional: true
   has_many :financial_goal_contributions, dependent: :destroy
+
+  scope :shared_with_household, -> { where.not(household_id: nil) }
+  scope :personal, -> { where(household_id: nil) }
 
   validates :title,
             presence: { message: "Título é obrigatório." },
@@ -29,7 +33,20 @@
             presence: true,
             inclusion: { in: STATUSES, message: "Status da meta inválido." }
 
-  def serialize
+  validates :household_id, presence: { message: "Família é obrigatória para meta compartilhada." }, if: :shared?
+
+  def shared?
+    household_id.present?
+  end
+
+  def serialize(current_user: nil)
+    contributor_list = financial_goal_contributions
+      .includes(:user)
+      .where.not(user: nil)
+      .distinct
+      .map { |c| { id: c.user_id, name: c.user.name } }
+      .uniq { |c| c[:id] }
+
     {
       id: id,
       title: title,
@@ -42,7 +59,12 @@
       status: status,
       start_date: start_date,
       target_date: target_date,
-      completed_at: completed_at
+      completed_at: completed_at,
+      user_name: user.name,
+      shared: shared?,
+      household_id: household_id,
+      contributors: contributor_list,
+      can_contribute: current_user.nil? || !shared? || household&.member?(current_user)
     }
   end
 

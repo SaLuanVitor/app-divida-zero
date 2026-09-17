@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "D\u00edvida Zero",
+    "name": "Dívida Zero",
     "slug": "DividaZero",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -40,6 +40,11 @@
     ],
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5a8a7f70-d513-49fe-a04d-fb97c24e6eea"
+      }
     }
   }
 }

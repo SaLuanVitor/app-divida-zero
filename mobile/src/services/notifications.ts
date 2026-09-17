@@ -3,6 +3,7 @@ import { AppPreferences } from '../types/settings';
 import { FinancialRecordDto } from '../types/financialRecord';
 import { listFinancialRecords } from './financialRecords';
 import { getAppPreferences, updateAppPreferences } from './preferences';
+import { registerRemotePushToken } from './devicePush';
 
 type NotificationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable';
 export type ManualNotificationKind = 'test' | 'due_today' | 'due_tomorrow' | 'weekly_summary' | 'xp_badge' | 'generic';
@@ -211,6 +212,11 @@ const syncPermissionStatusWithPreferences = async (
 
   if (Object.keys(updates).length > 0) {
     await updateAppPreferences(updates);
+    if (updates.device_push_enabled === true || status === 'granted') {
+      void registerRemotePushToken().catch((e) => {
+        if (__DEV__) console.warn('[notifications] push token registration failed', e);
+      });
+    }
   }
 };
 
@@ -310,7 +316,9 @@ export const initializeNotificationLayer = () => {
         importance: Notifications.AndroidImportance?.DEFAULT ?? 3,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#f48c25',
-      }).catch(() => {});
+      }).catch((e: any) => {
+        if (__DEV__) console.warn('[notifications] channel setup failed', e);
+      });
     }
   } catch (error) {
     cachedNotificationsModule = null;
@@ -325,8 +333,8 @@ export const initializeNotificationLayer = () => {
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
       }),
     });
     handlerConfigured = true;
@@ -911,6 +919,8 @@ export const syncScheduledLocalNotifications = async ({
 
   return { synced: true as const };
 };
+
+export const getNotificationsNativeModule = () => getNotificationsModule();
 
 export const sendXpAndBadgeNotification = async ({
   enabled,

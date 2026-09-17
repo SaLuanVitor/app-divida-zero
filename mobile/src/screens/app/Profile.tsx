@@ -17,12 +17,17 @@ import {
     Star,
     X,
     Pencil,
+    Users,
+    UserPlus,
+    MessageCircle,
+    Landmark,
 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import AppOverlay from '../../components/AppOverlay';
 import ProfileAvatar from '../../components/ProfileAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
@@ -120,10 +125,14 @@ const Profile = () => {
     const avatarPickerScrollRef = useRef<ScrollView>(null);
 
     const menuItems = [
+        { label: 'Minha família', icon: Users, color: '#f48c25', route: 'Familia' },
+        { label: 'Convites pendentes', icon: UserPlus, color: '#22c55e', route: 'Convites Pendentes' },
         { label: 'Dados do usuário', icon: UserIcon, color: '#3b82f6', route: 'Dados Pessoais' },
         { label: 'Configurações do app', icon: Settings, color: '#64748b', route: 'Configuracoes App' },
         { label: 'Notificações', icon: Bell, color: '#f59e0b', route: 'Notificacoes' },
         { label: 'Envio de notificações', icon: Bell, color: '#f97316', route: 'Envio Notificacoes' },
+        { label: 'WhatsApp', icon: MessageCircle, color: '#22c55e', route: 'WhatsApp' },
+        { label: 'Importar extrato', icon: Landmark, color: '#3b82f6', route: 'BankImport' },
         { label: 'Avaliar aplicativo', icon: Star, color: '#f48c25', route: 'Avaliacao App' },
         ...(user?.role === 'admin'
             ? [{ label: 'Painel Admin', icon: Shield, color: '#0ea5e9', route: 'Admin Dashboard' }]
@@ -229,7 +238,7 @@ const Profile = () => {
     }, [user?.email]);
     const memberSinceLabel = useMemo(() => {
         const candidates: Array<string | undefined> = [];
-        const userCreatedAt = (user as any)?.created_at as string | undefined;
+        const userCreatedAt = user?.created_at;
         if (userCreatedAt) candidates.push(userCreatedAt);
 
         if (events.length > 0) {
@@ -819,9 +828,8 @@ const Profile = () => {
                 </View>
             </Modal>
 
-            {showAvatarPicker ? (
-                <View className="absolute inset-0 z-[58]">
-                    <Pressable className="absolute inset-0 bg-black/40" onPress={() => !savingAppearance && setShowAvatarPicker(false)} />
+            <AppOverlay visible={showAvatarPicker} backdropClassName="bg-black/40" onBackdropPress={() => !savingAppearance && setShowAvatarPicker(false)}>
+                {showAvatarPicker ? (
                     <View
                         className="absolute bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4"
                         style={{ left: modalSideInset, right: modalSideInset, top: pickerTopInset, bottom: pickerBottomInset }}
@@ -971,12 +979,11 @@ const Profile = () => {
                             />
                         </View>
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {showLogoutConfirm ? (
-                <View className="absolute inset-0 z-50">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={() => !logoutLoading && setShowLogoutConfirm(false)} />
+            <AppOverlay visible={showLogoutConfirm} backdropClassName="bg-black/30" onBackdropPress={() => !logoutLoading && setShowLogoutConfirm(false)}>
+                {showLogoutConfirm ? (
                     <View className="absolute left-4 right-4 top-[38%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Sair da conta</AppText>
                         <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2 mb-4">
@@ -1006,8 +1013,8 @@ const Profile = () => {
                             onPress={() => setShowLogoutConfirm(false)}
                         />
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
         </>
     );
 };

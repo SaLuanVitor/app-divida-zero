@@ -9,7 +9,13 @@
 
   class << self
     def recalculate_for_user!(user)
-      feedbacks = user.financial_goals.order(:created_at).flat_map { |goal| recalculate_goal!(goal) }
+      household = user.households.first
+      goals = if household
+        FinancialGoal.where(user: user).or(FinancialGoal.where(household: household)).order(:created_at)
+      else
+        user.financial_goals.order(:created_at)
+      end
+      feedbacks = goals.flat_map { |goal| recalculate_goal!(goal) }
       sync_goal_achievements!(user)
       feedbacks
     end
@@ -41,9 +47,12 @@
       )
 
       xp_feedbacks = []
+      previous_milestone = goal.last_awarded_milestone.to_i
       reached_milestones = MILESTONES.select { |milestone| progress_pct >= milestone }
+      new_milestones = reached_milestones.select { |m| m > previous_milestone }
       already_completed = goal.completed_at.present? && previous_status == "completed"
       xp_feedbacks.concat(sync_progress_events!(goal, reached_milestones)) unless already_completed
+      notify_household_milestones!(goal, new_milestones) if new_milestones.any?
       goal.update!(last_awarded_milestone: reached_milestones.max.to_i)
 
       if previous_status != "completed" && completed_now
@@ -74,9 +83,10 @@
     end
 
     def remove_goal_tracking!(goal)
-      related_events = goal.user.gamification_events
-                           .where(source_type: goal.class.name, source_id: goal.id, event_type: %w[goal_created goal_progress_milestone goal_completed])
-                           .order(:created_at)
+      owner = goal.user
+      related_events = owner.gamification_events
+                            .where(source_type: goal.class.name, source_id: goal.id, event_type: %w[goal_created goal_progress_milestone goal_completed])
+                            .order(:created_at)
 
       reverted_points = related_events.sum(:points)
       removed_milestones = related_events
@@ -214,19 +224,49 @@
       xp_feedbacks
     end
 
+    def notify_household_milestones!(goal, milestones)
+      return unless goal.household_id.present?
+
+      goal.household.users.find_each do |member|
+        next if member == goal.user
+
+        milestones.each do |milestone|
+          NotificationAlert.create!(
+            user: member,
+            alert_type: "goal_funding",
+            window_key: "goal-milestone-#{goal.id}-#{milestone}-#{goal.updated_at.to_i}",
+            title: "🎉 Meta da família avançou!",
+            message: "#{goal.title} atingiu #{milestone}%!",
+            due_count: 1,
+            metadata: {
+              goal_id: goal.id,
+              goal_title: goal.title,
+              milestone: milestone,
+              progress_pct: goal.progress_pct
+            }
+          )
+        end
+      end
+    end
+
     def relevant_amount_for(goal)
-      case goal.goal_type
-      when "debt"
-        settled_scope_for_goal(goal)
-          .where(record_type: "debt", flow_type: "expense")
-          .sum(:amount)
-          .to_d
-      when "save", "specific"
+      if goal.household_id.present?
         total = goal.financial_goal_contributions.sum(&:signed_amount)
         total.positive? ? total : 0.to_d
       else
-        total = goal.financial_goal_contributions.sum(&:signed_amount)
-        total.positive? ? total : 0.to_d
+        case goal.goal_type
+        when "debt"
+          settled_scope_for_goal(goal)
+            .where(record_type: "debt", flow_type: "expense")
+            .sum(:amount)
+            .to_d
+        when "save", "specific"
+          total = goal.financial_goal_contributions.sum(&:signed_amount)
+          total.positive? ? total : 0.to_d
+        else
+          total = goal.financial_goal_contributions.sum(&:signed_amount)
+          total.positive? ? total : 0.to_d
+        end
       end
     end
 

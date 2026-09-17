@@ -7,10 +7,11 @@
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
         funding = FinancialGoalsProgressService.funding_snapshot_for_user(@current_user)
 
-        goals = @current_user.financial_goals.order(Arel.sql("CASE WHEN status = 'active' THEN 0 ELSE 1 END"), :target_date, :created_at)
+        goals = scoped_goals.order(Arel.sql("CASE WHEN status = 'active' THEN 0 ELSE 1 END"), :target_date, :created_at)
+        serialized = goals.map { |g| g.serialize(current_user: @current_user) }
 
         render json: {
-          goals: goals.map(&:serialize),
+          goals: serialized,
           settled_global_balance: funding[:settled_global_balance].to_s("F"),
           allocated_to_goals: funding[:allocated_to_goals].to_s("F"),
           available_for_goal_funding: funding[:available_for_goal_funding].to_s("F")
@@ -18,6 +19,8 @@
       end
 
       def create
+        return if params[:household_id].present? && !validate_household!
+
         goal = @current_user.financial_goals.create!(goal_params)
 
         xp_feedback = GamificationService.award!(
@@ -39,7 +42,7 @@
 
         render json: {
           message: "Meta criada com sucesso.",
-          goal: goal.reload.serialize,
+          goal: goal.reload.serialize(current_user: @current_user),
           xp_feedback: xp_feedback
         }, status: :created
       end
@@ -52,7 +55,7 @@
 
         render json: {
           message: "Meta atualizada com sucesso.",
-          goal: goal.reload.serialize
+          goal: goal.reload.serialize(current_user: @current_user)
         }, status: :ok
       end
 
@@ -68,7 +71,20 @@
       private
 
       def goal_params
-        params.fetch(:financial_goal, params).permit(:title, :description, :target_amount, :start_date, :target_date, :goal_type)
+        params.fetch(:financial_goal, params).permit(:title, :description, :target_amount, :start_date, :target_date, :goal_type, :household_id)
+      end
+
+      def validate_household!
+        household = @current_user.households.find_by(id: params[:household_id])
+        unless household
+          render json: { error: "Família não encontrada." }, status: :not_found
+          return false
+        end
+        unless household.owner?(@current_user)
+          render json: { error: "Apenas o dono da família pode criar metas compartilhadas." }, status: :forbidden
+          return false
+        end
+        true
       end
 
       def unlock_first_goal_created!(goal)
@@ -97,6 +113,15 @@
         xp_feedback[:summary] = current_summary
         xp_feedback[:leveled_up] = true if current_summary[:level].to_i > original_level
         xp_feedback
+      end
+
+      def scoped_goals
+        household = @current_user.households.first
+        if household
+          FinancialGoal.where(user: @current_user).or(FinancialGoal.where(household: household))
+        else
+          @current_user.financial_goals
+        end
       end
     end
   end

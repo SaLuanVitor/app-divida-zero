@@ -13,6 +13,7 @@
     goal_deleted
     record_reopened
     daily_achievement_completed
+    import_accepted
   ].freeze
 
   validates :event_type, inclusion: { in: EVENT_TYPES, message: "Evento de gamificação inválido." }

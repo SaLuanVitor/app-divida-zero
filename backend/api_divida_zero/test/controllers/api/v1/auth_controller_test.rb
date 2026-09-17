@@ -10,6 +10,13 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
       password: @password,
       password_confirmation: @password
     )
+
+    # Disable Rack::Attack for these tests to avoid rate limiting interference
+    Rack::Attack.enabled = false
+  end
+
+  teardown do
+    Rack::Attack.enabled = true
   end
 
   test "register creates user and returns token pair" do
@@ -69,6 +76,64 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     post "/api/v1/auth/login", params: { email: @user.email, password: "senha_errada" }
 
     assert_response :unauthorized
+  end
+
+  test "login increments failed_login_count on invalid password" do
+    assert_equal 0, @user.failed_login_count
+
+    post "/api/v1/auth/login", params: { email: @user.email, password: "wrong_password" }
+    assert_response :unauthorized
+
+    @user.reload
+    assert_equal 1, @user.failed_login_count
+  end
+
+  test "login locks account after 5 failed attempts" do
+    5.times do
+      post "/api/v1/auth/login", params: { email: @user.email, password: "wrong_password" }
+      assert_response :unauthorized
+    end
+
+    @user.reload
+    assert @user.locked?
+    assert @user.locked_until.present?
+    assert_equal 0, @user.failed_login_count
+  end
+
+  test "login with correct password unlocks locked account" do
+    @user.update!(failed_login_count: 5)
+    @user.lock_account!
+
+    post "/api/v1/auth/login", params: { email: @user.email, password: @password }
+
+    assert_response :ok
+    @user.reload
+    assert_equal 0, @user.failed_login_count
+    assert_nil @user.locked_until
+    body = JSON.parse(response.body)
+    assert body["access_token"].present?
+  end
+
+  test "login with wrong password keeps locked account locked" do
+    @user.update!(failed_login_count: 5)
+    @user.lock_account!
+
+    post "/api/v1/auth/login", params: { email: @user.email, password: "wrong_password" }
+
+    assert_response :forbidden
+    body = JSON.parse(response.body)
+    assert_match(/Conta bloqueada. Tente novamente em \d+ minutos./, body["error"])
+  end
+
+  test "successful login resets failed_login_count and locked_until" do
+    @user.update!(failed_login_count: 3, locked_until: 10.minutes.from_now)
+
+    post "/api/v1/auth/login", params: { email: @user.email, password: @password }
+
+    assert_response :ok
+    @user.reload
+    assert_equal 0, @user.failed_login_count
+    assert_nil @user.locked_until
   end
 
   test "login blocks inactive account" do
@@ -331,6 +396,74 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
       new_password: "senha_nova_123"
     }
 
+    assert_response :unauthorized
+  end
+
+  # LOGOUT TESTS
+  test "logout revokes access token" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+    access_token = tokens[:access_token]
+
+    post "/api/v1/auth/logout", headers: auth_header(access_token), params: { refresh_token: tokens[:refresh_token] }
+
+    assert_response :ok
+    body = JSON.parse(response.body)
+    assert_equal "Logout realizado com sucesso.", body["message"]
+
+    # Verify access token is blacklisted
+    assert TokenBlacklist.revoked?(access_token)
+  end
+
+  test "logout revokes refresh token" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+    refresh_token = tokens[:refresh_token]
+
+    post "/api/v1/auth/logout", headers: auth_header(tokens[:access_token]), params: { refresh_token: refresh_token }
+
+    assert_response :ok
+    assert TokenBlacklist.revoked?(refresh_token)
+  end
+
+  test "logout without refresh token only revokes access token" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    post "/api/v1/auth/logout", headers: auth_header(tokens[:access_token])
+
+    assert_response :ok
+    assert TokenBlacklist.revoked?(tokens[:access_token])
+    assert_not TokenBlacklist.revoked?(tokens[:refresh_token])
+  end
+
+  test "revoked access token returns unauthorized on subsequent requests" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    # Logout
+    post "/api/v1/auth/logout", headers: auth_header(tokens[:access_token]), params: { refresh_token: tokens[:refresh_token] }
+    assert_response :ok
+
+    # Try to use access token again
+    get "/api/v1/auth/me", headers: auth_header(tokens[:access_token])
+    assert_response :unauthorized
+    body = JSON.parse(response.body)
+    assert_equal "Token revogado. Faça login novamente.", body["error"]
+  end
+
+  test "revoked refresh token returns unauthorized on refresh" do
+    tokens = JsonWebToken.issue_pair(user_id: @user.id)
+
+    # Logout
+    post "/api/v1/auth/logout", headers: auth_header(tokens[:access_token]), params: { refresh_token: tokens[:refresh_token] }
+    assert_response :ok
+
+    # Try to refresh with revoked token
+    post "/api/v1/auth/refresh", params: { refresh_token: tokens[:refresh_token] }
+    assert_response :unauthorized
+    body = JSON.parse(response.body)
+    assert_equal "Refresh token revogado. Faça login novamente.", body["error"]
+  end
+
+  test "logout requires authentication" do
+    post "/api/v1/auth/logout"
     assert_response :unauthorized
   end
 

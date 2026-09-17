@@ -76,6 +76,18 @@ module Ai
         TEXT
       end
 
+      def categorize_bank_transactions(context)
+        <<~TEXT
+          Contexto do usuário: #{context.to_json}
+
+          Categorize cada transação bancária abaixo.
+          Para cada uma, responda com: suggested_category, flow_type (income/expense), confidence (0-1).
+
+          Categorias disponíveis: Alimentação, Transporte, Moradia, Saúde, Educação,
+          Lazer, Serviços, Compras, Salário, Investimentos, Transferências, Impostos, Assinaturas, Outros.
+        TEXT
+      end
+
       def daily_message(global_context)
         <<~TEXT
           Contexto do sistema:

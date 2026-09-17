@@ -1,8 +1,11 @@
 # Be sure to restart your server when you modify this file.
 
-# Configure parameters to be partially matched (e.g. passw matches password) and filtered from the log file.
-# Use this to limit dissemination of sensitive information.
-# See the ActiveSupport::ParameterFilter documentation for supported notations and behaviors.
+# Configure parameters to be filtered from the log file. Use this to prevent
+# sensitive information like passwords and API keys from being written to the log.
 Rails.application.config.filter_parameters += [
-  :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn, :cvv, :cvc
+  :password, :password_confirmation, :current_password,
+  :client_secret, :clientSecret, :client_id, :clientId,
+  :api_key, :apiKey, :api_secret, :apiSecret,
+  :access_token, :accessToken, :refresh_token, :refreshToken,
+  :secret, :token, :authorization, :auth_token, :authToken
 ]

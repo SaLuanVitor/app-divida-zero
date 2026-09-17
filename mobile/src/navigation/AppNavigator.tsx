@@ -18,6 +18,12 @@ import SecuritySettings from '../screens/app/SecuritySettings';
 import HelpSupport from '../screens/app/HelpSupport';
 import AppRating from '../screens/app/AppRating';
 import Tutorial from '../screens/app/Tutorial';
+import Familia from '../screens/app/Familia';
+import Convidar from '../screens/app/Convidar';
+import ConvitesPendentes from '../screens/app/ConvitesPendentes';
+import WhatsAppSettings from '../screens/app/WhatsAppSettings';
+import BankImportScreen from '../screens/app/BankImportScreen';
+import BankReviewScreen from '../screens/app/BankReviewScreen';
 import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, Landmark } from 'lucide-react-native';
 import { useOverlay } from '../context/OverlayContext';
 import { useThemeMode } from '../context/ThemeContext';
@@ -290,6 +296,12 @@ export const AppNavigator = () => {
                 <Tab.Screen name="Ajuda e Suporte" component={HelpSupport} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Avaliacao App" component={AppRating} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Tutorial" component={Tutorial} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Familia" component={Familia} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Convidar" component={Convidar} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Convites Pendentes" component={ConvitesPendentes} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="WhatsApp" component={WhatsAppSettings} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="BankImport" component={BankImportScreen} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="BankReview" component={BankReviewScreen} options={{ tabBarButton: () => null }} />
             </Tab.Navigator>
         </BottomInsetProvider>
     );

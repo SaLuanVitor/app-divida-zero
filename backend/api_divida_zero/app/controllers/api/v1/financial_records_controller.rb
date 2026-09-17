@@ -1,6 +1,7 @@
 module Api
   module V1
     class FinancialRecordsController < ApplicationController
+      include Auditable
       before_action :authenticate_access_token!
       STATUS_TRANSITIONS = {
         "income" => {
@@ -14,7 +15,7 @@ module Api
       }.freeze
 
       def index
-        records = @current_user.financial_records.order(:due_date)
+        records = scoped_records.order(:due_date)
 
         if params[:year].present? && params[:month].present?
           year = params[:year].to_i
@@ -47,6 +48,8 @@ module Api
         DailyAchievementsService.sync_for_user!(@current_user)
         xp_feedback = refresh_feedback_summary(xp_feedback)
 
+        audit_log!("record_create", resource: generated.first, metadata: { created_count: generated.size, mode: payload[:mode] })
+
         render json: {
           message: "Registro criado com sucesso.",
           created_count: generated.size,
@@ -68,6 +71,9 @@ module Api
         end
 
         result = apply_record_status_transition(record: record, next_status: transition_target_for(record, "pending"))
+
+        audit_log!("record_pay", resource: record, metadata: { flow_type: record.flow_type, amount: record.amount.to_s })
+
         render json: result, status: :ok
       end
 
@@ -103,6 +109,9 @@ module Api
           FinancialGoalsProgressService.recalculate_for_user!(@current_user)
           DailyAchievementsService.sync_for_user!(@current_user)
           xp_feedback = refresh_feedback_summary(xp_feedback)
+
+          audit_log!("record_delete", resource: record, metadata: { deleted_count: deleted_count, settled_count: settled_count, group_delete: true })
+
           return render json: {
             message: "Registros do grupo excluídos com sucesso.",
             deleted_count: deleted_count,
@@ -120,6 +129,8 @@ module Api
         FinancialGoalsProgressService.recalculate_for_user!(@current_user)
         DailyAchievementsService.sync_for_user!(@current_user)
         xp_feedback = refresh_feedback_summary(xp_feedback)
+
+        audit_log!("record_delete", resource: record, metadata: { settled: settled_count == 1 })
 
         render json: {
           message: "Registro excluído com sucesso.",
@@ -435,7 +446,8 @@ module Api
           notes: record.notes,
           group_code: record.group_code,
           financial_goal_id: record.financial_goal_id,
-          financial_goal_contribution_id: record.financial_goal_contribution_id
+          financial_goal_contribution_id: record.financial_goal_contribution_id,
+          user_name: record.user.name
         }
       end
 
@@ -474,6 +486,19 @@ module Api
         xp_feedback[:summary] = current_summary
         xp_feedback[:leveled_up] = true if current_summary[:level].to_i > original_level
         xp_feedback
+      end
+
+      def scoped_records
+        household = @current_user.households.first
+        if household
+          FinancialRecord.includes(:user).where(user: @current_user).or(FinancialRecord.includes(:user).where(household: household))
+        else
+          @current_user.financial_records.includes(:user)
+        end
+      end
+
+      def current_household
+        @current_user.households.first
       end
     end
   end

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2>Olá, <%= @user.name.split(" ").first %>!</h2>
+  <p style="font-size: 16px;">Aqui está um resumo da sua evolução financeira nesta semana. Nada de preocupação — só para celebrar seu progresso.</p>
+
+  <% if @week_start && @week_end %>
+    <p style="color: #6b7280;">Período: <strong><%= l(@week_start) %></strong> a <strong><%= l(@week_end) %></strong></p>
+  <% end %>
+
+  <% if @goals_advanced.any? %>
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-top: 16px;">
+      <h3 style="margin: 0 0 8px; color: #166534;">🎯 Metas que avançaram</h3>
+      <% @goals_advanced.each do |goal| %>
+        <p style="margin: 4px 0;">
+          <strong><%= goal["title"] %></strong> — <%= goal["progress"] %>%
+        </p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @economy["settled_balance"].to_d > 0 %>
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-top: 16px;">
+      <h3 style="margin: 0 0 8px; color: #166534;">💰 Economia da semana</h3>
+      <p style="font-size: 24px; font-weight: bold; color: #16a34a; margin: 0;">
+        <%= number_to_currency(@economy["settled_balance"].to_d, unit: "R$ ", separator: ",", delimiter: ".") %>
+      </p>
+      <p style="color: #6b7280; font-size: 12px; margin: 4px 0 0;">
+        Entradas: <%= number_to_currency(@economy["settled_income"].to_d, unit: "R$ ", separator: ",", delimiter: ".") %> •
+        Saídas: <%= number_to_currency(@economy["settled_expense"].to_d, unit: "R$ ", separator: ",", delimiter: ".") %>
+      </p>
+    </div>
+  <% end %>
+
+  <% if @streak >= 2 %>
+    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 16px; margin-top: 16px;">
+      <h3 style="margin: 0 0 4px; color: #92400e;">🔥 Sequência de atividade</h3>
+      <p style="font-size: 20px; font-weight: bold; margin: 0;">
+        <%= @streak %> <%= @streak == 1 ? "dia" : "dias" %> seguidos
+      </p>
+    </div>
+  <% end %>
+
+  <% if @goal_milestones.any? %>
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-top: 16px;">
+      <h3 style="margin: 0 0 8px; color: #166534;">🏆 Marcos atingidos</h3>
+      <% @goal_milestones.each do |ms| %>
+        <p style="margin: 4px 0;">
+          <strong><%= ms["title"] %></strong> — <%= ms["milestone"] %>%
+        </p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @total_records > 0 && @goals_advanced.empty? && @economy["settled_balance"].to_d <= 0 && @streak < 2 && @goal_milestones.empty? %>
+    <p style="margin-top: 16px;"><%= @total_records %> registro(s) financeiro(s) nesta semana.</p>
+  <% end %>
+
+  <p style="margin-top: 24px;">
+    <a href="<%= ENV.fetch("MAILER_DEFAULT_HOST", "http://localhost:3000") %>" style="background: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+      Ver no App
+    </a>
+  </p>
+
+  <p style="color: #6b7280; font-size: 12px; margin-top: 32px;">
+    Para desativar essas notificações, ajuste suas preferências no App Dívida Zero.
+  </p>
+</body>
+</html>

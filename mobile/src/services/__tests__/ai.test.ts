@@ -16,12 +16,36 @@ describe('ai service phase gating', () => {
 
   afterEach(() => {
     delete process.env.EXPO_PUBLIC_PHASE_1_MODE;
+    delete process.env.EXPO_PUBLIC_AI_SURFACE_DAILY_MESSAGE;
     jest.clearAllMocks();
   });
 
   it('blocks AI calls by default in phase 1 mode', async () => {
     const { ai } = await loadAiModule('true');
-    await expect(ai.getAiNextAction()).rejects.toThrow('AI mobile calls are disabled in phase 1.');
+    await expect(ai.getAiNextAction()).rejects.toThrow('AI surface "nextAction" is disabled in phase 1.');
+  });
+
+  it('allows daily message when its surface flag is enabled', async () => {
+    jest.resetModules();
+    process.env.EXPO_PUBLIC_PHASE_1_MODE = 'true';
+    process.env.EXPO_PUBLIC_AI_SURFACE_DAILY_MESSAGE = 'true';
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const api = require('../api');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const ai = require('../ai');
+
+    (api.get as jest.Mock).mockResolvedValueOnce({
+      data: {
+        id: 1,
+        date: '2026-07-10',
+        title: 'Mensagem IA',
+        body: 'Corpo IA',
+        theme: 'constancia',
+      },
+    });
+
+    const result = await ai.getDailyMessageToday();
+    expect(result.title).toBe('Mensagem IA');
   });
 
   it('maps next action response when phase 1 mode is disabled', async () => {

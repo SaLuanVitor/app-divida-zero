@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: ./backend/api_divida_zero
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DATABASE_URL: postgres://postgres:postgres@db:5432/app_divida_zero_production
+      DATABASE_CACHE_URL: postgres://postgres:postgres@db:5432/app_divida_zero_production_cache
+      DATABASE_QUEUE_URL: postgres://postgres:postgres@db:5432/app_divida_zero_production_queue
+      DATABASE_CABLE_URL: postgres://postgres:postgres@db:5432/app_divida_zero_production_cable
+      AI_API_KEY: ${AI_API_KEY:-}
+      CORS_ALLOWED_ORIGINS: "*"
+      DEMO_SEED_ENABLED: "false"
+    volumes:
+      - rails_storage:/rails/storage
+
+  db:
+    environment:
+      POSTGRES_DB: app_divida_zero_production
+
+volumes:
+  rails_storage:

@@ -7,6 +7,7 @@ export interface User {
     force_password_change?: boolean;
     profile_icon_key?: string;
     profile_frame_key?: string;
+    created_at?: string;
 }
 
 export interface AuthResponse {

@@ -26,6 +26,8 @@ import Button from '../../components/Button';
 import ProfileAvatar from '../../components/ProfileAvatar';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import ScreenHelpButton from '../../components/ScreenHelpButton';
+import AppOverlay from '../../components/AppOverlay';
+import AppToast from '../../components/AppToast';
 import { useAuth } from '../../context/AuthContext';
 import { useOverlay } from '../../context/OverlayContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
@@ -46,6 +48,7 @@ import { FinancialGoalDto } from '../../types/financialGoal';
 import { runWhenIdle } from '../../utils/idle';
 import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
+import { useHaptics } from '../../hooks/useHaptics';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { markPerf, measurePerf } from '../../services/perf';
 import {
@@ -55,6 +58,8 @@ import {
 } from '../../services/notificationCenter';
 import { NotificationHistoryItem } from '../../types/notificationCenter';
 import { getLocalDailyMessage } from '../../services/localDailyMessage';
+import { getDailyMessageToday, getAiNextAction } from '../../services/ai';
+import { isAiSurfaceEnabled } from '../../config/featurePhase';
 import { shouldStackForLargeText, textClampLines, threeColumnItemWidth } from '../../utils/responsive';
 
 type CalendarStatus = 'pending' | 'paid' | 'received';
@@ -70,6 +75,7 @@ type CalendarEntry = {
     reminder: string;
     icon: React.ComponentType<{ size?: number; color?: string }>;
     color: string;
+    userName?: string;
 };
 
 type FeedbackState = {
@@ -207,6 +213,7 @@ const toCalendarEntry = (record: FinancialRecordDto): CalendarEntry => {
         reminder: recurrenceLabel(record),
         icon,
         color,
+        userName: record.user_name,
     };
 };
 
@@ -225,6 +232,7 @@ const Home = () => {
     const { darkMode } = useThemeMode();
     const { fontScale, largerTouchTargets } = useAccessibility();
     const { isBeginnerTutorialActive, currentEssentialStepId, refreshTargetMeasure } = useTutorial();
+    const { pay, receive, deleteRecord, light } = useHaptics();
     const insets = useSafeAreaInsets();
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
@@ -260,8 +268,28 @@ const Home = () => {
     const [notificationsPopupLoading, setNotificationsPopupLoading] = useState(false);
     const [notificationItems, setNotificationItems] = useState<NotificationHistoryItem[]>([]);
     const [onboardingPrimaryGoal, setOnboardingPrimaryGoal] = useState<'organize_month' | 'pay_off_debt' | 'create_goal' | null>(null);
-    const dailyMessage = useMemo(() => getLocalDailyMessage(), []);
+    const dailyMessageSurfaceEnabled = isAiSurfaceEnabled('dailyMessage');
+    const nextActionSurfaceEnabled = isAiSurfaceEnabled('nextAction');
+    const [dailyMessage, setDailyMessage] = useState(() => getLocalDailyMessage());
+    const [nextBestAction, setNextBestAction] = useState<NextActionCard | null>(null);
     const compactPillHeight = Math.max(Math.round(36 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 36);
+
+    useEffect(() => {
+        if (!dailyMessageSurfaceEnabled) return;
+
+        let active = true;
+        getDailyMessageToday()
+            .then((message) => {
+                if (active) setDailyMessage(message);
+            })
+            .catch(() => {
+                if (active) setDailyMessage(getLocalDailyMessage());
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [dailyMessageSurfaceEnabled]);
     const searchInputHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 48 : 44);
     const pickerTabHeight = Math.max(Math.round(40 * Math.max(fontScale, 1)), largerTouchTargets ? 44 : 40);
     const pickerGridWidth = useMemo(() => threeColumnItemWidth(Math.min(windowWidth - 48, 420), 8), [windowWidth]);
@@ -620,6 +648,54 @@ const Home = () => {
         };
     }, [goals, navigation, onboardingPrimaryGoal, pendingEntriesCount]);
 
+    const resolveNextActionPress = useCallback(
+        (cta: string): (() => void) => {
+            const normalized = cta.trim().toLowerCase();
+            if (normalized.includes('pendent')) {
+                return () => setMonthListFilter('pending');
+            }
+            if (normalized.includes('meta')) {
+                return () => navigation.navigate('MetaForm');
+            }
+            if (normalized.includes('dívida') || normalized.includes('divida')) {
+                return () => navigation.navigate('Lancamentos', { mode: 'debt' });
+            }
+            if (normalized.includes('lanç') || normalized.includes('lanc')) {
+                return () => navigation.navigate('Lancamentos');
+            }
+            return () => setMonthListFilter('pending');
+        },
+        [navigation]
+    );
+
+    useEffect(() => {
+        if (!nextActionSurfaceEnabled) {
+            setNextBestAction(null);
+            return;
+        }
+
+        let active = true;
+        getAiNextAction()
+            .then(({ action }) => {
+                if (!active) return;
+                setNextBestAction({
+                    title: action.title,
+                    description: action.description,
+                    cta: action.cta,
+                    onPress: resolveNextActionPress(action.cta),
+                });
+            })
+            .catch(() => {
+                if (active) setNextBestAction(null);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [nextActionSurfaceEnabled, resolveNextActionPress, pendingEntriesCount, goals.length, onboardingPrimaryGoal]);
+
+    const displayNextBestAction = nextBestAction ?? localNextBestAction;
+
     const visibleEntries = useMemo(() => {
         let base = entries;
         if (monthListFilter === 'pending') {
@@ -814,6 +890,14 @@ const Home = () => {
 
     const executePay = async (entry: CalendarEntry) => {
         const result = await payFinancialRecord(entry.id);
+
+        // Haptic feedback based on flow type
+        if (entry.icon === CircleDollarSign) {
+            receive(); // income = receive
+        } else {
+            pay(); // expense/debt = pay
+        }
+
         await Promise.all([
             loadMonthlyRecords({ force: true }),
             loadGlobalGamification({ force: true }),
@@ -885,6 +969,10 @@ const Home = () => {
 
     const executeDelete = async (entry: CalendarEntry, scope: 'single' | 'group') => {
         const result = await deleteFinancialRecord(entry.id, scope);
+
+        // Haptic feedback for deletion
+        deleteRecord();
+
         await Promise.all([
             loadMonthlyRecords({ force: true }),
             loadGlobalGamification({ force: true }),
@@ -1011,16 +1099,16 @@ const Home = () => {
 
                         <View className="mt-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/25 p-4">
                             <AppText className="text-[11px] text-primary font-extrabold uppercase mb-1">Próxima ação recomendada</AppText>
-                            <AppText className="text-slate-900 dark:text-slate-100 text-[15px] font-extrabold">{localNextBestAction.title}</AppText>
-                            <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1 leading-5">{localNextBestAction.description}</AppText>
+                            <AppText className="text-slate-900 dark:text-slate-100 text-[15px] font-extrabold">{displayNextBestAction.title}</AppText>
+                            <AppText className="text-slate-600 dark:text-slate-200 text-xs mt-1 leading-5">{displayNextBestAction.description}</AppText>
                             <TouchableOpacity
                                 className="mt-3 px-3 rounded-full bg-primary/10 border border-primary/20 items-center justify-center self-start"
                                 style={{ minHeight: compactPillHeight, height: compactPillHeight }}
-                                onPress={localNextBestAction.onPress}
+                                onPress={displayNextBestAction.onPress}
                                 accessibilityRole="button"
-                                accessibilityLabel={localNextBestAction.cta}
+                                accessibilityLabel={displayNextBestAction.cta}
                             >
-                                <AppText className="text-primary text-xs font-bold">{localNextBestAction.cta}</AppText>
+                                <AppText className="text-primary text-xs font-bold">{displayNextBestAction.cta}</AppText>
                             </TouchableOpacity>
                         </View>
 
@@ -1213,7 +1301,7 @@ const Home = () => {
                                                         numberOfLines={textClampLines('list')}
                                                         ellipsizeMode="tail"
                                                     >
-                                                        {item.subtitle} • {formatDateBRFromISO(item.date)}
+                                                        {item.subtitle}{item.userName && item.userName !== user?.name ? ` · por ${item.userName}` : ''} • {formatDateBRFromISO(item.date)}
                                                     </AppText>
                                                 </View>
                                             </View>
@@ -1375,9 +1463,8 @@ const Home = () => {
                 </View>
             </Modal>
 
-            {showDayDetails ? (
-                <View className="absolute inset-0 z-[120]">
-                    <Pressable className="absolute inset-0 bg-black/20" onPress={closeOverlay} />
+            <AppOverlay visible={showDayDetails} backdropClassName="bg-black/20" onBackdropPress={closeOverlay}>
+                {showDayDetails ? (
                     <View
                         className="absolute left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3 max-h-[70%]"
                         style={{ bottom: overlayBottomInset }}
@@ -1405,6 +1492,11 @@ const Home = () => {
                                         </AppText>
                                     </View>
                                     <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">{item.subtitle}</AppText>
+                                    {item.userName && item.userName !== user?.name && (
+                                        <AppText className="text-slate-400 dark:text-slate-500 text-[10px] mt-0.5">
+                                            por {item.userName}
+                                        </AppText>
+                                    )}
                                     <View className="flex-row items-center justify-between mt-2">
                                         <AppText className="text-slate-500 dark:text-slate-200 text-xs">{item.reminder}</AppText>
                                         <AppText className="text-slate-900 dark:text-slate-100 font-bold">{item.value}</AppText>
@@ -1426,12 +1518,11 @@ const Home = () => {
                             ))
                         )}
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {showConfirm ? (
-                <View className="absolute inset-0 z-[60]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={() => !actionLoading && setConfirmState(null)} />
+            <AppOverlay visible={showConfirm} backdropClassName="bg-black/30" onBackdropPress={() => !actionLoading && setConfirmState(null)}>
+                {showConfirm ? (
                     <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">{confirmState?.title}</AppText>
                         <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2 mb-4">{confirmState?.message}</AppText>
@@ -1452,12 +1543,11 @@ const Home = () => {
                             className="h-11"
                         />
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {showXpPopup ? (
-                <View className="absolute inset-0 z-[62]">
-                    <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
+            <AppOverlay visible={showXpPopup} backdropClassName="bg-black/35" onBackdropPress={() => setXpPopup(null)}>
+                {showXpPopup ? (
                     <View className="absolute left-5 right-5 top-[24%] bg-white dark:bg-[#121212] rounded-3xl border border-orange-100 dark:border-slate-700 p-5">
                         <View className="items-center">
                             <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border border-primary/20 mb-3">
@@ -1485,12 +1575,11 @@ const Home = () => {
                             <Button title="Continuar" onPress={() => setXpPopup(null)} className="h-12 mt-4 w-full" />
                         </View>
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {showPeriodSelector ? (
-                <View className="absolute inset-0 z-[65]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={closePeriodPicker} />
+            <AppOverlay visible={showPeriodSelector} backdropClassName="bg-black/30" onBackdropPress={closePeriodPicker}>
+                {showPeriodSelector ? (
                     <View className="absolute left-4 right-4 top-[24%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                         <View className="flex-row items-center justify-between mb-3">
                             <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Navegar por período</AppText>
@@ -1573,24 +1662,25 @@ const Home = () => {
                             />
                         )}
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {feedback ? (
-                <View className="absolute top-16 left-4 right-4 z-[70]">
-                    <View className={`rounded-xl border px-4 py-3 ${feedback.kind === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
-                        <AppText className={`font-bold text-sm ${feedback.kind === 'success' ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>
-                            {feedback.title}
-                        </AppText>
-                        <AppText className={`text-xs mt-1 ${feedback.kind === 'success' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-                            {feedback.message}
-                        </AppText>
-                    </View>
-                </View>
-            ) : null}
+            <AppToast
+                visible={!!feedback}
+                kind={feedback?.kind ?? 'success'}
+                title={feedback?.title}
+                message={feedback?.message}
+                position="top"
+                onRequestClose={() => setFeedback(null)}
+            />
 
-            {undoState ? (
-                <View pointerEvents="box-none" className="absolute left-4 right-4 z-[72]" style={{ bottom: overlayBottomInset }}>
+            <AppToast
+                visible={!!undoState}
+                position="bottom"
+                bottomInset={overlayBottomInset}
+                onRequestClose={() => setUndoState(null)}
+            >
+                {undoState ? (
                     <View className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-4 py-3 flex-row items-center justify-between">
                         <View className="flex-1 pr-3">
                             <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">
@@ -1608,8 +1698,8 @@ const Home = () => {
                             <AppText className="text-white text-xs font-bold">{undoLoading ? '...' : 'Desfazer'}</AppText>
                         </TouchableOpacity>
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppToast>
         </>
     );
 };

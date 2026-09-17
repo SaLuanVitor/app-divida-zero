@@ -4,11 +4,14 @@ require "securerandom"
 module Api
   module V1
     class AuthController < ApplicationController
-      before_action :authenticate_access_token!, only: [:me, :update_profile, :change_password]
+      include Auditable
+      before_action :authenticate_access_token!, only: [:me, :update_profile, :change_password, :update_email_notifications, :update_wa_notifications, :send_phone_code, :verify_phone]
 
       def register
         user = User.new(register_params)
         user.save!
+
+        WelcomeMailer.welcome(user).deliver_later
 
         render_auth_payload(user, status: :created)
       end
@@ -18,19 +21,37 @@ module Api
         password = params.require(:password)
 
         unless user&.authenticate(password)
+          # Wrong password: check if locked, then increment failed count
+          if user&.locked?
+            minutes = ((user.locked_until - Time.current) / 60).ceil
+            return render json: { error: "Conta bloqueada. Tente novamente em #{minutes} minutos." }, status: :forbidden
+          end
+          user&.increment_failed_login!
           return render json: { error: "Usuário ou senha inválidos." }, status: :unauthorized
         end
+
+        # Correct password: reset any lockout/failed attempts
+        user.reset_failed_login!
+
         unless user.active?
           return render json: { error: "Conta inativa. Entre em contato com o administrador." }, status: :forbidden
         end
 
         user.update!(last_login_at: Time.current)
 
+        audit_log!("login", resource: user, metadata: { ip: request.remote_ip })
+
         render_auth_payload(user)
       end
 
       def refresh
         refresh_token = params[:refresh_token].presence || bearer_token
+
+        # Check if refresh token is blacklisted
+        if TokenBlacklist.revoked?(refresh_token)
+          return render json: { error: "Refresh token revogado. Faça login novamente." }, status: :unauthorized
+        end
+
         payload = JsonWebToken.decode(refresh_token, expected_type: "refresh")
         user = User.find(payload["sub"])
         unless user.active?
@@ -42,6 +63,27 @@ module Api
         render json: { error: "Refresh token inválido." }, status: :unauthorized
       end
 
+      def logout
+        # Allow logout even with revoked token (to clean up refresh token)
+        # But require access token to be present in header
+        access_token = request.headers["Authorization"].to_s.split(" ").last
+        return render json: { error: "Não autorizado." }, status: :unauthorized if access_token.blank?
+
+        refresh_token = params[:refresh_token].presence
+
+        if access_token.present?
+          TokenBlacklist.add!(access_token)
+        end
+
+        if refresh_token.present?
+          TokenBlacklist.add!(refresh_token)
+        end
+
+        audit_log!("logout", metadata: { ip: request.remote_ip })
+
+        render json: { message: "Logout realizado com sucesso." }, status: :ok
+      end
+
       def forgot_password
         user = User.find_by(email: params.require(:email).to_s.strip.downcase)
 
@@ -51,6 +93,8 @@ module Api
             reset_password_token_digest: Digest::SHA256.hexdigest(raw_token),
             reset_password_sent_at: Time.current
           )
+
+          PasswordResetMailer.reset_email(user, raw_token).deliver_later
 
           response = { message: "Se o usuário existir, as instruções foram enviadas." }
           response[:dev_reset_token] = raw_token if Rails.env.development? || Rails.env.test?
@@ -87,7 +131,11 @@ module Api
       end
 
       def me
-        render json: { user: @current_user.public_payload }, status: :ok
+        render json: {
+          user: @current_user.public_payload,
+          email_preferences: @current_user.email_preferences_with_defaults,
+          wa_preferences: @current_user.wa_preferences_with_defaults
+        }, status: :ok
       end
 
       def update_profile
@@ -103,6 +151,60 @@ module Api
           message: "Dados do usuário atualizados com sucesso.",
           user: @current_user.public_payload
         }, status: :ok
+      end
+
+      def update_email_notifications
+        @current_user.update_email_preferences!(params[:email_notification_preferences])
+
+        render json: {
+          message: "Preferências de e-mail atualizadas.",
+          email_preferences: @current_user.email_preferences_with_defaults
+        }, status: :ok
+      end
+
+      def update_wa_notifications
+        @current_user.update_wa_preferences!(params[:wa_notification_preferences])
+
+        render json: {
+          message: "Preferências de WhatsApp atualizadas.",
+          wa_preferences: @current_user.wa_preferences_with_defaults
+        }, status: :ok
+      end
+
+      def send_phone_code
+        phone = params[:phone].to_s.strip
+
+        if phone.blank?
+          return render json: { error: "Telefone é obrigatório." }, status: :unprocessable_entity
+        end
+
+        result = WhatsappVerificationService.send_code(@current_user, phone: phone)
+
+        if result[:success]
+          render json: { message: result[:message] }, status: :ok
+        else
+          render json: { error: result[:error] }, status: :unprocessable_entity
+        end
+      end
+
+      def verify_phone
+        phone = params[:phone].to_s.strip
+        code = params[:code].to_s.strip
+
+        if phone.blank? || code.blank?
+          return render json: { error: "Telefone e código são obrigatórios." }, status: :unprocessable_entity
+        end
+
+        result = WhatsappVerificationService.verify_code(@current_user, phone: phone, code: code)
+
+        if result[:success]
+          render json: {
+            message: result[:message],
+            wa_preferences: @current_user.wa_preferences_with_defaults
+          }, status: :ok
+        else
+          render json: { error: result[:error] }, status: :unprocessable_entity
+        end
       end
 
       def change_password
@@ -121,6 +223,8 @@ module Api
         @current_user.password_confirmation = new_password
         @current_user.force_password_change = false
         @current_user.save!
+
+        audit_log!("password_change", resource: @current_user)
 
         render json: { message: "Senha alterada com sucesso." }, status: :ok
       end

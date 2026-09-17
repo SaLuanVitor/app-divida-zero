@@ -1,0 +1,22 @@
+# Secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# IDE/Editor local
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+backend/api_divida_zero/tmp/
+backend/api_divida_zero/log/
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+*.apk
+*.keystore
+*.jks

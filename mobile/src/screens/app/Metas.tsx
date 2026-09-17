@@ -1,15 +1,18 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import AppTextInput from '../../components/AppTextInput';
-import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2, ChevronRight } from 'lucide-react-native';
+import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2, ChevronRight, Globe, Users } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import AppOverlay from '../../components/AppOverlay';
+import AppToast from '../../components/AppToast';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import ScreenHelpButton from '../../components/ScreenHelpButton';
 import { useBottomInset } from '../../context/BottomInsetContext';
+import { useHaptics } from '../../hooks/useHaptics';
 import {
     createFinancialGoalContribution,
     deleteFinancialGoal,
@@ -21,6 +24,7 @@ import {
     FinancialGoalContributionKind,
     FinancialGoalDto,
     FinancialGoalType,
+    ContributorInfo,
 } from '../../types/financialGoal';
 
 type FeedbackState = {
@@ -55,6 +59,7 @@ const Metas = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { overlayBottomInset } = useBottomInset();
+    const { success, error, warning, deleteRecord } = useHaptics();
 
     const [goals, setGoals] = useState<FinancialGoalDto[]>([]);
     const [loading, setLoading] = useState(false);
@@ -155,6 +160,8 @@ const Metas = () => {
         return { active, completed, avgProgress };
     }, [goals]);
 
+    const sharedGoals = useMemo(() => goals.filter((g) => g.shared), [goals]);
+    const personalGoals = useMemo(() => goals.filter((g) => !g.shared), [goals]);
     const goalsToRender = useMemo(() => goals.slice(0, visibleGoalsCount), [goals, visibleGoalsCount]);
     const hasMoreGoals = visibleGoalsCount < goals.length;
 
@@ -202,6 +209,7 @@ const Metas = () => {
         try {
             await deleteFinancialGoal(goalPendingDelete.id);
             await loadGoals();
+            deleteRecord(); // Haptic feedback for deletion
             pushFeedback('success', 'Meta removida', 'A meta foi removida com sucesso.');
             setGoalPendingDelete(null);
         } catch (error: any) {
@@ -256,6 +264,14 @@ const Metas = () => {
             const monthlyHistoryHint = result.linked_record_id
                 ? ' O registro já foi lançado no histórico mensal.'
                 : '';
+
+            // Haptic feedback based on contribution kind
+            if (contributionKind === 'deposit') {
+                success(); // positive haptic for deposit
+            } else {
+                warning(); // different haptic for withdrawal
+            }
+
             pushFeedback(
                 'success',
                 contributionKind === 'deposit' ? 'Valor adicionado' : 'Valor retirado',
@@ -273,6 +289,143 @@ const Metas = () => {
         } finally {
             setContributionLoading(false);
         }
+    };
+
+    const renderGoalCard = (goal: FinancialGoalDto) => {
+        const typeOption = goalTypeOptions.find((item) => item.value === goal.goal_type);
+        const Icon = typeOption?.icon || Target;
+
+        return (
+            <Card key={goal.id} className={`mb-4 ${goal.shared ? 'border-primary/20' : ''}`} noPadding>
+                <TouchableOpacity activeOpacity={0.88} onPress={() => openEditScreen(goal)}>
+                    <View className="p-4">
+                        <View className="flex-row items-start justify-between mb-3">
+                            <View className="flex-1 flex-row items-start">
+                                <View className={`w-11 h-11 rounded-xl items-center justify-center mr-3 ${goal.shared ? 'bg-green-100 dark:bg-green-900/30' : 'bg-primary/10'}`}>
+                                    {goal.shared ? <Globe size={20} color="#16a34a" /> : <Icon size={20} color="#f48c25" />}
+                                </View>
+                                <View className="flex-1 pt-0.5 pr-1">
+                                    <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">{goal.title}</AppText>
+                                    <AppText className="text-slate-500 dark:text-slate-200 text-xs">
+                                        {goal.shared ? 'Compartilhada' : typeOption?.label || 'Meta'} - {goal.status === 'completed' ? 'Concluída' : 'Em andamento'}
+                                    </AppText>
+                                </View>
+                            </View>
+                            <ChevronRight size={16} color="#94a3b8" />
+                        </View>
+
+                        <View className="absolute right-4 top-4 z-10">
+                            <TouchableOpacity
+                                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800"
+                                onPress={(event) => {
+                                    event.stopPropagation();
+                                    requestDeleteGoal(goal);
+                                }}
+                            >
+                                <Trash2 size={14} color="#ef4444" />
+                            </TouchableOpacity>
+                        </View>
+
+                        {goal.description ? (
+                            <AppText className="text-slate-600 dark:text-slate-200 text-sm mb-3">{goal.description}</AppText>
+                        ) : null}
+
+                        <View className="flex-row justify-between mb-2">
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs font-bold uppercase">Progresso</AppText>
+                            <AppText className="text-primary text-xs font-bold">{goal.progress_pct}%</AppText>
+                        </View>
+
+                        <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
+                            <View className="h-full bg-primary rounded-full" style={{ width: `${goal.progress_pct}%` }} />
+                        </View>
+
+                        <View className="flex-row justify-between items-end mb-3">
+                            <View>
+                                <AppText className="text-slate-400 dark:text-slate-200 text-xs">Já alcançado</AppText>
+                                <AppText className="text-slate-900 dark:text-slate-100 font-bold">{formatCurrency(goal.current_amount)}</AppText>
+                            </View>
+                            <View className="items-end">
+                                <AppText className="text-slate-400 dark:text-slate-200 text-xs">Meta</AppText>
+                                <AppText className="text-slate-900 dark:text-slate-100 font-bold">{formatCurrency(goal.target_amount)}</AppText>
+                            </View>
+                        </View>
+
+                        {goal.shared && goal.contributors && goal.contributors.length > 0 ? (
+                            <View className="flex-row items-center gap-1 mb-3">
+                                <Users size={12} color="#94a3b8" />
+                                {goal.contributors.map((c, idx) => (
+                                    <View key={c.id} className="flex-row items-center">
+                                        <View className="w-6 h-6 rounded-full bg-primary/20 items-center justify-center border border-white dark:border-slate-800">
+                                            <AppText className="text-primary text-[10px] font-bold">
+                                                {c.name.charAt(0).toUpperCase()}
+                                            </AppText>
+                                        </View>
+                                        {idx < goal.contributors!.length - 1 ? (
+                                            <View className="w-3 h-0.5 bg-slate-300 dark:bg-slate-600 mx-0.5" />
+                                        ) : null}
+                                    </View>
+                                ))}
+                                <AppText className="text-slate-500 dark:text-slate-200 text-xs ml-1">
+                                    {goal.contributors.length > 1 ? 'colaboraram' : 'colaborou'}
+                                </AppText>
+                            </View>
+                        ) : null}
+
+                        <View className="flex-row gap-2 mb-3">
+                            <TouchableOpacity
+                                className={`flex-1 rounded-xl border px-3 py-2 items-center ${
+                                    goal.can_contribute !== false
+                                        ? 'border-primary/25 bg-primary/10'
+                                        : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
+                                }`}
+                                onPress={(event) => {
+                                    event.stopPropagation();
+                                    if (goal.can_contribute !== false) openContributionModal(goal, 'deposit');
+                                }}
+                            >
+                                <AppText className={`text-xs font-bold ${goal.can_contribute !== false ? 'text-primary' : 'text-slate-400'}`}>
+                                    Adicionar valor
+                                </AppText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className={`flex-1 rounded-xl border px-3 py-2 items-center ${
+                                    goal.can_contribute !== false
+                                        ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212]'
+                                        : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
+                                }`}
+                                onPress={(event) => {
+                                    event.stopPropagation();
+                                    if (goal.can_contribute !== false) openContributionModal(goal, 'withdraw');
+                                }}
+                            >
+                                <AppText className={`text-xs font-bold ${goal.can_contribute !== false ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
+                                    Retirar valor
+                                </AppText>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View className="bg-slate-50 dark:bg-[#1a1a1a] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                            <AppText className="text-slate-600 dark:text-slate-200 text-sm">
+                                {goal.status === 'completed'
+                                    ? 'Meta concluída com sucesso.'
+                                    : `Faltam ${formatCurrency(goal.remaining_amount)} para concluir.`}
+                            </AppText>
+                            <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
+                                {`${contributionsByGoal[goal.id]?.length ?? 0} aporte(s) registrado(s) nesta meta`}
+                            </AppText>
+                            <View className="flex-row items-center gap-2 mt-2">
+                                <CalendarDays size={14} color="#94a3b8" />
+                                <AppText className="text-slate-500 dark:text-slate-200 text-xs">Início: {formatDateBR(goal.start_date)}</AppText>
+                            </View>
+                            <View className="flex-row items-center gap-2 mt-2">
+                                <CalendarDays size={14} color="#94a3b8" />
+                                <AppText className="text-slate-500 dark:text-slate-200 text-xs">{formatDateBR(goal.target_date)}</AppText>
+                            </View>
+                        </View>
+                    </View>
+                </TouchableOpacity>
+            </Card>
+        );
     };
 
     return (
@@ -373,109 +526,24 @@ const Metas = () => {
                     </Card>
                 ) : null}
 
-                {goalsToRender.map((goal) => {
-                    const typeOption = goalTypeOptions.find((item) => item.value === goal.goal_type);
-                    const Icon = typeOption?.icon || Target;
+                {sharedGoals.length > 0 ? (
+                    <View className="mb-2">
+                        <View className="flex-row items-center gap-2 mb-3 mt-2">
+                            <Globe size={16} color="#f48c25" />
+                            <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">🌍 Família</AppText>
+                        </View>
+                        {sharedGoals.slice(0, visibleGoalsCount).map((goal) => renderGoalCard(goal))}
+                    </View>
+                ) : null}
 
-                    return (
-                        <Card key={goal.id} className="mb-4" noPadding>
-                            <TouchableOpacity activeOpacity={0.88} onPress={() => openEditScreen(goal)}>
-                                <View className="p-4">
-                                    <View className="flex-row items-start justify-between mb-3">
-                                        <View className="flex-1 flex-row items-start">
-                                            <View className="w-11 h-11 rounded-xl bg-primary/10 items-center justify-center mr-3">
-                                                <Icon size={20} color="#f48c25" />
-                                            </View>
-                                            <View className="flex-1 pt-0.5 pr-1">
-                                                <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">{goal.title}</AppText>
-                                                <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-                                                    {typeOption?.label || 'Meta'} - {goal.status === 'completed' ? 'Concluída' : 'Em andamento'}
-                                                </AppText>
-                                            </View>
-                                        </View>
-                                        <ChevronRight size={16} color="#94a3b8" />
-                                    </View>
-
-                                    <View className="absolute right-4 top-4 z-10">
-                                        <TouchableOpacity
-                                            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800"
-                                            onPress={(event) => {
-                                                event.stopPropagation();
-                                                requestDeleteGoal(goal);
-                                            }}
-                                        >
-                                            <Trash2 size={14} color="#ef4444" />
-                                        </TouchableOpacity>
-                                    </View>
-
-                                    {goal.description ? (
-                                        <AppText className="text-slate-600 dark:text-slate-200 text-sm mb-3">{goal.description}</AppText>
-                                    ) : null}
-
-                                    <View className="flex-row justify-between mb-2">
-                                        <AppText className="text-slate-500 dark:text-slate-200 text-xs font-bold uppercase">Progresso</AppText>
-                                        <AppText className="text-primary text-xs font-bold">{goal.progress_pct}%</AppText>
-                                    </View>
-
-                                    <View className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
-                                        <View className="h-full bg-primary rounded-full" style={{ width: `${goal.progress_pct}%` }} />
-                                    </View>
-
-                                    <View className="flex-row justify-between items-end mb-3">
-                                        <View>
-                                            <AppText className="text-slate-400 dark:text-slate-200 text-xs">Já alcançado</AppText>
-                                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">{formatCurrency(goal.current_amount)}</AppText>
-                                        </View>
-                                        <View className="items-end">
-                                            <AppText className="text-slate-400 dark:text-slate-200 text-xs">Meta</AppText>
-                                            <AppText className="text-slate-900 dark:text-slate-100 font-bold">{formatCurrency(goal.target_amount)}</AppText>
-                                        </View>
-                                    </View>
-
-                                    <View className="flex-row gap-2 mb-3">
-                                        <TouchableOpacity
-                                            className="flex-1 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 items-center"
-                                            onPress={(event) => {
-                                                event.stopPropagation();
-                                                openContributionModal(goal, 'deposit');
-                                            }}
-                                        >
-                                            <AppText className="text-primary text-xs font-bold">Adicionar valor</AppText>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121212] px-3 py-2 items-center"
-                                            onPress={(event) => {
-                                                event.stopPropagation();
-                                                openContributionModal(goal, 'withdraw');
-                                            }}
-                                        >
-                                            <AppText className="text-slate-700 dark:text-slate-200 text-xs font-bold">Retirar valor</AppText>
-                                        </TouchableOpacity>
-                                    </View>
-
-                                    <View className="bg-slate-50 dark:bg-[#1a1a1a] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
-                                        <AppText className="text-slate-600 dark:text-slate-200 text-sm">
-                                            {goal.status === 'completed'
-                                                ? 'Meta concluída com sucesso.'
-                                                : `Faltam ${formatCurrency(goal.remaining_amount)} para concluir.`}
-                                        </AppText>
-                                        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
-                                            {`${contributionsByGoal[goal.id]?.length ?? 0} aporte(s) registrado(s) nesta meta`}
-                                        </AppText>
-                                        <View className="flex-row items-center gap-2 mt-2">
-                                            <CalendarDays size={14} color="#94a3b8" />
-                                            <AppText className="text-slate-500 dark:text-slate-200 text-xs">Início: {formatDateBR(goal.start_date)}</AppText>
-                                        </View>
-                                        <View className="flex-row items-center gap-2 mt-2">
-                                            <CalendarDays size={14} color="#94a3b8" />
-                                            <AppText className="text-slate-500 dark:text-slate-200 text-xs">{formatDateBR(goal.target_date)}</AppText>
-                                        </View>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        </Card>
-                    );
-                })}
+                {personalGoals.length > 0 ? (
+                    <View className="mb-2">
+                        <View className="flex-row items-center gap-2 mb-3 mt-2">
+                            <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">📋 Suas metas</AppText>
+                        </View>
+                        {personalGoals.slice(0, Math.max(0, visibleGoalsCount - sharedGoals.length)).map((goal) => renderGoalCard(goal))}
+                    </View>
+                ) : null}
 
                 {!loading && hasMoreGoals ? (
                     <View className="items-center pb-2">
@@ -487,40 +555,18 @@ const Metas = () => {
                 ) : null}
             </Layout>
 
-            {feedback ? (
-                <View pointerEvents="box-none" className="absolute left-4 right-4 z-[70]" style={{ bottom: overlayBottomInset }}>
-                    <View
-                        className={`rounded-xl border px-4 py-3 ${
-                            feedback.kind === 'success'
-                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                        }`}
-                    >
-                        <AppText
-                            className={`font-bold text-sm ${
-                                feedback.kind === 'success'
-                                    ? 'text-emerald-800 dark:text-emerald-300'
-                                    : 'text-red-800 dark:text-red-300'
-                            }`}
-                        >
-                            {feedback.title}
-                        </AppText>
-                        <AppText
-                            className={`text-xs mt-1 ${
-                                feedback.kind === 'success'
-                                    ? 'text-emerald-700 dark:text-emerald-300'
-                                    : 'text-red-700 dark:text-red-300'
-                            }`}
-                        >
-                            {feedback.message}
-                        </AppText>
-                    </View>
-                </View>
-            ) : null}
+            <AppToast
+                visible={!!feedback}
+                kind={feedback?.kind ?? 'success'}
+                title={feedback?.title}
+                message={feedback?.message}
+                position="bottom"
+                bottomInset={overlayBottomInset}
+                onRequestClose={() => setFeedback(null)}
+            />
 
-            {goalPendingContribution ? (
-                <View className="absolute inset-0 z-[66]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={() => closeContributionModal()} />
+            <AppOverlay visible={!!goalPendingContribution} backdropClassName="bg-black/30" onBackdropPress={() => closeContributionModal()}>
+                {goalPendingContribution ? (
                     <View className="absolute left-4 right-4 top-[26%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">
                             {contributionKind === 'deposit' ? 'Adicionar valor' : 'Retirar valor'}
@@ -587,12 +633,11 @@ const Metas = () => {
                             onPress={() => closeContributionModal()}
                         />
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
 
-            {goalPendingDelete ? (
-                <View className="absolute inset-0 z-[65]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={() => !deleteLoading && setGoalPendingDelete(null)} />
+            <AppOverlay visible={!!goalPendingDelete} backdropClassName="bg-black/30" onBackdropPress={() => !deleteLoading && setGoalPendingDelete(null)}>
+                {goalPendingDelete ? (
                     <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Excluir meta</AppText>
                         <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2 mb-4">
@@ -614,8 +659,8 @@ const Metas = () => {
                             onPress={() => setGoalPendingDelete(null)}
                         />
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
         </>
     );
 };

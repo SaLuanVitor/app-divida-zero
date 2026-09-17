@@ -5,13 +5,20 @@ const readScreen = (name: string) =>
   fs.readFileSync(path.resolve(__dirname, '..', `${name}.tsx`), 'utf-8');
 
 describe('phase 1 surface without AI', () => {
-  it('keeps AI service out of the main app screens', () => {
-    const files = ['Home', 'Relatorios', 'Lancamentos', 'AppSettings', 'NotificationSettings'];
+  it('keeps most AI services out of the main app screens during gradual rollout', () => {
+    const filesWithoutAi = ['Relatorios', 'Lancamentos', 'AppSettings', 'NotificationSettings'];
 
-    files.forEach((file) => {
+    filesWithoutAi.forEach((file) => {
       const source = readScreen(file);
-      expect(source).not.toContain("services/ai");
+      expect(source).not.toContain('services/ai');
     });
+
+    const home = readScreen('Home');
+    expect(home).toContain('getDailyMessageToday');
+    expect(home).toContain('getAiNextAction');
+    expect(home).not.toContain('getAiAlerts');
+    expect(home).not.toContain('getAiReportsBriefing');
+    expect(home).not.toContain('getAiCategorizeRecord');
   });
 
   it('does not show AI labels in user-facing main screens', () => {

@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Pressable, Keyboard, FlatList, useWindowDimensions } from 'react-native';
+import { View, TouchableOpacity, Keyboard, FlatList, useWindowDimensions } from 'react-native';
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Landmark, PiggyBank, Target, Trophy, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Button from '../../components/Button';
+import AppOverlay from '../../components/AppOverlay';
+import AppToast from '../../components/AppToast';
 import { useThemeMode } from '../../context/ThemeContext';
 import { createFinancialGoal, updateFinancialGoal } from '../../services/financialGoals';
 import { CreateFinancialGoalPayload, FinancialGoalDto, FinancialGoalType } from '../../types/financialGoal';
@@ -13,9 +15,11 @@ import { normalizeGamificationSummary, XpFeedbackDto } from '../../types/gamific
 import { getAppPreferences, updateAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
+import { getMyHousehold } from '../../services/household';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
 import { controlHeight, threeColumnItemWidth } from '../../utils/responsive';
+import { Household } from '../../types/household';
 
 type GoalDateField = 'start' | 'target';
 type FeedbackState = {
@@ -91,6 +95,9 @@ const MetaForm = () => {
     const [targetDate, setTargetDate] = useState<Date | null>(null);
     const [goalType, setGoalType] = useState<FinancialGoalType>('save');
     const [activeDateField, setActiveDateField] = useState<GoalDateField>('start');
+    const [shareWithFamily, setShareWithFamily] = useState(false);
+    const [household, setHousehold] = useState<Household | null>(null);
+    const [householdLoading, setHouseholdLoading] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [pickerMonth, setPickerMonth] = useState(() => {
         const baseDate = goal?.start_date ? new Date(`${goal.start_date}T00:00:00`) : new Date();
@@ -141,9 +148,22 @@ const MetaForm = () => {
     useEffect(() => {
         if (formMode === 'create') {
             applyGoalState(undefined);
-            return;
+        } else {
+            applyGoalState(goal);
         }
-        applyGoalState(goal);
+
+        if (formMode === 'create') {
+            setHouseholdLoading(true);
+            getMyHousehold()
+                .then((result) => {
+                    if (result.household) {
+                        setHousehold(result.household);
+                        setShareWithFamily(false);
+                    }
+                })
+                .catch(() => {})
+                .finally(() => setHouseholdLoading(false));
+        }
     }, [applyGoalState, formMode, formNonce, goal?.id]);
 
     const goBackToGoals = () => {
@@ -243,6 +263,7 @@ const MetaForm = () => {
             start_date: formatDateISO(startDate),
             target_date: targetDate ? formatDateISO(targetDate) : undefined,
             goal_type: goalType,
+            household_id: shareWithFamily && household ? household.id : undefined,
         };
 
         setSubmitting(true);
@@ -393,6 +414,44 @@ const MetaForm = () => {
                         onChangeText={setDescription}
                     />
 
+                    {household && formMode === 'create' ? (
+                        <TouchableOpacity
+                            className={`flex-row items-center justify-between rounded-xl border px-4 py-3 mb-4 ${
+                                shareWithFamily
+                                    ? 'bg-primary/10 border-primary/30'
+                                    : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'
+                            }`}
+                            onPress={() => setShareWithFamily(!shareWithFamily)}
+                            accessibilityRole="switch"
+                            accessibilityState={{ checked: shareWithFamily }}
+                        >
+                            <View className="flex-1">
+                                <AppText className="text-slate-900 dark:text-slate-100 font-bold text-sm">
+                                    Compartilhar com a família
+                                </AppText>
+                                <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">
+                                    {household.members
+                                        .filter((m) => m.name)
+                                        .slice(0, 3)
+                                        .map((m) => m.name.split(' ')[0])
+                                        .join(', ')}
+                                    {household.members.length > 3 ? ' e mais' : ''}
+                                </AppText>
+                            </View>
+                            <View
+                                className={`w-12 h-7 rounded-full items-center justify-center ${
+                                    shareWithFamily ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
+                                }`}
+                            >
+                                <View
+                                    className={`w-5 h-5 rounded-full bg-white shadow-sm ${
+                                        shareWithFamily ? 'self-end mr-0.5' : 'self-start ml-0.5'
+                                    }`}
+                                />
+                            </View>
+                        </TouchableOpacity>
+                    ) : null}
+
                     <Button
                         title={submitting ? 'Salvando...' : goal ? 'Salvar alterações' : 'Salvar meta'}
                         onPress={handleSubmit}
@@ -403,9 +462,9 @@ const MetaForm = () => {
                 </View>
             </Layout>
 
-            {showDatePicker ? (
-                <View className="absolute inset-0 z-[120]">
-                    <Pressable className="absolute inset-0 bg-black/20" onPress={closeDatePicker} />
+            <AppOverlay visible={showDatePicker} backdropClassName="bg-black/20" onBackdropPress={closeDatePicker}>
+                {showDatePicker ? (
+                    <>
                     <View
                         className="absolute left-4 right-4 bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-3"
                         style={{ bottom: overlayBottomInset }}
@@ -498,12 +557,9 @@ const MetaForm = () => {
                             <Button title="Fechar" onPress={closeDatePicker} className="flex-1" />
                         </View>
                     </View>
-                </View>
-            ) : null}
 
-            {showDatePicker && showPeriodPicker ? (
-                <View className="absolute inset-0 z-[60]">
-                    <Pressable className="absolute inset-0 bg-black/30" onPress={closePeriodPicker} />
+                    <AppOverlay visible={showPeriodPicker} backdropClassName="bg-black/30" onBackdropPress={closePeriodPicker}>
+                        {showPeriodPicker ? (
                     <View className="absolute left-4 right-4 top-[24%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                         <View className="flex-row items-center justify-between mb-3">
                             <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">Selecionar período</AppText>
@@ -586,43 +642,24 @@ const MetaForm = () => {
                             />
                         )}
                     </View>
-                </View>
-            ) : null}
+                        ) : null}
+                    </AppOverlay>
+                    </>
+                ) : null}
+            </AppOverlay>
 
-            {feedback ? (
-                <View pointerEvents="box-none" className="absolute left-4 right-4 z-[70]" style={{ bottom: overlayBottomInset }}>
-                    <View
-                        className={`rounded-xl border px-4 py-3 ${
-                            feedback.kind === 'success'
-                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                        }`}
-                    >
-                        <AppText
-                            className={`font-bold text-sm ${
-                                feedback.kind === 'success'
-                                    ? 'text-emerald-800 dark:text-emerald-300'
-                                    : 'text-red-800 dark:text-red-300'
-                            }`}
-                        >
-                            {feedback.title}
-                        </AppText>
-                        <AppText
-                            className={`text-xs mt-1 ${
-                                feedback.kind === 'success'
-                                    ? 'text-emerald-700 dark:text-emerald-300'
-                                    : 'text-red-700 dark:text-red-300'
-                            }`}
-                        >
-                            {feedback.message}
-                        </AppText>
-                    </View>
-                </View>
-            ) : null}
+            <AppToast
+                visible={!!feedback}
+                kind={feedback?.kind ?? 'success'}
+                title={feedback?.title}
+                message={feedback?.message}
+                position="bottom"
+                bottomInset={overlayBottomInset}
+                onRequestClose={() => setFeedback(null)}
+            />
 
-            {xpPopup ? (
-                <View className="absolute inset-0 z-[60]">
-                    <Pressable className="absolute inset-0 bg-black/35" onPress={() => setXpPopup(null)} />
+            <AppOverlay visible={!!xpPopup} backdropClassName="bg-black/35" onBackdropPress={() => setXpPopup(null)}>
+                {xpPopup ? (
                     <View className="absolute left-5 right-5 top-[22%] bg-white dark:bg-[#121212] rounded-3xl border border-orange-100 dark:border-slate-700 p-5">
                         <View className="items-center">
                             <View className="w-24 h-24 rounded-full bg-primary/10 items-center justify-center border border-primary/20 mb-3">
@@ -671,8 +708,8 @@ const MetaForm = () => {
                             />
                         </View>
                     </View>
-                </View>
-            ) : null}
+                ) : null}
+            </AppOverlay>
         </>
     );
 };
