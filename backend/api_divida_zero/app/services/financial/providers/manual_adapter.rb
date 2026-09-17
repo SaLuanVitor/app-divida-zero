@@ -7,7 +7,7 @@ module FinancialProviders
       return [] unless file_path && File.exist?(file_path)
 
       parser = format == 'csv' ? Bank::CsvParser.new : Bank::OfxParser.new
-      raw = safe_parse(parser, file_path)
+      raw = parser.parse(file_path)
 
       raw.map do |txn|
         {
@@ -58,15 +58,6 @@ module FinancialProviders
 
     def ping
       true
-    end
-
-    private
-
-    def safe_parse(parser, file_path)
-      parser.parse(file_path)
-    rescue StandardError => e
-      Rails.logger.error("Parser error (#{parser.class}): #{e.message}")
-      []
     end
   end
 end
