@@ -3,12 +3,11 @@ module Api
     module Financial
       class ConnectionsController < ApplicationController
         before_action :authenticate_access_token!
-        before_action :check_open_finance_enabled, only: %i[create show destroy sync]
+        before_action :check_open_finance_enabled, only: %i[create show destroy sync transactions]
 
         def create
           # Validar limites antes de criar conexão
           unless LimitsService.allowed?(current_user, :connections, :create)
-            limit = LimitsService.remaining(current_user, :connections)
             plan_name = current_user.plan&.name&.humanize || 'Free'
 
             return render json: {
@@ -16,7 +15,7 @@ module Api
               message: "Limite de #{LimitsService.usage(current_user)[:connections] + 1} conexões por usuário atingido. Plano: #{plan_name}.",
               limit_exceeded: true,
               resource: 'connections',
-              limit: LimitsService.usage(current_user)[:connections] + limit,
+              limit: LimitsService.usage(current_user)[:connections] + 1,
               used: LimitsService.usage(current_user)[:connections]
             }, status: :forbidden
           end
@@ -100,12 +99,46 @@ module Api
           render json: { message: 'Sincronização iniciada', connection_id: connection.id }, status: :accepted
         end
 
+        def transactions
+          connection = current_user.financial_connections.find(params[:id])
+
+          transactions = connection.imported_transactions
+                                   .pending_or_duplicate
+                                   .order(date: :desc)
+                                   .limit(200)
+
+          grouped = transactions.group_by(&:date).map do |date, items|
+            { date: date, transactions: items.map { |t| serialize_transaction(t) } }
+          end
+
+          render json: {
+            groups: grouped,
+            total: transactions.size
+          }, status: :ok
+        end
+
         private
 
         def check_open_finance_enabled
           unless FeatureFlags.enabled?(:open_finance)
             render json: { error: 'Open Finance desabilitado' }, status: :forbidden
           end
+        end
+
+        def serialize_transaction(txn)
+          {
+            id: txn.id,
+            description: txn.description,
+            amount: txn.amount.to_s,
+            date: txn.date,
+            flow_type: txn.flow_type,
+            suggested_category: txn.suggested_category,
+            ai_confidence: txn.ai_confidence,
+            original_category: txn.original_category,
+            status: txn.status,
+            duplicate_reason: txn.duplicate_reason,
+            duplicate_of_id: txn.duplicate_of_id
+          }
         end
 
         def limits_info(user)

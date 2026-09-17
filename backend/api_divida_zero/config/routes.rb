@@ -71,21 +71,9 @@
       end
 
       namespace :bank do
-        resources :statements, only: [], param: :batch_id do
-          collection do
-            post :upload
-          end
-          member do
-            get :status
-            delete :destroy
-          end
-        end
-        resources :transactions, only: [] do
-          collection do
-            get :pending
-            post :accept
-            post :reject
-          end
+        # DEPRECATED - maintained for mobile app compatibility
+        resources :statements, only: [:create, :destroy, :show], param: :batch_id, controller: 'bank/statements'
+        resources :transactions, only: [:index, :create, :update], controller: 'bank/transactions' do
           member do
             post :merge
           end
@@ -96,6 +84,7 @@
         resources :connections, only: [:create, :show, :destroy] do
           member do
             post :sync
+            get :transactions
           end
         end
       end

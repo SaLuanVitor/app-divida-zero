@@ -22,7 +22,7 @@ class FinancialSyncJob < ApplicationJob
     )
 
     begin
-      if sync_type == :full || connection.financial_accounts.empty?
+      if sync_type == :full || sync_type == :manual_upload || connection.financial_accounts.empty?
         sync_accounts(connection, adapter, sync_record)
       end
 
@@ -46,6 +46,9 @@ class FinancialSyncJob < ApplicationJob
   private
 
   def sync_accounts(connection, adapter, sync_record)
+    # Manual provider doesn't have accounts
+    return [] if connection.manual?
+
     accounts = adapter.accounts(connection)
 
     accounts.each do |acc_data|
@@ -86,7 +89,11 @@ class FinancialSyncJob < ApplicationJob
       transactions = adapter.transactions(connection, params)
       break if transactions.empty?
 
-      normalized = TransactionNormalizer.normalize(transactions, provider: :pluggy)
+      normalized = if connection.manual?
+                     TransactionNormalizer.normalize(transactions, provider: :manual)
+                   else
+                     TransactionNormalizer.normalize(transactions, provider: :pluggy)
+                   end
 
       normalized.each do |txn|
         save_transaction(connection, txn)
@@ -102,7 +109,7 @@ class FinancialSyncJob < ApplicationJob
   end
 
   def save_transaction(connection, txn_data)
-    # Usar fit_id para deduplicação (id do Pluggy)
+    # Usar fit_id para deduplicação (id do Pluggy ou hash manual)
     transaction = connection.imported_transactions.find_or_initialize_by(fit_id: txn_data[:fit_id])
 
     transaction.assign_attributes(
