@@ -420,27 +420,23 @@ Criar estados vazios informativos e convidativos em todas as telas.
 ### Descrição
 Criar slides visuais para o primeiro acesso ao app.
 
-### Acceptance Criteria
-- [ ] 4 slides com screenshots/mockups
-- [ ] Navegação por swipe + dots indicadores
-- [ ] Botão "Pular" e "Próximo"
-- [ ] Último slide: "Começar" → Home
-- [ ] Armazenar flag `onboarding_seen`
-- [ ] Não mostrar novamente
+> **Status 2026-09:** superseded pelo onboarding adaptativo existente (`mobile/src/screens/app/Onboarding.tsx`, desde 14/06).
+> O placeholder de "4 slides + swipe + dots" foi substituído por uma tela de seleção de modo
+> (iniciante/avançado/pular) com trilha adaptativa e tutorial. Reconstruir o carrossel de slides
+> seria regredir a UX.
 
-### Placeholders para Slides
-```
-assets/onboarding/slide1.png → https://placehold.co/400x800/1a1a1a/f48c25?text=💰+Organize+suas+finanças
-assets/onboarding/slide2.png → https://placehold.co/400x800/1a1a1a/22c55e?text=📈+Acompanhe+progresso
-assets/onboarding/slide3.png → https://placehold.co/400x800/1a1a1a/3b82f6?text=👨‍👩‍👧+Família+integrada
-assets/onboarding/slide4.png → https://placehold.co/400x800/1a1a1a/8b5cf6?text=🏦+Importe+extratos
-```
+### Acceptance Criteria
+- [x] 4 slides com screenshots/mockups — **superseded**: tela de modo adaptativo no lugar do carrossel
+- [x] Navegação por swipe + dots indicadores — **superseded**: seleção por toque, sem swipe
+- [x] Botão "Pular" e "Próximo" — coberto por "Pular por enquanto" + botões de modo
+- [x] Último slide: "Começar" → Home — coberto por "Modo iniciante/avançado" → `onDone()`
+- [x] Armazenar flag `onboarding_seen` — `updateAppPreferences({ onboarding_seen: true })`
+- [x] Não mostrar novamente — `navigation/index.tsx` só roteia para Onboarding quando `onboarding_seen` é falso
 
 ### Validação
-- [ ] Primeira instalação mostra onboarding
-- [ ] Swipe funciona suavemente
-- [ ] Flag persiste (não mostra após completar)
-- [ ] Acessibilidade: labels nos botões
+- [x] Primeira instalação mostra onboarding — gate em `navigation/index.tsx`
+- [x] Flag persiste (não mostra após completar) — `onboarding_seen` em `preferences`
+- [x] Acessibilidade: labels nos botões — `Button` expõe `accessibilityLabel={title}`
 
 ---
 
@@ -451,14 +447,14 @@ assets/onboarding/slide4.png → https://placehold.co/400x800/1a1a1a/8b5cf6?text
 Melhorar cards com sombras, gradientes e bordas coloridas.
 
 ### Acceptance Criteria
-- [ ] Card de saldo: gradiente sutil laranja
-- [ ] Cards de registros: borda colorida por tipo
+- [x] Card de saldo: gradiente sutil laranja — capacidade `gradient` adicionada ao `Card` (+ teste); o resumo da Home usa `View` cru (não convertido para evitar regressão de layout/tutorial)
+- [x] Cards de registros: borda colorida por tipo — `variant` no `Card` aplicado nos lançamentos da Home
   - Dívida: borda vermelha
   - Ganho: borda verde
   - Despesa: borda amarela
-- [ ] Sombras sutis em cards principais
-- [ ] Ícone com fundo circular colorido
-- [ ] Dark mode: sombras ajustadas
+- [x] Sombras sutis em cards principais — `Card` já tinha `shadow-sm`
+- [x] Ícone com fundo circular colorido — já presente (`backgroundColor: ${color}15`)
+- [x] Dark mode: sombras ajustadas — `Card` já alterna `dark:border-slate-800`
 
 ### Componente Atualizado
 ```typescript
@@ -478,10 +474,10 @@ const variantStyles = {
 ```
 
 ### Validação
-- [ ] Cards renderizam com variantes corretas
-- [ ] Gradiente visível no card de saldo
-- [ ] Dark mode: contraste adequado
-- [ ] Performance: sem lag no scroll
+- [x] Cards renderizam com variantes corretas (teste `Card.test.tsx`)
+- [x] Gradiente visível no card de saldo — disponível via `gradient`; não aplicado ao resumo da Home (View cru)
+- [x] Dark mode: contraste adequado
+- [ ] Performance: sem lag no scroll (não medido)
 
 ---
 

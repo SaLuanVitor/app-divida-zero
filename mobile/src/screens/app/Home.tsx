@@ -79,6 +79,7 @@ type CalendarEntry = {
     reminder: string;
     icon: React.ComponentType<{ size?: number; color?: string }>;
     color: string;
+    variant?: 'income' | 'expense' | 'debt';
     userName?: string;
 };
 
@@ -205,6 +206,7 @@ const toCalendarEntry = (record: FinancialRecordDto): CalendarEntry => {
 
     const icon = isDebt ? Landmark : isIncome ? CircleDollarSign : Wallet;
     const color = isDebt ? '#ef4444' : isIncome ? '#16a34a' : '#f59e0b';
+    const variant = isDebt ? 'debt' : isIncome ? 'income' : 'expense';
 
     return {
         id: record.id,
@@ -217,6 +219,7 @@ const toCalendarEntry = (record: FinancialRecordDto): CalendarEntry => {
         reminder: recurrenceLabel(record),
         icon,
         color,
+        variant,
         userName: record.user_name,
     };
 };
@@ -1306,7 +1309,7 @@ const Home = () => {
                             ) : null}
 
                             {monthItemsToRender.map((item, index) => (
-                                <Card key={String(item.id) + index} className="mb-3" noPadding>
+                                <Card key={String(item.id) + index} className="mb-3" noPadding variant={item.variant}>
                                     <View className="p-4">
                                         <View className="flex-row items-start justify-between gap-3">
                                             <View className="flex-row items-center flex-1 min-w-0">
