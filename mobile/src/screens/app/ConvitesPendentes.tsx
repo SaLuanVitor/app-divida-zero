@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Check, X } from 'lucide-react-native';
+import { ArrowLeft, Check, Mail, X } from 'lucide-react-native';
 import AppText from '../../components/AppText';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
+import EmptyState from '../../components/EmptyState';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
 import useBackToProfile from '../../hooks/useBackToProfile';
@@ -87,10 +88,13 @@ const ConvitesPendentes = () => {
               <ActivityIndicator size="large" color="#f48c25" />
             </View>
           ) : invitations.length === 0 ? (
-            <Card className="p-6 items-center">
-              <AppText className="text-slate-500 text-center">
-                Nenhum convite pendente.
-              </AppText>
+            <Card noPadding>
+              <EmptyState
+                icon={Mail}
+                iconColor="#8b5cf6"
+                title="Nenhum convite pendente"
+                message="Quando alguém te convidar para uma família, o convite aparece aqui."
+              />
             </Card>
           ) : (
             invitations.map((invite) => (

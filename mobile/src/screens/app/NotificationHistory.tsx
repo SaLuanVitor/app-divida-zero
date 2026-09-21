@@ -14,6 +14,7 @@ import {
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import AppText from '../../components/AppText';
+import EmptyState from '../../components/EmptyState';
 import { runWhenIdle } from '../../utils/idle';
 import {
   listNotificationHistory,
@@ -179,11 +180,12 @@ const NotificationHistory = () => {
 
           {!loading && visibleItems.length === 0 ? (
             <Card noPadding>
-              <View className="p-4">
-                <AppText className="text-slate-600 dark:text-slate-200 text-sm">
-                  Não existem notificações.
-                </AppText>
-              </View>
+              <EmptyState
+                icon={Bell}
+                iconColor="#22c55e"
+                title="Tudo tranquilo por aqui"
+                message="Você ainda não tem notificações. Novos alertas aparecem aqui."
+              />
             </Card>
           ) : null}
 

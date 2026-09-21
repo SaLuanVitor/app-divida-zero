@@ -7,6 +7,7 @@ import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import EmptyState from '../../components/EmptyState';
 import AppOverlay from '../../components/AppOverlay';
 import AppToast from '../../components/AppToast';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
@@ -520,13 +521,14 @@ const Metas = () => {
 
                 {!loading && goals.length === 0 ? (
                     <Card noPadding>
-                        <View className="p-5">
-                            <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base mb-1">Nenhuma meta cadastrada</AppText>
-                            <AppText className="text-slate-500 dark:text-slate-200 text-sm mb-4">
-                                Crie sua primeira meta e gerencie o saldo dela com aportes manuais.
-                            </AppText>
-                            <Button title="Criar primeira meta" onPress={openCreateScreen} />
-                        </View>
+                        <EmptyState
+                            icon={Target}
+                            iconColor="#3b82f6"
+                            title="Nenhuma meta cadastrada"
+                            message="Crie sua primeira meta e gerencie o saldo dela com aportes manuais."
+                            actionLabel="Criar primeira meta"
+                            onAction={openCreateScreen}
+                        />
                     </Card>
                 ) : null}
 

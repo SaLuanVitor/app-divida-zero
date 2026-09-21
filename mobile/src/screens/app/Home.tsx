@@ -17,6 +17,7 @@ import {
     Target,
     Shield,
     Crown,
+    CalendarDays,
 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +25,7 @@ import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import ProfileAvatar from '../../components/ProfileAvatar';
+import EmptyState from '../../components/EmptyState';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import ScreenHelpButton from '../../components/ScreenHelpButton';
 import AppOverlay from '../../components/AppOverlay';
@@ -1283,11 +1285,24 @@ const Home = () => {
                                 onChangeText={setSearchQuery}
                             />
                             {!loading && filteredMonthItems.length === 0 ? (
-                                <Card className="mb-3" noPadding>
-                                    <View className="p-4">
-                                        <AppText className="text-slate-600 dark:text-slate-200 text-sm">Sem lançamentos para os filtros e busca informados neste mês.</AppText>
-                                    </View>
-                                </Card>
+                                records.length === 0 ? (
+                                    <Card className="mb-3" noPadding>
+                                        <EmptyState
+                                            icon={CalendarDays}
+                                            iconColor="#f48c25"
+                                            title="Comece registrando seu primeiro lançamento"
+                                            message="Registre dívidas, ganhos e despesas para acompanhar suas finanças."
+                                            actionLabel="Registrar lançamento"
+                                            onAction={() => navigation.navigate('Lancamentos')}
+                                        />
+                                    </Card>
+                                ) : (
+                                    <Card className="mb-3" noPadding>
+                                        <View className="p-4">
+                                            <AppText className="text-slate-600 dark:text-slate-200 text-sm">Sem lançamentos para os filtros e busca informados neste mês.</AppText>
+                                        </View>
+                                    </Card>
+                                )
                             ) : null}
 
                             {monthItemsToRender.map((item, index) => (

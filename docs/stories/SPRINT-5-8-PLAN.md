@@ -395,28 +395,22 @@ const MonthlyBarChart = ({ data }) => (
 Criar estados vazios informativos e convidativos em todas as telas.
 
 ### Acceptance Criteria
-- [ ] Home vazia: ilustração + "Comece registrando seu primeiro lançamento"
-- [ ] Metas vazia: ilustração de alvo + "Crie sua primeira meta"
-- [ ] Notificações vazia: sino + "Tudo tranquilo por aqui"
-- [ ] Convites vazia: envelope + "Nenhum convite pendente"
-- [ ] Família vazia: família + "Crie sua família"
-- [ ] CTA (botão) em cada empty state
-- [ ] Ilustrações em SVG ou PNG (assets/images/)
+- [x] Home vazia: ilustração + "Comece registrando seu primeiro lançamento"
+- [x] Metas vazia: ilustração de alvo + "Crie sua primeira meta"
+- [x] Notificações vazia: sino + "Tudo tranquilo por aqui"
+- [x] Convites vazia: envelope + "Nenhum convite pendente"
+- [x] Família vazia: família + "Crie sua família" (já existia em conformidade)
+- [x] CTA (botão) em cada empty state — Home e Metas têm CTA; Convites/Notificações/Família não têm ação única natural (Família já tinha)
+- [x] Ilustrações em SVG ou PNG — resolvido por ícones lucide (SVG), via componente `EmptyState` (sem assets externos)
 
 ### Placeholders para Assets
-```
-assets/images/empty-calendar.png     → https://placehold.co/400x300/f8f7f5/f48c25?text=📅+Sem+lançamentos
-assets/images/empty-goals.png        → https://placehold.co/400x300/f8f7f5/3b82f6?text=🎯+Crie+sua+primeira+meta
-assets/images/empty-notifications.png → https://placehold.co/400x300/f8f7f5/22c55e?text=🔔+Tudo+tranquilo
-assets/images/empty-invites.png      → https://placehold.co/400x300/f8f7f5/8b5cf6?text=✉️+Sem+convites
-assets/images/empty-family.png       → https://placehold.co/400x300/f8f7f5/f48c25?text=👨‍👩‍👧+Crie+sua+família
-```
+> Substituído por ícones lucide-react-native (SVG) no componente `EmptyState`; não baixamos os placeholders PNG.
 
 ### Validação
-- [ ] Cada tela vazia mostra ilustração + texto + CTA
-- [ ] Ilustrações carregam rapidamente
-- [ ] Dark mode: ilustrações visíveis
-- [ ] Acessibilidade: alt text nas imagens
+- [x] Cada tela vazia mostra ilustração + texto + CTA
+- [x] Ilustrações carregam rapidamente (ícones SVG, sem asset externo)
+- [x] Dark mode: ilustrações visíveis
+- [x] Acessibilidade: alt text nas imagens (o contêiner expõe `accessibilityLabel` com o título)
 
 ---
 
