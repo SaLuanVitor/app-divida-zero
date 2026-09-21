@@ -76,7 +76,7 @@ Pesquisar provedor, criar abstração de canal de notificação, refatorar canai
 - [x] `PushChannel` implementado usando a abstração
 - [x] `WhatsAppChannel` esboço (stub) criado
 - [x] Provider SDK integrado (gem/client HTTP)
-- [ ] Testes unitários da abstração
+- [x] Testes unitários da abstração
 - [x] `WHATSAPP_PROVIDER`, `WHATSAPP_API_KEY` no .env.example
 
 ### Arquitetura: NotificationChannel
@@ -127,7 +127,7 @@ Adicionar campo phone no User, verificação via código SMS/WhatsApp, preferên
 - [x] `WhatsAppRateLimiter` funcional (token bucket)
 - [x] Limite diário por usuário (10msgs/dia)
 - [x] DND automático (22h-8h)
-- [ ] Testes de autorização e opt-in
+- [x] Testes de autorização e opt-in
 
 ### Data Model
 
