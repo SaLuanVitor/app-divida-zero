@@ -488,14 +488,14 @@ const variantStyles = {
 Melhorar visual da lista de notificações.
 
 ### Acceptance Criteria
-- [ ] Ícone colorido por tipo:
-  - Lembrete: 🔴 vermelho
-  - Meta: 🔵 azul
-  - Conquista: 🟡 dourado
-  - Sistema: ⚪ cinza
-- [ ] Timestamp relativo ("há 2 horas", "ontem")
-- [ ] Badge de não lido (ponto laranja)
-- [ ] Swipe para deletar (opcional)
+- [x] Ícone colorido por tipo — já existia via `kindIconMap`/`kindColorMap`:
+  - Lembrete: 🔴 vermelho (`#ef4444`)
+  - Meta: 🔵 azul (`#0ea5e9`)
+  - Conquista: 🟡 dourado (`#f48c25`)
+  - Sistema: ⚪ cinza (`#64748b`)
+- [x] Timestamp relativo ("há 2 horas", "ontem") — `formatRelativeTime` em `utils/relativeTime.ts`
+- [x] Badge de não lido (ponto laranja) — já existia
+- [ ] Swipe para deletar (opcional) — não implementado (opcional)
 
 ### Placeholders
 ```
@@ -506,9 +506,9 @@ assets/notifications/icon-system.png   → https://placehold.co/48x48/64748b/fff
 ```
 
 ### Validação
-- [ ] Ícones aparecem por tipo
-- [ ] Timestamps relativos funcionam
-- [ ] Badge aparece para não lidas
+- [x] Ícones aparecem por tipo
+- [x] Timestamps relativos funcionam (teste `relativeTime.test.ts`)
+- [x] Badge aparece para não lidas
 
 ---
 

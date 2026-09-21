@@ -21,6 +21,7 @@ import {
   markNotificationHistorySeen,
 } from '../../services/notificationCenter';
 import { NotificationHistoryItem } from '../../types/notificationCenter';
+import { formatRelativeTime } from '../../utils/relativeTime';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
 import useBackToProfile from '../../hooks/useBackToProfile';
@@ -192,7 +193,7 @@ const NotificationHistory = () => {
           {visibleItems.map((item) => {
             const Icon = kindIconMap[item.kind] || Bell;
             const iconColor = kindColorMap[item.kind] || '#64748b';
-            const createdLabel = new Date(item.created_at).toLocaleString('pt-BR');
+            const createdLabel = formatRelativeTime(item.created_at);
 
             return (
               <Card key={item.id} className="mb-3" noPadding>
