@@ -1,7 +1,7 @@
 # Story FASE-3t.1 — TelegramChannel: canal de notificação transacional via Telegram Bot API
 
 ## Status
-Planejada
+Done
 
 ## Story
 **As a** usuário do App Dívida Zero,
@@ -15,19 +15,15 @@ Planejada
 - Reaproveitar a abstração `ApplicationChannel` já existente (`EmailChannel`, `PushChannel`, `WhatsappChannel`), o `NotificationAlertsService` e o Solid Queue.
 
 ## Acceptance Criteria
-1. `TelegramProvider` criado com `configured?`, `send_message(chat_id:, text:)` e `verify_credentials!`, lendo `TELEGRAM_BOT_TOKEN` do env (resolução por `safe_constantize` ou classe única, sem segundo namespace).
-2. `TelegramChannel < ApplicationChannel` implementado:
-   - `channel_name` → `"telegram"`
-   - `deliver(user:, alert:)` → monta texto a partir de `alert.title`/`alert.message`, chama `TelegramProvider.send_message`, devolve `ApplicationChannel::DeliverResult`
-   - `valid_recipient?` → `telegram_chat_id` presente + `telegram_enabled_for_alert?("due_today")` + opt-in explícito (`telegram_opt_in_at`)
-   - não envia se provider não configurado (log + `DeliverResult` de sucesso vazio, como o `WhatsappChannel`)
-3. Model `User` ganha: `telegram_chat_id` (string, nullable), `telegram_username` (string, nullable), `telegram_opt_in_at` (datetime), `telegram_notification_preferences` (jsonb default `{}`), com `TELEGRAM_PREFERENCE_DEFAULTS`, `telegram_preferences_with_defaults`, `update_telegram_preferences!` e `telegram_enabled_for_alert?` — espelhando o padrão de `push`/`email`/`wa_notification_preferences`.
-4. `TelegramDispatchJob` (fila `default`, como o `EmailDispatchJob`/`PushDispatchJob`) com `perform(notification_alert_id)` e skip quando alert/user inválidos.
-5. `NotificationAlertsService#create_alert_once!` passa a enfileirar `TelegramDispatchJob.perform_later(alert.id) if TelegramProvider.configured?`.
-6. Opt-in: endpoint `POST /api/v1/auth/telegram/link` recebe `chat_id` + `auth_token` (assinado pelo servidor, gerado no fluxo deep link `https://t.me/<bot>?start=<auth_token>`), verifica o token, grava `telegram_chat_id`/`username`/`telegram_opt_in_at` e liga `telegram_notifications_enabled`.
-7. Endpoint `PATCH /api/v1/auth/telegram_notifications` (preferências, espelhando `update_wa_notifications`) e `me` passa a retornar o status do Telegram (chat vinculado + preferências).
-8. `TELEGRAM_BOT_TOKEN` e `TELEGRAM_BOT_USERNAME` no `.env.example`.
-9. Testes: `TelegramProvider` (mock HTTP, 200/erro/rate-limit), `TelegramChannel` (valid_recipient?, skip sem provider, deliver), `User` telegram preferences, `TelegramDispatchJob`, e endpoint de link (token inválido/expirado/vinculado).
+1. [x] `TelegramProvider` criado com `configured?`, `send_message(chat_id:, text:)` e `verify_credentials!`, lendo `TELEGRAM_BOT_TOKEN` do env (`app/services/telegram_provider.rb`).
+2. [x] `TelegramChannel < ApplicationChannel` implementado (`channel_name`, `deliver`, `valid_recipient?`, skip sem provider) em `app/channels/telegram_channel.rb`.
+3. [x] Model `User` com `telegram_chat_id`, `telegram_username`, `telegram_opt_in_at`, `telegram_notification_preferences` + `TELEGRAM_PREFERENCE_DEFAULTS`, `telegram_preferences_with_defaults`, `update_telegram_preferences!`, `telegram_enabled_for_alert?`.
+4. [x] `TelegramDispatchJob` (fila `default`, skip quando alert/user inválidos).
+5. [x] `NotificationAlertsService#create_alert_once!` enfileira `TelegramDispatchJob.perform_later(alert.id) if TelegramProvider.configured?`.
+6. [x] Opt-in: `POST /api/v1/auth/telegram/link` (`chat_id` + `auth_token` via `TelegramLinkToken` HMAC, expiração 30 min) + deep link `GET /api/v1/auth/telegram/link_url`.
+7. [x] `PATCH /api/v1/auth/telegram_notifications` + `me` retorna `telegram_preferences` e `telegram_linked`.
+8. [x] `TELEGRAM_BOT_TOKEN` e `TELEGRAM_BOT_USERNAME` no `.env.example`.
+9. [x] Testes: `telegram_provider_test`, `telegram_channel_test`, `telegram_dispatch_job_test`, `user_telegram_test`, `auth_telegram_test` (24 testes).
 
 ## Tarefas / Subtasks
 - [ ] Criar `TelegramProvider` com cliente HTTP (Net::HTTP ou Faraday, sem gem nova se possível) e tratamento de 429/erro (AC #1)
