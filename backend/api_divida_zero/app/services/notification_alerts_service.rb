@@ -151,6 +151,7 @@ class NotificationAlertsService
       PushDispatchJob.perform_later(alert.id)
       EmailDispatchJob.perform_later(alert.id)
       WhatsappDispatchJob.perform_later(alert.id) if WhatsappProvider.configured?
+      TelegramDispatchJob.perform_later(alert.id) if TelegramProvider.configured?
       alert
     end
 

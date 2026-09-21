@@ -1,4 +1,4 @@
-﻿Rails.application.routes.draw do
+Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   namespace :api do
@@ -16,6 +16,9 @@
       patch "auth/phone", to: "auth#send_phone_code"
       post "auth/phone/verify", to: "auth#verify_phone"
       patch "auth/change_password", to: "auth#change_password"
+      patch "auth/telegram_notifications", to: "auth#update_telegram_notifications"
+      get "auth/telegram/link_url", to: "auth#telegram_link_url"
+      post "auth/telegram/link", to: "auth#link_telegram"
 
       resource :household, only: %i[show create update destroy], controller: "households" do
         resources :invitations, only: %i[index create destroy], controller: "household_invitations"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_18_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -90,6 +90,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_000001) do
     t.index ["created_at"], name: "index_app_ratings_on_created_at"
     t.index ["user_id", "created_at"], name: "index_app_ratings_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_app_ratings_on_user_id", unique: true
+  end
+
+  create_table "audit_logs", force: :cascade do |t|
+    t.string "action", null: false
+    t.datetime "created_at", null: false
+    t.string "ip"
+    t.text "metadata"
+    t.integer "resource_id"
+    t.string "resource_type"
+    t.datetime "updated_at", null: false
+    t.text "user_agent"
+    t.bigint "user_id"
+    t.index ["action"], name: "index_audit_logs_on_action"
+    t.index ["created_at"], name: "index_audit_logs_on_created_at"
+    t.index ["resource_type", "resource_id"], name: "index_audit_logs_on_resource_type_and_resource_id"
+    t.index ["user_id", "created_at"], name: "index_audit_logs_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_audit_logs_on_user_id"
   end
 
   create_table "daily_ai_messages", force: :cascade do |t|
@@ -289,13 +306,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_000001) do
     t.index ["user_id"], name: "index_notification_alerts_on_user_id"
   end
 
+  create_table "token_blacklists", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.string "token_digest"
+    t.datetime "updated_at", null: false
+    t.index ["token_digest"], name: "index_token_blacklists_on_token_digest", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.jsonb "email_notification_preferences", default: {}, null: false
+    t.integer "failed_login_count", default: 0, null: false
     t.boolean "force_password_change", default: false, null: false
     t.datetime "last_login_at"
+    t.datetime "locked_until"
     t.string "name", null: false
     t.string "password_digest", null: false
     t.string "phone"
@@ -306,6 +333,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_000001) do
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token_digest"
     t.string "role", default: "user", null: false
+    t.string "telegram_chat_id"
+    t.jsonb "telegram_notification_preferences", default: {}, null: false
+    t.datetime "telegram_opt_in_at"
+    t.string "telegram_username"
     t.datetime "updated_at", null: false
     t.integer "wa_consecutive_429_count", default: 0, null: false
     t.jsonb "wa_notification_preferences", default: {}, null: false
@@ -315,6 +346,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_000001) do
     t.index ["phone"], name: "index_users_on_phone", unique: true
     t.index ["reset_password_token_digest"], name: "index_users_on_reset_password_token_digest"
     t.index ["role"], name: "index_users_on_role"
+    t.index ["telegram_chat_id"], name: "index_users_on_telegram_chat_id", unique: true
   end
 
   create_table "whatsapp_messages", force: :cascade do |t|
@@ -354,6 +386,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_000001) do
   add_foreign_key "ai_usage_counters", "users"
   add_foreign_key "analytics_events", "users"
   add_foreign_key "app_ratings", "users"
+  add_foreign_key "audit_logs", "users"
   add_foreign_key "device_tokens", "users"
   add_foreign_key "financial_goal_contributions", "financial_goals"
   add_foreign_key "financial_goal_contributions", "users"

@@ -5,7 +5,7 @@ module Api
   module V1
     class AuthController < ApplicationController
       include Auditable
-      before_action :authenticate_access_token!, only: [:me, :update_profile, :change_password, :update_email_notifications, :update_wa_notifications, :send_phone_code, :verify_phone]
+      before_action :authenticate_access_token!, only: [:me, :update_profile, :change_password, :update_email_notifications, :update_wa_notifications, :send_phone_code, :verify_phone, :link_telegram, :update_telegram_notifications, :telegram_link_url]
 
       def register
         user = User.new(register_params)
@@ -134,7 +134,9 @@ module Api
         render json: {
           user: @current_user.public_payload,
           email_preferences: @current_user.email_preferences_with_defaults,
-          wa_preferences: @current_user.wa_preferences_with_defaults
+          wa_preferences: @current_user.wa_preferences_with_defaults,
+          telegram_preferences: @current_user.telegram_preferences_with_defaults,
+          telegram_linked: @current_user.telegram_chat_id.present? && @current_user.telegram_opt_in_at.present?
         }, status: :ok
       end
 
@@ -172,6 +174,60 @@ module Api
         render json: {
           message: "Preferências de WhatsApp atualizadas.",
           wa_preferences: @current_user.wa_preferences_with_defaults
+        }, status: :ok
+      end
+
+      def update_telegram_notifications
+        prefs = params[:telegram_notification_preferences]
+        prefs = prefs.permit! if prefs.respond_to?(:permit!)
+        @current_user.update_telegram_preferences!(prefs)
+
+        render json: {
+          message: "Preferências do Telegram atualizadas.",
+          telegram_preferences: @current_user.telegram_preferences_with_defaults
+        }, status: :ok
+      end
+
+      def telegram_link_url
+        token = TelegramLinkToken.issue(user_id: @current_user.id)
+        username = TelegramProvider.bot_username
+
+        if username.blank?
+          return render json: { error: "Bot do Telegram não configurado." }, status: :unprocessable_entity
+        end
+
+        render json: {
+          link: "https://t.me/#{username}?start=#{token}"
+        }, status: :ok
+      end
+
+      def link_telegram
+        chat_id = params[:chat_id].to_s.strip
+        token = params[:auth_token].to_s.strip
+
+        if chat_id.blank? || token.blank?
+          return render json: { error: "chat_id e auth_token são obrigatórios." }, status: :unprocessable_entity
+        end
+
+        decoded_user_id = TelegramLinkToken.decode(token)
+        unless decoded_user_id && decoded_user_id.to_i == @current_user.id
+          return render json: { error: "Token de vínculo inválido ou expirado." }, status: :unprocessable_entity
+        end
+
+        if User.where(telegram_chat_id: chat_id).where.not(id: @current_user.id).exists?
+          return render json: { error: "Este Telegram já está vinculado a outra conta." }, status: :conflict
+        end
+
+        @current_user.update!(
+          telegram_chat_id: chat_id,
+          telegram_username: params[:username].to_s.strip.presence,
+          telegram_opt_in_at: Time.current
+        )
+        @current_user.update_telegram_preferences!("telegram_notifications_enabled" => true)
+
+        render json: {
+          message: "Telegram vinculado com sucesso.",
+          telegram_preferences: @current_user.telegram_preferences_with_defaults
         }, status: :ok
       end
 
