@@ -122,7 +122,7 @@ Adicionar campo phone no User, verificação via código SMS/WhatsApp, preferên
 - [x] Endpoint `PATCH auth/whatsapp_notifications` (preferências)
 - [x] `User.wa_enabled_for_alert?` (similar email_enabled_for_alert?)
 - [x] Toggle WA no `me` endpoint (mobile exibe)
-- [ ] Rate limiter: máx 3 tentativas de verificação/hora por IP
+- [x] Rate limiter: máx 3 tentativas de verificação/hora por telefone (decisão 2026-09: manter chave por telefone; IP adiado)
 - [x] Não enviar WA sem opt-in explícito (validação no channel)
 - [x] `WhatsAppRateLimiter` funcional (token bucket)
 - [x] Limite diário por usuário (10msgs/dia)
