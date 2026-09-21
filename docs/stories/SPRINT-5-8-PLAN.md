@@ -318,13 +318,13 @@ Adicionar animações de sucesso para feedback visual satisfatório.
 Adicionar visualizações gráficas na tela de relatórios.
 
 ### Acceptance Criteria
-- [ ] react-native-chart-kit ou victory-native instalado
-- [ ] Gráfico de barras: entradas vs saídas (mensal)
-- [ ] Gráfico de pizza: por categoria
-- [ ] Gráfico de linha: evolução do saldo
-- [ ] Filtro por período
-- [ ] Dark mode suportado
-- [ ] Loading state enquanto carrega
+- [x] react-native-chart-kit ou victory-native instalado — resolvido por `react-native-svg` (já era dependência do projeto); gráficos desenhados com SVG customizado
+- [x] Gráfico de barras: entradas vs saídas (mensal)
+- [x] Gráfico de pizza: por categoria
+- [x] Gráfico de linha: evolução do saldo
+- [x] Filtro por período
+- [x] Dark mode suportado
+- [x] Loading state enquanto carrega
 
 ### Implementação
 ```typescript
@@ -354,10 +354,10 @@ const MonthlyBarChart = ({ data }) => (
 ```
 
 ### Validação
-- [ ] Gráficos renderizam com dados reais
-- [ ] Filtro por mês/atualiza dados
-- [ ] Dark mode: cores ajustadas
-- [ ] Performance: < 500ms para render
+- [x] Gráficos renderizam com dados reais
+- [x] Filtro por mês/atualiza dados
+- [x] Dark mode: cores ajustadas
+- [ ] Performance: < 500ms para render (não medido — ver Quality Gate)
 
 ---
 

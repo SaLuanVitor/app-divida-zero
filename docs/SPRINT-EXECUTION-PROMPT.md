@@ -84,7 +84,7 @@ story_order:
     deps: ["5.6"]
     owner: "@dev (mobile) + @ux-design-expert (design)"
     type: "mobile"
-    status: "PENDING"
+    status: "DONE"  # ✅ CONCLUÍDA
 ```
 
 **Auto-pick rule:** Próxima story = a primeira da lista com `deps` todas `DONE` e `status` em `PENDING` ou `IN_PROGRESS`. Story em `IN_PROGRESS` é retomada antes de qualquer `PENDING`, senão o loop fica sem candidato quando a story da vez já começou.

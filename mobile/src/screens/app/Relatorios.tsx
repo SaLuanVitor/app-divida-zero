@@ -1,7 +1,9 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
+import CategoryDonut from '../../components/charts/CategoryDonut';
+import BalanceLineChart from '../../components/charts/BalanceLineChart';
 import { ArrowDownCircle, ArrowUpCircle, Calendar, ChevronLeft, ChevronRight, FileDown, Filter, Scale, Wallet, X } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import AppText from '../../components/AppText';
@@ -658,6 +660,24 @@ const Relatorios = () => {
             </View></Card>
 
             <Card className="mb-3" noPadding><View className="p-4">
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold mb-2">Evolução do saldo</AppText>
+              {data.monthly_trend.length < 2 ? (
+                <AppText className="text-slate-500 dark:text-slate-200 text-sm">Sem dados suficientes para o gráfico de evolução.</AppText>
+              ) : (
+                <View className="items-center">
+                  <BalanceLineChart
+                    points={data.monthly_trend.map((item) => ({
+                      label: shortMonth(item.year, item.month),
+                      value: Number(item.balance || 0),
+                    }))}
+                    darkMode={darkMode}
+                    width={chartWidth}
+                  />
+                </View>
+              )}
+            </View></Card>
+
+            <Card className="mb-3" noPadding><View className="p-4">
               <View className="flex-row gap-2 mb-3">
                 <TouchableOpacity className={`flex-1 rounded-xl border items-center justify-center ${tab === 'records' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ minHeight: controlHeightMd }} onPress={() => setTab('records')}><AppText className={`font-bold text-sm ${tab === 'records' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Lançamentos</AppText></TouchableOpacity>
                 <TouchableOpacity className={`flex-1 rounded-xl border items-center justify-center ${tab === 'categories' ? 'bg-primary border-primary' : 'bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-700'}`} style={{ minHeight: controlHeightMd }} onPress={() => setTab('categories')}><AppText className={`font-bold text-sm ${tab === 'categories' ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>Categorias</AppText></TouchableOpacity>
@@ -691,13 +711,18 @@ const Relatorios = () => {
               ) : null}
 
               {data.monthly_summary.records_count > 0 && tab === 'categories' ? (
-                data.categories_breakdown.map((item, idx) => (
-                  <View key={`${item.category}-${idx}`} className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] border border-slate-100 dark:border-slate-800 p-3 mb-2">
-                    <View className="flex-row items-center justify-between"><AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold">{item.category}</AppText><AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{formatCurrency(item.total)}</AppText></View>
-                    <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">{item.percentage.toFixed(1)}%</AppText>
-                    <View className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden mt-1"><View className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, Math.max(0, item.percentage))}%` }} /></View>
+                <>
+                  <CategoryDonut items={data.categories_breakdown} darkMode={darkMode} />
+                  <View className="mt-3">
+                    {data.categories_breakdown.map((item, idx) => (
+                      <View key={`${item.category}-${idx}`} className="rounded-xl bg-slate-50 dark:bg-[#1a1a1a] border border-slate-100 dark:border-slate-800 p-3 mb-2">
+                        <View className="flex-row items-center justify-between"><AppText className="text-slate-900 dark:text-slate-100 text-sm font-semibold">{item.category}</AppText><AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">{formatCurrency(item.total)}</AppText></View>
+                        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-1">{item.percentage.toFixed(1)}%</AppText>
+                        <View className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden mt-1"><View className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, Math.max(0, item.percentage))}%` }} /></View>
+                      </View>
+                    ))}
                   </View>
-                ))
+                </>
               ) : null}
             </View></Card>
           </>
