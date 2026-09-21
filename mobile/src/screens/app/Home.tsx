@@ -1003,6 +1003,12 @@ const Home = () => {
     const handleConfirm = async () => {
         if (!confirmState) return;
 
+        if (confirmState.variant === 'danger') {
+            deleteRecord();
+        } else {
+            light();
+        }
+
         setActionLoading(true);
         try {
             await confirmState.onConfirm();
@@ -1552,6 +1558,13 @@ const Home = () => {
             <AppOverlay visible={showConfirm} backdropClassName="bg-black/30" onBackdropPress={() => !actionLoading && setConfirmState(null)}>
                 {showConfirm ? (
                     <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
+                        <View className={`w-12 h-12 rounded-full items-center justify-center mb-3 ${confirmState?.variant === 'danger' ? 'bg-red-50 dark:bg-red-950/40' : 'bg-primary/10'}`}>
+                            {confirmState?.variant === 'danger' ? (
+                                <Trash2 size={24} color="#ef4444" />
+                            ) : (
+                                <Shield size={24} color="#f48c25" />
+                            )}
+                        </View>
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">{confirmState?.title}</AppText>
                         <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2 mb-4">{confirmState?.message}</AppText>
 

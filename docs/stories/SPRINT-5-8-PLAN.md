@@ -519,11 +519,11 @@ assets/notifications/icon-system.png   → https://placehold.co/48x48/64748b/fff
 Melhorar modais de confirmação com ícones e animações.
 
 ### Acceptance Criteria
-- [ ] Ícone de alerta (⚠️) ou perigo (🗑️)
-- [ ] Animação de entrada (scale up)
-- [ ] Botão de perigo em vermelho mais forte
-- [ ] Texto de consequência claro
-- [ ] Haptic feedback ao confirmar
+- [x] Ícone de alerta (⚠️) ou perigo (🗑️) — `Trash2` no danger, `Shield` no primary
+- [ ] Animação de entrada (scale up) — não implementada (evita reanimated no modal crítico)
+- [x] Botão de perigo em vermelho mais forte — já existia via `variant="danger"`
+- [x] Texto de consequência claro — já existia (`message`)
+- [x] Haptic feedback ao confirmar — `deleteRecord()` no danger, `light()` no primary
 
 ### Placeholders
 ```
