@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal, FlatList, LayoutChangeEvent } from 'react-native';
@@ -49,6 +49,8 @@ import { runWhenIdle } from '../../utils/idle';
 import { getAppPreferences } from '../../services/preferences';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { useHaptics } from '../../hooks/useHaptics';
+import SuccessAnimation from '../../components/SuccessAnimation';
+import { useSuccessAnimation } from '../../hooks/useSuccessAnimation';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { markPerf, measurePerf } from '../../services/perf';
 import {
@@ -225,6 +227,7 @@ const calculateSettledBalance = (items: FinancialRecordDto[]) =>
     }, 0);
 
 const Home = () => {
+    const successAnim = useSuccessAnimation({ withHaptics: false });
     const { user } = useAuth();
     const navigation = useNavigation<any>();
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
@@ -832,6 +835,10 @@ const Home = () => {
             leveledUp: xpFeedback.leveled_up,
             levelIcon: summary.level_icon,
         });
+        // Show confetti animation on level up
+        if (xpFeedback.leveled_up) {
+            successAnim.showConfetti();
+        }
     };
 
     const maybeNotifyXp = async (xpFeedback: XpFeedbackDto | null | undefined, fallbackTitle: string) => {
@@ -897,6 +904,9 @@ const Home = () => {
         } else {
             pay(); // expense/debt = pay
         }
+
+        // Show checkmark animation for successful payment
+        successAnim.showCheckmark();
 
         await Promise.all([
             loadMonthlyRecords({ force: true }),
@@ -1672,6 +1682,19 @@ const Home = () => {
                 message={feedback?.message}
                 position="top"
                 onRequestClose={() => setFeedback(null)}
+            />
+
+            <SuccessAnimation
+                type={successAnim.animationType}
+                visible={successAnim.isVisible}
+                size={160}
+                onAnimationFinish={successAnim.hide}
+                style={{
+                    position: 'absolute',
+                    top: '35%',
+                    alignSelf: 'center',
+                    zIndex: 9999,
+                }}
             />
 
             <AppToast

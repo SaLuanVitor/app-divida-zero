@@ -292,22 +292,22 @@ export const hapticLight = () =>
 Adicionar animações de sucesso para feedback visual satisfatório.
 
 ### Acceptance Criteria
-- [ ] lottie-react-native instalado
-- [ ] Animação de checkmark para pagamentos
-- [ ] Animação de confetti para nível up
-- [ ] Animação de engrenagem para processamento
-- [ ] Animações duram 1.5-2 segundos
-- [ ] Redução de movimento respeitada
+- [x] lottie-react-native instalado
+- [x] Animação de checkmark para pagamentos
+- [x] Animação de confetti para nível up
+- [x] Animação de engrenagem para processamento
+- [x] Animações duram 1.5-2 segundos
+- [x] Redução de movimento respeitada
 
 ### Assets Necessários
-- `success-check.json` (Lottie)
-- `confetti.json` (Lottie)
-- `loading-gear.json` (Lottie)
+- `mobile/src/assets/animations/checkmark.json` (Lottie)
+- `mobile/src/assets/animations/confetti.json` (Lottie)
+- `mobile/src/assets/animations/gear.json` (Lottie)
 
 ### Validação
-- [ ] Animações aparecem nos momentos corretos
-- [ ] Não bloqueiam interação do usuário
-- [ ] Respect motion settings do dispositivo
+- [x] Animações aparecem nos momentos corretos
+- [x] Não bloqueiam interação do usuário
+- [x] Respect motion settings do dispositivo
 
 ---
 
