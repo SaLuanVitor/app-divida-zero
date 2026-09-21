@@ -7,26 +7,26 @@ class WhatsappChannel < ApplicationChannel
     def deliver(user:, alert:, template_params: nil)
       unless WhatsappProvider.configured?
         Rails.logger.info "[WhatsAppChannel] Provider not configured. Skipping."
-        return DeliverResult.new(success: true, message_id: nil)
+        return ApplicationChannel::DeliverResult.new(success: true, message_id: nil)
       end
 
       if dnd_active?(user)
         Rails.logger.info "[WhatsAppChannel] DND active for user #{user.id}. Skipping."
-        return DeliverResult.new(success: true, message_id: nil)
+        return ApplicationChannel::DeliverResult.new(success: true, message_id: nil)
       end
 
       if global_daily_cap_reached?
         Rails.logger.warn "[WhatsAppChannel] Global daily cap reached. Skipping."
-        return DeliverResult.new(success: false, error: "Global daily cap reached")
+        return ApplicationChannel::DeliverResult.new(success: false, error: "Global daily cap reached")
       end
 
-      return DeliverResult.new(success: false, error: "Daily cap reached") if user.daily_wa_count >= daily_cap_per_user
+      return ApplicationChannel::DeliverResult.new(success: false, error: "Daily cap reached") if user.daily_wa_count >= daily_cap_per_user
 
       rate_check = rate_limiter.allow?(user.phone)
-      return DeliverResult.new(success: false, error: "Rate limited", message_id: nil) unless rate_check[:allowed]
+      return ApplicationChannel::DeliverResult.new(success: false, error: "Rate limited", message_id: nil) unless rate_check[:allowed]
 
       template_name = template_for(alert.alert_type)
-      return DeliverResult.new(success: false, error: "No template for #{alert.alert_type}") unless template_name
+      return ApplicationChannel::DeliverResult.new(success: false, error: "No template for #{alert.alert_type}") unless template_name
 
       result = WhatsappProvider.send_template(
         phone: user.phone,
@@ -36,12 +36,12 @@ class WhatsappChannel < ApplicationChannel
 
       track_message(user, alert, result) if result.success?
 
-      result.success? ? result : DeliverResult.new(success: false, error: result.error)
+      result.success? ? result : ApplicationChannel::DeliverResult.new(success: false, error: result.error)
     rescue WhatsappProvider::RateLimitExceeded => e
       handle_rate_limit(user, e)
-      DeliverResult.new(success: false, error: e.message)
+      ApplicationChannel::DeliverResult.new(success: false, error: e.message)
     rescue StandardError => e
-      DeliverResult.new(success: false, error: e.message)
+      ApplicationChannel::DeliverResult.new(success: false, error: e.message)
     end
 
     def valid_recipient?(user)

@@ -1,4 +1,4 @@
-﻿require "digest"
+require "digest"
 require "securerandom"
 
 module Api
@@ -154,7 +154,9 @@ module Api
       end
 
       def update_email_notifications
-        @current_user.update_email_preferences!(params[:email_notification_preferences])
+        prefs = params[:email_notification_preferences]
+        prefs = prefs.permit! if prefs.respond_to?(:permit!)
+        @current_user.update_email_preferences!(prefs)
 
         render json: {
           message: "Preferências de e-mail atualizadas.",
@@ -163,7 +165,9 @@ module Api
       end
 
       def update_wa_notifications
-        @current_user.update_wa_preferences!(params[:wa_notification_preferences])
+        prefs = params[:wa_notification_preferences]
+        prefs = prefs.permit! if prefs.respond_to?(:permit!)
+        @current_user.update_wa_preferences!(prefs)
 
         render json: {
           message: "Preferências de WhatsApp atualizadas.",

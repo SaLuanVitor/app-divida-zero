@@ -6,7 +6,7 @@ class PushChannel < ApplicationChannel
 
     def deliver(user:, alert:)
       tokens = user.device_tokens.pluck(:expo_push_token)
-      return DeliverResult.new(success: true, message_id: nil) if tokens.empty?
+      return ApplicationChannel::DeliverResult.new(success: true, message_id: nil) if tokens.empty?
 
       result = ExpoPushService.deliver(
         tokens: tokens,
@@ -19,7 +19,7 @@ class PushChannel < ApplicationChannel
         }
       )
 
-      DeliverResult.new(
+      ApplicationChannel::DeliverResult.new(
         success: result[:delivered].positive?,
         message_id: "#{channel_name}-#{alert.id}"
       )
