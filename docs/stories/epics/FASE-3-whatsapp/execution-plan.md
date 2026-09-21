@@ -1,5 +1,10 @@
 # FASE 3 — WhatsApp: Execução e Arquitetura
 
+> **⚠️ SUPERSEDED (2026-09):** a estratégia de canal foi migrada de WhatsApp para **Telegram**.
+> A decisão está registrada em `docs/adr/ADR-0003-telegram-sem-whatsapp-sem-email.md`.
+> Este plano permanece como histórico da arquitetura de WhatsApp (preservado por compatibilidade,
+> sem remoção de código). A implementação do `TelegramChannel` fica para uma story própria.
+
 > **Fase:** 3 — WhatsApp Business API
 > **Estratégia:** 3 subfases incrementais, NotificationChannel polimórfico, rate limiting, prevenção de bloqueio
 > **Owner:** SaLuanVitor · **Orquestração:** @aiox-master (Orion)
