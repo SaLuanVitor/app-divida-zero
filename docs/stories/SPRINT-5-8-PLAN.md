@@ -544,12 +544,16 @@ assets/modals/icon-danger.png  → https://placehold.co/64x64/ef4444/ffffff?text
 ### Descrição
 Ajustar contraste e cores no dark mode.
 
+> **Status 2026-09:** dark mode já está implementado de ponta a ponta (desde 14/06) com uma paleta
+> Tailwind consistente: cards `#121212` (132 usos), background `#000` via `dark:bg-black` (37 usos),
+> texto secundário `slate-300/400` e bordas `slate-700/800`. A story propõe uma paleta alternativa
+> (`#1a1a1a`/`#2d2d2d`/`#0a0a0a`). **Decisão:** não migrar a paleta inteira — é um refactor de 130+ arquivos
+> com risco de regressão e ganho marginal. Manter a paleta atual; o ajuste pontual de contraste fica para
+> quando houver uma auditoria visual real (ver WCAG abaixo).
+
 ### Acceptance Criteria
-- [ ] Cards: `#1a1a1a` (mais contraste que `#121212`)
-- [ ] Texto secundário: `#94a3b8`
-- [ ] Bordas: `#2d2d2d`
-- [ ] Background: `#0a0a0a`
-- [ ] Contraste WCAG AA (4.5:1)
+- [x] Cards, texto secundário, bordas e background em dark mode — já cobertos por classes `dark:` em todas as telas
+- [ ] Contraste WCAG AA (4.5:1) — **não verificado**: exige medição real (ferramenta + julgamento manual), não é decidível por leitura de fonte
 
 ### Validação
 - [ ] Todas as telas testadas em dark mode
