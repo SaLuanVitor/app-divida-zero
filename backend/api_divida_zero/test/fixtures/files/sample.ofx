@@ -1,0 +1,31 @@
+OFXHEADER:100
+DATA:OFXSGML
+ENCODING:UTF-8
+
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+        <CURDEF>BRL</CURDEF>
+        <BANKTRANLIST>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260710000000</DTPOSTED>
+            <TRNAMT>-150.50</TRNAMT>
+            <FITID>OFX-001</FITID>
+            <NAME>Supermercado</NAME>
+            <MEMO>Compras do mes</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <DTPOSTED>20260712000000</DTPOSTED>
+            <TRNAMT>5000.00</TRNAMT>
+            <FITID>OFX-002</FITID>
+            <NAME>Salario</NAME>
+            <MEMO>Pagamento mensal</MEMO>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>

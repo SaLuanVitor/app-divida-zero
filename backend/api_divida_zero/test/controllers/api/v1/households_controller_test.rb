@@ -2,6 +2,8 @@ require "test_helper"
 
 class Api::V1::HouseholdsControllerTest < ActionDispatch::IntegrationTest
   setup do
+    FeatureFlag.where(key: 'family').delete_all
+    FeatureFlag.create!(key: 'family', enabled: true)
     @owner = User.create!(
       name: "Dono da Familia",
       email: "dono_familia_#{Time.now.to_i}_#{rand(1000)}",
@@ -423,6 +425,13 @@ class Api::V1::HouseholdsControllerTest < ActionDispatch::IntegrationTest
 
     post "/api/v1/invitations/token/decline"
     assert_response :unauthorized
+  end
+
+  test "household endpoints blocked when family flag disabled" do
+    FeatureFlag.where(key: 'family').update_all(enabled: false)
+
+    get "/api/v1/household", headers: auth_header(@owner_tokens[:access_token])
+    assert_response :forbidden
   end
 
   private

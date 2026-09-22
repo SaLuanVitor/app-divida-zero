@@ -2,6 +2,7 @@ module Api
   module V1
     class InvitationsController < ApplicationController
       before_action :authenticate_access_token!
+      before_action :check_family_enabled
 
       def pending
         invitations = HouseholdInvitation.pending
@@ -56,6 +57,12 @@ module Api
       end
 
       private
+
+      def check_family_enabled
+        unless FeatureFlag.enabled?(:family)
+          render json: { error: "Funcionalidade de família desabilitada" }, status: :forbidden
+        end
+      end
 
       def serialize_invitation(invitation)
         {
