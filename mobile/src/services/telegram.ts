@@ -9,6 +9,8 @@ export interface TelegramPreferences {
 export interface TelegramStatus {
   preferences: TelegramPreferences | null;
   linked: boolean;
+  username: string | null;
+  chatId: string | null;
 }
 
 export interface TelegramPreferencesResponse {
@@ -25,6 +27,8 @@ export const getTelegramStatus = async (): Promise<TelegramStatus> => {
   return {
     preferences: data.telegram_preferences ?? null,
     linked: Boolean(data.telegram_linked),
+    username: data.telegram_username ?? null,
+    chatId: data.telegram_chat_id ?? null,
   };
 };
 
@@ -42,5 +46,10 @@ export const updateTelegramPreferences = async (
   const { data } = await api.patch('/auth/telegram_notifications', {
     telegram_notification_preferences: prefs,
   });
+  return data as TelegramPreferencesResponse;
+};
+
+export const unlinkTelegram = async (): Promise<TelegramPreferencesResponse> => {
+  const { data } = await api.delete('/auth/telegram/link');
   return data as TelegramPreferencesResponse;
 };

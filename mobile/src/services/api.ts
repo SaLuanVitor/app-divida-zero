@@ -37,7 +37,7 @@ export const resolveApiBaseUrl = ({
     const envUrl = envApiBaseUrl?.trim();
 
     if (!isDev) {
-        // Release builds must always target Railway.
+        // Release builds always target the fixed production domain (self-hosted + Cloudflare tunnel).
         return defaultReleaseApiBaseUrl;
     }
 

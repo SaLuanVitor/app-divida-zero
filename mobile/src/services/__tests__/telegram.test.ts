@@ -3,6 +3,7 @@ import {
   getTelegramStatus,
   getTelegramLinkUrl,
   updateTelegramPreferences,
+  unlinkTelegram,
 } from '../telegram';
 
 jest.mock('../api', () => ({
@@ -10,6 +11,7 @@ jest.mock('../api', () => ({
   default: {
     get: jest.fn(),
     patch: jest.fn(),
+    delete: jest.fn(),
   },
 }));
 
@@ -18,10 +20,12 @@ describe('telegram service', () => {
     jest.clearAllMocks();
   });
 
-  it('getTelegramStatus maps linked and preferences from /auth/me', async () => {
+  it('getTelegramStatus maps linked, preferences and identity from /auth/me', async () => {
     (api.get as jest.Mock).mockResolvedValueOnce({
       data: {
         telegram_linked: true,
+        telegram_username: 'salvanvitor',
+        telegram_chat_id: '5914458140',
         telegram_preferences: {
           telegram_notifications_enabled: true,
           telegram_due_reminders: true,
@@ -34,6 +38,8 @@ describe('telegram service', () => {
 
     expect(api.get).toHaveBeenCalledWith('/auth/me');
     expect(status.linked).toBe(true);
+    expect(status.username).toBe('salvanvitor');
+    expect(status.chatId).toBe('5914458140');
     expect(status.preferences?.telegram_weekly_summary).toBe(false);
   });
 
@@ -44,6 +50,7 @@ describe('telegram service', () => {
 
     expect(status.linked).toBe(false);
     expect(status.preferences).toBeNull();
+    expect(status.username).toBeNull();
   });
 
   it('getTelegramLinkUrl returns the deep link', async () => {
@@ -67,5 +74,15 @@ describe('telegram service', () => {
     expect(api.patch).toHaveBeenCalledWith('/auth/telegram_notifications', {
       telegram_notification_preferences: { telegram_due_reminders: false },
     });
+  });
+
+  it('unlinkTelegram calls DELETE on the link endpoint', async () => {
+    (api.delete as jest.Mock).mockResolvedValueOnce({
+      data: { message: 'Telegram desvinculado.' },
+    });
+
+    await unlinkTelegram();
+
+    expect(api.delete).toHaveBeenCalledWith('/auth/telegram/link');
   });
 });

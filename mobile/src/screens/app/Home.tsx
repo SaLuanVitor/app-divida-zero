@@ -18,6 +18,7 @@ import {
     Shield,
     Crown,
     CalendarDays,
+    Send,
 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -48,7 +49,8 @@ import { useTutorial } from '../../context/TutorialContext';
 import { listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto } from '../../types/financialGoal';
 import { runWhenIdle } from '../../utils/idle';
-import { getAppPreferences } from '../../services/preferences';
+import { getAppPreferences, updateAppPreferences } from '../../services/preferences';
+import { getTelegramStatus } from '../../services/telegram';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { useHaptics } from '../../hooks/useHaptics';
 import SuccessAnimation from '../../components/SuccessAnimation';
@@ -276,6 +278,7 @@ const Home = () => {
     const [notificationsPopupLoading, setNotificationsPopupLoading] = useState(false);
     const [notificationItems, setNotificationItems] = useState<NotificationHistoryItem[]>([]);
     const [onboardingPrimaryGoal, setOnboardingPrimaryGoal] = useState<'organize_month' | 'pay_off_debt' | 'create_goal' | null>(null);
+    const [showTelegramPrompt, setShowTelegramPrompt] = useState(false);
     const dailyMessageSurfaceEnabled = isAiSurfaceEnabled('dailyMessage');
     const nextActionSurfaceEnabled = isAiSurfaceEnabled('nextAction');
     const [dailyMessage, setDailyMessage] = useState(() => getLocalDailyMessage());
@@ -581,6 +584,27 @@ const Home = () => {
             return cancel;
         }, [])
     );
+
+    useFocusEffect(
+        useCallback(() => {
+            const cancel = runWhenIdle(async () => {
+                try {
+                    const prefs = await getAppPreferences();
+                    if (prefs.telegram_prompt_seen) return;
+                    const status = await getTelegramStatus();
+                    setShowTelegramPrompt(!status.linked);
+                } catch {
+                    setShowTelegramPrompt(false);
+                }
+            });
+            return cancel;
+        }, [])
+    );
+
+    const dismissTelegramPrompt = async () => {
+        setShowTelegramPrompt(false);
+        await updateAppPreferences({ telegram_prompt_seen: true });
+    };
 
     const homeHelpBullets = useMemo(() => {
         const focusText =
@@ -1099,6 +1123,48 @@ const Home = () => {
                             </TouchableOpacity>
                         </View>
                     </View>
+
+                    {showTelegramPrompt ? (
+                        <View className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-900 bg-sky-50 dark:bg-sky-950/40 p-3">
+                            <View className="flex-row items-start">
+                                <View className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900 items-center justify-center">
+                                    <Send size={16} color="#0ea5e9" />
+                                </View>
+                                <View className="flex-1 ml-2 pr-1">
+                                    <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">
+                                        Receber avisos no Telegram?
+                                    </AppText>
+                                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-1">
+                                        Vincule seu Telegram para receber notificações exclusivas e melhorar sua experiência.
+                                    </AppText>
+                                </View>
+                                <TouchableOpacity onPress={dismissTelegramPrompt} className="p-1 -mr-1" accessibilityRole="button" accessibilityLabel="Fechar aviso do Telegram">
+                                    <X size={16} color={darkMode ? '#cbd5e1' : '#64748b'} />
+                                </TouchableOpacity>
+                            </View>
+                            <View className="flex-row gap-2 mt-3">
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        void dismissTelegramPrompt();
+                                        navigation.navigate('Telegram');
+                                    }}
+                                    className="flex-1 bg-sky-500 py-2.5 rounded-xl items-center"
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Vincular Telegram"
+                                >
+                                    <AppText className="text-white font-bold text-sm">Vincular Telegram</AppText>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={dismissTelegramPrompt}
+                                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 items-center justify-center"
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Agora não"
+                                >
+                                    <AppText className="text-slate-600 dark:text-slate-200 font-bold text-sm">Agora não</AppText>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ) : null}
 
                     <TutorialTarget targetId="home-summary-card">
                         <View className="flex-row gap-3">

@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react';
-import { View, TouchableOpacity, Switch, Linking } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { View, TouchableOpacity, Switch, Linking, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Send, CheckCircle2, RefreshCw, Users } from 'lucide-react-native';
+import { ArrowLeft, Send, CheckCircle2, RefreshCw, Users, Unlink } from 'lucide-react-native';
 import AppText from '../../components/AppText';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
@@ -13,6 +13,7 @@ import {
   getTelegramLinkUrl,
   getTelegramStatus,
   updateTelegramPreferences,
+  unlinkTelegram,
   TelegramPreferences,
 } from '../../services/telegram';
 
@@ -54,11 +55,16 @@ const TelegramSettings = () => {
 
   const [prefs, setPrefs] = useState<TelegramPreferences | null>(null);
   const [linked, setLinked] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const [chatId, setChatId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [opening, setOpening] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
   const [message, setMessage] = useState('');
   const [messageKind, setMessageKind] = useState<'success' | 'error' | ''>('');
+
+  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showMessage = (kind: 'success' | 'error', text: string) => {
     setMessageKind(kind);
@@ -66,25 +72,53 @@ const TelegramSettings = () => {
     setTimeout(() => setMessage(''), 4000);
   };
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const status = await getTelegramStatus();
       setPrefs(status.preferences);
       setLinked(status.linked);
+      setUsername(status.username);
+      setChatId(status.chatId);
+      return status;
     } catch {
-      // mantem estado anterior em falha de rede
+      return null;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Recarrega ao focar: o vinculo acontece fora do app (no Telegram),
-  // entao o status precisa ser reconferido quando o usuario volta.
+  // Recarrega ao focar: o vinculo acontece fora do app (no Telegram).
   useFocusEffect(
     useCallback(() => {
       void load();
+      return () => {
+        if (pollingRef.current) clearTimeout(pollingRef.current);
+      };
     }, [load])
   );
+
+  // Polling curto de reconferencia: apos abrir o link, o webhook pode levar
+  // alguns segundos para vincular. Verifica a cada 3s por ~18s.
+  const startPolling = useCallback(() => {
+    let attempts = 0;
+    const tick = () => {
+      attempts += 1;
+      void load(true).then((status) => {
+        if (status?.linked || attempts >= 6) {
+          return;
+        }
+        pollingRef.current = setTimeout(tick, 3000);
+      });
+    };
+    pollingRef.current = setTimeout(tick, 3000);
+  }, [load]);
+
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearTimeout(pollingRef.current);
+    };
+  }, []);
 
   const handleLink = async () => {
     if (opening) return;
@@ -92,7 +126,8 @@ const TelegramSettings = () => {
     try {
       const url = await getTelegramLinkUrl();
       await Linking.openURL(url);
-      showMessage('success', 'Abra o Telegram, toque em Iniciar e volte para cá.');
+      showMessage('success', 'Abra o Telegram, toque em Iniciar. O vínculo será confirmado automaticamente.');
+      startPolling();
     } catch (err: any) {
       const apiError = err?.response?.data?.error;
       showMessage('error', apiError || 'Não foi possível abrir o Telegram.');
@@ -104,11 +139,41 @@ const TelegramSettings = () => {
   const handleRecheck = async () => {
     setChecking(true);
     try {
-      await load();
-      if (linked) showMessage('success', 'Vinculo confirmado.');
+      const status = await load(true);
+      if (status?.linked) showMessage('success', 'Vínculo confirmado.');
+      else showMessage('error', 'Ainda não vinculado. Toque em Iniciar no Telegram.');
     } finally {
       setChecking(false);
     }
+  };
+
+  const handleUnlink = () => {
+    Alert.alert(
+      'Desvincular Telegram',
+      'Você deixará de receber os avisos do Dívida Zero no Telegram.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Desvincular',
+          style: 'destructive',
+          onPress: async () => {
+            setUnlinking(true);
+            try {
+              await unlinkTelegram();
+              setLinked(false);
+              setUsername(null);
+              setChatId(null);
+              setPrefs((p) => (p ? { ...p, telegram_notifications_enabled: false } : p));
+              showMessage('success', 'Telegram desvinculado.');
+            } catch {
+              showMessage('error', 'Erro ao desvincular.');
+            } finally {
+              setUnlinking(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const togglePref = useCallback(
@@ -125,6 +190,12 @@ const TelegramSettings = () => {
     },
     [prefs]
   );
+
+  const identityLabel = username
+    ? `@${username}`
+    : chatId
+      ? `ID ${chatId}`
+      : 'Telegram';
 
   return (
     <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">
@@ -161,9 +232,9 @@ const TelegramSettings = () => {
           <>
             <Card className="p-4 mb-3">
               <View className="flex-row items-center">
-                <CheckCircle2 size={20} color="#22c55e" />
+                <CheckCircle2 size={22} color="#22c55e" />
                 <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">
-                  Telegram vinculado
+                  Vinculado a {identityLabel}
                 </AppText>
               </View>
               <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-2">
@@ -171,7 +242,7 @@ const TelegramSettings = () => {
               </AppText>
             </Card>
 
-            <Card className="px-4 py-1">
+            <Card className="px-4 py-1 mb-3">
               <ToggleItem
                 title="Receber pelo Telegram"
                 subtitle="Liga ou desliga todos os avisos no Telegram."
@@ -196,6 +267,19 @@ const TelegramSettings = () => {
                 rowHeight={rowHeight}
               />
             </Card>
+
+            <TouchableOpacity
+              onPress={handleUnlink}
+              disabled={unlinking}
+              className="flex-row items-center justify-center py-3 rounded-xl border border-red-200 dark:border-red-900"
+              accessibilityRole="button"
+              accessibilityLabel="Desvincular Telegram"
+            >
+              <Unlink size={16} color="#ef4444" />
+              <AppText className="text-red-600 dark:text-red-300 font-bold ml-2">
+                {unlinking ? 'Desvinculando...' : 'Desvincular'}
+              </AppText>
+            </TouchableOpacity>
           </>
         ) : (
           <Card className="p-4">
@@ -217,7 +301,7 @@ const TelegramSettings = () => {
                 2. No Telegram, toque em Iniciar
               </AppText>
               <AppText className="text-slate-700 dark:text-slate-200 text-xs mt-1">
-                3. Volte para o app e confirme o vínculo
+                3. O vínculo é confirmado automaticamente ao voltar
               </AppText>
             </View>
 
