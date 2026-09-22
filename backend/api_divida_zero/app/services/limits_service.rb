@@ -6,7 +6,7 @@ class LimitsService
 
     plan = user.plan || Plan.free
     limit_key = build_limit_key(resource, action)
-    limit = plan.limits.find_by(key: limit_key)&.value.to_i
+    limit = plan.limit_for(limit_key).to_i
 
     return true if limit.zero? # 0 = unlimited
 
@@ -19,7 +19,7 @@ class LimitsService
 
     plan = user.plan || Plan.free
     limit_key = build_limit_key(resource, :create)
-    limit = plan.limits.find_by(key: limit_key)&.value.to_i
+    limit = plan.limit_for(limit_key).to_i
 
     return Float::INFINITY if limit.zero?
 
@@ -47,7 +47,7 @@ class LimitsService
 
     plan = user.plan || Plan.free
     limit_key = build_limit_key(resource, :create)
-    limit = plan.limits.find_by(key: limit_key)&.value.to_i
+    limit = plan.limit_for(limit_key).to_i
 
     return 0 if limit.zero?
 
