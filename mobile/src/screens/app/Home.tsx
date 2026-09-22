@@ -1131,10 +1131,10 @@ const Home = () => {
                                     <Send size={16} color="#0ea5e9" />
                                 </View>
                                 <View className="flex-1 ml-2 pr-1">
-                                    <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold">
+                                    <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold" numberOfLines={textClampLines('title')} ellipsizeMode="tail">
                                         Receber avisos no Telegram?
                                     </AppText>
-                                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-1">
+                                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-1" numberOfLines={textClampLines('list')} ellipsizeMode="tail">
                                         Vincule seu Telegram para receber notificações exclusivas e melhorar sua experiência.
                                     </AppText>
                                 </View>

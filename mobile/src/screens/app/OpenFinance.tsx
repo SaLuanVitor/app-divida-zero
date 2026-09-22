@@ -8,6 +8,7 @@ import Card from '../../components/Card';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import useBackToProfile from '../../hooks/useBackToProfile';
+import { controlHeight, textClampLines } from '../../utils/responsive';
 
 const ActionRow = ({
   icon,
@@ -40,8 +41,8 @@ const ActionRow = ({
         <Icon size={20} color={color} />
       </View>
       <View className="flex-1 ml-3">
-        <AppText className="text-slate-900 dark:text-slate-100 font-semibold">{title}</AppText>
-        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">{subtitle}</AppText>
+        <AppText className="text-slate-900 dark:text-slate-100 font-semibold" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{title}</AppText>
+        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{subtitle}</AppText>
       </View>
       <AppText className="text-slate-400 dark:text-slate-500">›</AppText>
     </TouchableOpacity>
@@ -50,11 +51,11 @@ const ActionRow = ({
 
 const OpenFinance = () => {
   const { darkMode } = useThemeMode();
-  const { largerTouchTargets } = useAccessibility();
+  const { fontScale, largerTouchTargets } = useAccessibility();
   const goBackToProfile = useBackToProfile();
   const navigation = useNavigation<any>();
   const iconColor = darkMode ? '#e2e8f0' : '#0f172a';
-  const rowMinHeight = largerTouchTargets ? 56 : 48;
+  const rowMinHeight = controlHeight(fontScale, largerTouchTargets, 48, { minTouchHeight: 48 });
 
   return (
     <Layout scrollable contentContainerClassName="bg-[#f8f7f5] dark:bg-black p-0">

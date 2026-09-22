@@ -10,6 +10,7 @@ import EmptyState from '../../components/EmptyState';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import useBackToProfile from '../../hooks/useBackToProfile';
+import { textClampLines } from '../../utils/responsive';
 import { getMyHousehold, createHousehold, leaveHousehold } from '../../services/household';
 import { Household } from '../../types/household';
 
@@ -184,7 +185,7 @@ const Familia = () => {
       <View className="p-4" style={{ gap: 16 }}>
         <Card className="p-5" style={{ gap: 12 }}>
           <View className="flex-row justify-between items-center">
-            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold">
+            <AppText className="text-slate-900 dark:text-slate-100 text-xl font-bold" numberOfLines={textClampLines('title')} ellipsizeMode="tail">
               {household.name}
             </AppText>
           </View>
@@ -223,10 +224,10 @@ const Familia = () => {
                   </AppText>
                 </View>
                 <View className="flex-1 ml-3">
-                  <AppText className="font-bold text-slate-900 dark:text-slate-100">
+                  <AppText className="font-bold text-slate-900 dark:text-slate-100" numberOfLines={textClampLines('list')} ellipsizeMode="tail">
                     {member.name}
                   </AppText>
-                  <AppText className="text-xs text-slate-500 dark:text-slate-200">{member.email}</AppText>
+                  <AppText className="text-xs text-slate-500 dark:text-slate-200" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{member.email}</AppText>
                 </View>
                 <View
                   className="px-2 py-1 rounded-full"

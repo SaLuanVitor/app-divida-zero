@@ -9,6 +9,7 @@ import Button from '../../components/Button';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import useBackToProfile from '../../hooks/useBackToProfile';
+import { controlHeight, textClampLines } from '../../utils/responsive';
 import {
   getTelegramLinkUrl,
   getTelegramStatus,
@@ -38,8 +39,8 @@ const ToggleItem = ({
   >
     <View className="flex-row items-center justify-between">
       <View className="flex-1 pr-3">
-        <AppText className="text-slate-900 dark:text-slate-100 font-semibold">{title}</AppText>
-        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5">{subtitle}</AppText>
+        <AppText className="text-slate-900 dark:text-slate-100 font-semibold" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{title}</AppText>
+        <AppText className="text-slate-500 dark:text-slate-200 text-xs mt-0.5" numberOfLines={textClampLines('list')} ellipsizeMode="tail">{subtitle}</AppText>
       </View>
       <Switch value={value} onValueChange={onChange} disabled={disabled} trackColor={{ true: '#0ea5e9' }} />
     </View>
@@ -51,7 +52,7 @@ const TelegramSettings = () => {
   const { fontScale, largerTouchTargets } = useAccessibility();
   const goBackToProfile = useBackToProfile();
   const iconColor = darkMode ? '#e2e8f0' : '#0f172a';
-  const rowHeight = Math.max(Math.round(44 * Math.max(fontScale, 1)), largerTouchTargets ? 52 : 44);
+  const rowHeight = controlHeight(fontScale, largerTouchTargets, 44, { minTouchHeight: 44 });
 
   const [prefs, setPrefs] = useState<TelegramPreferences | null>(null);
   const [linked, setLinked] = useState(false);
@@ -233,7 +234,7 @@ const TelegramSettings = () => {
             <Card className="p-4 mb-3">
               <View className="flex-row items-center">
                 <CheckCircle2 size={22} color="#22c55e" />
-                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">
+                <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2 flex-1" numberOfLines={textClampLines('title')} ellipsizeMode="tail">
                   Vinculado a {identityLabel}
                 </AppText>
               </View>
