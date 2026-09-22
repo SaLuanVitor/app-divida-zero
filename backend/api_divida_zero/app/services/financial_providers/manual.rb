@@ -1,5 +1,9 @@
 module FinancialProviders
   class Manual < Base
+    def initialize(config = {})
+      @config = config
+    end
+
     def transactions(connection, params = {})
       file_path = connection.metadata&.dig('file_path')
       format = connection.metadata&.dig('format') || 'ofx'

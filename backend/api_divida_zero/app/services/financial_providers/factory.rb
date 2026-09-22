@@ -2,10 +2,9 @@ require 'concurrent/hash'
 
 module FinancialProviders
   class Factory
-    PROVIDERS = Concurrent::Hash.new({
-      'pluggy' => FinancialProviders::Pluggy,
-      'manual' => FinancialProviders::Manual
-    }.freeze)
+    PROVIDERS = Concurrent::Hash.new
+    PROVIDERS['pluggy'] = FinancialProviders::Pluggy
+    PROVIDERS['manual'] = FinancialProviders::Manual
 
     def self.build(provider = nil, config = {})
       provider ||= Setting.open_finance_provider
