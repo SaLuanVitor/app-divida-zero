@@ -47,6 +47,7 @@ class Api::V1::AuthTelegramTest < ActionDispatch::IntegrationTest
       assert_response :ok
       body = JSON.parse(response.body)
       assert_match %r{^https://t\.me/divida_zero_bot\?start=}, body["link"]
+      assert_match %r{^tg://resolve\?domain=divida_zero_bot&start=}, body["tg_link"]
     end
   end
 

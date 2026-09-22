@@ -53,15 +53,30 @@ describe('telegram service', () => {
     expect(status.username).toBeNull();
   });
 
-  it('getTelegramLinkUrl returns the deep link', async () => {
+  it('getTelegramLinkUrl returns both deep links', async () => {
+    (api.get as jest.Mock).mockResolvedValueOnce({
+      data: {
+        link: 'https://t.me/appDividaZeroBot?start=abc',
+        tg_link: 'tg://resolve?domain=appDividaZeroBot&start=abc',
+      },
+    });
+
+    const result = await getTelegramLinkUrl();
+
+    expect(api.get).toHaveBeenCalledWith('/auth/telegram/link_url');
+    expect(result.link).toBe('https://t.me/appDividaZeroBot?start=abc');
+    expect(result.tgLink).toBe('tg://resolve?domain=appDividaZeroBot&start=abc');
+  });
+
+  it('getTelegramLinkUrl falls back to null tgLink when missing', async () => {
     (api.get as jest.Mock).mockResolvedValueOnce({
       data: { link: 'https://t.me/appDividaZeroBot?start=abc' },
     });
 
-    const link = await getTelegramLinkUrl();
+    const result = await getTelegramLinkUrl();
 
-    expect(api.get).toHaveBeenCalledWith('/auth/telegram/link_url');
-    expect(link).toBe('https://t.me/appDividaZeroBot?start=abc');
+    expect(result.link).toBe('https://t.me/appDividaZeroBot?start=abc');
+    expect(result.tgLink).toBeNull();
   });
 
   it('updateTelegramPreferences sends partial prefs', async () => {

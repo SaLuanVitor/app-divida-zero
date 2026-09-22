@@ -199,7 +199,8 @@ module Api
         end
 
         render json: {
-          link: "https://t.me/#{username}?start=#{token}"
+          link: "https://t.me/#{username}?start=#{token}",
+          tg_link: "tg://resolve?domain=#{username}&start=#{token}"
         }, status: :ok
       end
 

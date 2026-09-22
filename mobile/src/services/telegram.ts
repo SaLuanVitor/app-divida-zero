@@ -18,6 +18,11 @@ export interface TelegramPreferencesResponse {
   telegram_preferences: TelegramPreferences;
 }
 
+export interface TelegramLink {
+  link: string;
+  tgLink: string | null;
+}
+
 /**
  * Status do vinculo do Telegram para o usuario autenticado.
  * Cada usuario tem o proprio vinculo (pessoal ou membro de familia).
@@ -33,11 +38,15 @@ export const getTelegramStatus = async (): Promise<TelegramStatus> => {
 };
 
 /**
- * Gera o deep link (t.me/<bot>?start=<token>) para o usuario abrir no Telegram.
+ * Gera os deep links para abrir o bot no Telegram. `tgLink` usa o scheme nativo
+ * (tg://resolve) para abrir o app direto, sem passar pelo navegador.
  */
-export const getTelegramLinkUrl = async (): Promise<string> => {
+export const getTelegramLinkUrl = async (): Promise<TelegramLink> => {
   const { data } = await api.get('/auth/telegram/link_url');
-  return data.link as string;
+  return {
+    link: data.link as string,
+    tgLink: (data.tg_link as string | undefined) ?? null,
+  };
 };
 
 export const updateTelegramPreferences = async (

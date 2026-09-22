@@ -125,8 +125,18 @@ const TelegramSettings = () => {
     if (opening) return;
     setOpening(true);
     try {
-      const url = await getTelegramLinkUrl();
-      await Linking.openURL(url);
+      const { link, tgLink } = await getTelegramLinkUrl();
+      const deepLink = tgLink ?? link;
+      try {
+        await Linking.openURL(deepLink);
+      } catch {
+        // Se o scheme nativo falhar (Telegram ausente), tenta o link https.
+        if (tgLink && tgLink !== link) {
+          await Linking.openURL(link);
+        } else {
+          throw new Error('Não foi possível abrir o Telegram.');
+        }
+      }
       showMessage('success', 'Abra o Telegram, toque em Iniciar. O vínculo será confirmado automaticamente.');
       startPolling();
     } catch (err: any) {
