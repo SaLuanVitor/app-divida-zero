@@ -28,7 +28,7 @@ class TransactionNormalizer
   def self.normalize_pluggy(txn)
     {
       description: txn['description']&.strip,
-      amount: txn['amount']&.to_f || 0.0,
+      amount: txn['amount']&.to_f&.abs || 0.0,
       date: parse_date(txn['date']),
       flow_type: map_flow_type(txn['type']),
       category: txn['category'] || txn['merchant']&.dig('category'),

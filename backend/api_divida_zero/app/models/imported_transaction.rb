@@ -1,5 +1,6 @@
 class ImportedTransaction < ApplicationRecord
   belongs_to :user
+  belongs_to :financial_connection, optional: true
   belongs_to :duplicate_of, class_name: "FinancialRecord", optional: true
   belongs_to :financial_record, optional: true
 
@@ -7,7 +8,7 @@ class ImportedTransaction < ApplicationRecord
   validates :description, presence: true
   validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :date, presence: true
-  validates :source, presence: true, inclusion: { in: %w[ofx_upload csv_upload] }
+  validates :source, presence: true, inclusion: { in: %w[ofx_upload csv_upload pluggy] }
   validates :status, inclusion: { in: %w[pending duplicate accepted rejected] }
 
   scope :pending, -> { where(status: "pending") }

@@ -2,6 +2,7 @@ class FinancialConnection < ApplicationRecord
   belongs_to :user
   has_many :financial_syncs, dependent: :destroy
   has_many :financial_accounts, dependent: :destroy
+  has_many :imported_transactions, dependent: :destroy
 
   enum :status, {
     pending: 0,

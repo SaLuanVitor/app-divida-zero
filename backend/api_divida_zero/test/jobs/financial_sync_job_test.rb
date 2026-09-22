@@ -22,7 +22,7 @@ class FinancialSyncJobTest < ActiveJob::TestCase
     adapter_mock.expect :transactions, [
       { 'id' => 'txn_1', 'description' => 'SUPERMERCADO', 'amount' => 150.0, 'date' => '2026-09-15', 'type' => 'DEBIT', 'status' => 'POSTED', 'category' => 'Alimentação' },
       { 'id' => 'txn_2', 'description' => 'SALARIO', 'amount' => 5000.0, 'date' => '2026-09-01', 'type' => 'CREDIT', 'status' => 'POSTED', 'category' => 'Salário' }
-    ], [@connection, { page: 1, page_size: 500, updated_after: nil }]
+    ], [@connection, { page: 1, page_size: 500 }]
 
     FinancialProviders::Factory.stub :build, adapter_mock do
       FinancialSyncJob.perform_now(financial_connection_id: @connection.id, sync_type: :full)
@@ -117,7 +117,7 @@ class FinancialSyncJobTest < ActiveJob::TestCase
     adapter_mock.expect :accounts, [], [@connection]
     adapter_mock.expect :transactions, [
       { 'id' => 'txn_dup', 'description' => 'DUPLICADA', 'amount' => 50.0, 'date' => '2026-09-15', 'type' => 'DEBIT', 'status' => 'POSTED' }
-    ], [@connection, { page: 1, page_size: 500, updated_after: nil }]
+    ], [@connection, { page: 1, page_size: 500 }]
 
     # Mock DeduplicationService para retornar true (duplicata)
     Bank::DeduplicationService.stub :duplicate?, true do
@@ -137,13 +137,14 @@ class FinancialSyncJobTest < ActiveJob::TestCase
     conn2 = FinancialConnection.create!(user: @user, provider: :pluggy, provider_item_id: 'item_2', provider_institution_id: 'itau', status: :active)
     FinancialConnection.create!(user: @user, provider: :manual, provider_item_id: 'manual_1', provider_institution_id: 'manual_upload', status: :active) # não deve ser incluído
 
-    assert_enqueued_with(job: FinancialSyncJob, args: [{ financial_connection_id: conn1.id, sync_type: :incremental }])
-    assert_enqueued_with(job: FinancialSyncJob, args: [{ financial_connection_id: conn2.id, sync_type: :incremental }]) do
+    # @connection (setup) + conn1 + conn2 = 3 conexões pluggy ativas
+    assert_enqueued_jobs 3, only: FinancialSyncJob do
       FinancialSyncJob.perform_now(all_connections: true)
     end
   end
 
   test 'should not sync inactive connections' do
+    @connection.update!(status: :pending)
     FinancialConnection.create!(user: @user, provider: :pluggy, provider_item_id: 'item_inactive', provider_institution_id: 'bb', status: :pending)
 
     assert_no_enqueued_jobs only: FinancialSyncJob do

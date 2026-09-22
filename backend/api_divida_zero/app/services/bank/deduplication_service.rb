@@ -16,6 +16,14 @@ module Bank
       end
     end
 
+    # Verifica uma única transação (descrição + valor + data) contra registros
+    # existentes, retornando true quando é duplicata.
+    def self.duplicate?(user, description, amount, date)
+      txn = { fit_id: nil, description: description, amount: amount, date: date }
+      result = detect(user, [txn]).first
+      result[:status] == "duplicate"
+    end
+
     private
 
     def self.build_existing_index(user)

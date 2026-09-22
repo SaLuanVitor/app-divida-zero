@@ -11,6 +11,28 @@ module Bank
       end
     end
 
+    # Categoriza uma única transação já persistida. Sem IA disponível, mantém a
+    # categoria vinda do provedor (já gravada pelo sync).
+    def self.categorize!(transaction)
+      return transaction if no_ai_available?
+
+      txn = {
+        description: transaction.description,
+        amount: transaction.amount.to_f,
+        original_category: transaction.original_category,
+        flow_type: transaction.flow_type
+      }
+      result = categorize_batch(transaction.user, [txn]).first
+      transaction.update_columns(
+        suggested_category: result[:suggested_category],
+        ai_confidence: result[:ai_confidence]
+      )
+      transaction
+    rescue StandardError => e
+      Rails.logger.error("AiCategorizationService.categorize! failed: #{e.message}")
+      transaction
+    end
+
     private
 
     def self.no_ai_available?

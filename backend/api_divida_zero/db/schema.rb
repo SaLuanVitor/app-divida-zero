@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_000005) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_000006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -325,6 +325,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000005) do
     t.string "description", null: false
     t.bigint "duplicate_of_id"
     t.string "duplicate_reason"
+    t.bigint "financial_connection_id"
     t.bigint "financial_record_id"
     t.string "fit_id"
     t.string "flow_type"
@@ -339,6 +340,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000005) do
     t.bigint "user_id", null: false
     t.index ["amount", "date", "description"], name: "idx_imported_dedup"
     t.index ["duplicate_of_id"], name: "index_imported_transactions_on_duplicate_of_id"
+    t.index ["financial_connection_id", "fit_id"], name: "idx_imported_transactions_connection_fit_id"
+    t.index ["financial_connection_id"], name: "index_imported_transactions_on_financial_connection_id"
     t.index ["financial_record_id"], name: "index_imported_transactions_on_financial_record_id"
     t.index ["import_batch_id"], name: "index_imported_transactions_on_import_batch_id"
     t.index ["user_id", "date"], name: "index_imported_transactions_on_user_id_and_date"
@@ -633,6 +636,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000005) do
   add_foreign_key "household_invitations", "users", column: "invited_by_id"
   add_foreign_key "household_memberships", "households"
   add_foreign_key "household_memberships", "users"
+  add_foreign_key "imported_transactions", "financial_connections"
   add_foreign_key "imported_transactions", "financial_records"
   add_foreign_key "imported_transactions", "financial_records", column: "duplicate_of_id"
   add_foreign_key "imported_transactions", "users"

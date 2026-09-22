@@ -111,32 +111,39 @@ class FinancialSyncJob < ApplicationJob
   end
 
   def save_transaction(connection, txn_data)
-    # Usar fit_id para deduplicação (id do Pluggy ou hash manual)
+    # Nova transação: checar duplicata contra registros existentes ANTES de
+    # construir. A associação has_many faz autosave no connection.update!,
+    # então um build sem save ainda seria persistido ao final do sync.
+    is_new = !connection.imported_transactions.exists?(fit_id: txn_data[:fit_id])
+    if is_new && Bank::DeduplicationService.duplicate?(
+      connection.user,
+      txn_data[:description],
+      txn_data[:amount],
+      txn_data[:date]
+    )
+      return
+    end
+
     transaction = connection.imported_transactions.find_or_initialize_by(fit_id: txn_data[:fit_id])
 
     transaction.assign_attributes(
+      user: connection.user,
       description: txn_data[:description],
       amount: txn_data[:amount],
       date: txn_data[:date],
       flow_type: txn_data[:flow_type],
       suggested_category: txn_data[:category],
       original_category: txn_data[:category],
+      import_batch_id: "pluggy_#{connection.id}",
+      source: 'pluggy',
       status: 'pending'
     )
 
     if transaction.new_record?
-      # Deduplicação adicional por descrição + valor + data
-      return if Bank::DeduplicationService.duplicate?(
-        connection.user,
-        txn_data[:description],
-        txn_data[:amount],
-        txn_data[:date]
-      )
-
       transaction.save!
       @records_created += 1
 
-      # Categorização por IA
+      # Categorização por IA (no-op quando não há IA configurada)
       Bank::AiCategorizationService.categorize!(transaction)
     elsif transaction.changed?
       transaction.save!
