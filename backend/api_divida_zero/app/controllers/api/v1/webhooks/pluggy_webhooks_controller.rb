@@ -5,7 +5,12 @@ class Api::V1::Webhooks::PluggyWebhooksController < ApplicationController
     event = params[:event] || request.headers['X-Pluggy-Event']
     event_id = params[:eventId] || request.headers['X-Pluggy-Event-Id']
 
-    return head :bad_request if event.blank? || event_id.blank?
+    # ACK imediato: responde 2XX mesmo sem event/eventId para a Pluggy não
+    # considerar o webhook quebrado. Eventos malformados são logados e descartados.
+    if event.blank? || event_id.blank?
+      Rails.logger.warn("Webhook Pluggy sem event/eventId: #{request.request_parameters.inspect}")
+      return head :ok
+    end
 
     # Idempotência: verificar se já processamos este event_id
     if ProcessedWebhookEvent.exists?(event_id: event_id)
@@ -23,7 +28,7 @@ class Api::V1::Webhooks::PluggyWebhooksController < ApplicationController
     head :ok
   rescue StandardError => e
     Rails.logger.error("Webhook receive error: #{e.message}")
-    head :bad_request
+    head :internal_server_error
   end
 
   private

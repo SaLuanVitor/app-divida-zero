@@ -76,7 +76,7 @@ class Api::V1::Webhooks::PluggyWebhooksControllerTest < ActionDispatch::Integrat
     assert_no_enqueued_jobs only: WebhookProcessingJob
   end
 
-  test 'should return bad_request for missing event' do
+  test 'should acknowledge missing event with ok' do
     payload = { eventId: 'evt_1' }
     signature = OpenSSL::HMAC.hexdigest('SHA256', @secret, payload.to_json)
 
@@ -85,6 +85,7 @@ class Api::V1::Webhooks::PluggyWebhooksControllerTest < ActionDispatch::Integrat
          headers: { 'Pluggy-Signature' => "sha256=#{signature}" },
          as: :json
 
-    assert_response :bad_request
+    assert_response :ok
+    assert_no_enqueued_jobs only: WebhookProcessingJob
   end
 end
