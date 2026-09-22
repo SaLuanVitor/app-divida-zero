@@ -86,6 +86,45 @@ class Api::V1::AuthTelegramTest < ActionDispatch::IntegrationTest
     assert_response :conflict
   end
 
+  test "unlink_telegram clears chat_id and disables notifications" do
+    @user.update!(
+      telegram_chat_id: "987654321",
+      telegram_username: "fulano",
+      telegram_opt_in_at: Time.current
+    )
+    @user.update_telegram_preferences!("telegram_notifications_enabled" => true)
+
+    delete "/api/v1/auth/telegram/link", headers: auth_header(@token)
+
+    assert_response :ok
+    @user.reload
+    assert_nil @user.telegram_chat_id
+    assert_nil @user.telegram_username
+    assert_nil @user.telegram_opt_in_at
+    refute @user.telegram_enabled_for_alert?("due_today")
+  end
+
+  test "unlink_telegram requires authentication" do
+    delete "/api/v1/auth/telegram/link"
+    assert_response :unauthorized
+  end
+
+  test "me returns telegram identity and linked flag" do
+    @user.update!(
+      telegram_chat_id: "987654321",
+      telegram_username: "fulano",
+      telegram_opt_in_at: Time.current
+    )
+
+    get "/api/v1/auth/me", headers: auth_header(@token)
+
+    assert_response :ok
+    body = JSON.parse(response.body)
+    assert_equal true, body["telegram_linked"]
+    assert_equal "fulano", body["telegram_username"]
+    assert_equal "987654321", body["telegram_chat_id"]
+  end
+
   private
 
   def auth_header(token)

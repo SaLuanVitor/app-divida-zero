@@ -5,7 +5,7 @@ module Api
   module V1
     class AuthController < ApplicationController
       include Auditable
-      before_action :authenticate_access_token!, only: [:me, :update_profile, :change_password, :update_email_notifications, :update_wa_notifications, :send_phone_code, :verify_phone, :link_telegram, :update_telegram_notifications, :telegram_link_url]
+      before_action :authenticate_access_token!, only: [:me, :update_profile, :change_password, :update_email_notifications, :update_wa_notifications, :send_phone_code, :verify_phone, :link_telegram, :unlink_telegram, :update_telegram_notifications, :telegram_link_url]
 
       def register
         user = User.new(register_params)
@@ -136,7 +136,9 @@ module Api
           email_preferences: @current_user.email_preferences_with_defaults,
           wa_preferences: @current_user.wa_preferences_with_defaults,
           telegram_preferences: @current_user.telegram_preferences_with_defaults,
-          telegram_linked: @current_user.telegram_chat_id.present? && @current_user.telegram_opt_in_at.present?
+          telegram_linked: @current_user.telegram_chat_id.present? && @current_user.telegram_opt_in_at.present?,
+          telegram_username: @current_user.telegram_username,
+          telegram_chat_id: @current_user.telegram_chat_id
         }, status: :ok
       end
 
@@ -227,6 +229,20 @@ module Api
 
         render json: {
           message: "Telegram vinculado com sucesso.",
+          telegram_preferences: @current_user.telegram_preferences_with_defaults
+        }, status: :ok
+      end
+
+      def unlink_telegram
+        @current_user.update!(
+          telegram_chat_id: nil,
+          telegram_username: nil,
+          telegram_opt_in_at: nil
+        )
+        @current_user.update_telegram_preferences!("telegram_notifications_enabled" => false)
+
+        render json: {
+          message: "Telegram desvinculado.",
           telegram_preferences: @current_user.telegram_preferences_with_defaults
         }, status: :ok
       end

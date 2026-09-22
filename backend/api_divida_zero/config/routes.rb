@@ -19,6 +19,7 @@ Rails.application.routes.draw do
       patch "auth/telegram_notifications", to: "auth#update_telegram_notifications"
       get "auth/telegram/link_url", to: "auth#telegram_link_url"
       post "auth/telegram/link", to: "auth#link_telegram"
+      delete "auth/telegram/link", to: "auth#unlink_telegram"
 
       resource :household, only: %i[show create update destroy], controller: "households" do
         resources :invitations, only: %i[index create destroy], controller: "household_invitations"
@@ -55,7 +56,7 @@ Rails.application.routes.draw do
       get "daily_message/today", to: "daily_messages#today"
       post "daily_message/dispatch", to: "daily_messages#dispatch_daily"
 
-      resources :financial_records, only: [:index, :create, :destroy] do
+      resources :financial_records, only: [ :index, :create, :destroy ] do
         member do
           patch :pay
           patch :status, action: :update_status
@@ -87,12 +88,11 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :financial_goals, only: [:index, :create, :update, :destroy] do
+      resources :financial_goals, only: [ :index, :create, :update, :destroy ] do
         resources :contributions,
-                  only: [:index, :create, :destroy],
+                  only: [ :index, :create, :destroy ],
                   controller: "financial_goal_contributions"
       end
     end
   end
 end
-
