@@ -65,11 +65,9 @@ class FinancialProviders::ManualAdapterTest < ActiveSupport::TestCase
   end
 
   test 'transactions handles parser errors gracefully' do
-    # Create connection with invalid file path
     connection = FinancialConnection.new(
       metadata: { file_path: 'test/fixtures/files/invalid.ofx', format: 'ofx' }
     )
-    # Should not raise, returns empty array
     assert_nothing_raised do
       result = @adapter.transactions(connection)
       assert_empty result

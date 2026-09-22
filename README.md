@@ -333,3 +333,110 @@ Itens recomendados:
 - Nao executar rotinas destrutivas no ambiente remoto.
 - Manter backup/snapshot do Postgres no Railway habilitado.
 - Em problema de deploy: fazer rollback da API e restaurar backup do banco.
+
+## 11) Bank Integration (Open Finance)
+
+### Arquitetura
+
+O sistema utiliza o padrão **Adapter** para integração bancária, permitindo múltiplos providers:
+
+```
+App → FinancialConnectionsController → FinancialProviderFactory → Provider Adapter
+                                                              ├── PluggyAdapter (Open Finance)
+                                                              └── ManualAdapter (OFX/CSV fallback)
+```
+
+### Providers Suportados
+
+| Provider | Tipo | Capabilities |
+|----------|------|--------------|
+| **Pluggy** | Open Finance (API) | Contas, Transações, Cartões, Sync automático (webhook) + manual |
+| **Manual** | OFX/CSV Upload | Transações apenas, Sync manual |
+
+### Endpoints da API
+
+#### Conexões Financeiras (Nova API Unificada)
+```
+POST   /api/v1/financial/connections           # Criar conexão (Pluggy: connect_token + URL; Manual: upload OFX/CSV)
+GET    /api/v1/financial/connections/:id       # Detalhes da conexão + contas + último sync
+DELETE /api/v1/financial/connections/:id       # Remover conexão
+POST   /api/v1/financial/connections/:id/sync  # Sincronização manual
+GET    /api/v1/financial/connections/:id/transactions  # Transações pendentes/duplicadas
+```
+
+#### Webhooks
+```
+POST /webhooks/pluggy  # Recebe eventos do Pluggy (item/created, transactions/created, etc.)
+```
+
+#### Legacy (Deprecated - mantido para compatibilidade mobile)
+```
+POST /api/v1/bank/statements/upload     → 410 Gone (use POST /api/v1/financial/connections)
+GET  /api/v1/bank/statements/:batch_id  → 410 Gone
+DELETE /api/v1/bank/statements/:batch_id → 410 Gone
+GET  /api/v1/bank/transactions/pending  → 410 Gone (use GET /connections/:id/transactions)
+POST /api/v1/bank/transactions/accept   → 410 Gone
+POST /api/v1/bank/transactions/reject   → 410 Gone
+POST /api/v1/bank/transactions/:id/merge → 410 Gone
+```
+
+### Fluxo Pluggy (Open Finance)
+1. Frontend chama `POST /connections` com `institution_id`
+2. Backend retorna `connect_token` + `connect_url`
+3. Frontend abre `connect_url` em WebView (Pluggy Connect Widget)
+4. Usuário autentica no banco → Pluggy dispara webhook `item/created`
+5. Backend processa webhook → `FinancialSyncJob` (full sync)
+6. Sync busca contas + transações → normaliza → dedup → categoriza IA → salva
+
+### Fluxo Manual (OFX/CSV)
+1. Frontend faz upload do arquivo via `POST /connections` (multipart/form-data)
+2. Backend cria `FinancialConnection` (provider=manual) + `FinancialSync` (manual_upload)
+3. `FinancialSyncJob` processa: parse → normaliza → dedup → categoriza IA → salva
+4. Frontend acompanha via `GET /connections/:id` (status do sync)
+
+### Feature Flags
+- `open_finance`: habilita/desabilita toda integração bancária
+- `manual_import`: habilita/desabilita upload OFX/CSV
+- `bank_sync`: habilita/desabilita sincronização automática
+
+### Limites (Plano Free)
+- 10 usuários totais
+- 20 conexões no sistema
+- 3 conexões por usuário
+- 15 contas por usuário
+- 10.000 transações/mês
+- 2 sincronizações manuais/dia por usuário
+
+### Admin Dashboard
+```
+GET /admin/financial           # Dashboard com métricas
+GET /admin/financial/connections  # Lista conexões com filtros
+GET /admin/financial/sync_logs    # Logs de sincronização
+```
+
+### Testes
+```bash
+# Testes unitários
+rails test test/services/financial_providers/
+rails test test/services/financial/limits_service_test.rb
+rails test test/services/financial/feature_flags_test.rb
+
+# Testes de controller
+rails test test/controllers/api/v1/financial/connections_controller_test.rb
+rails test test/controllers/api/v1/bank/statements_controller_test.rb
+rails test test/controllers/admin/financial_controller_test.rb
+
+# Testes de jobs
+rails test test/jobs/financial_sync_job_test.rb
+rails test test/jobs/webhook_processing_job_test.rb
+```
+
+### Benchmark
+```bash
+ruby bin/benchmark_import.rb ofx 5
+ruby bin/benchmark_import.rb csv 5
+```
+
+**Targets:**
+- OFX: Parse < 1s, Full Sync < 5s (1000 transações)
+- CSV: Parse < 0.5s, Full Sync < 3s (1000 transações)

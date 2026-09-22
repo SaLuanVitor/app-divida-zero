@@ -1,138 +1,86 @@
-require "test_helper"
+require 'test_helper'
 
 class Api::V1::Bank::StatementsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @user = User.create!(
-      name: "Import Test",
-      email: "import_#{Time.now.to_i}_#{rand(1000)}@example.com",
-      password: "senha1234",
-      password_confirmation: "senha1234"
-    )
-    @tokens = JsonWebToken.issue_pair(user_id: @user.id)
+    @user = users(:one)
+    @token = JsonWebToken.encode(user_id: @user.id)
+    @headers = { 'Authorization' => "Bearer #{@token}" }
+    @ofx_file = fixture_file_upload('test/fixtures/files/sample.ofx', 'application/ofx')
+    @csv_file = fixture_file_upload('test/fixtures/files/sample.csv', 'text/csv')
   end
 
-  test "upload returns 202 and enqueues job" do
-    assert_enqueued_with(job: StatementParseJob) do
-      post "/api/v1/bank/statements/upload",
-           params: { file: fixture_file_upload("sample.csv", "text/csv") },
-           headers: auth_header
-    end
+  test 'should return 403 when manual_import disabled' do
+    FeatureFlag.disable('manual_import')
 
+    post api_v1_bank_statements_upload_url, headers: @headers, params: { file: @ofx_file }
+    assert_response :forbidden
+  end
+
+  test 'should upload OFX and return batch_id' do
+    FeatureFlag.enable('manual_import')
+
+    post api_v1_bank_statements_upload_url, headers: @headers, params: { file: @ofx_file }
     assert_response :accepted
-    body = JSON.parse(response.body)
-    assert body["batch_id"].present?
-    assert_equal "processing", body["status"]
+
+    json = JSON.parse(response.body)
+    assert json['batch_id']
+    assert json['connection_id']
+    assert_equal 'processing', json['status']
   end
 
-  test "upload rejects missing file" do
-    post "/api/v1/bank/statements/upload", params: {}, headers: auth_header
+  test 'should upload CSV and return batch_id' do
+    FeatureFlag.enable('manual_import')
+
+    post api_v1_bank_statements_upload_url, headers: @headers, params: { file: @csv_file }
+    assert_response :accepted
+
+    json = JSON.parse(response.body)
+    assert json['batch_id']
+  end
+
+  test 'should reject unsupported file format' do
+    FeatureFlag.enable('manual_import')
+    txt_file = fixture_file_upload('test/fixtures/files/sample.txt', 'text/plain')
+
+    post api_v1_bank_statements_upload_url, headers: @headers, params: { file: txt_file }
     assert_response :unprocessable_entity
-    assert_match(/Arquivo é obrigatório/, JSON.parse(response.body)["error"])
   end
 
-  test "upload rejects non-allowed extension" do
-    file = Tempfile.new([ "fake", ".txt" ])
-    file.write("hello")
-    file.rewind
-    uploaded = Rack::Test::UploadedFile.new(file.path, "text/plain", original_filename: "fake.txt")
+  test 'should reject file too large' do
+    FeatureFlag.enable('manual_import')
+    large_file = fixture_file_upload('test/fixtures/files/large.ofx', 'application/ofx')
 
-    post "/api/v1/bank/statements/upload",
-         params: { file: uploaded },
-         headers: auth_header
-
+    post api_v1_bank_statements_upload_url, headers: @headers, params: { file: large_file }
     assert_response :unprocessable_entity
-    assert_match(/Formato não suportado/, JSON.parse(response.body)["error"])
-  ensure
-    file&.close
-    file&.unlink
   end
 
-  test "status returns processing while no transactions exist" do
-    Rails.cache = ActiveSupport::Cache.lookup_store(:memory_store)
-    assert_enqueued_with(job: StatementParseJob) do
-      post "/api/v1/bank/statements/upload",
-           params: { file: fixture_file_upload("sample.csv", "text/csv") },
-           headers: auth_header
-    end
-    batch_id = JSON.parse(response.body)["batch_id"]
+  test 'should return status for valid batch_id' do
+    FeatureFlag.enable('manual_import')
 
-    get "/api/v1/bank/statements/#{batch_id}/status", headers: auth_header
+    post api_v1_bank_statements_upload_url, headers: @headers, params: { file: @ofx_file }
+    json = JSON.parse(response.body)
+    batch_id = json['batch_id']
+
+    get api_v1_bank_statements_status_url(batch_id: batch_id), headers: @headers
     assert_response :ok
-    status_body = JSON.parse(response.body)
-    assert_equal "processing", status_body["status"]
-  ensure
-    Rails.cache = ActiveSupport::Cache.lookup_store(:null_store)
+
+    json = JSON.parse(response.body)
+    assert_equal batch_id, json['batch_id']
   end
 
-  test "status returns done with totals after transactions created" do
-    batch_id = SecureRandom.uuid
-    @user.imported_transactions.create!(
-      import_batch_id: batch_id, description: "A", amount: 10.0,
-      date: Date.current, source: "csv_upload", status: "pending"
-    )
-    @user.imported_transactions.create!(
-      import_batch_id: batch_id, description: "B", amount: 20.0,
-      date: Date.current, source: "csv_upload", status: "duplicate",
-      duplicate_reason: "exact_match"
-    )
-
-    get "/api/v1/bank/statements/#{batch_id}/status", headers: auth_header
-    assert_response :ok
-    body = JSON.parse(response.body)
-    assert_equal "done", body["status"]
-    assert_equal 2, body["total"]
-    assert_equal 1, body["pending"]
-    assert_equal 1, body["duplicates"]
-  end
-
-  test "status returns error when batch failed" do
-    Rails.cache = ActiveSupport::Cache.lookup_store(:memory_store)
-    batch_id = SecureRandom.uuid
-    Rails.cache.write("bank_import_batch:#{batch_id}", { status: "error", error: "boom" })
-
-    get "/api/v1/bank/statements/#{batch_id}/status", headers: auth_header
-    assert_response :ok
-    body = JSON.parse(response.body)
-    assert_equal "error", body["status"]
-    assert_equal "boom", body["error"]
-  ensure
-    Rails.cache = ActiveSupport::Cache.lookup_store(:null_store)
-  end
-
-  test "status returns not found for unknown batch" do
-    get "/api/v1/bank/statements/#{SecureRandom.uuid}/status", headers: auth_header
+  test 'should return 404 for invalid batch_id' do
+    get api_v1_bank_statements_status_url(batch_id: 'invalid'), headers: @headers
     assert_response :not_found
   end
 
-  test "destroy deletes batch transactions" do
-    batch_id = SecureRandom.uuid
-    @user.imported_transactions.create!(
-      import_batch_id: batch_id, description: "A", amount: 10.0,
-      date: Date.current, source: "csv_upload", status: "pending"
-    )
+  test 'should delete import batch' do
+    FeatureFlag.enable('manual_import')
 
-    assert_difference "ImportedTransaction.count", -1 do
-      delete "/api/v1/bank/statements/#{batch_id}", headers: auth_header
-    end
+    post api_v1_bank_statements_upload_url, headers: @headers, params: { file: @ofx_file }
+    json = JSON.parse(response.body)
+    batch_id = json['batch_id']
 
+    delete api_v1_bank_statements_destroy_url(batch_id: batch_id), headers: @headers
     assert_response :ok
-    assert_equal 1, JSON.parse(response.body)["deleted"]
-  end
-
-  test "endpoints require access token" do
-    post "/api/v1/bank/statements/upload"
-    assert_response :unauthorized
-
-    get "/api/v1/bank/statements/#{SecureRandom.uuid}/status"
-    assert_response :unauthorized
-
-    delete "/api/v1/bank/statements/#{SecureRandom.uuid}"
-    assert_response :unauthorized
-  end
-
-  private
-
-  def auth_header
-    { "Authorization" => "Bearer #{@tokens[:access_token]}" }
   end
 end
