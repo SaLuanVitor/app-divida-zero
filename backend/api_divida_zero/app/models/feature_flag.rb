@@ -14,10 +14,11 @@ class FeatureFlag < ApplicationRecord
   end
 
   def self.enable(key, description: nil)
-    find_or_create_by(key: key) do |flag|
-      flag.enabled = true
-      flag.description = description
-    end
+    flag = find_or_initialize_by(key: key)
+    flag.enabled = true
+    flag.description = description if description.present?
+    flag.save!
+    flag
   end
 
   def self.disable(key)
@@ -30,7 +31,7 @@ class FeatureFlag < ApplicationRecord
     bank_sync: { enabled: false, description: 'Sincronização bancária automática' },
     investments: { enabled: false, description: 'Suporte a investimentos' },
     credit_cards: { enabled: true, description: 'Suporte a cartões de crédito' },
-    family: { enabled: false, description: 'Funcionalidades de família' },
+    family: { enabled: true, description: 'Funcionalidades de família' },
     ai_analysis: { enabled: true, description: 'Análise por IA de transações' },
     manual_import: { enabled: true, description: 'Importação manual OFX/CSV' }
   }.freeze

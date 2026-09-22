@@ -2,6 +2,7 @@ module Api
   module V1
     class HouseholdsController < ApplicationController
       before_action :authenticate_access_token!
+      before_action :check_family_enabled
       before_action :set_household, only: %i[show update destroy]
 
       def show
@@ -54,6 +55,12 @@ module Api
       end
 
       private
+
+      def check_family_enabled
+        unless FeatureFlag.enabled?(:family)
+          render json: { error: "Funcionalidade de família desabilitada" }, status: :forbidden
+        end
+      end
 
       def set_household
         @household = current_household
