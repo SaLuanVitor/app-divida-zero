@@ -25,6 +25,7 @@ import TelegramSettings from '../screens/app/TelegramSettings';
 import OpenFinance from '../screens/app/OpenFinance';
 import BankImportScreen from '../screens/app/BankImportScreen';
 import BankReviewScreen from '../screens/app/BankReviewScreen';
+import BankConnectScreen from '../screens/app/BankConnectScreen';
 import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, Landmark } from 'lucide-react-native';
 import { useOverlay } from '../context/OverlayContext';
 import { useThemeMode } from '../context/ThemeContext';
@@ -304,6 +305,7 @@ export const AppNavigator = () => {
                 <Tab.Screen name="OpenFinance" component={OpenFinance} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="BankImport" component={BankImportScreen} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="BankReview" component={BankReviewScreen} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="BankConnect" component={BankConnectScreen} options={{ tabBarButton: () => null }} />
             </Tab.Navigator>
         </BottomInsetProvider>
     );

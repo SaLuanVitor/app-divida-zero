@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, FileUp, ListChecks, RefreshCw, Landmark } from 'lucide-react-native';
+import { ArrowLeft, FileUp, ListChecks, RefreshCw, Landmark, Link } from 'lucide-react-native';
 import AppText from '../../components/AppText';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
@@ -105,16 +105,27 @@ const OpenFinance = () => {
           />
         </Card>
 
-        <Card className="p-4">
+        <Card className="mb-3 p-4">
           <View className="flex-row items-center mb-1">
-            <RefreshCw size={18} color="#94a3b8" />
+            <RefreshCw size={18} color="#3b82f6" />
             <AppText className="text-slate-900 dark:text-slate-100 font-bold ml-2">
               Sincronização automática
             </AppText>
           </View>
           <AppText className="text-slate-500 dark:text-slate-200 text-xs">
-            Em breve. A conexão automática com o banco ainda não está disponível nesta versão.
+            Conecte sua conta bancária via Open Finance e sincronize automaticamente.
           </AppText>
+        </Card>
+
+        <Card className="mb-3">
+          <ActionRow
+            icon={Link}
+            color="#3b82f6"
+            title="Conectar banco"
+            subtitle="Conecte sua conta via Open Finance (Pluggy)."
+            onPress={() => navigation.navigate('BankConnect')}
+            rowMinHeight={rowMinHeight}
+          />
         </Card>
       </View>
     </Layout>
