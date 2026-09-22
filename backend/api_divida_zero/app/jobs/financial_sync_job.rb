@@ -2,6 +2,8 @@ class FinancialSyncJob < ApplicationJob
   queue_as :financial_sync
 
   def perform(financial_connection_id: nil, sync_type: :full, all_connections: false)
+    return unless FeatureFlag.enabled?(:bank_sync)
+
     if all_connections
       FinancialConnection.active.where(provider: :pluggy).find_each do |connection|
         FinancialSyncJob.perform_later(financial_connection_id: connection.id, sync_type: :incremental)

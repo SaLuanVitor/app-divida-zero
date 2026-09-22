@@ -26,8 +26,8 @@ class FeatureFlag < ApplicationRecord
 
   # Feature flags iniciais
   INITIAL_FLAGS = {
-    open_finance: { enabled: true, description: 'Integração Open Finance via Pluggy' },
-    bank_sync: { enabled: true, description: 'Sincronização bancária automática' },
+    open_finance: { enabled: false, description: 'Integração Open Finance via Pluggy' },
+    bank_sync: { enabled: false, description: 'Sincronização bancária automática' },
     investments: { enabled: false, description: 'Suporte a investimentos' },
     credit_cards: { enabled: true, description: 'Suporte a cartões de crédito' },
     family: { enabled: false, description: 'Funcionalidades de família' },
