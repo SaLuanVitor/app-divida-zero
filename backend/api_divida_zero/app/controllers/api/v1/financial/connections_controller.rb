@@ -158,7 +158,7 @@ module Api
               status: LimitsService.status(user, :accounts)
             },
             syncs: {
-              used: LimitsService.usage(user)[:syncs_today],
+              used: LimitsService.usage(user)[:syncs],
               limit: user.plan&.limit_for('sync.manual_per_day') || PlanLimit.sync_manual_per_day,
               remaining: LimitsService.remaining(user, :syncs),
               percentage: LimitsService.percentage_used(user, :syncs),

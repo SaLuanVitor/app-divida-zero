@@ -75,7 +75,7 @@ class LimitsServiceTest < ActiveSupport::TestCase
     assert_equal 1, usage[:connections]
     assert usage.key?(:accounts)
     assert usage.key?(:transactions_this_month)
-    assert usage.key?(:syncs_today)
+    assert usage.key?(:syncs)
   end
 
   test 'percentage_used returns correct percentage' do

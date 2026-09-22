@@ -2,20 +2,22 @@ require 'test_helper'
 
 class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::IntegrationTest
   setup do
+    Rails.cache.clear
     @user = users(:one)
-    @token = JsonWebToken.encode(user_id: @user.id)
+    @token = JsonWebToken.encode(sub: @user.id, type: 'access')
     @headers = { 'Authorization' => "Bearer #{@token}" }
+    Plan.seed_free_plan!
   end
 
   test 'should return 403 when open_finance disabled' do
-    FeatureFlag.disable('open_finance')
+    FeatureFlags.disable('open_finance')
 
     post api_v1_financial_connections_url, headers: @headers, params: { institution_id: 'nubank' }, as: :json
     assert_response :forbidden
   end
 
   test 'should create connection and return connect_token' do
-    FeatureFlag.enable('open_finance')
+    FeatureFlags.enable('open_finance')
 
     # Mock the adapter
     adapter_mock = Minitest::Mock.new
@@ -35,10 +37,10 @@ class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::Integratio
   end
 
   test 'should handle Pluggy API error on create' do
-    FeatureFlag.enable('open_finance')
+    FeatureFlags.enable('open_finance')
 
     adapter_mock = Minitest::Mock.new
-    adapter_mock.expect :create_connection, nil, [@user] do
+    adapter_mock.expect(:create_connection, nil) do
       raise FinancialProviders::Pluggy::PluggyAuthError, 'Invalid credentials'
     end
 
@@ -51,7 +53,7 @@ class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::Integratio
   end
 
   test 'should show connection with accounts and last sync' do
-    FeatureFlag.enable('open_finance')
+    FeatureFlags.enable('open_finance')
 
     connection = FinancialConnection.create!(
       user: @user,
@@ -79,7 +81,7 @@ class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::Integratio
   end
 
   test 'should destroy connection' do
-    FeatureFlag.enable('open_finance')
+    FeatureFlags.enable('open_finance')
 
     connection = FinancialConnection.create!(
       user: @user,
@@ -102,7 +104,7 @@ class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::Integratio
   end
 
   test 'should enqueue sync job' do
-    FeatureFlag.enable('open_finance')
+    FeatureFlags.enable('open_finance')
 
     connection = FinancialConnection.create!(
       user: @user,
@@ -112,7 +114,7 @@ class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::Integratio
       status: :active
     )
 
-    assert_enqueued_with(job: FinancialSyncJob, args: { financial_connection_id: connection.id, sync_type: :full }) do
+    assert_enqueued_with(job: FinancialSyncJob, args: [{ financial_connection_id: connection.id, sync_type: :full }]) do
       post sync_api_v1_financial_connection_url(connection), headers: @headers
     end
 
@@ -120,7 +122,7 @@ class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::Integratio
   end
 
   test 'should return 403 when connection limit exceeded' do
-    FeatureFlag.enable('open_finance')
+    FeatureFlags.enable('open_finance')
 
     # Create 3 connections (free plan limit)
     3.times do |i|
@@ -147,7 +149,7 @@ class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::Integratio
   end
 
   test 'should return limits info in create response' do
-    FeatureFlag.enable('open_finance')
+    FeatureFlags.enable('open_finance')
 
     adapter_mock = Minitest::Mock.new
     adapter_mock.expect :create_connection, { connect_token: 'token_123', connect_url: 'https://connect.pluggy.ai/?connectToken=token_123', item_id: 'item_456' }, [@user]
@@ -168,7 +170,7 @@ class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::Integratio
   end
 
   test 'should return limits info in show response' do
-    FeatureFlag.enable('open_finance')
+    FeatureFlags.enable('open_finance')
 
     connection = FinancialConnection.create!(
       user: @user,
@@ -189,7 +191,7 @@ class Api::V1::Financial::ConnectionsControllerTest < ActionDispatch::Integratio
   end
 
   test 'should return 403 when sync limit exceeded' do
-    FeatureFlag.enable('open_finance')
+    FeatureFlags.enable('open_finance')
 
     connection = FinancialConnection.create!(
       user: @user,

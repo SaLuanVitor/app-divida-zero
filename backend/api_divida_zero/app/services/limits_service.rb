@@ -37,7 +37,7 @@ class LimitsService
         connections: user.financial_connections.active.count,
         accounts: user.financial_accounts.count,
         transactions_this_month: user.financial_records.where('due_date >= ?', Time.current.beginning_of_month).count,
-        syncs_today: user.financial_syncs.where('started_at >= ?', Time.current.beginning_of_day).count
+        syncs: user.financial_syncs.where('started_at >= ?', Time.current.beginning_of_day).count
       }
     end
   end
@@ -70,6 +70,8 @@ class LimitsService
   end
 
   def self.build_limit_key(resource, action)
+    return 'sync.manual_per_day' if resource == :syncs
+
     suffix = action == :create ? 'per_user' : 'total'
     "#{resource}.max_#{suffix}"
   end
