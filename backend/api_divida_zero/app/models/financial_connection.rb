@@ -12,8 +12,8 @@ class FinancialConnection < ApplicationRecord
   }, default: :pending
 
   enum :provider, {
-    pluggy: 0,
-    manual: 1
+    pluggy: 'pluggy',
+    manual: 'manual'
   }
 
   validates :provider, presence: true

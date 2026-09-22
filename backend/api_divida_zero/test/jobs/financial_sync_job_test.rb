@@ -32,7 +32,6 @@ class FinancialSyncJobTest < ActiveJob::TestCase
 
     sync = @connection.financial_syncs.last
     assert_equal 'completed', sync.status
-    assert_equal 1, sync.records_created # 1 account
     assert_equal 2, sync.records_created # 2 transactions
 
     assert_equal 1, @connection.financial_accounts.count
@@ -68,7 +67,7 @@ class FinancialSyncJobTest < ActiveJob::TestCase
 
   test 'should handle PluggyAuthError' do
     adapter_mock = Minitest::Mock.new
-    adapter_mock.expect :accounts, nil, [@connection] do
+    adapter_mock.expect(:accounts, nil) do
       raise FinancialProviders::Pluggy::PluggyAuthError, 'Invalid credentials'
     end
 
@@ -85,7 +84,7 @@ class FinancialSyncJobTest < ActiveJob::TestCase
 
   test 'should handle PluggyRateLimitError' do
     adapter_mock = Minitest::Mock.new
-    adapter_mock.expect :accounts, nil, [@connection] do
+    adapter_mock.expect(:accounts, nil) do
       raise FinancialProviders::Pluggy::PluggyRateLimitError, 'Rate limited'
     end
 
@@ -100,7 +99,7 @@ class FinancialSyncJobTest < ActiveJob::TestCase
 
   test 'should handle PluggyServerError' do
     adapter_mock = Minitest::Mock.new
-    adapter_mock.expect :accounts, nil, [@connection] do
+    adapter_mock.expect(:accounts, nil) do
       raise FinancialProviders::Pluggy::PluggyServerError, 'Internal server error'
     end
 
@@ -138,8 +137,8 @@ class FinancialSyncJobTest < ActiveJob::TestCase
     conn2 = FinancialConnection.create!(user: @user, provider: :pluggy, provider_item_id: 'item_2', provider_institution_id: 'itau', status: :active)
     FinancialConnection.create!(user: @user, provider: :manual, provider_item_id: 'manual_1', provider_institution_id: 'manual_upload', status: :active) # não deve ser incluído
 
-    assert_enqueued_with(job: FinancialSyncJob, args: { financial_connection_id: conn1.id, sync_type: :incremental })
-    assert_enqueued_with(job: FinancialSyncJob, args: { financial_connection_id: conn2.id, sync_type: :incremental }) do
+    assert_enqueued_with(job: FinancialSyncJob, args: [{ financial_connection_id: conn1.id, sync_type: :incremental }])
+    assert_enqueued_with(job: FinancialSyncJob, args: [{ financial_connection_id: conn2.id, sync_type: :incremental }]) do
       FinancialSyncJob.perform_now(all_connections: true)
     end
   end

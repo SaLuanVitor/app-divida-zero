@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_000004) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_000005) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -142,6 +142,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000004) do
     t.string "key", null: false
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_feature_flags_on_key", unique: true
+  end
+
+  create_table "financial_accounts", force: :cascade do |t|
+    t.integer "account_type", default: 0, null: false
+    t.decimal "balance", precision: 12, scale: 2, default: "0.0", null: false
+    t.datetime "created_at", null: false
+    t.string "currency", default: "BRL", null: false
+    t.bigint "financial_connection_id", null: false
+    t.string "name", null: false
+    t.string "provider_account_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["financial_connection_id", "provider_account_id"], name: "idx_financial_accounts_connection_provider", unique: true
+    t.index ["financial_connection_id"], name: "index_financial_accounts_on_financial_connection_id"
   end
 
   create_table "financial_connections", force: :cascade do |t|
@@ -604,6 +617,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000004) do
   add_foreign_key "app_ratings", "users"
   add_foreign_key "audit_logs", "users"
   add_foreign_key "device_tokens", "users"
+  add_foreign_key "financial_accounts", "financial_connections"
   add_foreign_key "financial_connections", "users"
   add_foreign_key "financial_goal_contributions", "financial_goals"
   add_foreign_key "financial_goal_contributions", "users"

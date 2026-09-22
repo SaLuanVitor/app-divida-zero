@@ -12,10 +12,10 @@ class WebhookProcessingJobTest < ActiveJob::TestCase
     )
   end
 
-  test 'should process item/created event' do
-    payload = { item: { id: 'item_123', status: 'active' } }
+  test 'should process item/created event and mark active' do
+    payload = { 'itemId' => 'item_123', 'clientUserId' => @user.id.to_s, 'triggeredBy' => 'USER' }
 
-    assert_enqueued_with(job: FinancialSyncJob, args: { financial_connection_id: @connection.id, sync_type: :full }) do
+    assert_enqueued_with(job: FinancialSyncJob, args: [{ financial_connection_id: @connection.id, sync_type: :full }]) do
       WebhookProcessingJob.perform_now(
         event_type: 'item/created',
         event_id: 'evt_1',
@@ -25,26 +25,48 @@ class WebhookProcessingJobTest < ActiveJob::TestCase
 
     @connection.reload
     assert_equal 'active', @connection.status
+    assert_equal 'item_123', @connection.provider_item_id
     assert ProcessedWebhookEvent.exists?(event_id: 'evt_1')
   end
 
-  test 'should process item/updated event' do
-    @connection.update!(status: :active)
-    payload = { item: { id: 'item_123', status: 'error', error: 'Token expired' } }
+  test 'should find pending connection by clientUserId when itemId is new' do
+    @connection.update!(provider_item_id: 'pending_abc123', status: :pending)
+    payload = { 'itemId' => 'real_item_456', 'clientUserId' => @user.id.to_s, 'triggeredBy' => 'USER' }
 
-    WebhookProcessingJob.perform_now(
-      event_type: 'item/updated',
-      event_id: 'evt_2',
-      payload: payload
-    )
+    assert_enqueued_with(job: FinancialSyncJob) do
+      WebhookProcessingJob.perform_now(
+        event_type: 'item/created',
+        event_id: 'evt_client',
+        payload: payload
+      )
+    end
 
     @connection.reload
-    assert_equal 'error', @connection.status
-    assert_equal 'Token expired', @connection.last_sync_error
+    assert_equal 'active', @connection.status
+    assert_equal 'real_item_456', @connection.provider_item_id
+  end
+
+  test 'should process item/updated event as incremental sync' do
+    @connection.update!(status: :active)
+    payload = { 'itemId' => 'item_123', 'clientUserId' => @user.id.to_s, 'triggeredBy' => 'SYNC' }
+
+    assert_enqueued_with(job: FinancialSyncJob, args: [{ financial_connection_id: @connection.id, sync_type: :incremental }]) do
+      WebhookProcessingJob.perform_now(
+        event_type: 'item/updated',
+        event_id: 'evt_2',
+        payload: payload
+      )
+    end
+
+    @connection.reload
+    assert_equal 'active', @connection.status
   end
 
   test 'should process item/error event' do
-    payload = { item: { id: 'item_123', status: 'error', error: 'Invalid credentials' } }
+    payload = {
+      'itemId' => 'item_123',
+      'error' => { 'code' => 'USER_INPUT_TIMEOUT', 'message' => 'Invalid credentials' }
+    }
 
     WebhookProcessingJob.perform_now(
       event_type: 'item/error',
@@ -58,7 +80,7 @@ class WebhookProcessingJobTest < ActiveJob::TestCase
   end
 
   test 'should process item/deleted event' do
-    payload = { item: { id: 'item_123', status: 'deleted' } }
+    payload = { 'itemId' => 'item_123' }
 
     WebhookProcessingJob.perform_now(
       event_type: 'item/deleted',
@@ -71,9 +93,9 @@ class WebhookProcessingJobTest < ActiveJob::TestCase
   end
 
   test 'should process transactions/created event as incremental sync' do
-    payload = { item: { id: 'item_123' } }
+    payload = { 'itemId' => 'item_123' }
 
-    assert_enqueued_with(job: FinancialSyncJob, args: { financial_connection_id: @connection.id, sync_type: :incremental }) do
+    assert_enqueued_with(job: FinancialSyncJob, args: [{ financial_connection_id: @connection.id, sync_type: :incremental }]) do
       WebhookProcessingJob.perform_now(
         event_type: 'transactions/created',
         event_id: 'evt_5',
@@ -83,7 +105,7 @@ class WebhookProcessingJobTest < ActiveJob::TestCase
   end
 
   test 'should process item/waiting_user_input as action_required' do
-    payload = { item: { id: 'item_123', error: 'MFA required' } }
+    payload = { 'itemId' => 'item_123' }
 
     WebhookProcessingJob.perform_now(
       event_type: 'item/waiting_user_input',
@@ -93,7 +115,6 @@ class WebhookProcessingJobTest < ActiveJob::TestCase
 
     @connection.reload
     assert_equal 'action_required', @connection.status
-    assert_equal 'MFA required', @connection.last_sync_error
   end
 
   test 'should not process duplicate event_id' do
@@ -102,15 +123,14 @@ class WebhookProcessingJobTest < ActiveJob::TestCase
     WebhookProcessingJob.perform_now(
       event_type: 'item/created',
       event_id: 'evt_dup',
-      payload: { item: { id: 'item_123', status: 'active' } }
+      payload: { 'itemId' => 'item_123', 'clientUserId' => @user.id.to_s }
     )
 
-    # Não deve enfileirar novo sync
     assert_no_enqueued_jobs only: FinancialSyncJob
   end
 
   test 'should not crash if connection not found' do
-    payload = { item: { id: 'nonexistent', status: 'active' } }
+    payload = { 'itemId' => 'nonexistent', 'clientUserId' => '999999' }
 
     assert_nothing_raised do
       WebhookProcessingJob.perform_now(
@@ -126,7 +146,7 @@ class WebhookProcessingJobTest < ActiveJob::TestCase
       WebhookProcessingJob.perform_now(
         event_type: 'unknown/event',
         event_id: 'evt_8',
-        payload: { item: { id: 'item_123' } }
+        payload: { 'itemId' => 'item_123' }
       )
     end
 

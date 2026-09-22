@@ -8,7 +8,7 @@ module FinancialProviders
 
     def self.build(provider = nil, config = {})
       provider ||= Setting.open_finance_provider
-      klass = PROVIDERS[provider]
+      klass = PROVIDERS[provider.to_s]
 
       raise ArgumentError, "Unknown provider: #{provider}. Available: #{PROVIDERS.keys.join(', ')}" unless klass
 

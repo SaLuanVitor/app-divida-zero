@@ -36,41 +36,50 @@ class WebhookProcessingJob < ApplicationJob
 
   def find_connection(payload)
     item_id = payload.dig('item', 'id') || payload['itemId']
-    return nil unless item_id
 
-    FinancialConnection.find_by(provider_item_id: item_id, provider: :pluggy)
+    if item_id.present?
+      connection = FinancialConnection.find_by(provider_item_id: item_id, provider: :pluggy)
+      return connection if connection
+    end
+
+    # Item recém-criado: o itemId ainda não era conhecido no create_connection,
+    # então localizamos a conexão pendente do usuário via clientUserId.
+    client_user_id = payload['clientUserId']
+    return nil if client_user_id.blank?
+
+    user_id = Integer(client_user_id, exception: false)
+    return nil unless user_id
+
+    FinancialConnection.where(provider: :pluggy, status: :pending, user_id: user_id)
+                       .order(created_at: :desc)
+                       .first
   end
 
   def handle_item_created(connection, payload)
-    item = payload['item'] || {}
+    item_id = payload['itemId'] || payload.dig('item', 'id')
     connection.update!(
-      status: map_item_status(item['status']),
-      provider_item_id: item['id'],
+      status: :active,
+      provider_item_id: item_id || connection.provider_item_id,
       last_sync_error: nil
     )
     FinancialSyncJob.perform_later(financial_connection_id: connection.id, sync_type: :full)
   end
 
   def handle_item_updated(connection, payload)
-    item = payload['item'] || {}
-    new_status = map_item_status(item['status'])
-
+    item_id = payload['itemId'] || payload.dig('item', 'id')
     connection.update!(
-      status: new_status,
-      last_sync_error: new_status == 'error' ? item['error'] : nil
+      status: :active,
+      provider_item_id: item_id || connection.provider_item_id,
+      last_sync_error: nil
     )
-
-    # Se status mudou para active ou credentials_updated, disparar sync
-    if %w[active error].include?(new_status)
-      FinancialSyncJob.perform_later(financial_connection_id: connection.id, sync_type: :incremental)
-    end
+    FinancialSyncJob.perform_later(financial_connection_id: connection.id, sync_type: :incremental)
   end
 
   def handle_item_error(connection, payload)
-    item = payload['item'] || {}
+    error = payload['error'] || {}
     connection.update!(
       status: :error,
-      last_sync_error: item['error'] || 'Erro desconhecido do provedor'
+      last_sync_error: error['message'] || error['code'] || 'Erro desconhecido do provedor'
     )
   end
 
@@ -92,13 +101,4 @@ class WebhookProcessingJob < ApplicationJob
     # TODO: Notificar usuário via push/email
   end
 
-  def map_item_status(pluggy_status)
-    case pluggy_status&.downcase
-    when 'active', 'connected' then 'active'
-    when 'error', 'failed' then 'error'
-    when 'pending', 'waiting_user_input', 'waiting_user_action' then 'action_required'
-    when 'deleted', 'disconnected' then 'disconnected'
-    else 'pending'
-    end
-  end
 end
