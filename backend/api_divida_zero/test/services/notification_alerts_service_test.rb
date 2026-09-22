@@ -82,6 +82,24 @@ class NotificationAlertsServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "generate_for_user does not enqueue email dispatch without SMTP" do
+    now = Time.zone.parse("2026-03-30 06:10:00")
+
+    assert_enqueued_jobs 0, only: EmailDispatchJob do
+      NotificationAlertsService.generate_for_user!(@user, now: now)
+    end
+  end
+
+  test "generate_for_user enqueues email dispatch when SMTP is configured" do
+    now = Time.zone.parse("2026-03-30 06:10:00")
+
+    EmailChannel.stub(:configured?, true) do
+      assert_enqueued_jobs 3, only: EmailDispatchJob do
+        NotificationAlertsService.generate_for_user!(@user, now: now)
+      end
+    end
+  end
+
   test "generate_for_user creates weekly summary only on friday with current-week records" do
     friday_now = Time.zone.parse("2026-04-03 09:10:00")
 
