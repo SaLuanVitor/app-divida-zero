@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_000006) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_000007) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -559,6 +559,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000006) do
     t.string "password_digest", null: false
     t.string "phone"
     t.boolean "phone_verified", default: false, null: false
+    t.bigint "plan_id"
     t.string "profile_frame_key", default: "frame_01", null: false
     t.string "profile_icon_key", default: "icon_01", null: false
     t.jsonb "push_preferences", default: {}, null: false
@@ -576,6 +577,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000006) do
     t.index ["active"], name: "index_users_on_active"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["phone"], name: "index_users_on_phone", unique: true
+    t.index ["plan_id"], name: "index_users_on_plan_id"
     t.index ["reset_password_token_digest"], name: "index_users_on_reset_password_token_digest"
     t.index ["role"], name: "index_users_on_role"
     t.index ["telegram_chat_id"], name: "index_users_on_telegram_chat_id", unique: true
@@ -648,6 +650,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000006) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "users", "plans"
   add_foreign_key "whatsapp_messages", "notification_alerts"
   add_foreign_key "whatsapp_messages", "users"
 end

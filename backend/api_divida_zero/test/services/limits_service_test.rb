@@ -2,11 +2,12 @@ require 'test_helper'
 
 class LimitsServiceTest < ActiveSupport::TestCase
   setup do
+    Rails.cache.clear
     @user = users(:one)
-    @free_plan = Plan.free
+    @free_plan = Plan.seed_free_plan!
     @user.update!(plan: @free_plan)
+    FeatureFlags.enable('open_finance')
 
-    # Clear cache
     LimitsService.clear_cache(@user)
   end
 
@@ -94,16 +95,19 @@ class LimitsServiceTest < ActiveSupport::TestCase
     # 0% - normal
     assert_equal :normal, LimitsService.status(@user, :connections)
 
-    # 50% - normal
+    # 33% - normal
     FinancialConnection.create!(user: @user, provider: :pluggy, provider_item_id: 'item_1', provider_institution_id: 'nubank', status: :active)
+    LimitsService.clear_cache(@user)
     assert_equal :normal, LimitsService.status(@user, :connections)
 
     # 66% - normal
     FinancialConnection.create!(user: @user, provider: :pluggy, provider_item_id: 'item_2', provider_institution_id: 'itau', status: :active)
+    LimitsService.clear_cache(@user)
     assert_equal :normal, LimitsService.status(@user, :connections)
 
     # 100% - blocked
     FinancialConnection.create!(user: @user, provider: :pluggy, provider_item_id: 'item_3', provider_institution_id: 'bb', status: :active)
+    LimitsService.clear_cache(@user)
     assert_equal :blocked, LimitsService.status(@user, :connections)
   end
 
@@ -116,7 +120,7 @@ class LimitsServiceTest < ActiveSupport::TestCase
   end
 
   test 'returns true when open_finance disabled' do
-    FeatureFlag.disable('open_finance')
+    FeatureFlags.disable('open_finance')
 
     assert LimitsService.allowed?(@user, :connections, :create)
     assert_equal Float::INFINITY, LimitsService.remaining(@user, :connections)
