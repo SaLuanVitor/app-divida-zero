@@ -20,12 +20,10 @@ Aplicativo de controle financeiro pessoal e familiar, com importação manual de
 
 ## Estrutura do repositório
 
-```
-backend/   → API Rails (backend/api_divida_zero)
-mobile/    → App React Native (Expo)
-docs/      → Stories, ADRs e guias
-scripts/   → Scripts de apoio (charset, etc.)
-```
+- `backend/`: API Rails (`backend/api_divida_zero`)
+- `mobile/`: App React Native (Expo)
+- `docs/`: stories, ADRs e guias
+- `scripts/`: scripts de apoio (charset etc.)
 
 ## Pré-requisitos
 
@@ -43,7 +41,7 @@ docker compose up --build -d
 curl.exe -i http://localhost:3000/up
 ```
 
-Serviços: `api-prod` (3000), `api-dev` (3001), `db` (Postgres 16). O compose usa `db:prepare` (preserva dados no restart — não voltar para `db:schema:load`).
+Serviços: `api-prod` (3000), `api-dev` (3001), `db` (Postgres 16). O compose usa `db:prepare` (preserva dados no restart). Não usar `db:schema:load`.
 
 ### Mobile
 
@@ -63,7 +61,7 @@ API pública: `https://api.dividazeropa.sbs/api/v1`. O mobile aponta para esse d
 
 ## Testes
 
-Backend — rode dentro do container, **1 arquivo por vez** (a suíte completa em paralelo segfaulta):
+Backend: rode dentro do container, **1 arquivo por vez** (a suíte completa em paralelo segfaulta):
 
 ```powershell
 docker compose exec api bash -lc "RAILS_ENV=test bundle exec rails db:prepare && bundle exec rails test test/controllers/api/v1/auth_controller_test.rb"
@@ -89,7 +87,7 @@ node .\scripts\check-mojibake.js
 
 | Flag | Default | Descrição |
 |------|---------|-----------|
-| `open_finance` | off | Integração Open Finance via Pluggy (congelado — ADR-0003) |
+| `open_finance` | off | Integração Open Finance via Pluggy (congelado, ADR-0003) |
 | `bank_sync` | off | Sincronização bancária automática |
 | `manual_import` | on | Importação manual OFX/CSV |
 | `family` | on | Funcionalidades de família |
@@ -104,16 +102,16 @@ POST   /api/v1/bank/statements/upload        # envia OFX/CSV, retorna batch_id
 GET    /api/v1/bank/statements/:batch_id/status  # progresso do parsing
 DELETE /api/v1/bank/statements/:batch_id     # exclui lote (LGPD)
 GET    /api/v1/bank/transactions/pending     # transações pendentes/duplicadas
-POST   /api/v1/bank/transactions/accept      # aceita selecionadas → FinancialRecord
+POST   /api/v1/bank/transactions/accept      # aceita selecionadas e cria FinancialRecord
 POST   /api/v1/bank/transactions/reject      # rejeita selecionadas
 POST   /api/v1/bank/transactions/:id/merge   # mescla duplicata em registro existente
 ```
 
-O auto-sync via Pluggy (`/api/v1/financial/connections`) está implementado mas **congelado** — os flags `open_finance` e `bank_sync` ficam off.
+O auto-sync via Pluggy (`/api/v1/financial/connections`) está implementado mas **congelado**: os flags `open_finance` e `bank_sync` ficam off.
 
 ## Decisões de arquitetura
 
-- `docs/adr/ADR-0003` — Telegram no lugar do WhatsApp; e-mail/SMTP fora de escopo; sync bancário congelado no manual OFX/CSV.
+- `docs/adr/ADR-0003`: Telegram no lugar do WhatsApp; e-mail/SMTP fora de escopo; sync bancário congelado no manual OFX/CSV.
 
 ## Notificações (Telegram)
 
