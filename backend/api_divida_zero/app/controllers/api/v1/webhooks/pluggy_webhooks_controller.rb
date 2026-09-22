@@ -29,15 +29,15 @@ class Api::V1::Webhooks::PluggyWebhooksController < ApplicationController
   private
 
   def verify_signature
-    # A Pluggy não assina webhooks nativamente com HMAC. A verificação só
-    # faz sentido se PLUGGY_WEBHOOK_SECRET estiver configurado e o header
-    # Pluggy-Signature for injetado (ex.: reverse proxy ou headers customizados).
-    # Sem segredo configurado, aceitamos o evento para não travar o onboarding.
-    secret = Setting.pluggy_webhook_secret
-    return if secret.blank?
-
+    # A Pluggy não assina webhooks com HMAC nativamente. A verificação só
+    # acontece se o header Pluggy-Signature estiver presente (ex.: injetado por
+    # um reverse proxy ou via headers customizados). Sem o header, aceitamos o
+    # evento, que é o comportamento padrão da Pluggy.
     signature = request.headers['Pluggy-Signature']
-    return head :unauthorized if signature.blank?
+    return if signature.blank?
+
+    secret = Setting.pluggy_webhook_secret
+    return head :unauthorized if secret.blank?
 
     expected = OpenSSL::HMAC.hexdigest('SHA256', secret, request.raw_post)
     provided = signature.split('=').last

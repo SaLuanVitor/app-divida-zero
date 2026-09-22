@@ -14,8 +14,26 @@ class Api::V1::Webhooks::PluggyWebhooksControllerTest < ActionDispatch::Integrat
     Setting.set('pluggy.webhook_secret', @secret)
   end
 
-  test 'should reject without signature' do
-    post api_v1_webhooks_pluggy_url, params: { event: 'item/created', eventId: 'evt_1' }
+  test 'should accept without signature header' do
+    payload = { event: 'item/created', eventId: 'evt_no_sig', itemId: 'item_123' }
+
+    assert_enqueued_with(job: WebhookProcessingJob) do
+      post api_v1_webhooks_pluggy_url, params: payload, as: :json
+    end
+
+    assert_response :ok
+  end
+
+  test 'should reject signature header without configured secret' do
+    payload = { event: 'item/created', eventId: 'evt_1' }
+
+    Setting.stub(:pluggy_webhook_secret, nil) do
+      post api_v1_webhooks_pluggy_url,
+           params: payload,
+           headers: { 'Pluggy-Signature' => 'sha256=abc' },
+           as: :json
+    end
+
     assert_response :unauthorized
   end
 
@@ -68,17 +86,5 @@ class Api::V1::Webhooks::PluggyWebhooksControllerTest < ActionDispatch::Integrat
          as: :json
 
     assert_response :bad_request
-  end
-
-  test 'should accept event without signature when no secret configured' do
-    payload = { event: 'item/created', eventId: 'evt_no_secret', itemId: 'item_123' }
-
-    Setting.stub(:pluggy_webhook_secret, nil) do
-      assert_enqueued_with(job: WebhookProcessingJob) do
-        post api_v1_webhooks_pluggy_url, params: payload, as: :json
-      end
-    end
-
-    assert_response :ok
   end
 end
