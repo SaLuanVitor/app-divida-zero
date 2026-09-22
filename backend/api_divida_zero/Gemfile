@@ -23,6 +23,7 @@ gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 gem "nokogiri", "~> 1.18"
 gem "csv"
+gem "concurrent-ruby", "~> 1.3"
 
 group :development, :test do
   gem "pg", "~> 1.5"

@@ -4,4 +4,10 @@
 # Não roda em ambiente de teste para evitar poluição do banco de CI.
 return if Rails.env.test?
 
+# Seed feature flags first (required for other seeds)
+FeatureFlag.seed_initial!
+
+# Seed free plan with limits
+Plan.seed_free_plan!
+
 DemoSeedService.call!

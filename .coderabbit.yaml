@@ -1,0 +1,119 @@
+# CodeRabbit Configuration for App Dívida Zero
+# https://docs.coderabbit.ai/configuration
+
+version: 1
+
+# Profile settings
+profile:
+  name: "App Dívida Zero"
+  description: "Open Finance integration for personal finance app"
+
+# Review settings
+review:
+  # Only review changed files in PR
+  changed-files-only: true
+  
+  # Skip review for certain paths
+  exclude-paths:
+    - "*.md"
+    - "*.txt"
+    - "docs/**"
+    - "*.lock"
+    - "Gemfile.lock"
+    - "package-lock.json"
+    - "yarn.lock"
+    - ".github/**"
+    - "*.yml"
+    - "*.yaml"
+  
+  # Review all other paths
+  include-paths:
+    - "backend/**/*.rb"
+    - "mobile/**/*.ts"
+    - "mobile/**/*.tsx"
+    - "frontend/**/*.ts"
+    - "frontend/**/*.tsx"
+
+# Language-specific settings
+languages:
+  ruby:
+    enabled: true
+    # Rails-specific rules
+    rails:
+      enabled: true
+    # Security rules
+    brakeman:
+      enabled: true
+  
+  typescript:
+    enabled: true
+    # React/React Native rules
+    react:
+      enabled: true
+    # Security
+    eslint:
+      enabled: true
+
+# Severity thresholds
+severity:
+  # Block merge on CRITICAL issues
+  critical: "block"
+  # Warn on HIGH issues
+  high: "warn"
+  # Comment on MEDIUM issues
+  medium: "comment"
+  # Ignore LOW issues
+  low: "ignore"
+
+# Custom rules
+rules:
+  # Security rules
+  - id: "security/hardcoded-secrets"
+    severity: "critical"
+    message: "Hardcoded secrets detected"
+  
+  - id: "security/sql-injection"
+    severity: "critical"
+    message: "Potential SQL injection vulnerability"
+  
+  - id: "security/xss"
+    severity: "high"
+    message: "Potential XSS vulnerability"
+
+  # Code quality rules
+  - id: "style/long-method"
+    severity: "medium"
+    message: "Method is too long, consider extracting"
+  
+  - id: "style/large-class"
+    severity: "medium"
+    message: "Class is too large, consider splitting"
+
+  # Rails-specific
+  - id: "rails/n-plus-one"
+    severity: "high"
+    message: "N+1 query detected"
+  
+  - id: "rails/missing-index"
+    severity: "medium"
+    message: "Missing database index"
+
+  # React/TypeScript
+  - id: "react/missing-key-prop"
+    severity: "medium"
+    message: "Missing key prop in list rendering"
+  
+  - id: "react/unsafe-dangerouslySetInnerHTML"
+    severity: "high"
+    message: "Unsafe usage of dangerouslySetInnerHTML"
+
+# Review output
+output:
+  # Post review as PR comment
+  comment-on-pr: true
+  # Create summary comment
+  summary: true
+  # Inline comments on code
+  inline-comments: true
+  # Group similar issues
+  group-issues: true

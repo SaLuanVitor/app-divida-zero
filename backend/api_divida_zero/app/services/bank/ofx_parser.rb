@@ -24,33 +24,31 @@ module Bank
     def sgml_to_xml(sgml)
       sgml
         .gsub(/(<\w+[^>]*)>(?=\s*<)/) { |m| "#{$1}>" }
-        .gsub(/&(?!(amp|lt|gt|quot|apos);)/, "&amp;")
+        .gsub(/&(?!(amp|lt|gt|quot|apos);)/, "&")
     end
 
     def parse_transaction(trn)
+      trn_amt_str = extract_text(trn, "TRNAMT")
+      trn_amt = BigDecimal(trn_amt_str) rescue BigDecimal("0")
+      trn_type = extract_text(trn, "TRNTYPE")
+
       {
-        fit_id: extract_text(trn, "FITID"),
         description: normalize_description(
           extract_text(trn, "NAME"),
           extract_text(trn, "MEMO")
         ),
-        amount: extract_amount(trn),
+        amount: trn_amt.abs.to_f,
         date: parse_date(extract_text(trn, "DTPOSTED")),
-        flow_type: determine_flow_type(trn, extract_text(trn, "TRNAMT")),
-        original_category: extract_text(trn, "TRNTYPE").presence,
-        check_number: extract_text(trn, "CHECKNUM").presence || extract_text(trn, "CHKNUM").presence
+        flow_type: determine_flow_type(trn_type, trn_amt_str),
+        fit_id: extract_text(trn, "FITID"),
+        original_category: trn_type.presence,
+        check_number: extract_text(trn, "CHECKNUM").presence || extract_text(trn, "CHKNUM").presence,
+        status: "pending"
       }
     end
 
     def extract_text(node, tag)
       node.at_xpath(tag)&.text&.strip || ""
-    end
-
-    def extract_amount(trn)
-      amt_str = extract_text(trn, "TRNAMT")
-      BigDecimal(amt_str).abs.to_f
-    rescue
-      0.0
     end
 
     def parse_date(date_str)
@@ -59,12 +57,11 @@ module Bank
       Date.current
     end
 
-    def determine_flow_type(trn, trn_amt)
-      trn_type = extract_text(trn, "TRNTYPE")
+    def determine_flow_type(trn_type, trn_amt_str)
       return "expense" if %w[DEBIT DEB].include?(trn_type)
       return "income" if %w[CREDIT CRED DEP].include?(trn_type)
 
-      trn_amt.start_with?("-") || trn_amt.to_f.negative? ? "expense" : "income"
+      trn_amt_str.start_with?("-") || trn_amt_str.to_f.negative? ? "expense" : "income"
     end
 
     def normalize_description(name, memo)

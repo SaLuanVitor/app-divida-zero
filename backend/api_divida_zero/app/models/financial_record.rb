@@ -27,4 +27,8 @@ class FinancialRecord < ApplicationRecord
     start_date = Date.new(year, month, 1)
     where(due_date: start_date..start_date.end_of_month)
   }
+
+  scope :this_month, -> {
+    where(due_date: Date.current.beginning_of_month..Date.current.end_of_month)
+  }
 end

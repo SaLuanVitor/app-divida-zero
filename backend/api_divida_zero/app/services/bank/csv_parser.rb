@@ -60,17 +60,28 @@ module Bank
       flow_type = if col_map[:type]
                     type_val = row[col_map[:type]].to_s.downcase
                     type_val.match?(/(crédito|credito|entrada|receita|income)/i) ? "income" : "expense"
-      else
+                  else
                     raw_amount.start_with?("-") ? "expense" : "income"
-      end
+                  end
 
       {
         description: row[col_map[:description]].to_s.strip.presence || "Transação sem descrição",
         amount: amount,
         date: parse_date(row[col_map[:date]].to_s.strip),
         flow_type: flow_type,
-        original_category: col_map[:category] ? row[col_map[:category]].to_s.strip.presence : nil
+        fit_id: generate_fit_id(
+          row[col_map[:description]].to_s.strip,
+          amount,
+          row[col_map[:date]].to_s.strip
+        ),
+        original_category: col_map[:category] ? row[col_map[:category]].to_s.strip.presence : nil,
+        status: "pending"
       }
+    end
+
+    def generate_fit_id(description, amount, date)
+      require "digest"
+      Digest::MD5.hexdigest("#{description}#{amount}#{date}")
     end
 
     def parse_date(str)

@@ -1,0 +1,14 @@
+<div class="metric-card">
+  <h3>Usuários</h3>
+  <div class="metric-value <%= users_stats[:percentage] >= 80 ? 'warning' : (users_stats[:percentage] >= 70 ? 'caution' : 'success') %>">
+    <%= users_stats[:total] %> / <%= users_stats[:max_users] %>
+  </div>
+  <div class="metric-bar">
+    <div class="metric-bar-fill <%= users_stats[:percentage] >= 80 ? 'warning' : (users_stats[:percentage] >= 70 ? 'caution' : 'normal') %>"
+         style="width: <%= [users_stats[:percentage], 100].min %>%"></div>
+  </div>
+  <div class="metric-detail">
+    <%= users_stats[:percentage] %>% do limite<br>
+    <small>Com conexões ativas: <%= users_stats[:with_connections] %></small>
+  </div>
+</div>

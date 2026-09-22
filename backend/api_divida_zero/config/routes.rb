@@ -45,6 +45,11 @@ Rails.application.routes.draw do
         patch "users/:id/status", to: "users#update_status"
         patch "users/:id/reset_password", to: "users#reset_password"
         get "analytics/overview", to: "analytics#overview"
+        namespace :financial do
+          get "/", to: "financial#index"
+          get "connections", to: "financial#connections"
+          get "sync_logs", to: "financial#sync_logs"
+        end
       end
       get "reports/summary", to: "reports#summary"
       post "analytics/events", to: "analytics#create"
@@ -66,29 +71,30 @@ Rails.application.routes.draw do
       post "whatsapp/webhook", to: "whatsapp#webhook"
       post "telegram/webhook", to: "telegram_webhooks#webhook"
 
+      namespace :webhooks do
+        post "pluggy", to: "pluggy_webhooks#receive"
+      end
+
       namespace :bank do
-        resources :statements, only: [], param: :batch_id do
-          collection do
-            post :upload
-          end
-          member do
-            get :status
-            delete :destroy
-          end
-        end
-        resources :transactions, only: [] do
-          collection do
-            get :pending
-            post :accept
-            post :reject
-          end
+        # DEPRECATED - maintained for mobile app compatibility
+        resources :statements, only: [:create, :destroy, :show], param: :batch_id, controller: 'bank/statements'
+        resources :transactions, only: [:index, :create, :update], controller: 'bank/transactions' do
           member do
             post :merge
           end
         end
       end
 
-      resources :financial_goals, only: [ :index, :create, :update, :destroy ] do
+      namespace :financial do
+        resources :connections, only: [:create, :show, :destroy] do
+          member do
+            post :sync
+            get :transactions
+          end
+        end
+      end
+
+      resources :financial_goals, only: [:index, :create, :update, :destroy] do
         resources :contributions,
                   only: [ :index, :create, :destroy ],
                   controller: "financial_goal_contributions"
