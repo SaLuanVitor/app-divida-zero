@@ -2,6 +2,8 @@ require 'test_helper'
 
 class FinancialSyncJobTest < ActiveJob::TestCase
   setup do
+    FeatureFlag.where(key: 'bank_sync').delete_all
+    FeatureFlag.create!(key: 'bank_sync', enabled: true)
     @user = users(:one)
     @connection = FinancialConnection.create!(
       user: @user,
@@ -148,5 +150,14 @@ class FinancialSyncJobTest < ActiveJob::TestCase
     assert_no_enqueued_jobs only: FinancialSyncJob do
       FinancialSyncJob.perform_now(all_connections: true)
     end
+  end
+
+  test 'does nothing when bank_sync is disabled' do
+    FeatureFlag.where(key: 'bank_sync').update_all(enabled: false)
+
+    FinancialSyncJob.perform_now(financial_connection_id: @connection.id, sync_type: :full)
+
+    assert_equal 0, @connection.financial_syncs.count
+    assert_equal 'active', @connection.reload.status
   end
 end
