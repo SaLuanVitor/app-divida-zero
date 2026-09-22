@@ -2,6 +2,7 @@ require "test_helper"
 
 class Api::V1::Bank::TransactionsControllerTest < ActionDispatch::IntegrationTest
   setup do
+    FeatureFlag.enable('manual_import')
     @user = User.create!(
       name: "Review Test",
       email: "review_#{Time.now.to_i}_#{rand(1000)}@example.com",
