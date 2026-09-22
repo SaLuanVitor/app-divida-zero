@@ -1,4 +1,8 @@
-require 'faraday'
+begin
+  require 'faraday'
+rescue LoadError
+  # Pluggy congelado (ADR-0003): faraday pode não estar no bundle.
+end
 require 'json'
 
 module FinancialProviders
