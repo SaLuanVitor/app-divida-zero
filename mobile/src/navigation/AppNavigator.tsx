@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, TouchableOpacity, Pressable, StyleSheet, LayoutChangeEvent, Modal, useWindowDimensions, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,7 @@ import Familia from '../screens/app/Familia';
 import Convidar from '../screens/app/Convidar';
 import ConvitesPendentes from '../screens/app/ConvitesPendentes';
 import WhatsAppSettings from '../screens/app/WhatsAppSettings';
+import TelegramSettings from '../screens/app/TelegramSettings';
 import BankImportScreen from '../screens/app/BankImportScreen';
 import BankReviewScreen from '../screens/app/BankReviewScreen';
 import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, Landmark } from 'lucide-react-native';
@@ -300,6 +301,7 @@ export const AppNavigator = () => {
                 <Tab.Screen name="Convidar" component={Convidar} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Convites Pendentes" component={ConvitesPendentes} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="WhatsApp" component={WhatsAppSettings} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="Telegram" component={TelegramSettings} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="BankImport" component={BankImportScreen} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="BankReview" component={BankReviewScreen} options={{ tabBarButton: () => null }} />
             </Tab.Navigator>

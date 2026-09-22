@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, ScrollView, Pressable, ActivityIndicator, useWindowDimensions, Modal } from 'react-native';
 import {
@@ -21,6 +21,7 @@ import {
     UserPlus,
     MessageCircle,
     Landmark,
+    Send,
 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -132,6 +133,7 @@ const Profile = () => {
         { label: 'Notificações', icon: Bell, color: '#f59e0b', route: 'Notificacoes' },
         { label: 'Envio de notificações', icon: Bell, color: '#f97316', route: 'Envio Notificacoes' },
         { label: 'WhatsApp', icon: MessageCircle, color: '#22c55e', route: 'WhatsApp' },
+        { label: 'Telegram', icon: Send, color: '#0ea5e9', route: 'Telegram' },
         { label: 'Importar extrato', icon: Landmark, color: '#3b82f6', route: 'BankImport' },
         { label: 'Avaliar aplicativo', icon: Star, color: '#f48c25', route: 'Avaliacao App' },
         ...(user?.role === 'admin'
