@@ -18,7 +18,7 @@
 
 **Dependencies:** FASE-3a.2 (WhatsAppChannel stub)
 **Complexity:** M (algoritmo + testes de concorrência)
-**Risks:** In-memory não persiste entre restarts — aceitável para POC inicial
+**Risks:** In-memory não persiste entre restarts: aceitável para POC inicial
 
 **Files:**
 - `app/services/whatsapp_rate_limiter.rb`

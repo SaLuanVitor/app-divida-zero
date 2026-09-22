@@ -1,8 +1,8 @@
-# PRD — Subfase 4a1: Importação de Extratos Bancários (OFX/CSV)
+# PRD: Subfase 4a1: Importação de Extratos Bancários (OFX/CSV)
 
 > **Produto:** App Dívida Zero
-> **Fase:** 4 — Integração Bancária
-> **Subfase:** 4a1 — Upload + Parsing de Extratos
+> **Fase:** 4: Integração Bancária
+> **Subfase:** 4a1: Upload + Parsing de Extratos
 > **Autor:** Morgan (PM)
 > **Data:** 2026-07-12
 > **Prioridade:** Alta
@@ -11,7 +11,7 @@
 
 ## 1. Problem Statement
 
-Hoje o usuário precisa **cadastrar manualmente** cada transação financeira no app. Para alguém com dezenas de movimentações por mês, isso é inviável — resultado: abandono do registro financeiro.
+Hoje o usuário precisa **cadastrar manualmente** cada transação financeira no app. Para alguém com dezenas de movimentações por mês, isso é inviável. Resultado: abandono do registro financeiro.
 
 O app precisa de um mecanismo para **importar extratos bancários** automaticamente, permitindo que o usuário apenas revise e aceite.
 
@@ -19,7 +19,7 @@ O app precisa de um mecanismo para **importar extratos bancários** automaticame
 
 ## 2. Target Users
 
-- Jovens adultos brasileiros (25–40 anos) que querem控制 financeiro
+- Jovens adultos brasileiros (25–40 anos) que querem controle financeiro
 - Usuários de Nubank, Inter, C6, Itaú, Bradesco, Santander, Caixa
 - Pessoas sem tempo para lançamento manual
 - Perfil mobile-first, mas que usa internet banking pelo computador
@@ -42,7 +42,7 @@ O app precisa de um mecanismo para **importar extratos bancários** automaticame
 
 ## 4. Functional Requirements (MoSCoW)
 
-### MUST — Essencial para o MVP
+### MUST: Essencial para o MVP
 
 | ID | Requisito | Descrição |
 |:--:|-----------|-----------|
@@ -55,7 +55,7 @@ O app precisa de um mecanismo para **importar extratos bancários** automaticame
 | FR07 | Rejeitar transações | Usuário pode rejeitar transações indesejadas |
 | FR08 | Feedback de progresso | Barra de progresso durante upload + parsing |
 
-### SHOULD — Importante, não crítico
+### SHOULD: Importante, não crítico
 
 | ID | Requisito | Descrição |
 |:--:|-----------|-----------|
@@ -63,14 +63,14 @@ O app precisa de um mecanismo para **importar extratos bancários** automaticame
 | FR10 | Guia por banco | Passo-a-passo de como exportar extrato em cada banco |
 | FR11 | Detecção de banco | Identificar banco pelo formato do OFX/CSV |
 
-### COULD — Diferencial
+### COULD: Diferencial
 
 | ID | Requisito | Descrição |
 |:--:|-----------|-----------|
 | FR12 | Multi-formato | Suporte a QIF, JSON exportado |
 | FR13 | Upload múltiplo | Vários arquivos de uma vez |
 
-### WON'T — Fora do escopo agora
+### WON'T: Fora do escopo agora
 
 | ID | Requisito | Descrição |
 |:--:|-----------|-----------|
@@ -170,4 +170,4 @@ sugestão: "Exporte como OFX. Precisa de ajuda? Veja guia."
 
 ---
 
-— Morgan, planejando o futuro 📊
+Morgan, planejando o futuro 📊

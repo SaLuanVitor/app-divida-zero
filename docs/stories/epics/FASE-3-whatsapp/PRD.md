@@ -1,7 +1,7 @@
-# PRD — FASE 3: WhatsApp Business API
+# PRD: FASE 3: WhatsApp Business API
 
 > **Produto:** App Dívida Zero
-> **Fase:** 3 — WhatsApp Business API
+> **Fase:** 3: WhatsApp Business API
 > **Autor:** Morgan (PM)
 > **Data:** 2026-07-12
 > **Status:** Rascunho
@@ -15,7 +15,7 @@
 
 O App Dívida Zero já possui notificação push e email funcionais (FASE 1). No entanto:
 
-- **Push notification** depende do app instalado e com permissão — muitos usuários desinstalam ou negam permissão.
+- **Push notification** depende do app instalado e com permissão: muitos usuários desinstalam ou negam permissão.
 - **Email** tem taxas de abertura tipicamente baixas (20-30%) em público brasileiro de finanças pessoais.
 - **WhatsApp** é o canal mais ubíquo no Brasil: >99% dos smartphones brasileiros têm WhatsApp instalado. Taxa de abertura de mensagens ultrapassa 90%.
 
@@ -30,7 +30,7 @@ O App Dívida Zero já possui notificação push e email funcionais (FASE 1). No
 
 ### 1.3 Alinhamento com Arquitetura Existente
 
-- Reutiliza `NotificationAlertsService` — o WA entra como mais um canal de dispatch (linha 114-115 do service atual).
+- Reutiliza `NotificationAlertsService`: o WA entra como mais um canal de dispatch (linha 114-115 do service atual).
 - Segue o mesmo padrão de `PushDispatchJob` e `EmailDispatchJob`: `WhatsAppDispatchJob` recebe `notification_alert_id`, verifica preferências, envia.
 - `wa_notification_preferences` (JSONB) segue o padrão de `push_preferences` e `email_notification_preferences`.
 - Fila dedicada `whatsapp` no Solid Queue para não competir com push/email.
@@ -44,16 +44,16 @@ O App Dívida Zero já possui notificação push e email funcionais (FASE 1). No
 #### Z-API
 - **Modelo:** Brasileiro, focado em WhatsApp API não-oficial (via WhatsApp Web)
 - **Pricing:** R$ 0,03-0,10/msg (planos de 500 a 50k msgs/mês)
-- **Setup:** Simples — API Key + instance token. Documentação em português.
+- **Setup:** Simples: API Key + instance token. Documentação em português.
 - **Compliance:** Não é parceiro Meta oficial. Risco de bloqueio aumentado.
 - **Rate Limits:** ~5 msg/s (plano médio). Sem limite claro documentado.
-- **Brazilian Market:** Excelente — suporte BR, docs em PT-BR, comunidade grande.
+- **Brazilian Market:** Excelente: suporte BR, docs em PT-BR, comunidade grande.
 - **Integração:** REST API simples. Gem não oficial disponível.
 
 #### Twilio
 - **Modelo:** Internacional, parceiro oficial Meta Business Solution Provider
 - **Pricing:** ~$0,05/msg (conversation-based). Custo total maior com taxas.
-- **Setup:** Moderado — precisa configurar WhatsApp Sender, templates no Meta Business.
+- **Setup:** Moderado: precisa configurar WhatsApp Sender, templates no Meta Business.
 - **Compliance:** Oficial Meta. Menor risco de bloqueio.
 - **Rate Limits:** 80 msg/s (tier 1). 1 msg/s por telefone.
 - **Brazilian Market:** Suporte multilíngue, mas documentação em inglês. Suporte via ticket.
@@ -61,8 +61,8 @@ O App Dívida Zero já possui notificação push e email funcionais (FASE 1). No
 
 #### Meta Cloud API (Direct)
 - **Modelo:** Direto com Meta WhatsApp Business Platform
-- **Pricing:** $0,005/msg (utility) — mais barato por mensagem
-- **Setup:** Complexo — precisa de Business Account, System User, Webhook, WABA
+- **Pricing:** $0,005/msg (utility): mais barato por mensagem
+- **Setup:** Complexo: precisa de Business Account, System User, Webhook, WABA
 - **Compliance:** Oficial Meta. Menor risco de bloqueio.
 - **Rate Limits:** 80 msg/s (tier 1). 1 msg/s por telefone. Escala com quality score.
 - **Brazilian Market:** Documentação em inglês. Sem suporte local dedicado.
@@ -104,7 +104,7 @@ O App Dívida Zero já possui notificação push e email funcionais (FASE 1). No
 
 ## 3. Feature Requirements
 
-### 3.1 Subfase 3a — Provider Discovery + NotificationChannel
+### 3.1 Subfase 3a: Provider Discovery + NotificationChannel
 
 **Objetivo:** Pesquisar provedor, criar abstração de canal, refatorar canais existentes.
 
@@ -120,7 +120,7 @@ O App Dívida Zero já possui notificação push e email funcionais (FASE 1). No
 | F3a-08 | Variáveis `WHATSAPP_PROVIDER`, `WHATSAPP_API_KEY` no .env.example | Must |
 | F3a-09 | Testes unitários da abstração `NotificationChannel` | Must |
 
-### 3.2 Subfase 3b — Opt-in + Verificação Telefônica + Rate Limit
+### 3.2 Subfase 3b: Opt-in + Verificação Telefônica + Rate Limit
 
 **Objetivo:** Adicionar phone, opt-in WA, rate limiting, DND.
 
@@ -142,7 +142,7 @@ O App Dívida Zero já possui notificação push e email funcionais (FASE 1). No
 | F3b-14 | DND automático: não enviar entre 22h-8h | Must |
 | F3b-15 | Testes de autorização, opt-in, rate limit, DND | Must |
 
-### 3.3 Subfase 3c — Templates + Dispatch Automatizado
+### 3.3 Subfase 3c: Templates + Dispatch Automatizado
 
 **Objetivo:** Criar templates HSM, integrar com NotificationAlertsService, dispatch.
 
@@ -150,7 +150,7 @@ O App Dívida Zero já possui notificação push e email funcionais (FASE 1). No
 |----|-----------|------------|
 | F3c-01 | Templates HSM no provedor: `due_reminder`, `weekly_summary`, `overdue_alert` | Must |
 | F3c-02 | `WhatsAppTemplate` model (cache local dos templates) | Must |
-| F3c-03 | `WhatsAppDispatchJob` — enviar via channel | Must |
+| F3c-03 | `WhatsAppDispatchJob`: enviar via channel | Must |
 | F3c-04 | Bridge no `NotificationAlertsService` (dispatch WA junto com push/email) | Must |
 | F3c-05 | Fila `whatsapp` dedicada no Solid Queue | Must |
 | F3c-06 | Retry com backoff exponencial (429: 5s, 10s, 20s) | Must |
@@ -286,7 +286,7 @@ WhatsAppDispatchJob (fila: whatsapp, retry: 3)
 | Templates aprovados | Apenas templates HSM aprovados ("approved") |
 | Quality monitor | Job diário consulta quality score |
 | Daily caps | Usuário (10) + Global (500) |
-| Categorias restritas | Apenas "utility" — sem marketing |
+| Categorias restritas | Apenas "utility": sem marketing |
 | Retry consciente | Exponencial, nunca forçar |
 
 ### 6.4 Observability
@@ -427,4 +427,4 @@ src/
 
 ---
 
-*— Morgan, planejando o futuro 📊*
+*Morgan, planejando o futuro 📊*

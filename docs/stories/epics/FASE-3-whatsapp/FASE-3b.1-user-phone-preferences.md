@@ -18,8 +18,8 @@
 - Opt-in default false (GDPR/WhatsApp compliance)
 
 **Dependencies:** FASE-3a.2 (ApplicationChannel)
-**Complexity:** P (migration + model + endpoint — padrão já existe)
-**Risks:** Baixo — padrão já estabelecido com push/email
+**Complexity:** P (migration + model + endpoint: padrão já existe)
+**Risks:** Baixo: padrão já estabelecido com push/email
 
 **Files:**
 - `db/migrate/*_add_whatsapp_fields_to_users.rb`

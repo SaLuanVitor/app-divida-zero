@@ -1,6 +1,6 @@
-# FASE 4 — Integração Bancária: Execução e Arquitetura
+# FASE 4: Integração Bancária: Execução e Arquitetura
 
-> **Fase:** 4 — Importação Extratos + Open Finance (futuro)
+> **Fase:** 4: Importação Extratos + Open Finance (futuro)
 > **Owner:** SaLuanVitor · **Orquestração:** @aiox-master (Orion)
 > **Provider:** Nenhum agregador pago. OFX/CSV manual agora → Open Finance direto (Bacen) no futuro.
 
@@ -8,10 +8,10 @@
 
 ## Visão Geral
 
-### FASE 4a — Importação Manual OFX/CSV (agora, grátis)
+### FASE 4a: Importação Manual OFX/CSV (agora, grátis)
 Usuário exporta extrato bancário (OFX ou CSV) → upload → AI parseia transações → dedup com registros existentes → revisão → aceita → vira FinancialRecord.
 
-### FASE 4b — Open Finance Direto (futuro, gratuito)
+### FASE 4b: Open Finance Direto (futuro, gratuito)
 Certificação Bacen → conector Open Finance direto → mesmo pipeline de categorização e dedup.
 
 ---
@@ -45,7 +45,7 @@ Upload OFX/CSV → FileUploadController
 
 ## Subfases Detalhadas
 
-### Subfase 4a1 — Upload + Parsing
+### Subfase 4a1: Upload + Parsing
 - [x] Modelo `ImportedTransaction` (dados brutos + status pending/duplicate/accepted/rejected)
 - [x] Serviço `StatementParsingService` com strategy:
   - `OfxParser` (OFX/QFX via parser Ruby)
@@ -55,7 +55,7 @@ Upload OFX/CSV → FileUploadController
 - [x] `GET /bank/statements/:id/status` (progress polling)
 - [x] Validação de formato + LGPD: delete de lote (`DELETE /bank/statements/:batch_id`), cleanup de `original_data` (30d via `CleanupImportedTransactionDataJob`, semanal), arquivo temp deletado pós-parsing
 
-### Subfase 4a2 — IA Categorização + Dedup
+### Subfase 4a2: IA Categorização + Dedup
 - [x] `AiCategorizationService` reutiliza `Ai::Client` existente + novo prompt `categorize_bank_transaction`
 - [x] `DeduplicationService`:
   - Match exato: amount + date + description idêntico → `duplicate`
@@ -64,21 +64,21 @@ Upload OFX/CSV → FileUploadController
 - [x] Batch processing: job processa lote de 50 transações por vez (`find_in_batches(batch_size: 50)`)
 - [x] Retry com backoff para falhas de IA (3 tentativas com backoff em erros transientes no `Ai::Client`)
 
-### Subfase 4a3 — Revisão + Conversão
+### Subfase 4a3: Revisão + Conversão
 - [x] `GET /bank/transactions/pending` (lista agrupada por data)
 - [x] `POST /bank/transactions/accept` (lote: aceita selecionadas → cria FinancialRecord)
 - [x] `POST /bank/transactions/reject` (marca como rejeitada)
 - [x] `POST /bank/transactions/merge/:id` (mescla duplicata com registro existente)
 - [x] Gatilhos pós-aceitação: gamificação, goals, achievements (mesmo flow do create manual)
 
-### Subfase 4a4 — Mobile
+### Subfase 4a4: Mobile
 - [x] Tela "Importar Extrato" (file picker para OFX/CSV)
 - [x] Progresso do parsing (barra + etapa atual: parsing → categorizando → deduplicando)
 - [x] Lista de transações pendentes com cards (descrição, valor, data, categoria sugerida)
 - [x] Ação em lote: "Aceitar selecionadas" / "Rejeitar"
 - [x] Indicador de duplicatas (amarelo = possível dup, vermelho = dup confirmada)
 
-### Subfase 4b — Open Finance Direto (futuro)
+### Subfase 4b: Open Finance Direto (futuro)
 - [ ] Pesquisa de certificação Bacen para Open Finance
 - [ ] Implementar `BankProvider` interface (suporta `OfxParser | CsvParser | OpenFinanceConnector`)
 - [ ] Conector Open Finance via API Bacen (redirect + token)

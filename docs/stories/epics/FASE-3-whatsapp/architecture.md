@@ -1,4 +1,4 @@
-# FASE 3 — WhatsApp Business API: Architecture Document
+# FASE 3: WhatsApp Business API: Architecture Document
 
 > **Arquiteta:** Aria (Architect)
 > **Data:** 2026-07-12
@@ -11,7 +11,7 @@
 
 1. [NotificationChannel Abstraction](#1-notificationchannel-abstraction)
 2. [Message Queue Architecture](#2-message-queue-architecture)
-3. [Rate Limiting — Token Bucket](#3-rate-limiting--token-bucket)
+3. [Rate Limiting: Token Bucket](#3-rate-limiting--token-bucket)
 4. [Daily Limits](#4-daily-limits)
 5. [Blocking Prevention](#5-blocking-prevention)
 6. [Data Model](#6-data-model)
@@ -208,7 +208,7 @@ Same pattern for `EmailDispatchJob`.
 ### 1.6 `NotificationAlertsService` Changes
 
 ```ruby
-# Inside create_alert_once! — add WhatsApp dispatch
+# Inside create_alert_once!: add WhatsApp dispatch
 def create_alert_once!(user:, alert_type:, due_count:, window_key:, title:, message:, metadata: {})
   return if due_count <= 0
   return if user.notification_alerts.exists?(alert_type: alert_type, window_key: window_key)
@@ -292,7 +292,7 @@ class WhatsAppDispatchJob < ApplicationJob
   queue_as :whatsapp
 
   retry_on WhatsAppProvider::RateLimitedError, wait: ->(executions) {
-    # Exponential backoff: 5s, 10s, 20s — max 3 retries
+    # Exponential backoff: 5s, 10s, 20s: max 3 retries
     [5, 10, 20][executions - 1] || 20
   }, attempts: 3
 
@@ -409,7 +409,7 @@ end
 
 ```ruby
 module WhatsAppProvider
-  # Transient — retry with backoff
+  # Transient: retry with backoff
   class RateLimitedError < StandardError
     attr_reader :retry_after
 
@@ -421,7 +421,7 @@ module WhatsAppProvider
 
   class ServerError < StandardError; end
 
-  # Permanent — discard to dead letter
+  # Permanent: discard to dead letter
   class PermanentError < StandardError; end
   class AuthenticationError < PermanentError; end
   class TemplateNotFoundError < PermanentError; end
@@ -431,7 +431,7 @@ end
 
 ---
 
-## 3. Rate Limiting — Token Bucket
+## 3. Rate Limiting: Token Bucket
 
 ### 3.1 Algorithm
 
@@ -581,7 +581,7 @@ WHERE status = 'sent'
 
 Cap resets naturally at midnight because queries use `CURRENT_DATE` / `Time.current.beginning_of_day`.
 
-No explicit reset job needed — but for observability, a recurring job logs daily stats:
+No explicit reset job needed, but for observability, a recurring job logs daily stats:
 
 ```yaml
 # config/recurring.yml additions
@@ -620,7 +620,7 @@ end
 
 - **Default window:** 22:00 – 08:00 (configurable per user via `wa_preferences`)
 - **Enforcement layer:** `WhatsAppDispatchJob#dnd_active?`
-- **Behavior:** Silently skip (do not queue retry) — the alert will be picked up in the next generation cycle (every 6h)
+- **Behavior:** Silently skip (do not queue retry): the alert will be picked up in the next generation cycle (every 6h)
 - **Edge case:** If `dnd_start == dnd_end`, treat as no DND restriction
 
 ### 5.2 Opt-In Validation
@@ -633,7 +633,7 @@ end
 | `wa_notifications_enabled == true` | `User#wa_enabled_for_alert?` | Skip if toggled off |
 
 ```ruby
-# In User model — follows email/push pattern
+# In User model: follows email/push pattern
 WA_PREFERENCE_DEFAULTS = {
   "wa_notifications_enabled" => false,
   "wa_due_reminders" => true,
@@ -706,7 +706,7 @@ end
 
 - Only send using templates with `status == "approved"` in `WhatsAppTemplate`
 - `WhatsAppChannel#resolve_template` raises `WhatsAppProvider::TemplateNotFoundError` if missing/not approved
-- Category restricted to `"utility"` — no marketing templates in FASE 3
+- Category restricted to `"utility"` : no marketing templates in FASE 3
 
 ---
 
@@ -815,7 +815,7 @@ end
                      └─────────────────┘
 ```
 
-### 6.6 Existing User Model — No Breaking Changes
+### 6.6 Existing User Model: No Breaking Changes
 
 Existing `push_preferences` (JSONB) and `email_notification_preferences` (JSONB) remain untouched. The new `wa_notification_preferences` is additive.
 
@@ -1034,7 +1034,7 @@ export const syncRemoteWaPreferences = async (prefs: WaPreferences): Promise<voi
 
 ### 8.4 UI Components
 
-**`NotificationSettings.tsx` — Add WhatsApp section:**
+**`NotificationSettings.tsx`: Add WhatsApp section:**
 
 - New `NotificationPreferenceKey` union includes WA keys
 - Toggle `wa_notifications_enabled` (disabled unless `phone_verified`)
@@ -1145,10 +1145,10 @@ end
 
 | Step | Migration | Backward Compat? | Risk |
 |------|-----------|------------------|------|
-| 1 | `AddWhatsAppFieldsToUsers` | Yes — nullable columns, default JSONB | Low |
-| 2 | `CreateWhatsAppMessages` | Yes — new table | Low |
-| 3 | `CreateWhatsAppTemplates` | Yes — new table | Low |
-| 4 | Add jobs/channels code | Yes — behind feature flag | Medium |
+| 1 | `AddWhatsAppFieldsToUsers` | Yes: nullable columns, default JSONB | Low |
+| 2 | `CreateWhatsAppMessages` | Yes: new table | Low |
+| 3 | `CreateWhatsAppTemplates` | Yes: new table | Low |
+| 4 | Add jobs/channels code | Yes: behind feature flag | Medium |
 
 ### 10.2 Deployment Sequence
 
@@ -1193,8 +1193,8 @@ WhatsAppDispatchJob.perform_later(alert.id) if ENV["WHATSAPP_PROVIDER"].present?
 ### 10.4 Backward Compatibility Guarantees
 
 - Existing `PushDispatchJob` and `EmailDispatchJob` continue to work unchanged during refactor (they'll be internally refactored to call channels, but same behavior).
-- `NotificationAlertsService` behavior unchanged — WA is an ADDITIVE dispatch.
-- `User` model `public_payload` additive — existing mobile clients ignore new fields.
+- `NotificationAlertsService` behavior unchanged: WA is an ADDITIVE dispatch.
+- `User` model `public_payload` additive: existing mobile clients ignore new fields.
 - `me` endpoint returns new fields but existing clients don't break (they ignore unknown keys).
 - All existing tests must pass after each phase.
 
@@ -1206,7 +1206,7 @@ WhatsAppDispatchJob.perform_later(alert.id) if ENV["WHATSAPP_PROVIDER"].present?
    - Drop whatsapp_templates
    - Drop whatsapp_messages
    - Remove columns from users
-3. Push/email unaffected — no code rollback needed for core channels
+3. Push/email unaffected: no code rollback needed for core channels
 ```
 
 ---
@@ -1247,7 +1247,7 @@ db/migrate/
   *_create_whatsapp_templates.rb
 
 app/controllers/api/v1/
-  (existing auth_controller.rb — add methods)
+  (existing auth_controller.rb: add methods)
 
 config/
   solid_queue.yml (whatsapp queue section)
@@ -1272,4 +1272,4 @@ config/routes.rb                              (+ WA routes)
 
 ---
 
-*— Aria, arquitetando o futuro 🏛️*
+*Aria, arquitetando o futuro 🏛️*

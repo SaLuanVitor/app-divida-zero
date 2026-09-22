@@ -1,4 +1,4 @@
-# Story FASE-3t.1 — TelegramChannel: canal de notificação transacional via Telegram Bot API
+# Story FASE-3t.1: TelegramChannel: canal de notificação transacional via Telegram Bot API
 
 ## Status
 Done
@@ -84,7 +84,7 @@ TelegramProvider.send_message(chat_id: user.telegram_chat_id, text: text)
 ### Observações
 - NÃO implementar credenciais reais nesta story: o `TelegramProvider` lê env, e os testes usam mock.
 - Seguir exatamente o padrão de `push`/`email`/`wa` para preferências (default desligado).
-- Manter `WhatsappChannel`/`WhatsappProvider` preservados por compatibilidade (sem remoção — ADR-0003), apenas o Telegram passa a ser o canal ativo de mensageria.
+- Manter `WhatsappChannel`/`WhatsappProvider` preservados por compatibilidade (sem remoção: ADR-0003), apenas o Telegram passa a ser o canal ativo de mensageria.
 
 ## Dependencies
 - `ApplicationChannel` (já existe)

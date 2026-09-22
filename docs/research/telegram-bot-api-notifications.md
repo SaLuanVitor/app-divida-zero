@@ -1,4 +1,4 @@
-# Telegram Bot API — Custo, limites e migração a partir do WhatsApp
+# Telegram Bot API: Custo, limites e migração a partir do WhatsApp
 
 **Data:** 2026-09
 **Decisão:** `docs/adr/ADR-0003-telegram-sem-whatsapp-sem-email.md`
@@ -40,7 +40,7 @@
 | Onboarding | opt-in via número + verificação | instalar app + `/start` via deep link |
 | Conformidade | gate comercial/legal da Meta | LGPD do próprio app |
 
-## Sync bancário gratuito — confirmação
+## Sync bancário gratuito: confirmação
 
 - O único caminho gratuito real é a **importação manual OFX/CSV** (já implementada na FASE 4a).
 - O Conector 200 (MeuPluggy) é gratuito mas restrito a **5 conexões do mesmo titular** e uso pessoal;

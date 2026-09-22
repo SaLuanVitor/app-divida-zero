@@ -1,4 +1,4 @@
-# ADR-0003: Canais gratuitos — Telegram no lugar do WhatsApp, sem e-mail próprio, sync bancário congelado no manual
+# ADR-0003: Canais gratuitos: Telegram no lugar do WhatsApp, sem e-mail próprio, sync bancário congelado no manual
 
 ## Status
 
@@ -26,7 +26,7 @@ que não pode assumir custo recorrente agora:
    - limite ~1 msg/s por chat individual e ~30 msg/s em broadcast (aquém, usa-se 429 + backoff);
    - o usuário precisa apertar **Start** antes de receber a primeira mensagem proativa (vincular conta
      via deep link `https://t.me/<bot>?start=<payload>`).
-   Nada de código de Telegram é implementado nesta decisão — apenas registra-se a direção; a
+   Nada de código de Telegram é implementado nesta decisão, apenas registra-se a direção; a
    implementação (`TelegramChannel` reutilizando `ApplicationChannel`) fica para uma story própria.
 2. **E-mail/SMTP fica fora de escopo por ora.** Não há serviço de e-mail próprio. O código de e-mail
    existente (mailers, `EmailChannel`, rake `smtp:test`) permanece preservado por compatibilidade, sem
@@ -38,7 +38,7 @@ que não pode assumir custo recorrente agora:
    mas limitado a 5 conexões do mesmo titular e uso pessoal; produto multi-usuário exige o plano Dados
    (a partir de R$ 2.500/mês). Belvo e Celcoin também são pagas/comerciais; os MCPs open source são só
    clientes sobre a API paga da provedora. Portanto **não existe** sync automático gratuito multi-usuário
-   no Brasil hoje — o manual OFX/CSV é o único caminho a custo zero.
+   no Brasil hoje: o manual OFX/CSV é o único caminho a custo zero.
 
 ## Consequências
 

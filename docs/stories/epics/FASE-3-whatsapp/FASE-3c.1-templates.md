@@ -18,7 +18,7 @@
 
 **Dependencies:** FASE-3a.1 (provider adapter), FASE-3b.4 (tracking model)
 **Complexity:** P (model + sync job)
-**Risks:** Template pode ser rejeitado pelo WhatsApp — processo manual de revisão
+**Risks:** Template pode ser rejeitado pelo WhatsApp: processo manual de revisão
 
 **Files:**
 - `db/migrate/*_create_whatsapp_templates.rb`

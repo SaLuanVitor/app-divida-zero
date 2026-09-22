@@ -1,4 +1,4 @@
-## [FASE-3c.3] Bridge Integration — NotificationAlertsService + Recurring
+## [FASE-3c.3] Bridge Integration: NotificationAlertsService + Recurring
 
 **Description:** Integrar WhatsAppDispatchJob no NotificationAlertsService. Configurar recurring.yml para jobs WA. Garantir que falha no WA não quebra push/email.
 
@@ -19,7 +19,7 @@
 
 **Dependencies:** FASE-3c.2 (WhatsAppDispatchJob), FASE-3b.3 (daily cap)
 **Complexity:** P (integração + recurring)
-**Risks:** Baixo — padrão já estabelecido com push/email
+**Risks:** Baixo: padrão já estabelecido com push/email
 
 **Files:**
 - `app/services/notification_alerts_service.rb` (bridge)

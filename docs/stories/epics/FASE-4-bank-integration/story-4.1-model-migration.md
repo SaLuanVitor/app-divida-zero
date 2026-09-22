@@ -1,8 +1,8 @@
-# Story 4.1 — Model + Migration: ImportedTransaction
+# Story 4.1: Model + Migration: ImportedTransaction
 
-> **Fase:** 4 — Integração Bancária
-> **Subfase:** 4a1 — Upload + Parsing
-> **Story:** 4.1 — Model + Migration
+> **Fase:** 4: Integração Bancária
+> **Subfase:** 4a1: Upload + Parsing
+> **Story:** 4.1: Model + Migration
 > **Prioridade:** Alta
 > **Dependências:** Nenhuma
 
@@ -87,7 +87,7 @@ end
 ### User association
 
 ```ruby
-# Em app/models/user.rb — adicionar:
+# Em app/models/user.rb: adicionar:
 has_many :imported_transactions, dependent: :destroy
 ```
 

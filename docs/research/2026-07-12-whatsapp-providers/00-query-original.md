@@ -4,5 +4,5 @@
 
 ## Contexto
 
-App Dívida Zero — Rails 8.1 API + PostgreSQL + Solid Queue + Expo React Native
+App Dívida Zero: Rails 8.1 API + PostgreSQL + Solid Queue + Expo React Native
 Precisa de WhatsApp para notificações transacionais no Brasil (categoria Utility)

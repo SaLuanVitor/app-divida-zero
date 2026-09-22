@@ -1,4 +1,4 @@
-# Provider Comparison — Bank Aggregation Brazil
+# Provider Comparison: Bank Aggregation Brazil
 
 ## Tabela Comparativa
 
@@ -26,12 +26,12 @@
 **Pluggy** para app-divida-zero:
 1. **Maior cobertura** bancária brasileira (Nubank, Itaú, Bradesco, Santander, Caixa, Inter, C6, BTG, XP)
 2. **Melhor custo** para BR-only (R$2.500/mês conexões ilimitadas)
-3. **ITP-licensed** pela Bacen — conformidade regulatória
-4. **Rico em features BR** — Pix, Boleto API, investimentos
-5. **Webhook nativo** — ideal para Solid Queue + jobs
+3. **ITP-licensed** pela Bacen: conformidade regulatória
+4. **Rico em features BR**: Pix, Boleto API, investimentos
+5. **Webhook nativo**: ideal para Solid Queue + jobs
 
 ## Riscos
 
-- Custo mensal recorrente (R$2.500/mês) — precisa justificar ROI
+- Custo mensal recorrente (R$2.500/mês): precisa justificar ROI
 - Dependência de terceiro para core feature
 - Open Finance direto seria gratuito mas complexidade de certificação é proibitiva

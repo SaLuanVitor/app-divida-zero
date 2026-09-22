@@ -19,7 +19,7 @@
 
 **Dependencies:** FASE-3a.1 (provider adapter)
 **Complexity:** M (refatoração + testes)
-**Risks:** Refatoração pode quebrar push/email existente — testes obrigatórios
+**Risks:** Refatoração pode quebrar push/email existente: testes obrigatórios
 
 **Files:**
 - `app/channels/application_channel.rb`

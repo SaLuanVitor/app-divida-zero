@@ -1,8 +1,8 @@
-# Story 4.3 — AI Categorization + Dedup Services
+# Story 4.3: AI Categorization + Dedup Services
 
-> **Fase:** 4 — Integração Bancária
-> **Subfase:** 4a1 — Upload + Parsing
-> **Story:** 4.3 — AI Categorization + Dedup
+> **Fase:** 4: Integração Bancária
+> **Subfase:** 4a1: Upload + Parsing
+> **Story:** 4.3: AI Categorization + Dedup
 > **Prioridade:** Alta
 > **Dependências:** Story 4.2 (parser services)
 
@@ -218,7 +218,7 @@ end
 ### PromptBuilder addition
 
 ```ruby
-# Em app/services/ai/prompt_builder.rb — adicionar:
+# Em app/services/ai/prompt_builder.rb: adicionar:
 
 def self.categorize_bank_transactions(context)
   <<~PROMPT

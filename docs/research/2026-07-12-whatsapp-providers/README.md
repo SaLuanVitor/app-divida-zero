@@ -1,7 +1,7 @@
-# WhatsApp Business API — Provider Research
+# WhatsApp Business API: Provider Research
 
 **Data:** 2026-07-12
-**Context:** App Dívida Zero — FASE 3 (notificações WhatsApp)
+**Context:** App Dívida Zero: FASE 3 (notificações WhatsApp)
 **Escopo:** Lembretes de vencimento, resumo semanal, alertas de atraso (categoria Utility)
 
 ## TL;DR

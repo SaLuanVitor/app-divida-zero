@@ -1,4 +1,4 @@
-# 📋 Sprint Plan — FASE 5 a 8
+# 📋 Sprint Plan: FASE 5 a 8
 
 > **Projeto:** App Dívida Zero
 > **Data:** 2026-08-20
@@ -17,7 +17,7 @@ FASE 5 (Semanas 1-3)  ──→  FASE 6 (Semanas 4-5)  ──→  FASE 7 (Semana
 
 ---
 
-# 🔷 FASE 5 — Segurança + UX Core
+# 🔷 FASE 5: Segurança + UX Core
 
 > **Duração:** 3 semanas (15 dias úteis)
 > **Objetivo:** Blindar o app e entregar feedback visual de qualidade
@@ -25,7 +25,7 @@ FASE 5 (Semanas 1-3)  ──→  FASE 6 (Semanas 4-5)  ──→  FASE 7 (Semana
 
 ---
 
-## Story 5.1 — Rate Limiting Global
+## Story 5.1: Rate Limiting Global
 **Prioridade:** 🔴 CRÍTICO | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -84,7 +84,7 @@ end
 
 ---
 
-## Story 5.2 — Account Lockout
+## Story 5.2: Account Lockout
 **Prioridade:** 🔴 CRÍTICO | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -135,7 +135,7 @@ end
 
 ---
 
-## Story 5.3 — Session Management (Logout + Blacklist)
+## Story 5.3: Session Management (Logout + Blacklist)
 **Prioridade:** 🔴 CRÍTICO | **Esforço:** G (3 dias)
 
 ### Descrição
@@ -185,7 +185,7 @@ end
 
 ---
 
-## Story 5.4 — Audit Log
+## Story 5.4: Audit Log
 **Prioridade:** 🟡 ALTA | **Esforço:** G (3 dias)
 
 ### Descrição
@@ -242,7 +242,7 @@ end
 
 ---
 
-## Story 5.5 — Haptic Feedback
+## Story 5.5: Haptic Feedback
 **Prioridade:** 🟡 ALTA | **Esforço:** S (1 dia)
 
 ### Descrição
@@ -285,7 +285,7 @@ export const hapticLight = () =>
 
 ---
 
-## Story 5.6 — Success Animations
+## Story 5.6: Success Animations
 **Prioridade:** 🟡 ALTA | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -311,14 +311,14 @@ Adicionar animações de sucesso para feedback visual satisfatório.
 
 ---
 
-## Story 5.7 — Gráficos nos Relatórios
+## Story 5.7: Gráficos nos Relatórios
 **Prioridade:** 🟡 ALTA | **Esforço:** G (3 dias)
 
 ### Descrição
 Adicionar visualizações gráficas na tela de relatórios.
 
 ### Acceptance Criteria
-- [x] react-native-chart-kit ou victory-native instalado — resolvido por `react-native-svg` (já era dependência do projeto); gráficos desenhados com SVG customizado
+- [x] react-native-chart-kit ou victory-native instalado: resolvido por `react-native-svg` (já era dependência do projeto); gráficos desenhados com SVG customizado
 - [x] Gráfico de barras: entradas vs saídas (mensal)
 - [x] Gráfico de pizza: por categoria
 - [x] Gráfico de linha: evolução do saldo
@@ -357,7 +357,7 @@ const MonthlyBarChart = ({ data }) => (
 - [x] Gráficos renderizam com dados reais
 - [x] Filtro por mês/atualiza dados
 - [x] Dark mode: cores ajustadas
-- [ ] Performance: < 500ms para render (não medido — ver Quality Gate)
+- [ ] Performance: < 500ms para render (não medido: ver Quality Gate)
 
 ---
 
@@ -380,7 +380,7 @@ const MonthlyBarChart = ({ data }) => (
 
 ---
 
-# 🔷 FASE 6 — Design Polish
+# 🔷 FASE 6: Design Polish
 
 > **Duração:** 2 semanas (10 dias úteis)
 > **Objetivo:** Elevar a qualidade visual e primeira impressão
@@ -388,7 +388,7 @@ const MonthlyBarChart = ({ data }) => (
 
 ---
 
-## Story 6.1 — Empty States com Ilustrações
+## Story 6.1: Empty States com Ilustrações
 **Prioridade:** 🟡 ALTA | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -400,8 +400,8 @@ Criar estados vazios informativos e convidativos em todas as telas.
 - [x] Notificações vazia: sino + "Tudo tranquilo por aqui"
 - [x] Convites vazia: envelope + "Nenhum convite pendente"
 - [x] Família vazia: família + "Crie sua família" (já existia em conformidade)
-- [x] CTA (botão) em cada empty state — Home e Metas têm CTA; Convites/Notificações/Família não têm ação única natural (Família já tinha)
-- [x] Ilustrações em SVG ou PNG — resolvido por ícones lucide (SVG), via componente `EmptyState` (sem assets externos)
+- [x] CTA (botão) em cada empty state: Home e Metas têm CTA; Convites/Notificações/Família não têm ação única natural (Família já tinha)
+- [x] Ilustrações em SVG ou PNG: resolvido por ícones lucide (SVG), via componente `EmptyState` (sem assets externos)
 
 ### Placeholders para Assets
 > Substituído por ícones lucide-react-native (SVG) no componente `EmptyState`; não baixamos os placeholders PNG.
@@ -414,7 +414,7 @@ Criar estados vazios informativos e convidativos em todas as telas.
 
 ---
 
-## Story 6.2 — Onboarding Visual
+## Story 6.2: Onboarding Visual
 **Prioridade:** 🟡 ALTA | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -426,35 +426,35 @@ Criar slides visuais para o primeiro acesso ao app.
 > seria regredir a UX.
 
 ### Acceptance Criteria
-- [x] 4 slides com screenshots/mockups — **superseded**: tela de modo adaptativo no lugar do carrossel
-- [x] Navegação por swipe + dots indicadores — **superseded**: seleção por toque, sem swipe
-- [x] Botão "Pular" e "Próximo" — coberto por "Pular por enquanto" + botões de modo
-- [x] Último slide: "Começar" → Home — coberto por "Modo iniciante/avançado" → `onDone()`
-- [x] Armazenar flag `onboarding_seen` — `updateAppPreferences({ onboarding_seen: true })`
-- [x] Não mostrar novamente — `navigation/index.tsx` só roteia para Onboarding quando `onboarding_seen` é falso
+- [x] 4 slides com screenshots/mockups: **superseded**: tela de modo adaptativo no lugar do carrossel
+- [x] Navegação por swipe + dots indicadores: **superseded**: seleção por toque, sem swipe
+- [x] Botão "Pular" e "Próximo": coberto por "Pular por enquanto" + botões de modo
+- [x] Último slide: "Começar" → Home: coberto por "Modo iniciante/avançado" → `onDone()`
+- [x] Armazenar flag `onboarding_seen`: `updateAppPreferences({ onboarding_seen: true })`
+- [x] Não mostrar novamente: `navigation/index.tsx` só roteia para Onboarding quando `onboarding_seen` é falso
 
 ### Validação
-- [x] Primeira instalação mostra onboarding — gate em `navigation/index.tsx`
-- [x] Flag persiste (não mostra após completar) — `onboarding_seen` em `preferences`
-- [x] Acessibilidade: labels nos botões — `Button` expõe `accessibilityLabel={title}`
+- [x] Primeira instalação mostra onboarding: gate em `navigation/index.tsx`
+- [x] Flag persiste (não mostra após completar): `onboarding_seen` em `preferences`
+- [x] Acessibilidade: labels nos botões: `Button` expõe `accessibilityLabel={title}`
 
 ---
 
-## Story 6.3 — Cards com Profundidade
+## Story 6.3: Cards com Profundidade
 **Prioridade:** 🟡 MÉDIA | **Esforço:** M (2 dias)
 
 ### Descrição
 Melhorar cards com sombras, gradientes e bordas coloridas.
 
 ### Acceptance Criteria
-- [x] Card de saldo: gradiente sutil laranja — capacidade `gradient` adicionada ao `Card` (+ teste); o resumo da Home usa `View` cru (não convertido para evitar regressão de layout/tutorial)
-- [x] Cards de registros: borda colorida por tipo — `variant` no `Card` aplicado nos lançamentos da Home
+- [x] Card de saldo: gradiente sutil laranja: capacidade `gradient` adicionada ao `Card` (+ teste); o resumo da Home usa `View` cru (não convertido para evitar regressão de layout/tutorial)
+- [x] Cards de registros: borda colorida por tipo: `variant` no `Card` aplicado nos lançamentos da Home
   - Dívida: borda vermelha
   - Ganho: borda verde
   - Despesa: borda amarela
-- [x] Sombras sutis em cards principais — `Card` já tinha `shadow-sm`
-- [x] Ícone com fundo circular colorido — já presente (`backgroundColor: ${color}15`)
-- [x] Dark mode: sombras ajustadas — `Card` já alterna `dark:border-slate-800`
+- [x] Sombras sutis em cards principais: `Card` já tinha `shadow-sm`
+- [x] Ícone com fundo circular colorido: já presente (`backgroundColor: ${color}15`)
+- [x] Dark mode: sombras ajustadas: `Card` já alterna `dark:border-slate-800`
 
 ### Componente Atualizado
 ```typescript
@@ -475,27 +475,27 @@ const variantStyles = {
 
 ### Validação
 - [x] Cards renderizam com variantes corretas (teste `Card.test.tsx`)
-- [x] Gradiente visível no card de saldo — disponível via `gradient`; não aplicado ao resumo da Home (View cru)
+- [x] Gradiente visível no card de saldo: disponível via `gradient`; não aplicado ao resumo da Home (View cru)
 - [x] Dark mode: contraste adequado
 - [ ] Performance: sem lag no scroll (não medido)
 
 ---
 
-## Story 6.4 — Notificações com Avatares
+## Story 6.4: Notificações com Avatares
 **Prioridade:** 🟡 MÉDIA | **Esforço:** M (1 dia)
 
 ### Descrição
 Melhorar visual da lista de notificações.
 
 ### Acceptance Criteria
-- [x] Ícone colorido por tipo — já existia via `kindIconMap`/`kindColorMap`:
+- [x] Ícone colorido por tipo: já existia via `kindIconMap`/`kindColorMap`:
   - Lembrete: 🔴 vermelho (`#ef4444`)
   - Meta: 🔵 azul (`#0ea5e9`)
   - Conquista: 🟡 dourado (`#f48c25`)
   - Sistema: ⚪ cinza (`#64748b`)
-- [x] Timestamp relativo ("há 2 horas", "ontem") — `formatRelativeTime` em `utils/relativeTime.ts`
-- [x] Badge de não lido (ponto laranja) — já existia
-- [ ] Swipe para deletar (opcional) — não implementado (opcional)
+- [x] Timestamp relativo ("há 2 horas", "ontem"): `formatRelativeTime` em `utils/relativeTime.ts`
+- [x] Badge de não lido (ponto laranja): já existia
+- [ ] Swipe para deletar (opcional): não implementado (opcional)
 
 ### Placeholders
 ```
@@ -512,18 +512,18 @@ assets/notifications/icon-system.png   → https://placehold.co/48x48/64748b/fff
 
 ---
 
-## Story 6.5 — Modal de Confirmação Visual
+## Story 6.5: Modal de Confirmação Visual
 **Prioridade:** 🟡 MÉDIA | **Esforço:** S (0.5 dia)
 
 ### Descrição
 Melhorar modais de confirmação com ícones e animações.
 
 ### Acceptance Criteria
-- [x] Ícone de alerta (⚠️) ou perigo (🗑️) — `Trash2` no danger, `Shield` no primary
-- [ ] Animação de entrada (scale up) — não implementada (evita reanimated no modal crítico)
-- [x] Botão de perigo em vermelho mais forte — já existia via `variant="danger"`
-- [x] Texto de consequência claro — já existia (`message`)
-- [x] Haptic feedback ao confirmar — `deleteRecord()` no danger, `light()` no primary
+- [x] Ícone de alerta (⚠️) ou perigo (🗑️): `Trash2` no danger, `Shield` no primary
+- [ ] Animação de entrada (scale up): não implementada (evita reanimated no modal crítico)
+- [x] Botão de perigo em vermelho mais forte: já existia via `variant="danger"`
+- [x] Texto de consequência claro: já existia (`message`)
+- [x] Haptic feedback ao confirmar: `deleteRecord()` no danger, `light()` no primary
 
 ### Placeholders
 ```
@@ -538,7 +538,7 @@ assets/modals/icon-danger.png  → https://placehold.co/64x64/ef4444/ffffff?text
 
 ---
 
-## Story 6.6 — Dark Mode Polish
+## Story 6.6: Dark Mode Polish
 **Prioridade:** 🟡 MÉDIA | **Esforço:** S (0.5 dia)
 
 ### Descrição
@@ -547,13 +547,13 @@ Ajustar contraste e cores no dark mode.
 > **Status 2026-09:** dark mode já está implementado de ponta a ponta (desde 14/06) com uma paleta
 > Tailwind consistente: cards `#121212` (132 usos), background `#000` via `dark:bg-black` (37 usos),
 > texto secundário `slate-300/400` e bordas `slate-700/800`. A story propõe uma paleta alternativa
-> (`#1a1a1a`/`#2d2d2d`/`#0a0a0a`). **Decisão:** não migrar a paleta inteira — é um refactor de 130+ arquivos
+> (`#1a1a1a`/`#2d2d2d`/`#0a0a0a`). **Decisão:** não migrar a paleta inteira: é um refactor de 130+ arquivos
 > com risco de regressão e ganho marginal. Manter a paleta atual; o ajuste pontual de contraste fica para
 > quando houver uma auditoria visual real (ver WCAG abaixo).
 
 ### Acceptance Criteria
-- [x] Cards, texto secundário, bordas e background em dark mode — já cobertos por classes `dark:` em todas as telas
-- [ ] Contraste WCAG AA (4.5:1) — **não verificado**: exige medição real (ferramenta + julgamento manual), não é decidível por leitura de fonte
+- [x] Cards, texto secundário, bordas e background em dark mode: já cobertos por classes `dark:` em todas as telas
+- [ ] Contraste WCAG AA (4.5:1): **não verificado**: exige medição real (ferramenta + julgamento manual), não é decidível por leitura de fonte
 
 ### Validação
 - [ ] Todas as telas testadas em dark mode
@@ -574,7 +574,7 @@ Ajustar contraste e cores no dark mode.
 
 ---
 
-# 🔷 FASE 7 — Features Avançadas
+# 🔷 FASE 7: Features Avançadas
 
 > **Duração:** 3 semanas (15 dias úteis)
 > **Objetivo:** Entregar features diferenciadoras
@@ -582,7 +582,7 @@ Ajustar contraste e cores no dark mode.
 
 ---
 
-## Story 7.1 — Biometric Auth
+## Story 7.1: Biometric Auth
 **Prioridade:** 🟡 ALTA | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -627,7 +627,7 @@ export const authenticateWithBiometric = async (): Promise<boolean> => {
 
 ---
 
-## Story 7.2 — Swipe Actions nos Cards
+## Story 7.2: Swipe Actions nos Cards
 **Prioridade:** 🟡 MÉDIA | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -655,7 +655,7 @@ assets/swipe/swipe-delete.png → https://placehold.co/80x80/ef4444/ffffff?text=
 
 ---
 
-## Story 7.3 — Quick Actions FAB
+## Story 7.3: Quick Actions FAB
 **Prioridade:** 🟡 MÉDIA | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -686,7 +686,7 @@ assets/fab/fab-goal.png      → https://placehold.co/48x48/8b5cf6/ffffff?text=�
 
 ---
 
-## Story 7.4 — Offline Support
+## Story 7.4: Offline Support
 **Prioridade:** 🟡 MÉDIA | **Esforço:** G (3 dias)
 
 ### Descrição
@@ -744,7 +744,7 @@ export const processQueue = async () => {
 
 ---
 
-## Story 7.5 — Error Recovery UX
+## Story 7.5: Error Recovery UX
 **Prioridade:** 🟡 ALTA | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -772,7 +772,7 @@ assets/errors/error-server.png  → https://placehold.co/200x150/f59e0b/ffffff?t
 
 ---
 
-## Story 7.6 — Push Notification Rich
+## Story 7.6: Push Notification Rich
 **Prioridade:** 🟡 MÉDIA | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -810,7 +810,7 @@ assets/push/push-achievement.png → https://placehold.co/400x200/f48c25/ffffff?
 
 ---
 
-# 🔷 FASE 8 — Launch Prep
+# 🔷 FASE 8: Launch Prep
 
 > **Duração:** 2 semanas (10 dias úteis)
 > **Objetivo:** Preparar para publicação nas stores
@@ -818,7 +818,7 @@ assets/push/push-achievement.png → https://placehold.co/400x200/f48c25/ffffff?
 
 ---
 
-## Story 8.1 — App Store Assets
+## Story 8.1: App Store Assets
 **Prioridade:** 🔴 CRÍTICO | **Esforço:** G (3 dias)
 
 ### Descrição
@@ -857,7 +857,7 @@ assets/store/app-icon.png             → https://placehold.co/512x512/f48c25/ff
 
 ---
 
-## Story 8.2 — Secrets Rotation Runbook
+## Story 8.2: Secrets Rotation Runbook
 **Prioridade:** 🟡 ALTA | **Esforço:** S (1 dia)
 
 ### Descrição
@@ -882,7 +882,7 @@ Documentar processo de rotação de secrets.
 
 ---
 
-## Story 8.3 — HTTPS Enforcement
+## Story 8.3: HTTPS Enforcement
 **Prioridade:** 🟡 ALTA | **Esforço:** S (0.5 dia)
 
 ### Descrição
@@ -902,7 +902,7 @@ Garantir HTTPS em produção.
 
 ---
 
-## Story 8.4 — Performance Audit
+## Story 8.4: Performance Audit
 **Prioridade:** 🟡 MÉDIA | **Esforço:** M (2 dias)
 
 ### Descrição
@@ -928,7 +928,7 @@ Auditar e otimizar performance do app.
 
 ---
 
-## Story 8.5 — Beta Testing Setup
+## Story 8.5: Beta Testing Setup
 **Prioridade:** 🟡 ALTA | **Esforço:** M (1 dia)
 
 ### Descrição
@@ -948,7 +948,7 @@ Configurar beta testing para validação externa.
 
 ---
 
-## Story 8.6 — Monitoring & Analytics
+## Story 8.6: Monitoring & Analytics
 **Prioridade:** 🟡 MÉDIA | **Esforço:** M (2 dias)
 
 ### Descrição

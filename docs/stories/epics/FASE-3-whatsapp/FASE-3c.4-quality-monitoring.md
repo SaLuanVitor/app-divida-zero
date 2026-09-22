@@ -12,7 +12,7 @@
 
 **Technical Notes:**
 - Meta quality score: green (≥90%), yellow (70-89%), red (<70%)
-- Provider não-Meta pode não ter quality score — adaptar por provider
+- Provider não-Meta pode não ter quality score: adaptar por provider
 - Dashboard admin via controller existente `Api::V1::Admin`
 - Dados do dashboard: aggregation em `WhatsAppMessage` por created_at e status
 

@@ -1,7 +1,7 @@
-# Arquitetura Técnica — Subfase 4a1: Importação OFX/CSV
+# Arquitetura Técnica: Subfase 4a1: Importação OFX/CSV
 
-> **Fase:** 4 — Integração Bancária
-> **Subfase:** 4a1 — Upload + Parsing + IA + Dedup
+> **Fase:** 4: Integração Bancária
+> **Subfase:** 4a1: Upload + Parsing + IA + Dedup
 > **Autor:** Aria (Architect)
 > **Data:** 2026-07-12
 > **Stack:** Rails 8.1 API-only, PostgreSQL, Solid Queue, OpenAI (GPT-4.1-mini)
@@ -122,7 +122,7 @@ module Bank
   class OfxParser
     # Input: raw file content
     # Output: Array of { description:, amount:, date:, fit_id:, check_number:, original_category: }
-    # Uses `OFX` gem (ofx 2.x) — handles both OFX 1.x (SGML) and 2.x (XML)
+    # Uses `OFX` gem (ofx 2.x): handles both OFX 1.x (SGML) and 2.x (XML)
     #
     # Edge cases:
     # - Negative amount = expense, positive = income (invertido no OFX)
@@ -169,7 +169,7 @@ module Bank
     # - Encoding (UTF-8, ISO-8859-1, Windows-1252)
     #
     # Bancos BR comuns (Nubank, Inter, Itaú, Bradesco) têm formatos
-    # ligeiramente diferentes — o detector de colunas lida com isso.
+    # ligeiramente diferentes: o detector de colunas lida com isso.
     def parse(file_path)
       raw = File.read(file_path)
       encoding = detect_encoding(raw)
@@ -614,7 +614,7 @@ end
 ### 2.5 Routes
 
 ```ruby
-# config/routes.rb — adicionar no namespace api/v1
+# config/routes.rb: adicionar no namespace api/v1
 namespace :bank do
   resources :statements, only: [] do
     collection do
@@ -743,7 +743,7 @@ GET /bank/transactions/pending
 
 ---
 
-## 5. LGPD — Data Lifecycle
+## 5. LGPD: Data Lifecycle
 
 ```
 Upload         →  tmp/imports/{batch_id}/*    (deletado após parsing)
@@ -818,13 +818,13 @@ E o controller deve aceitar upload sem IA quando `Rails.env.test?`.
 
 ## 9. Performance
 
-- **Upload:** Aceito em 202 (async) — usuário não espera
+- **Upload:** Aceito em 202 (async): usuário não espera
 - **Parsing:** 100 transações OFX em <1s, CSV em <2s
 - **IA:** 20 transações/lote, ~3-5s por lote (OpenAI)
 - **Total** 100 transações: ~10-15s (IA dominante)
 - **Pooling:** Cliente mobile faz polling a cada 3s
-- **Backup:** Timeout de 60s — se exceder, marca como erro
+- **Backup:** Timeout de 60s: se exceder, marca como erro
 
 ---
 
-— Aria, arquitetando o futuro 🏗️
+Aria, arquitetando o futuro 🏗️

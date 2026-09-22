@@ -1,8 +1,8 @@
-# Story 4.6 — Mobile: Import Screen + Transaction Review
+# Story 4.6: Mobile: Import Screen + Transaction Review
 
-> **Fase:** 4 — Integração Bancária
-> **Subfase:** 4a1 — Upload + Parsing
-> **Story:** 4.6 — Mobile: Import Screen
+> **Fase:** 4: Integração Bancária
+> **Subfase:** 4a1: Upload + Parsing
+> **Story:** 4.6: Mobile: Import Screen
 > **Prioridade:** Alta
 > **Dependências:** Stories 4.4 + 4.5 (backend endpoints prontos)
 
@@ -367,7 +367,7 @@ export default function BankReviewScreen({ navigation }: any) {
 ### Navigation Registration
 
 ```typescript
-// Em AppNavigator.tsx — adicionar:
+// Em AppNavigator.tsx: adicionar:
 import BankImportScreen from '../screens/app/BankImportScreen';
 import BankReviewScreen from '../screens/app/BankReviewScreen';
 
@@ -379,7 +379,7 @@ import BankReviewScreen from '../screens/app/BankReviewScreen';
 ### Menu Item
 
 ```typescript
-// Em Profile.tsx — adicionar botão:
+// Em Profile.tsx: adicionar botão:
 <TouchableOpacity
   className="flex-row items-center py-4 border-b border-gray-100"
   onPress={() => navigation.navigate('BankImport')}

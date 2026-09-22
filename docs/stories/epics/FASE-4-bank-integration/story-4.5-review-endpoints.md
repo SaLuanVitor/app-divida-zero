@@ -1,8 +1,8 @@
-# Story 4.5 — Review + Accept Endpoints (TransactionsController)
+# Story 4.5: Review + Accept Endpoints (TransactionsController)
 
-> **Fase:** 4 — Integração Bancária
-> **Subfase:** 4a1 — Upload + Parsing
-> **Story:** 4.5 — Review + Accept Endpoints
+> **Fase:** 4: Integração Bancária
+> **Subfase:** 4a1: Upload + Parsing
+> **Story:** 4.5: Review + Accept Endpoints
 > **Prioridade:** Alta
 > **Dependências:** Story 4.4 (upload endpoints)
 

@@ -1,14 +1,14 @@
-# FASE 3 — WhatsApp: Execução e Arquitetura
+# FASE 3: WhatsApp: Execução e Arquitetura
 
 > **⚠️ SUPERSEDED (2026-09):** a estratégia de canal foi migrada de WhatsApp para **Telegram**.
 > A decisão está registrada em `docs/adr/ADR-0003-telegram-sem-whatsapp-sem-email.md`.
 > Este plano permanece como histórico da arquitetura de WhatsApp (preservado por compatibilidade,
 > sem remoção de código). A implementação do `TelegramChannel` fica para uma story própria.
 
-> **Fase:** 3 — WhatsApp Business API
+> **Fase:** 3: WhatsApp Business API
 > **Estratégia:** 3 subfases incrementais, NotificationChannel polimórfico, rate limiting, prevenção de bloqueio
 > **Owner:** SaLuanVitor · **Orquestração:** @aiox-master (Orion)
-> **Provider:** A decidir (Z-API / Twilio / Meta Cloud API) — definido na Subfase 3a
+> **Provider:** A decidir (Z-API / Twilio / Meta Cloud API): definido na Subfase 3a
 
 ---
 
@@ -68,7 +68,7 @@ Por app:
 
 ---
 
-## Subfase 3a — Provider Discovery + NotificationChannel
+## Subfase 3a: Provider Discovery + NotificationChannel
 
 ### Objetivo
 Pesquisar provedor, criar abstração de canal de notificação, refatorar canais existentes.
@@ -100,7 +100,7 @@ Cada canal implementa:
 ```
 
 ### Data Model (3a)
-- Nenhum modelo novo — apenas esboço do `WhatsAppChannel`
+- Nenhum modelo novo: apenas esboço do `WhatsAppChannel`
 
 ### Files
 - `app/channels/application_channel.rb`
@@ -112,7 +112,7 @@ Cada canal implementa:
 
 ---
 
-## Subfase 3b — Opt-in + Verificação Telefônica
+## Subfase 3b: Opt-in + Verificação Telefônica
 
 ### Objetivo
 Adicionar campo phone no User, verificação via código SMS/WhatsApp, preferências WA, prevenção de bloqueio.
@@ -184,7 +184,7 @@ WA_PREFERENCE_DEFAULTS = {
 
 ---
 
-## Subfase 3c — Templates + Envio Automatizado
+## Subfase 3c: Templates + Envio Automatizado
 
 ### Objetivo
 Criar templates HSM, integrar com NotificationAlertsService, dispatch automatizado.

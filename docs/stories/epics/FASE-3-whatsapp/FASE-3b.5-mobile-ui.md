@@ -1,4 +1,4 @@
-## [FASE-3b.5] Mobile UI — Phone Input + WA Toggles
+## [FASE-3b.5] Mobile UI: Phone Input + WA Toggles
 
 **Description:** Adicionar tela de configuração de WhatsApp no mobile: input de telefone com máscara, fluxo de verificação, toggles de preferências WA.
 

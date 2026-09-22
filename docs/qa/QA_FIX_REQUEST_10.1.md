@@ -1,4 +1,4 @@
-# QA Fix Request — Story 10.1: Open Finance Foundation
+# QA Fix Request: Story 10.1: Open Finance Foundation
 
 **Story:** 10.1.open-finance-foundation
 **Branch:** feature/10.1-open-finance-foundation
@@ -10,7 +10,7 @@
 
 ## Issues to Fix (Ordered by Priority)
 
-### 🔴 CRITICAL — Must Fix Before Merge
+### 🔴 CRITICAL: Must Fix Before Merge
 
 #### 1. Secrets Exposure in Logs
 **File:** `app/services/financial/providers/pluggy_adapter.rb`
@@ -37,7 +37,7 @@ end
 
 ---
 
-### 🟠 HIGH — Must Fix Before Merge
+### 🟠 HIGH: Must Fix Before Merge
 
 #### 2. Missing Error Handling on HTTP Calls
 **File:** `app/services/financial/providers/pluggy_adapter.rb`
@@ -179,7 +179,7 @@ end
 
 ---
 
-### 🟡 MEDIUM — Should Fix (Follow-up)
+### 🟡 MEDIUM: Should Fix (Follow-up)
 
 #### 5. Missing Tests for Configuration Models
 **Files:** `app/models/plan.rb`, `plan_limit.rb`, `feature_flag.rb`, `setting.rb`, `financial_account.rb`
@@ -213,7 +213,7 @@ end
 
 ---
 
-### 🟢 LOW — Nice to Have
+### 🟢 LOW: Nice to Have
 
 #### 9. Structured Logging
 Adicionar `request_id` correlation em todos os logs do adapter.

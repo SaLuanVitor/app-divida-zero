@@ -1,8 +1,8 @@
-# Story 4.4 — Upload + Status Endpoints (StatementsController)
+# Story 4.4: Upload + Status Endpoints (StatementsController)
 
-> **Fase:** 4 — Integração Bancária
-> **Subfase:** 4a1 — Upload + Parsing
-> **Story:** 4.4 — Upload + Status Endpoints
+> **Fase:** 4: Integração Bancária
+> **Subfase:** 4a1: Upload + Parsing
+> **Story:** 4.4: Upload + Status Endpoints
 > **Prioridade:** Alta
 > **Dependências:** Stories 4.1, 4.2, 4.3 (model + parsers + ai/dedup)
 
@@ -200,7 +200,7 @@ end
 ### Queue config
 
 ```yaml
-# Em config/queue.yml — adicionar workers:
+# Em config/queue.yml: adicionar workers:
 # workers:
 #   - queues: [bank, *]
 #     threads: 2
@@ -209,7 +209,7 @@ end
 ### Routes
 
 ```ruby
-# Em config/routes.rb — adicionar dentro de namespace :api/v1:
+# Em config/routes.rb: adicionar dentro de namespace :api/v1:
 namespace :bank do
   resources :statements, only: [] do
     collection do

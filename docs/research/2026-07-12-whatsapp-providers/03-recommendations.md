@@ -6,15 +6,15 @@
 
 ### Justificativa
 
-1. **Menor risco de bloqueio** — App Dívida Zero lida com dados financeiros. Usar API não-oficial (Z-API) expõe o negócio a bloqueio permanente do WhatsApp, o que seria catastrófico.
+1. **Menor risco de bloqueio**: App Dívida Zero lida com dados financeiros. Usar API não-oficial (Z-API) expõe o negócio a bloqueio permanente do WhatsApp, o que seria catastrófico.
 
-2. **Qualidade de entrega** — Mensagens via API oficial têm maior taxa de entrega e suporte a templates HSM aprovados, essenciais para notificações utility.
+2. **Qualidade de entrega**: Mensagens via API oficial têm maior taxa de entrega e suporte a templates HSM aprovados, essenciais para notificações utility.
 
-3. **Escalabilidade** — Rate limits de 80 msg/s são mais que suficientes para o volume atual e futuro.
+3. **Escalabilidade**: Rate limits de 80 msg/s são mais que suficientes para o volume atual e futuro.
 
-4. **Custo justificável** — ~R$ 600-1.500/mês para 15k mensagens é aceitável para um app financeiro com usuários ativos.
+4. **Custo justificável**: ~R$ 600-1.500/mês para 15k mensagens é aceitável para um app financeiro com usuários ativos.
 
-5. **Suporte local** — BSPs brasileiros oferecem suporte em português e ajudam com verificação Business e aprovação de templates.
+5. **Suporte local**: BSPs brasileiros oferecem suporte em português e ajudam com verificação Business e aprovação de templates.
 
 ### Plano de Ação (FASE-3a.1)
 

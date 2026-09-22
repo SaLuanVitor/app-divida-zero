@@ -1,4 +1,4 @@
-# Provider Comparison — WhatsApp Business API
+# Provider Comparison: WhatsApp Business API
 
 ## Tabela Comparativa
 
@@ -19,10 +19,10 @@
 
 ## Análise Detalhada
 
-### Meta Cloud API (via BSP — Zenvia / WhatsAppNow)
+### Meta Cloud API (via BSP: Zenvia / WhatsAppNow)
 - **Prós:** API oficial, menor risco de bloqueio, qualidade de entrega superior, escalabilidade, templates HSM aprovados pelo WhatsApp, suporte BSP local
 - **Contras:** Precisa de conta Business Meta verificada, processo de onboarding mais lento, custo mais alto, dependência de BSP
-- **Ideal para:** Produção — app financeiro com notificações transacionais
+- **Ideal para:** Produção (app financeiro com notificações transacionais)
 
 ### Twilio
 - **Prós:** API oficial, documentação excelente, SMS fallback nativo, boa escalabilidade, múltiplos canais
@@ -31,5 +31,5 @@
 
 ### Z-API
 - **Prós:** Mais simples de configurar, mais barato, docs em português, sem verificação Business
-- **Contras:** **Não-oficial** — usa WhatsApp Web (alto risco de bloqueio), rate limits baixos, sem garantia de compliance
+- **Contras:** **Não-oficial**: usa WhatsApp Web (alto risco de bloqueio), rate limits baixos, sem garantia de compliance
 - **Ideal para:** MVP/POC rápido, mas NÃO recomendado para produção com dados financeiros

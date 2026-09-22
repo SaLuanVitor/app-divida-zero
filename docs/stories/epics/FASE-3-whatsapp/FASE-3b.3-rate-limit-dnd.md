@@ -3,7 +3,7 @@
 **Description:** Integrar rate limiter completo no pipeline de envio WA. Implementar DND (Do Not Disturb) automático com configuração por usuário.
 
 **Acceptance Criteria:**
-- [x] Rate limiter integrado ao `WhatsAppChannel.deliver` — bloqueia se excedido
+- [x] Rate limiter integrado ao `WhatsAppChannel.deliver`: bloqueia se excedido
 - [x] Limite diário por usuário: 10 mensagens/dia (contagem em `WhatsAppMessage`)
 - [x] Limite diário global: 500/dia (configurável via `WHATSAPP_DAILY_CAP`)
 - [x] DND configurável: `wa_dnd_start` (default 22:00) e `wa_dnd_end` (default 08:00)

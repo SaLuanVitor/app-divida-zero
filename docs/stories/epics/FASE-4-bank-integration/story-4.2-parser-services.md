@@ -1,8 +1,8 @@
-# Story 4.2 — OFX/CSV Parser Services
+# Story 4.2: OFX/CSV Parser Services
 
-> **Fase:** 4 — Integração Bancária
-> **Subfase:** 4a1 — Upload + Parsing
-> **Story:** 4.2 — OFX/CSV Parser Services
+> **Fase:** 4: Integração Bancária
+> **Subfase:** 4a1: Upload + Parsing
+> **Story:** 4.2: OFX/CSV Parser Services
 > **Prioridade:** Alta
 > **Dependências:** Story 4.1 (model + migration)
 
@@ -20,7 +20,7 @@
 - [x] AC-08: `Bank::StatementParsingService` orquestra detector + parser + retorno
 - [x] AC-09: Formato inválido levanta `Bank::UnsupportedFormatError`
 - [x] AC-10: Transações sem descrição viram "Transação sem descrição"
-- [x] AC-11: Parsing OFX via Nokogiri custom (SGML→XML), sem `gem "ofx"` — decisão aprovada pelo dono (2026-08-20): implementação atual testada e validada, evita dependência externa
+- [x] AC-11: Parsing OFX via Nokogiri custom (SGML→XML), sem `gem "ofx"`: decisão aprovada pelo dono (2026-08-20): implementação atual testada e validada, evita dependência externa
 - [x] AC-12: Testes unitários para cada parser com fixtures reais
 
 ## Files
@@ -29,7 +29,7 @@
 
 ```ruby
 # NOTA (2026-08-20): gem "ofx" NÃO utilizada. OfxParser usa Nokogiri custom
-# (SGML→XML) — decisão aprovada pelo dono. Documentação original abaixo:
+# (SGML→XML): decisão aprovada pelo dono. Documentação original abaixo:
 gem "ofx", "~> 2.2"
 ```
 
@@ -235,7 +235,7 @@ end
 ## Test Fixtures
 
 Criar fixtures de teste em `test/fixtures/files/`:
-- `sample.ofx` — OFX 1.x com 3 transações
-- `sample.qfx` — OFX 2.x (QFX) com 2 transações
-- `sample.csv` — CSV Nubank-style (UTF-8, vírgula)
-- `sample_semicolon.csv` — CSV Itaú-style (ISO-8859-1, ponto-e-vírgula)
+- `sample.ofx`: OFX 1.x com 3 transações
+- `sample.qfx`: OFX 2.x (QFX) com 2 transações
+- `sample.csv`: CSV Nubank-style (UTF-8, vírgula)
+- `sample_semicolon.csv`: CSV Itaú-style (ISO-8859-1, ponto-e-vírgula)
