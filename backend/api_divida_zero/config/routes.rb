@@ -63,6 +63,7 @@ Rails.application.routes.draw do
       end
       get "whatsapp/webhook", to: "whatsapp#verify"
       post "whatsapp/webhook", to: "whatsapp#webhook"
+      post "telegram/webhook", to: "telegram_webhooks#webhook"
 
       namespace :bank do
         resources :statements, only: [], param: :batch_id do
