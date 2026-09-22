@@ -79,6 +79,7 @@ export const defaultAppPreferences: AppPreferences = {
   tutorial_missions_done: [],
   tutorial_general_version: 1,
   tutorial_general_track_state: 'idle',
+  telegram_prompt_seen: false,
 };
 
 const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): AppPreferences => {
@@ -113,6 +114,8 @@ const normalizePreferences = (raw: Partial<AppPreferences> | null | undefined): 
       typeof raw?.advanced_quick_guide_seen === 'boolean' ? raw.advanced_quick_guide_seen : false,
     first_success_milestone_done:
       typeof raw?.first_success_milestone_done === 'boolean' ? raw.first_success_milestone_done : false,
+    telegram_prompt_seen:
+      typeof raw?.telegram_prompt_seen === 'boolean' ? raw.telegram_prompt_seen : false,
     tutorial_active_mode:
       raw?.tutorial_active_mode === 'beginner' || raw?.tutorial_active_mode === 'advanced'
         ? raw.tutorial_active_mode

@@ -1,5 +1,10 @@
 # FASE 3 — WhatsApp: Execução e Arquitetura
 
+> **⚠️ SUPERSEDED (2026-09):** a estratégia de canal foi migrada de WhatsApp para **Telegram**.
+> A decisão está registrada em `docs/adr/ADR-0003-telegram-sem-whatsapp-sem-email.md`.
+> Este plano permanece como histórico da arquitetura de WhatsApp (preservado por compatibilidade,
+> sem remoção de código). A implementação do `TelegramChannel` fica para uma story própria.
+
 > **Fase:** 3 — WhatsApp Business API
 > **Estratégia:** 3 subfases incrementais, NotificationChannel polimórfico, rate limiting, prevenção de bloqueio
 > **Owner:** SaLuanVitor · **Orquestração:** @aiox-master (Orion)
@@ -76,7 +81,7 @@ Pesquisar provedor, criar abstração de canal de notificação, refatorar canai
 - [x] `PushChannel` implementado usando a abstração
 - [x] `WhatsAppChannel` esboço (stub) criado
 - [x] Provider SDK integrado (gem/client HTTP)
-- [ ] Testes unitários da abstração
+- [x] Testes unitários da abstração
 - [x] `WHATSAPP_PROVIDER`, `WHATSAPP_API_KEY` no .env.example
 
 ### Arquitetura: NotificationChannel
@@ -122,12 +127,12 @@ Adicionar campo phone no User, verificação via código SMS/WhatsApp, preferên
 - [x] Endpoint `PATCH auth/whatsapp_notifications` (preferências)
 - [x] `User.wa_enabled_for_alert?` (similar email_enabled_for_alert?)
 - [x] Toggle WA no `me` endpoint (mobile exibe)
-- [ ] Rate limiter: máx 3 tentativas de verificação/hora por IP
+- [x] Rate limiter: máx 3 tentativas de verificação/hora por telefone (decisão 2026-09: manter chave por telefone; IP adiado)
 - [x] Não enviar WA sem opt-in explícito (validação no channel)
 - [x] `WhatsAppRateLimiter` funcional (token bucket)
 - [x] Limite diário por usuário (10msgs/dia)
 - [x] DND automático (22h-8h)
-- [ ] Testes de autorização e opt-in
+- [x] Testes de autorização e opt-in
 
 ### Data Model
 

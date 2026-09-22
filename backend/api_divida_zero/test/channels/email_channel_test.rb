@@ -57,4 +57,16 @@ class EmailChannelTest < ActiveSupport::TestCase
   test "channel_name is email" do
     assert_equal "email", EmailChannel.channel_name
   end
+
+  test "configured? follows SMTP_PASSWORD presence" do
+    original = ENV["SMTP_PASSWORD"]
+
+    ENV["SMTP_PASSWORD"] = nil
+    refute EmailChannel.configured?
+
+    ENV["SMTP_PASSWORD"] = "resend_secret"
+    assert EmailChannel.configured?
+  ensure
+    ENV["SMTP_PASSWORD"] = original
+  end
 end

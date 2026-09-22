@@ -29,5 +29,6 @@ export interface AppPreferences {
   tutorial_missions_done: string[];
   tutorial_general_version: number;
   tutorial_general_track_state: 'idle' | 'essential' | 'paused' | 'completed';
+  telegram_prompt_seen: boolean;
 }
 

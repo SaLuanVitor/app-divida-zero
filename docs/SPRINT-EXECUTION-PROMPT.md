@@ -44,7 +44,7 @@ story_order:
     deps: ["5.1"]
     owner: "@dev + @data-engineer (migration)"
     type: "backend"
-    status: "PENDING"
+    status: "DONE"  # ✅ CONCLUÍDA
   - id: "5.3"
     title: "Session Management (Logout + Blacklist)"
     priority: "CRÍTICO"
@@ -52,7 +52,7 @@ story_order:
     deps: ["5.1", "5.2"]
     owner: "@dev + @data-engineer (Redis)"
     type: "backend"
-    status: "PENDING"
+    status: "DONE"  # ✅ CONCLUÍDA
   - id: "5.4"
     title: "Audit Log"
     priority: "ALTA"
@@ -60,7 +60,7 @@ story_order:
     deps: ["5.3"]
     owner: "@dev + @data-engineer"
     type: "backend"
-    status: "PENDING"
+    status: "DONE"  # ✅ CONCLUÍDA
   - id: "5.5"
     title: "Haptic Feedback"
     priority: "ALTA"
@@ -68,7 +68,7 @@ story_order:
     deps: []
     owner: "@dev (mobile)"
     type: "mobile"
-    status: "PENDING"
+    status: "DONE"  # ✅ CONCLUÍDA
   - id: "5.6"
     title: "Success Animations"
     priority: "ALTA"
@@ -76,7 +76,7 @@ story_order:
     deps: ["5.5"]
     owner: "@dev (mobile) + @ux-design-expert (assets)"
     type: "mobile"
-    status: "PENDING"
+    status: "DONE"  # ✅ CONCLUÍDA
   - id: "5.7"
     title: "Gráficos nos Relatórios"
     priority: "ALTA"
@@ -84,10 +84,10 @@ story_order:
     deps: ["5.6"]
     owner: "@dev (mobile) + @ux-design-expert (design)"
     type: "mobile"
-    status: "PENDING"
+    status: "DONE"  # ✅ CONCLUÍDA
 ```
 
-**Auto-pick rule:** Próxima story = primeira na lista com `deps` todas `DONE` e `status = "PENDING"`.
+**Auto-pick rule:** Próxima story = a primeira da lista com `deps` todas `DONE` e `status` em `PENDING` ou `IN_PROGRESS`. Story em `IN_PROGRESS` é retomada antes de qualquer `PENDING`, senão o loop fica sem candidato quando a story da vez já começou.
 
 ---
 
@@ -251,6 +251,8 @@ acceptance_criteria:
   - token revogado retorna 401
 ```
 
+**Implementado como:** model `TokenBlacklist` em banco, com `token_digest` e `expires_at` (TTL de 7 dias) e o scope `active`. A opção por Redis descrita no plano não foi usada.
+
 ### Story 5.4 — Audit Log
 ```yaml
 backend_files:
@@ -294,14 +296,17 @@ acceptance_criteria:
 ### Story 5.6 — Success Animations (Mobile)
 ```yaml
 mobile_files:
-  - package.json (lottie-react-native, react-native-reanimated)
-  - src/assets/animations/success-check.json
+  - package.json (lottie-react-native ~7.3.4, instalado)
+  - src/assets/animations/checkmark.json
   - src/assets/animations/confetti.json
-  - src/assets/animations/loading-gear.json
+  - src/assets/animations/gear.json
   - src/components/SuccessAnimation.tsx
-  - src/screens/app/Lancamentos.tsx (integração)
+  - src/hooks/useSuccessAnimation.ts
+  - src/hooks/useReducedMotion.ts
+  - src/screens/app/Home.tsx (integração)
   - src/screens/app/Metas.tsx (integração)
-  - test/components/SuccessAnimation.test.tsx
+  - src/screens/app/Lancamentos.tsx (integração pendente)
+  - src/components/__tests__/SuccessAnimation.test.tsx (pendente)
 
 acceptance_criteria:
   - lottie-react-native instalado
@@ -311,6 +316,8 @@ acceptance_criteria:
   - duração 1.5-2s
   - redução de movimento respeitada
 ```
+
+**Implementado como:** os três Lottie ficaram em `src/assets/animations/`, com os nomes `checkmark.json` (1,50 s), `confetti.json` (2,00 s) e `gear.json` (2,00 s), no lugar dos nomes previstos nesta lista. O checkmark dispara no pagamento bem-sucedido e o confetti no nível up, ambos em `Home.tsx`. O gear é o estado de processamento em `Metas.tsx`. `Lancamentos.tsx` não foi integrado, e o teste do componente ainda não existe.
 
 ### Story 5.7 — Gráficos nos Relatórios (Mobile)
 ```yaml
@@ -388,6 +395,14 @@ cross_gates:
 | 5.7 | ⏳ PENDING | — | — | — | Gráficos Relatórios (Mobile) |
 
 **Overall:** 5/7 DONE | 71% | ETA: 15 dias úteis
+
+> **Estado verificado em 2026-09-17**, por leitura de código e de git, sem executar nenhum portão.
+
+- 5.1 a 5.5 têm commit na branch `feat/fase-5-seguranca`, com o tracker fechado em `760e774`
+- 5.6 tem trabalho não commitado: `SuccessAnimation.tsx`, `useReducedMotion.ts`, `useSuccessAnimation.ts`, os três Lottie em `src/assets/animations/` (checkmark 1,50 s, confetti 2,00 s, gear 2,00 s) e `lottie-react-native ~7.3.4` no `package.json`. A integração alcança `Home.tsx` e `Metas.tsx`. Falta o teste do componente (`src/components/__tests__/`) e o commit
+- 5.7 não iniciada: `react-native-chart-kit` e `victory-native` ausentes do `package.json`. O `react-native-svg 15.15.3` já está instalado e `src/components/admin/DonutChart.tsx` desenha em SVG, o que serve de base se a decisão for não adicionar dependência nova
+- `db/schema.rb`, `config/database.yml`, `Home.tsx` e `Metas.tsx` estão modificados no diretório de trabalho
+- O invariante da FASE 0 do loop (`git status` limpo) não é satisfeito hoje, então o loop não parte enquanto as alterações de 5.6 não forem commitadas ou guardadas
 ```
 
 ---
@@ -418,8 +433,8 @@ cross_gates:
 ## 🚀 START COMMAND — EXECUTAR AGORA
 
 ```bash
-# ESTAMOS NA BRANCH CORRETA (feat/fase-5-seguranca)
-# Story 5.1 JÁ CONCLUÍDA
+# BRANCH ATUAL: feat/fase-5-seguranca
+# Stories 5.1 a 5.5 CONCLUÍDAS. A 5.6 está em andamento, com alterações não commitadas.
 
 # OPÇÃO A: Rodar TODA a FASE 5 automaticamente
 @aiox-master *full-sdc-wave fase-5-seguranca
@@ -443,8 +458,8 @@ cd mobile && npm install
 # 3. Backend bundle instalado
 cd backend/api_divida_zero && bundle install
 
-# 4. Verificar se Redis disponível (para 5.3 blacklist)
-# Se não: story 5.3 usará memory store em dev
+# 4. Redis não é necessário: a blacklist da story 5.3 ficou em banco, no model
+#    ActiveRecord `TokenBlacklist`. O Gemfile não tem a gem e não há inicializador de Redis.
 ```
 
 ---

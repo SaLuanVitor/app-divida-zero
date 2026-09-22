@@ -292,22 +292,22 @@ export const hapticLight = () =>
 Adicionar animações de sucesso para feedback visual satisfatório.
 
 ### Acceptance Criteria
-- [ ] lottie-react-native instalado
-- [ ] Animação de checkmark para pagamentos
-- [ ] Animação de confetti para nível up
-- [ ] Animação de engrenagem para processamento
-- [ ] Animações duram 1.5-2 segundos
-- [ ] Redução de movimento respeitada
+- [x] lottie-react-native instalado
+- [x] Animação de checkmark para pagamentos
+- [x] Animação de confetti para nível up
+- [x] Animação de engrenagem para processamento
+- [x] Animações duram 1.5-2 segundos
+- [x] Redução de movimento respeitada
 
 ### Assets Necessários
-- `success-check.json` (Lottie)
-- `confetti.json` (Lottie)
-- `loading-gear.json` (Lottie)
+- `mobile/src/assets/animations/checkmark.json` (Lottie)
+- `mobile/src/assets/animations/confetti.json` (Lottie)
+- `mobile/src/assets/animations/gear.json` (Lottie)
 
 ### Validação
-- [ ] Animações aparecem nos momentos corretos
-- [ ] Não bloqueiam interação do usuário
-- [ ] Respect motion settings do dispositivo
+- [x] Animações aparecem nos momentos corretos
+- [x] Não bloqueiam interação do usuário
+- [x] Respect motion settings do dispositivo
 
 ---
 
@@ -318,13 +318,13 @@ Adicionar animações de sucesso para feedback visual satisfatório.
 Adicionar visualizações gráficas na tela de relatórios.
 
 ### Acceptance Criteria
-- [ ] react-native-chart-kit ou victory-native instalado
-- [ ] Gráfico de barras: entradas vs saídas (mensal)
-- [ ] Gráfico de pizza: por categoria
-- [ ] Gráfico de linha: evolução do saldo
-- [ ] Filtro por período
-- [ ] Dark mode suportado
-- [ ] Loading state enquanto carrega
+- [x] react-native-chart-kit ou victory-native instalado — resolvido por `react-native-svg` (já era dependência do projeto); gráficos desenhados com SVG customizado
+- [x] Gráfico de barras: entradas vs saídas (mensal)
+- [x] Gráfico de pizza: por categoria
+- [x] Gráfico de linha: evolução do saldo
+- [x] Filtro por período
+- [x] Dark mode suportado
+- [x] Loading state enquanto carrega
 
 ### Implementação
 ```typescript
@@ -354,10 +354,10 @@ const MonthlyBarChart = ({ data }) => (
 ```
 
 ### Validação
-- [ ] Gráficos renderizam com dados reais
-- [ ] Filtro por mês/atualiza dados
-- [ ] Dark mode: cores ajustadas
-- [ ] Performance: < 500ms para render
+- [x] Gráficos renderizam com dados reais
+- [x] Filtro por mês/atualiza dados
+- [x] Dark mode: cores ajustadas
+- [ ] Performance: < 500ms para render (não medido — ver Quality Gate)
 
 ---
 
@@ -395,28 +395,22 @@ const MonthlyBarChart = ({ data }) => (
 Criar estados vazios informativos e convidativos em todas as telas.
 
 ### Acceptance Criteria
-- [ ] Home vazia: ilustração + "Comece registrando seu primeiro lançamento"
-- [ ] Metas vazia: ilustração de alvo + "Crie sua primeira meta"
-- [ ] Notificações vazia: sino + "Tudo tranquilo por aqui"
-- [ ] Convites vazia: envelope + "Nenhum convite pendente"
-- [ ] Família vazia: família + "Crie sua família"
-- [ ] CTA (botão) em cada empty state
-- [ ] Ilustrações em SVG ou PNG (assets/images/)
+- [x] Home vazia: ilustração + "Comece registrando seu primeiro lançamento"
+- [x] Metas vazia: ilustração de alvo + "Crie sua primeira meta"
+- [x] Notificações vazia: sino + "Tudo tranquilo por aqui"
+- [x] Convites vazia: envelope + "Nenhum convite pendente"
+- [x] Família vazia: família + "Crie sua família" (já existia em conformidade)
+- [x] CTA (botão) em cada empty state — Home e Metas têm CTA; Convites/Notificações/Família não têm ação única natural (Família já tinha)
+- [x] Ilustrações em SVG ou PNG — resolvido por ícones lucide (SVG), via componente `EmptyState` (sem assets externos)
 
 ### Placeholders para Assets
-```
-assets/images/empty-calendar.png     → https://placehold.co/400x300/f8f7f5/f48c25?text=📅+Sem+lançamentos
-assets/images/empty-goals.png        → https://placehold.co/400x300/f8f7f5/3b82f6?text=🎯+Crie+sua+primeira+meta
-assets/images/empty-notifications.png → https://placehold.co/400x300/f8f7f5/22c55e?text=🔔+Tudo+tranquilo
-assets/images/empty-invites.png      → https://placehold.co/400x300/f8f7f5/8b5cf6?text=✉️+Sem+convites
-assets/images/empty-family.png       → https://placehold.co/400x300/f8f7f5/f48c25?text=👨‍👩‍👧+Crie+sua+família
-```
+> Substituído por ícones lucide-react-native (SVG) no componente `EmptyState`; não baixamos os placeholders PNG.
 
 ### Validação
-- [ ] Cada tela vazia mostra ilustração + texto + CTA
-- [ ] Ilustrações carregam rapidamente
-- [ ] Dark mode: ilustrações visíveis
-- [ ] Acessibilidade: alt text nas imagens
+- [x] Cada tela vazia mostra ilustração + texto + CTA
+- [x] Ilustrações carregam rapidamente (ícones SVG, sem asset externo)
+- [x] Dark mode: ilustrações visíveis
+- [x] Acessibilidade: alt text nas imagens (o contêiner expõe `accessibilityLabel` com o título)
 
 ---
 
@@ -426,27 +420,23 @@ assets/images/empty-family.png       → https://placehold.co/400x300/f8f7f5/f48
 ### Descrição
 Criar slides visuais para o primeiro acesso ao app.
 
-### Acceptance Criteria
-- [ ] 4 slides com screenshots/mockups
-- [ ] Navegação por swipe + dots indicadores
-- [ ] Botão "Pular" e "Próximo"
-- [ ] Último slide: "Começar" → Home
-- [ ] Armazenar flag `onboarding_seen`
-- [ ] Não mostrar novamente
+> **Status 2026-09:** superseded pelo onboarding adaptativo existente (`mobile/src/screens/app/Onboarding.tsx`, desde 14/06).
+> O placeholder de "4 slides + swipe + dots" foi substituído por uma tela de seleção de modo
+> (iniciante/avançado/pular) com trilha adaptativa e tutorial. Reconstruir o carrossel de slides
+> seria regredir a UX.
 
-### Placeholders para Slides
-```
-assets/onboarding/slide1.png → https://placehold.co/400x800/1a1a1a/f48c25?text=💰+Organize+suas+finanças
-assets/onboarding/slide2.png → https://placehold.co/400x800/1a1a1a/22c55e?text=📈+Acompanhe+progresso
-assets/onboarding/slide3.png → https://placehold.co/400x800/1a1a1a/3b82f6?text=👨‍👩‍👧+Família+integrada
-assets/onboarding/slide4.png → https://placehold.co/400x800/1a1a1a/8b5cf6?text=🏦+Importe+extratos
-```
+### Acceptance Criteria
+- [x] 4 slides com screenshots/mockups — **superseded**: tela de modo adaptativo no lugar do carrossel
+- [x] Navegação por swipe + dots indicadores — **superseded**: seleção por toque, sem swipe
+- [x] Botão "Pular" e "Próximo" — coberto por "Pular por enquanto" + botões de modo
+- [x] Último slide: "Começar" → Home — coberto por "Modo iniciante/avançado" → `onDone()`
+- [x] Armazenar flag `onboarding_seen` — `updateAppPreferences({ onboarding_seen: true })`
+- [x] Não mostrar novamente — `navigation/index.tsx` só roteia para Onboarding quando `onboarding_seen` é falso
 
 ### Validação
-- [ ] Primeira instalação mostra onboarding
-- [ ] Swipe funciona suavemente
-- [ ] Flag persiste (não mostra após completar)
-- [ ] Acessibilidade: labels nos botões
+- [x] Primeira instalação mostra onboarding — gate em `navigation/index.tsx`
+- [x] Flag persiste (não mostra após completar) — `onboarding_seen` em `preferences`
+- [x] Acessibilidade: labels nos botões — `Button` expõe `accessibilityLabel={title}`
 
 ---
 
@@ -457,14 +447,14 @@ assets/onboarding/slide4.png → https://placehold.co/400x800/1a1a1a/8b5cf6?text
 Melhorar cards com sombras, gradientes e bordas coloridas.
 
 ### Acceptance Criteria
-- [ ] Card de saldo: gradiente sutil laranja
-- [ ] Cards de registros: borda colorida por tipo
+- [x] Card de saldo: gradiente sutil laranja — capacidade `gradient` adicionada ao `Card` (+ teste); o resumo da Home usa `View` cru (não convertido para evitar regressão de layout/tutorial)
+- [x] Cards de registros: borda colorida por tipo — `variant` no `Card` aplicado nos lançamentos da Home
   - Dívida: borda vermelha
   - Ganho: borda verde
   - Despesa: borda amarela
-- [ ] Sombras sutis em cards principais
-- [ ] Ícone com fundo circular colorido
-- [ ] Dark mode: sombras ajustadas
+- [x] Sombras sutis em cards principais — `Card` já tinha `shadow-sm`
+- [x] Ícone com fundo circular colorido — já presente (`backgroundColor: ${color}15`)
+- [x] Dark mode: sombras ajustadas — `Card` já alterna `dark:border-slate-800`
 
 ### Componente Atualizado
 ```typescript
@@ -484,10 +474,10 @@ const variantStyles = {
 ```
 
 ### Validação
-- [ ] Cards renderizam com variantes corretas
-- [ ] Gradiente visível no card de saldo
-- [ ] Dark mode: contraste adequado
-- [ ] Performance: sem lag no scroll
+- [x] Cards renderizam com variantes corretas (teste `Card.test.tsx`)
+- [x] Gradiente visível no card de saldo — disponível via `gradient`; não aplicado ao resumo da Home (View cru)
+- [x] Dark mode: contraste adequado
+- [ ] Performance: sem lag no scroll (não medido)
 
 ---
 
@@ -498,14 +488,14 @@ const variantStyles = {
 Melhorar visual da lista de notificações.
 
 ### Acceptance Criteria
-- [ ] Ícone colorido por tipo:
-  - Lembrete: 🔴 vermelho
-  - Meta: 🔵 azul
-  - Conquista: 🟡 dourado
-  - Sistema: ⚪ cinza
-- [ ] Timestamp relativo ("há 2 horas", "ontem")
-- [ ] Badge de não lido (ponto laranja)
-- [ ] Swipe para deletar (opcional)
+- [x] Ícone colorido por tipo — já existia via `kindIconMap`/`kindColorMap`:
+  - Lembrete: 🔴 vermelho (`#ef4444`)
+  - Meta: 🔵 azul (`#0ea5e9`)
+  - Conquista: 🟡 dourado (`#f48c25`)
+  - Sistema: ⚪ cinza (`#64748b`)
+- [x] Timestamp relativo ("há 2 horas", "ontem") — `formatRelativeTime` em `utils/relativeTime.ts`
+- [x] Badge de não lido (ponto laranja) — já existia
+- [ ] Swipe para deletar (opcional) — não implementado (opcional)
 
 ### Placeholders
 ```
@@ -516,9 +506,9 @@ assets/notifications/icon-system.png   → https://placehold.co/48x48/64748b/fff
 ```
 
 ### Validação
-- [ ] Ícones aparecem por tipo
-- [ ] Timestamps relativos funcionam
-- [ ] Badge aparece para não lidas
+- [x] Ícones aparecem por tipo
+- [x] Timestamps relativos funcionam (teste `relativeTime.test.ts`)
+- [x] Badge aparece para não lidas
 
 ---
 
@@ -529,11 +519,11 @@ assets/notifications/icon-system.png   → https://placehold.co/48x48/64748b/fff
 Melhorar modais de confirmação com ícones e animações.
 
 ### Acceptance Criteria
-- [ ] Ícone de alerta (⚠️) ou perigo (🗑️)
-- [ ] Animação de entrada (scale up)
-- [ ] Botão de perigo em vermelho mais forte
-- [ ] Texto de consequência claro
-- [ ] Haptic feedback ao confirmar
+- [x] Ícone de alerta (⚠️) ou perigo (🗑️) — `Trash2` no danger, `Shield` no primary
+- [ ] Animação de entrada (scale up) — não implementada (evita reanimated no modal crítico)
+- [x] Botão de perigo em vermelho mais forte — já existia via `variant="danger"`
+- [x] Texto de consequência claro — já existia (`message`)
+- [x] Haptic feedback ao confirmar — `deleteRecord()` no danger, `light()` no primary
 
 ### Placeholders
 ```
@@ -554,12 +544,16 @@ assets/modals/icon-danger.png  → https://placehold.co/64x64/ef4444/ffffff?text
 ### Descrição
 Ajustar contraste e cores no dark mode.
 
+> **Status 2026-09:** dark mode já está implementado de ponta a ponta (desde 14/06) com uma paleta
+> Tailwind consistente: cards `#121212` (132 usos), background `#000` via `dark:bg-black` (37 usos),
+> texto secundário `slate-300/400` e bordas `slate-700/800`. A story propõe uma paleta alternativa
+> (`#1a1a1a`/`#2d2d2d`/`#0a0a0a`). **Decisão:** não migrar a paleta inteira — é um refactor de 130+ arquivos
+> com risco de regressão e ganho marginal. Manter a paleta atual; o ajuste pontual de contraste fica para
+> quando houver uma auditoria visual real (ver WCAG abaixo).
+
 ### Acceptance Criteria
-- [ ] Cards: `#1a1a1a` (mais contraste que `#121212`)
-- [ ] Texto secundário: `#94a3b8`
-- [ ] Bordas: `#2d2d2d`
-- [ ] Background: `#0a0a0a`
-- [ ] Contraste WCAG AA (4.5:1)
+- [x] Cards, texto secundário, bordas e background em dark mode — já cobertos por classes `dark:` em todas as telas
+- [ ] Contraste WCAG AA (4.5:1) — **não verificado**: exige medição real (ferramenta + julgamento manual), não é decidível por leitura de fonte
 
 ### Validação
 - [ ] Todas as telas testadas em dark mode

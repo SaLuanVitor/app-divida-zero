@@ -109,7 +109,7 @@ class NotificationAlertsService
     end
 
     def build_near_due_content(records, count)
-      return ["Nenhuma conta perto do vencimento", ""] if count == 0
+      return [ "Nenhuma conta perto do vencimento", "" ] if count == 0
 
       if count == 1
         record = records.first
@@ -124,7 +124,7 @@ class NotificationAlertsService
         message = "Próximos vencimentos: #{bills}"
       end
 
-      [title, message]
+      [ title, message ]
     end
 
     def build_weekly_window_key(now)
@@ -149,8 +149,9 @@ class NotificationAlertsService
       )
 
       PushDispatchJob.perform_later(alert.id)
-      EmailDispatchJob.perform_later(alert.id)
+      EmailDispatchJob.perform_later(alert.id) if EmailChannel.configured?
       WhatsappDispatchJob.perform_later(alert.id) if WhatsappProvider.configured?
+      TelegramDispatchJob.perform_later(alert.id) if TelegramProvider.configured?
       alert
     end
 
@@ -159,4 +160,3 @@ class NotificationAlertsService
     end
   end
 end
-

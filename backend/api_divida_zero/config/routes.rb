@@ -1,4 +1,4 @@
-﻿Rails.application.routes.draw do
+Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   namespace :api do
@@ -16,6 +16,10 @@
       patch "auth/phone", to: "auth#send_phone_code"
       post "auth/phone/verify", to: "auth#verify_phone"
       patch "auth/change_password", to: "auth#change_password"
+      patch "auth/telegram_notifications", to: "auth#update_telegram_notifications"
+      get "auth/telegram/link_url", to: "auth#telegram_link_url"
+      post "auth/telegram/link", to: "auth#link_telegram"
+      delete "auth/telegram/link", to: "auth#unlink_telegram"
 
       resource :household, only: %i[show create update destroy], controller: "households" do
         resources :invitations, only: %i[index create destroy], controller: "household_invitations"
@@ -57,7 +61,7 @@
       get "daily_message/today", to: "daily_messages#today"
       post "daily_message/dispatch", to: "daily_messages#dispatch_daily"
 
-      resources :financial_records, only: [:index, :create, :destroy] do
+      resources :financial_records, only: [ :index, :create, :destroy ] do
         member do
           patch :pay
           patch :status, action: :update_status
@@ -65,6 +69,7 @@
       end
       get "whatsapp/webhook", to: "whatsapp#verify"
       post "whatsapp/webhook", to: "whatsapp#webhook"
+      post "telegram/webhook", to: "telegram_webhooks#webhook"
 
       namespace :webhooks do
         post "pluggy", to: "pluggy_webhooks#receive"
@@ -91,10 +96,9 @@
 
       resources :financial_goals, only: [:index, :create, :update, :destroy] do
         resources :contributions,
-                  only: [:index, :create, :destroy],
+                  only: [ :index, :create, :destroy ],
                   controller: "financial_goal_contributions"
       end
     end
   end
 end
-

@@ -1,4 +1,4 @@
-﻿class User < ApplicationRecord
+class User < ApplicationRecord
   ROLES = %w[user admin].freeze
 
   has_secure_password
@@ -41,6 +41,12 @@
     "notify_due_today" => true,
     "notify_due_tomorrow" => true,
     "notify_weekly_summary" => true
+  }.freeze
+
+  TELEGRAM_PREFERENCE_DEFAULTS = {
+    "telegram_notifications_enabled" => false,
+    "telegram_due_reminders" => true,
+    "telegram_weekly_summary" => true
   }.freeze
   has_many :app_ratings, dependent: :destroy
   has_many :ai_interactions, dependent: :destroy
@@ -136,6 +142,34 @@
     whatsapp_messages.where(created_at: Date.current.all_day).count
   rescue StandardError
     0
+  end
+
+  def telegram_preferences_with_defaults
+    TELEGRAM_PREFERENCE_DEFAULTS.merge(telegram_notification_preferences.stringify_keys)
+  end
+
+  def update_telegram_preferences!(raw_preferences)
+    return if raw_preferences.blank?
+
+    allowed = TELEGRAM_PREFERENCE_DEFAULTS.keys
+    incoming = raw_preferences.to_h.stringify_keys.slice(*allowed)
+    return if incoming.empty?
+
+    update!(telegram_notification_preferences: telegram_preferences_with_defaults.merge(incoming))
+  end
+
+  def telegram_enabled_for_alert?(alert_type)
+    prefs = telegram_preferences_with_defaults
+    return false unless ActiveModel::Type::Boolean.new.cast(prefs["telegram_notifications_enabled"])
+
+    case alert_type.to_s
+    when "due_today", "near_due", "overdue"
+      ActiveModel::Type::Boolean.new.cast(prefs["telegram_due_reminders"])
+    when "weekly_summary"
+      ActiveModel::Type::Boolean.new.cast(prefs["telegram_weekly_summary"])
+    else
+      true
+    end
   end
 
   def email_enabled_for_alert?(alert_type)

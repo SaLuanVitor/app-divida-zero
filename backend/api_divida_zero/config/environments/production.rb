@@ -87,6 +87,9 @@ Rails.application.configure do
   config.hosts = [
     "localhost",
     /.*\.trycloudflare\.com/,
+    "api.dividazeropa.sbs",
+    "dividazeropa.sbs",
+    /.*\.dividazeropa\.sbs/,
   ]
 
   # Skip DNS rebinding protection for the default health check endpoint.

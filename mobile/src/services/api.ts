@@ -20,7 +20,7 @@ const getLocalDateHeader = () => {
 
 const getDefaultDevApiBaseUrl = (platform: string) =>
     platform === 'android' ? 'http://10.0.2.2:3000/api/v1' : 'http://localhost:3000/api/v1';
-const defaultReleaseApiBaseUrl = 'https://app-divida-zero-production-5333.up.railway.app/api/v1';
+const defaultReleaseApiBaseUrl = 'https://api.dividazeropa.sbs/api/v1';
 
 const normalizeAndroidLocalhost = (url: string, platform: string) =>
     platform === 'android' && url.includes('localhost') ? url.replace('localhost', '10.0.2.2') : url;
@@ -37,7 +37,7 @@ export const resolveApiBaseUrl = ({
     const envUrl = envApiBaseUrl?.trim();
 
     if (!isDev) {
-        // Release builds must always target Railway.
+        // Release builds always target the fixed production domain (self-hosted + Cloudflare tunnel).
         return defaultReleaseApiBaseUrl;
     }
 

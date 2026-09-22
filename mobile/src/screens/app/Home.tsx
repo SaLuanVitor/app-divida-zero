@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
 import { View, TouchableOpacity, Pressable, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, ScrollView, useWindowDimensions, Modal, FlatList, LayoutChangeEvent } from 'react-native';
@@ -17,6 +17,8 @@ import {
     Target,
     Shield,
     Crown,
+    CalendarDays,
+    Send,
 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +26,7 @@ import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import ProfileAvatar from '../../components/ProfileAvatar';
+import EmptyState from '../../components/EmptyState';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import ScreenHelpButton from '../../components/ScreenHelpButton';
 import AppOverlay from '../../components/AppOverlay';
@@ -46,9 +49,12 @@ import { useTutorial } from '../../context/TutorialContext';
 import { listFinancialGoals } from '../../services/financialGoals';
 import { FinancialGoalDto } from '../../types/financialGoal';
 import { runWhenIdle } from '../../utils/idle';
-import { getAppPreferences } from '../../services/preferences';
+import { getAppPreferences, updateAppPreferences } from '../../services/preferences';
+import { getTelegramStatus } from '../../services/telegram';
 import { sendXpAndBadgeNotification } from '../../services/notifications';
 import { useHaptics } from '../../hooks/useHaptics';
+import SuccessAnimation from '../../components/SuccessAnimation';
+import { useSuccessAnimation } from '../../hooks/useSuccessAnimation';
 import { trackAnalyticsEventDeferred } from '../../services/analytics';
 import { markPerf, measurePerf } from '../../services/perf';
 import {
@@ -75,6 +81,7 @@ type CalendarEntry = {
     reminder: string;
     icon: React.ComponentType<{ size?: number; color?: string }>;
     color: string;
+    variant?: 'income' | 'expense' | 'debt';
     userName?: string;
 };
 
@@ -201,6 +208,7 @@ const toCalendarEntry = (record: FinancialRecordDto): CalendarEntry => {
 
     const icon = isDebt ? Landmark : isIncome ? CircleDollarSign : Wallet;
     const color = isDebt ? '#ef4444' : isIncome ? '#16a34a' : '#f59e0b';
+    const variant = isDebt ? 'debt' : isIncome ? 'income' : 'expense';
 
     return {
         id: record.id,
@@ -213,6 +221,7 @@ const toCalendarEntry = (record: FinancialRecordDto): CalendarEntry => {
         reminder: recurrenceLabel(record),
         icon,
         color,
+        variant,
         userName: record.user_name,
     };
 };
@@ -225,6 +234,7 @@ const calculateSettledBalance = (items: FinancialRecordDto[]) =>
     }, 0);
 
 const Home = () => {
+    const successAnim = useSuccessAnimation({ withHaptics: false });
     const { user } = useAuth();
     const navigation = useNavigation<any>();
     const { openOverlay, closeOverlay, isOverlayOpen } = useOverlay();
@@ -268,6 +278,7 @@ const Home = () => {
     const [notificationsPopupLoading, setNotificationsPopupLoading] = useState(false);
     const [notificationItems, setNotificationItems] = useState<NotificationHistoryItem[]>([]);
     const [onboardingPrimaryGoal, setOnboardingPrimaryGoal] = useState<'organize_month' | 'pay_off_debt' | 'create_goal' | null>(null);
+    const [showTelegramPrompt, setShowTelegramPrompt] = useState(false);
     const dailyMessageSurfaceEnabled = isAiSurfaceEnabled('dailyMessage');
     const nextActionSurfaceEnabled = isAiSurfaceEnabled('nextAction');
     const [dailyMessage, setDailyMessage] = useState(() => getLocalDailyMessage());
@@ -574,6 +585,27 @@ const Home = () => {
         }, [])
     );
 
+    useFocusEffect(
+        useCallback(() => {
+            const cancel = runWhenIdle(async () => {
+                try {
+                    const prefs = await getAppPreferences();
+                    if (prefs.telegram_prompt_seen) return;
+                    const status = await getTelegramStatus();
+                    setShowTelegramPrompt(!status.linked);
+                } catch {
+                    setShowTelegramPrompt(false);
+                }
+            });
+            return cancel;
+        }, [])
+    );
+
+    const dismissTelegramPrompt = async () => {
+        setShowTelegramPrompt(false);
+        await updateAppPreferences({ telegram_prompt_seen: true });
+    };
+
     const homeHelpBullets = useMemo(() => {
         const focusText =
             onboardingPrimaryGoal === 'pay_off_debt'
@@ -832,6 +864,10 @@ const Home = () => {
             leveledUp: xpFeedback.leveled_up,
             levelIcon: summary.level_icon,
         });
+        // Show confetti animation on level up
+        if (xpFeedback.leveled_up) {
+            successAnim.showConfetti();
+        }
     };
 
     const maybeNotifyXp = async (xpFeedback: XpFeedbackDto | null | undefined, fallbackTitle: string) => {
@@ -897,6 +933,9 @@ const Home = () => {
         } else {
             pay(); // expense/debt = pay
         }
+
+        // Show checkmark animation for successful payment
+        successAnim.showCheckmark();
 
         await Promise.all([
             loadMonthlyRecords({ force: true }),
@@ -988,6 +1027,12 @@ const Home = () => {
     const handleConfirm = async () => {
         if (!confirmState) return;
 
+        if (confirmState.variant === 'danger') {
+            deleteRecord();
+        } else {
+            light();
+        }
+
         setActionLoading(true);
         try {
             await confirmState.onConfirm();
@@ -1078,6 +1123,48 @@ const Home = () => {
                             </TouchableOpacity>
                         </View>
                     </View>
+
+                    {showTelegramPrompt ? (
+                        <View className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-900 bg-sky-50 dark:bg-sky-950/40 p-3">
+                            <View className="flex-row items-start">
+                                <View className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900 items-center justify-center">
+                                    <Send size={16} color="#0ea5e9" />
+                                </View>
+                                <View className="flex-1 ml-2 pr-1">
+                                    <AppText className="text-slate-900 dark:text-slate-100 text-sm font-bold" numberOfLines={textClampLines('title')} ellipsizeMode="tail">
+                                        Receber avisos no Telegram?
+                                    </AppText>
+                                    <AppText className="text-slate-600 dark:text-slate-300 text-xs mt-1" numberOfLines={textClampLines('list')} ellipsizeMode="tail">
+                                        Vincule seu Telegram para receber notificações exclusivas e melhorar sua experiência.
+                                    </AppText>
+                                </View>
+                                <TouchableOpacity onPress={dismissTelegramPrompt} className="p-1 -mr-1" accessibilityRole="button" accessibilityLabel="Fechar aviso do Telegram">
+                                    <X size={16} color={darkMode ? '#cbd5e1' : '#64748b'} />
+                                </TouchableOpacity>
+                            </View>
+                            <View className="flex-row gap-2 mt-3">
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        void dismissTelegramPrompt();
+                                        navigation.navigate('Telegram');
+                                    }}
+                                    className="flex-1 bg-sky-500 py-2.5 rounded-xl items-center"
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Vincular Telegram"
+                                >
+                                    <AppText className="text-white font-bold text-sm">Vincular Telegram</AppText>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={dismissTelegramPrompt}
+                                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 items-center justify-center"
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Agora não"
+                                >
+                                    <AppText className="text-slate-600 dark:text-slate-200 font-bold text-sm">Agora não</AppText>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ) : null}
 
                     <TutorialTarget targetId="home-summary-card">
                         <View className="flex-row gap-3">
@@ -1273,15 +1360,28 @@ const Home = () => {
                                 onChangeText={setSearchQuery}
                             />
                             {!loading && filteredMonthItems.length === 0 ? (
-                                <Card className="mb-3" noPadding>
-                                    <View className="p-4">
-                                        <AppText className="text-slate-600 dark:text-slate-200 text-sm">Sem lançamentos para os filtros e busca informados neste mês.</AppText>
-                                    </View>
-                                </Card>
+                                records.length === 0 ? (
+                                    <Card className="mb-3" noPadding>
+                                        <EmptyState
+                                            icon={CalendarDays}
+                                            iconColor="#f48c25"
+                                            title="Comece registrando seu primeiro lançamento"
+                                            message="Registre dívidas, ganhos e despesas para acompanhar suas finanças."
+                                            actionLabel="Registrar lançamento"
+                                            onAction={() => navigation.navigate('Lancamentos')}
+                                        />
+                                    </Card>
+                                ) : (
+                                    <Card className="mb-3" noPadding>
+                                        <View className="p-4">
+                                            <AppText className="text-slate-600 dark:text-slate-200 text-sm">Sem lançamentos para os filtros e busca informados neste mês.</AppText>
+                                        </View>
+                                    </Card>
+                                )
                             ) : null}
 
                             {monthItemsToRender.map((item, index) => (
-                                <Card key={String(item.id) + index} className="mb-3" noPadding>
+                                <Card key={String(item.id) + index} className="mb-3" noPadding variant={item.variant}>
                                     <View className="p-4">
                                         <View className="flex-row items-start justify-between gap-3">
                                             <View className="flex-row items-center flex-1 min-w-0">
@@ -1524,6 +1624,13 @@ const Home = () => {
             <AppOverlay visible={showConfirm} backdropClassName="bg-black/30" onBackdropPress={() => !actionLoading && setConfirmState(null)}>
                 {showConfirm ? (
                     <View className="absolute left-4 right-4 top-[35%] bg-white dark:bg-[#121212] rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm dark:shadow-none">
+                        <View className={`w-12 h-12 rounded-full items-center justify-center mb-3 ${confirmState?.variant === 'danger' ? 'bg-red-50 dark:bg-red-950/40' : 'bg-primary/10'}`}>
+                            {confirmState?.variant === 'danger' ? (
+                                <Trash2 size={24} color="#ef4444" />
+                            ) : (
+                                <Shield size={24} color="#f48c25" />
+                            )}
+                        </View>
                         <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold">{confirmState?.title}</AppText>
                         <AppText className="text-slate-600 dark:text-slate-200 text-sm mt-2 mb-4">{confirmState?.message}</AppText>
 
@@ -1672,6 +1779,19 @@ const Home = () => {
                 message={feedback?.message}
                 position="top"
                 onRequestClose={() => setFeedback(null)}
+            />
+
+            <SuccessAnimation
+                type={successAnim.animationType}
+                visible={successAnim.isVisible}
+                size={160}
+                onAnimationFinish={successAnim.hide}
+                style={{
+                    position: 'absolute',
+                    top: '35%',
+                    alignSelf: 'center',
+                    zIndex: 9999,
+                }}
             />
 
             <AppToast

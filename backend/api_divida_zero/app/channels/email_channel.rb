@@ -22,5 +22,11 @@ class EmailChannel < ApplicationChannel
     def valid_recipient?(user, alert_type = "due_today")
       user.email_enabled_for_alert?(alert_type)
     end
+
+    # E-mail transacional esta fora de escopo por ora (ADR-0003): sem SMTP
+    # proprio, nao ha entrega real. So envia quando houver senha SMTP.
+    def configured?
+      ENV["SMTP_PASSWORD"].present?
+    end
   end
 end

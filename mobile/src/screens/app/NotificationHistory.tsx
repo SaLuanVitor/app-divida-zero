@@ -14,12 +14,14 @@ import {
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import AppText from '../../components/AppText';
+import EmptyState from '../../components/EmptyState';
 import { runWhenIdle } from '../../utils/idle';
 import {
   listNotificationHistory,
   markNotificationHistorySeen,
 } from '../../services/notificationCenter';
 import { NotificationHistoryItem } from '../../types/notificationCenter';
+import { formatRelativeTime } from '../../utils/relativeTime';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useBottomInset } from '../../context/BottomInsetContext';
 import useBackToProfile from '../../hooks/useBackToProfile';
@@ -179,18 +181,19 @@ const NotificationHistory = () => {
 
           {!loading && visibleItems.length === 0 ? (
             <Card noPadding>
-              <View className="p-4">
-                <AppText className="text-slate-600 dark:text-slate-200 text-sm">
-                  Não existem notificações.
-                </AppText>
-              </View>
+              <EmptyState
+                icon={Bell}
+                iconColor="#22c55e"
+                title="Tudo tranquilo por aqui"
+                message="Você ainda não tem notificações. Novos alertas aparecem aqui."
+              />
             </Card>
           ) : null}
 
           {visibleItems.map((item) => {
             const Icon = kindIconMap[item.kind] || Bell;
             const iconColor = kindColorMap[item.kind] || '#64748b';
-            const createdLabel = new Date(item.created_at).toLocaleString('pt-BR');
+            const createdLabel = formatRelativeTime(item.created_at);
 
             return (
               <Card key={item.id} className="mb-3" noPadding>

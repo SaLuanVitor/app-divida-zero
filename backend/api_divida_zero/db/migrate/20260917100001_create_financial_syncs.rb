@@ -14,7 +14,6 @@ class CreateFinancialSyncs < ActiveRecord::Migration[8.1]
       t.text :error_message
       t.timestamps
     end
-    add_index :financial_syncs, :financial_connection_id
     add_index :financial_syncs, :status
     add_index :financial_syncs, :started_at
   end

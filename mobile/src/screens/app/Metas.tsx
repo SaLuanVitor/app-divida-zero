@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppText from '../../components/AppText';
 import AppTextInput from '../../components/AppTextInput';
 import { View, TouchableOpacity, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
@@ -7,12 +7,14 @@ import { CalendarDays, PlusCircle, Target, PiggyBank, Landmark, Sparkles, Trash2
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
+import EmptyState from '../../components/EmptyState';
 import AppOverlay from '../../components/AppOverlay';
 import AppToast from '../../components/AppToast';
 import TutorialTarget from '../../components/tutorial/TutorialTarget';
 import ScreenHelpButton from '../../components/ScreenHelpButton';
 import { useBottomInset } from '../../context/BottomInsetContext';
 import { useHaptics } from '../../hooks/useHaptics';
+import SuccessAnimation from '../../components/SuccessAnimation';
 import {
     createFinancialGoalContribution,
     deleteFinancialGoal,
@@ -71,6 +73,7 @@ const Metas = () => {
     const [contributionAmountDigits, setContributionAmountDigits] = useState('');
     const [contributionNotes, setContributionNotes] = useState('');
     const [contributionLoading, setContributionLoading] = useState(false);
+    const [showProcessingAnimation, setShowProcessingAnimation] = useState(false);
     const [contributionsByGoal, setContributionsByGoal] = useState<Record<number, FinancialGoalContributionDto[]>>({});
     const [fundingSnapshot, setFundingSnapshot] = useState({
         settled_global_balance: '0',
@@ -253,6 +256,7 @@ const Metas = () => {
         }
 
         setContributionLoading(true);
+        setShowProcessingAnimation(true);
         try {
             const result = await createFinancialGoalContribution(goalPendingContribution.id, {
                 kind: contributionKind,
@@ -288,6 +292,7 @@ const Metas = () => {
             pushFeedback('error', 'Falha no aporte', message);
         } finally {
             setContributionLoading(false);
+            setShowProcessingAnimation(false);
         }
     };
 
@@ -516,13 +521,14 @@ const Metas = () => {
 
                 {!loading && goals.length === 0 ? (
                     <Card noPadding>
-                        <View className="p-5">
-                            <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base mb-1">Nenhuma meta cadastrada</AppText>
-                            <AppText className="text-slate-500 dark:text-slate-200 text-sm mb-4">
-                                Crie sua primeira meta e gerencie o saldo dela com aportes manuais.
-                            </AppText>
-                            <Button title="Criar primeira meta" onPress={openCreateScreen} />
-                        </View>
+                        <EmptyState
+                            icon={Target}
+                            iconColor="#3b82f6"
+                            title="Nenhuma meta cadastrada"
+                            message="Crie sua primeira meta e gerencie o saldo dela com aportes manuais."
+                            actionLabel="Criar primeira meta"
+                            onAction={openCreateScreen}
+                        />
                     </Card>
                 ) : null}
 
@@ -554,6 +560,19 @@ const Metas = () => {
                     </View>
                 ) : null}
             </Layout>
+
+            <SuccessAnimation
+                type="gear"
+                visible={showProcessingAnimation}
+                size={100}
+                loop
+                style={{
+                    position: 'absolute',
+                    top: '30%',
+                    alignSelf: 'center',
+                    zIndex: 9999,
+                }}
+            />
 
             <AppToast
                 visible={!!feedback}

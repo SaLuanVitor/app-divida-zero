@@ -46,7 +46,7 @@ services:
       - bundle_cache:/usr/local/bundle
     command: >
       bash -lc "rm -f /rails/tmp/pids/server.pid &&
-      bundle exec rails db:create db:schema:load &&
+      bundle exec rails db:prepare &&
       bundle exec rails app:bootstrap_admin &&
       bundle exec rails server -b 0.0.0.0 -p 3000"
 
@@ -79,7 +79,7 @@ services:
       - bundle_cache:/usr/local/bundle
     command: >
       bash -lc "rm -f /rails/tmp/pids/server.pid &&
-      bundle exec rails db:create db:schema:load &&
+      bundle exec rails db:prepare &&
       bundle exec rails app:bootstrap_admin &&
       bundle exec rails server -b 0.0.0.0 -p 3000"
 

@@ -115,22 +115,22 @@ describe('resolveApiBaseUrl', () => {
     expect(result).toBe('http://10.0.2.2:3000/api/v1');
   });
 
-  it('always uses Railway in release mode even with local env url', () => {
+  it('always uses fixed tunnel domain in release mode even with local env url', () => {
     const result = resolveApiBaseUrl({
       isDev: false,
       platform: 'android',
       envApiBaseUrl: 'http://10.0.2.2:3000/api/v1',
     });
 
-    expect(result).toBe('https://app-divida-zero-production-5333.up.railway.app/api/v1');
+    expect(result).toBe('https://api.dividazeropa.sbs/api/v1');
   });
 
-  it('uses Railway in release mode without env', () => {
+  it('uses fixed tunnel domain in release mode without env', () => {
     const result = resolveApiBaseUrl({
       isDev: false,
       platform: 'android',
     });
 
-    expect(result).toBe('https://app-divida-zero-production-5333.up.railway.app/api/v1');
+    expect(result).toBe('https://api.dividazeropa.sbs/api/v1');
   });
 });
