@@ -32,10 +32,11 @@ module FinancialProviders
     end
 
     def create_connection(user)
-      response = post('/connect_token', { clientUserId: user.id.to_s })
+      response = post('/connect_token', { options: { clientUserId: user.id.to_s } })
+      access_token = response['accessToken']
       {
-        connect_token: response['connectToken'],
-        connect_url: "#{@connect_url}/?connectToken=#{response['connectToken']}",
+        connect_token: access_token,
+        connect_url: "#{@connect_url}/?connectToken=#{access_token}",
         item_id: response['itemId']
       }
     end
@@ -66,7 +67,7 @@ module FinancialProviders
     end
 
     def institutions
-      response = get('/institutions')
+      response = get('/connectors')
       response['results'] || []
     end
 
@@ -82,7 +83,7 @@ module FinancialProviders
     end
 
     def ping
-      response = get('/institutions?pageSize=1')
+      response = get('/connectors?pageSize=1')
       response['results'].any?
     rescue Faraday::Error => e
       Rails.logger.error("Pluggy ping failed: #{e.message}")
@@ -107,7 +108,7 @@ module FinancialProviders
 
     def auth_header
       refresh_token_if_needed
-      { 'Authorization' => "Bearer #{@auth_token}" }
+      { 'X-API-KEY' => @auth_token }
     end
 
     def refresh_token_if_needed
@@ -146,15 +147,15 @@ module FinancialProviders
       when 401
         @auth_token = nil
         @auth_token_expires_at = nil
-        raise PluggyAuthError, 'Invalid or expired credentials', status: 401, body: response.body
+        raise PluggyAuthError.new('Invalid or expired credentials', status: 401, body: response.body)
       when 404
-        raise PluggyNotFoundError, 'Resource not found', status: 404, body: response.body
+        raise PluggyNotFoundError.new('Resource not found', status: 404, body: response.body)
       when 429
-        raise PluggyRateLimitError, 'Rate limited', status: 429, body: response.body
+        raise PluggyRateLimitError.new('Rate limited', status: 429, body: response.body)
       when 500..599
-        raise PluggyServerError, "Server error: #{response.status}", status: response.status, body: response.body
+        raise PluggyServerError.new("Server error: #{response.status}", status: response.status, body: response.body)
       else
-        raise PluggyApiError, "HTTP #{response.status}: #{response.body}", status: response.status, body: response.body
+        raise PluggyApiError.new("HTTP #{response.status}: #{response.body}", status: response.status, body: response.body)
       end
     end
   end

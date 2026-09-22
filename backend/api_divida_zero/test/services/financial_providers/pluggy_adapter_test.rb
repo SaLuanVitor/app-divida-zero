@@ -1,4 +1,12 @@
 require 'test_helper'
+require 'ostruct'
+
+# Faraday falso que falha toda chamada, para os testes não dependerem de rede.
+class StubFaraday
+  def get(*_args, **_kwargs, &_block); raise Faraday::ConnectionFailed, 'no connection'; end
+  def post(*_args, **_kwargs, &_block); raise Faraday::ConnectionFailed, 'no connection'; end
+  def delete(*_args, **_kwargs, &_block); raise Faraday::ConnectionFailed, 'no connection'; end
+end
 
 class FinancialProviders::PluggyAdapterTest < ActiveSupport::TestCase
   setup do
@@ -8,6 +16,7 @@ class FinancialProviders::PluggyAdapterTest < ActiveSupport::TestCase
       base_url: 'https://api.pluggy.ai',
       connect_url: 'https://connect.pluggy.ai'
     )
+    @adapter.instance_variable_set(:@conn, StubFaraday.new)
   end
 
   test 'should initialize with config' do
@@ -88,7 +97,7 @@ class FinancialProviders::PluggyAdapterTest < ActiveSupport::TestCase
 
   test 'handle_response raises PluggyServerError on 500' do
     assert_raises(FinancialProviders::Pluggy::PluggyServerError) do
-      @ adapter.send(:handle_response, OpenStruct.new(status: 500, body: { error: 'server error' }))
+      @adapter.send(:handle_response, OpenStruct.new(status: 500, body: { error: 'server error' }))
     end
   end
 

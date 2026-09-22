@@ -1,5 +1,9 @@
 module FinancialProviders
   class Base
+    def initialize(config = {})
+      @config = config
+    end
+
     def create_connection(user)
       raise NotImplementedError, "#{self.class} must implement #create_connection"
     end

@@ -77,8 +77,6 @@ class FinancialProviderFactoryTest < ActiveSupport::TestCase
   end
 
   test 'registry is thread-safe (Concurrent::Hash)' do
-    assert_kind_of Concurrent::Hash, FinancialProviders::Factory.instance_variable_get(:@providers) ||
-      FinancialProviders::Factory.send(:class_variable_get, :@@providers) ||
-      FinancialProviders::Factory.const_get(:PROVIDERS)
+    assert_kind_of Concurrent::Hash, FinancialProviders::Factory::PROVIDERS
   end
 end
