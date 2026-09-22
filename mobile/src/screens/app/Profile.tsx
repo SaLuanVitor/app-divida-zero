@@ -19,7 +19,6 @@ import {
     Pencil,
     Users,
     UserPlus,
-    MessageCircle,
     Landmark,
     Send,
 } from 'lucide-react-native';
@@ -132,9 +131,8 @@ const Profile = () => {
         { label: 'Configurações do app', icon: Settings, color: '#64748b', route: 'Configuracoes App' },
         { label: 'Notificações', icon: Bell, color: '#f59e0b', route: 'Notificacoes' },
         { label: 'Envio de notificações', icon: Bell, color: '#f97316', route: 'Envio Notificacoes' },
-        { label: 'WhatsApp', icon: MessageCircle, color: '#22c55e', route: 'WhatsApp' },
         { label: 'Telegram', icon: Send, color: '#0ea5e9', route: 'Telegram' },
-        { label: 'Importar extrato', icon: Landmark, color: '#3b82f6', route: 'BankImport' },
+        { label: 'Open Finance', icon: Landmark, color: '#3b82f6', route: 'OpenFinance' },
         { label: 'Avaliar aplicativo', icon: Star, color: '#f48c25', route: 'Avaliacao App' },
         ...(user?.role === 'admin'
             ? [{ label: 'Painel Admin', icon: Shield, color: '#0ea5e9', route: 'Admin Dashboard' }]

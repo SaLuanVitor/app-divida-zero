@@ -6,6 +6,7 @@ import AppText from '../../components/AppText';
 import AppTextInput from '../../components/AppTextInput';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
+import EmptyState from '../../components/EmptyState';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import useBackToProfile from '../../hooks/useBackToProfile';
@@ -108,55 +109,57 @@ const Familia = () => {
         </View>
 
         <View className="p-4">
-          <Card className="p-6 items-center" style={{ gap: 16 }}>
-            <Users size={48} color="#94a3b8" />
-            <AppText className="text-slate-900 dark:text-slate-100 text-lg font-bold text-center">
-              Você não está em nenhuma família
-            </AppText>
-            <AppText className="text-slate-500 text-center">
-              Crie uma família para compartilhar lançamentos e metas com outras pessoas.
-            </AppText>
-            {creating ? (
-              <View className="w-full" style={{ gap: 12 }}>
-                <AppTextInput
-                  value={newName}
-                  onChangeText={setNewName}
-                  placeholder="Nome da família"
-                  placeholderTextColor="#94a3b8"
-                  className="bg-[#f8fafc] dark:bg-[#1f2937] text-slate-900 dark:text-slate-100 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700"
-                  style={{ fontSize: 16, minHeight: largerTouchTargets ? 56 : 48 }}
-                />
-                <TouchableOpacity
-                  onPress={async () => {
-                    if (!newName.trim()) return;
-                    setCreating(true);
-                    try {
-                      const created = await createHousehold(newName.trim());
-                      setHousehold(created);
-                    } catch (error: any) {
-                      RNAlert.alert('Erro', error?.response?.data?.error || 'Não foi possível criar a família.');
-                    } finally {
-                      setCreating(false);
-                    }
-                  }}
-                  disabled={!newName.trim()}
-                  className="bg-[#f48c25] p-3.5 rounded-xl items-center"
-                  style={{ opacity: !newName.trim() ? 0.5 : 1 }}
-                >
-                  <AppText className="text-white font-bold">Criar</AppText>
-                </TouchableOpacity>
-              </View>
-            ) : (
+          {creating ? (
+            <Card className="p-4" style={{ gap: 12 }}>
+              <AppText className="text-slate-900 dark:text-slate-100 font-bold text-base">
+                Nome da família
+              </AppText>
+              <AppTextInput
+                value={newName}
+                onChangeText={setNewName}
+                placeholder="Ex.: Minha família"
+                placeholderTextColor="#94a3b8"
+                className="bg-[#f8fafc] dark:bg-[#1f2937] text-slate-900 dark:text-slate-100 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700"
+                style={{ fontSize: 16, minHeight: largerTouchTargets ? 56 : 48 }}
+              />
               <TouchableOpacity
-                onPress={() => setCreating(true)}
-                className="bg-[#f48c25] px-6 py-3 rounded-xl flex-row items-center"
-                style={{ gap: 8 }}
+                onPress={async () => {
+                  if (!newName.trim()) return;
+                  setCreating(true);
+                  try {
+                    const created = await createHousehold(newName.trim());
+                    setHousehold(created);
+                  } catch (error: any) {
+                    RNAlert.alert('Erro', error?.response?.data?.error || 'Não foi possível criar a família.');
+                  } finally {
+                    setCreating(false);
+                  }
+                }}
+                disabled={!newName.trim()}
+                className="bg-[#f48c25] p-3.5 rounded-xl items-center"
+                style={{ opacity: !newName.trim() ? 0.5 : 1 }}
               >
-                <UserPlus size={18} color="#fff" />
-                <AppText className="text-white font-bold">Criar família</AppText>
+                <AppText className="text-white font-bold">Criar</AppText>
               </TouchableOpacity>
-            )}
-          </Card>
+              <TouchableOpacity
+                onPress={() => setCreating(false)}
+                className="p-3 rounded-xl items-center border border-slate-200 dark:border-slate-700"
+              >
+                <AppText className="text-slate-600 dark:text-slate-200 font-bold">Cancelar</AppText>
+              </TouchableOpacity>
+            </Card>
+          ) : (
+            <Card noPadding>
+              <EmptyState
+                icon={Users}
+                iconColor="#f48c25"
+                title="Você ainda não está em uma família"
+                message="Crie uma família para compartilhar lançamentos e metas com quem você confia."
+                actionLabel="Criar família"
+                onAction={() => setCreating(true)}
+              />
+            </Card>
+          )}
         </View>
       </Layout>
     );
@@ -203,27 +206,39 @@ const Familia = () => {
           <AppText className="text-slate-900 dark:text-slate-100 text-base font-bold mb-2">
             Membros ({household.members?.length || 0})
           </AppText>
-          {household.members?.map((member) => (
-            <View
-              key={member.id}
-              className="flex-row justify-between items-center py-2 border-b border-[#f1ede9] dark:border-[#1f2937]"
-            >
-              <View>
-                <AppText className="font-bold text-slate-900 dark:text-slate-100">
-                  {member.name}
-                </AppText>
-                <AppText className="text-xs text-slate-500">{member.email}</AppText>
-              </View>
+          {household.members?.map((member) => {
+            const initial = (member.name || member.email || '?').trim().charAt(0).toUpperCase();
+            const isMemberOwner = member.role === 'owner';
+            return (
               <View
-                className="px-2 py-1 rounded"
-                style={{ backgroundColor: member.role === 'owner' ? '#f48c25' : '#94a3b8' }}
+                key={member.id}
+                className="flex-row items-center py-2 border-b border-[#f1ede9] dark:border-[#1f2937]"
               >
-                <AppText className="text-[11px] text-white font-bold">
-                  {member.role === 'owner' ? 'Dono' : 'Membro'}
-                </AppText>
+                <View
+                  className="w-10 h-10 rounded-full items-center justify-center"
+                  style={{ backgroundColor: isMemberOwner ? '#f48c2515' : '#94a3b815' }}
+                >
+                  <AppText className="font-bold text-base" style={{ color: isMemberOwner ? '#f48c25' : '#64748b' }}>
+                    {initial}
+                  </AppText>
+                </View>
+                <View className="flex-1 ml-3">
+                  <AppText className="font-bold text-slate-900 dark:text-slate-100">
+                    {member.name}
+                  </AppText>
+                  <AppText className="text-xs text-slate-500 dark:text-slate-200">{member.email}</AppText>
+                </View>
+                <View
+                  className="px-2 py-1 rounded-full"
+                  style={{ backgroundColor: isMemberOwner ? '#f48c25' : '#94a3b8' }}
+                >
+                  <AppText className="text-[10px] text-white font-bold">
+                    {isMemberOwner ? 'Dono' : 'Membro'}
+                  </AppText>
+                </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </Card>
 
         {isOwner && (

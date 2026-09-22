@@ -21,8 +21,8 @@ import Tutorial from '../screens/app/Tutorial';
 import Familia from '../screens/app/Familia';
 import Convidar from '../screens/app/Convidar';
 import ConvitesPendentes from '../screens/app/ConvitesPendentes';
-import WhatsAppSettings from '../screens/app/WhatsAppSettings';
 import TelegramSettings from '../screens/app/TelegramSettings';
+import OpenFinance from '../screens/app/OpenFinance';
 import BankImportScreen from '../screens/app/BankImportScreen';
 import BankReviewScreen from '../screens/app/BankReviewScreen';
 import { House, Trophy, Plus, ChartColumnIncreasing, User, Wallet, CirclePlus, Landmark } from 'lucide-react-native';
@@ -300,8 +300,8 @@ export const AppNavigator = () => {
                 <Tab.Screen name="Familia" component={Familia} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Convidar" component={Convidar} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Convites Pendentes" component={ConvitesPendentes} options={{ tabBarButton: () => null }} />
-                <Tab.Screen name="WhatsApp" component={WhatsAppSettings} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="Telegram" component={TelegramSettings} options={{ tabBarButton: () => null }} />
+                <Tab.Screen name="OpenFinance" component={OpenFinance} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="BankImport" component={BankImportScreen} options={{ tabBarButton: () => null }} />
                 <Tab.Screen name="BankReview" component={BankReviewScreen} options={{ tabBarButton: () => null }} />
             </Tab.Navigator>
