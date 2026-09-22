@@ -22,7 +22,7 @@ module Api
 
           connection = current_user.financial_connections.build(
             provider: Setting.open_finance_provider,
-            provider_institution_id: params[:institution_id],
+            provider_institution_id: params[:institution_id].presence || 'pluggy_connect',
             status: :pending
           )
 
