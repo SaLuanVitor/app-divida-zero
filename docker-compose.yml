@@ -28,6 +28,7 @@ services:
       RAILS_ENV: production
       PORT: 3000
       RAILS_MAX_THREADS: 5
+      SOLID_QUEUE_IN_PUMA: "true"
       DATABASE_URL: postgresql://postgres:postgres@db:5432/app_divida_zero_production
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@dividazero.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no .env}
@@ -64,6 +65,7 @@ services:
       RAILS_ENV: development
       PORT: 3001
       RAILS_MAX_THREADS: 5
+      SOLID_QUEUE_IN_PUMA: "true"
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@dividazero.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no .env}
       ADMIN_NAME: ${ADMIN_NAME:-Administrador}
