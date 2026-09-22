@@ -76,9 +76,21 @@ Rails.application.routes.draw do
       end
 
       namespace :bank do
-        # DEPRECATED - maintained for mobile app compatibility
-        resources :statements, only: [:create, :destroy, :show], param: :batch_id, controller: 'bank/statements'
-        resources :transactions, only: [:index, :create, :update], controller: 'bank/transactions' do
+        resources :statements, only: [], param: :batch_id do
+          collection do
+            post :upload
+          end
+          member do
+            get :status
+            delete :destroy
+          end
+        end
+        resources :transactions, only: [] do
+          collection do
+            get :pending
+            post :accept
+            post :reject
+          end
           member do
             post :merge
           end
