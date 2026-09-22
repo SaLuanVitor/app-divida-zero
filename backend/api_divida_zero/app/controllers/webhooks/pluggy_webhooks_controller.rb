@@ -1,5 +1,4 @@
 class Webhooks::PluggyWebhooksController < ApplicationController
-  skip_before_action :verify_authenticity_token
   before_action :verify_signature
 
   def receive
