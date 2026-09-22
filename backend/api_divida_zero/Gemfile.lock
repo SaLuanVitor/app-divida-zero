@@ -385,6 +385,7 @@ DEPENDENCIES
   brakeman
   bundler-audit
   capybara
+  concurrent-ruby (~> 1.3)
   csv
   debug
   image_processing (~> 1.2)

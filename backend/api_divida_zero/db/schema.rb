@@ -135,6 +135,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_000001) do
     t.index ["user_id"], name: "index_device_tokens_on_user_id"
   end
 
+  create_table "feature_flags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.boolean "enabled", default: false, null: false
+    t.string "key", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_feature_flags_on_key", unique: true
+  end
+
+  create_table "financial_connections", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "last_sync_error"
+    t.datetime "last_synced_at"
+    t.text "metadata"
+    t.string "provider", null: false
+    t.string "provider_institution_id", null: false
+    t.string "provider_item_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["last_synced_at"], name: "index_financial_connections_on_last_synced_at"
+    t.index ["status"], name: "index_financial_connections_on_status"
+    t.index ["user_id", "provider", "provider_item_id"], name: "idx_financial_connections_unique", unique: true
+    t.index ["user_id"], name: "index_financial_connections_on_user_id"
+  end
+
   create_table "financial_goal_contributions", force: :cascade do |t|
     t.decimal "amount", precision: 12, scale: 2, null: false
     t.datetime "created_at", null: false
@@ -207,6 +233,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_000001) do
     t.index ["user_id", "due_date"], name: "index_financial_records_on_user_id_and_due_date"
     t.index ["user_id", "status"], name: "index_financial_records_on_user_id_and_status"
     t.index ["user_id"], name: "index_financial_records_on_user_id"
+  end
+
+  create_table "financial_syncs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "error_code"
+    t.text "error_message"
+    t.bigint "financial_connection_id", null: false
+    t.datetime "finished_at"
+    t.string "provider", null: false
+    t.integer "records_created", default: 0
+    t.integer "records_deleted", default: 0
+    t.integer "records_updated", default: 0
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.integer "sync_type", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["financial_connection_id"], name: "index_financial_syncs_on_financial_connection_id"
+    t.index ["started_at"], name: "index_financial_syncs_on_started_at"
+    t.index ["status"], name: "index_financial_syncs_on_status"
   end
 
   create_table "gamification_events", force: :cascade do |t|
@@ -306,6 +351,45 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_000001) do
     t.index ["user_id"], name: "index_notification_alerts_on_user_id"
   end
 
+  create_table "plan_limits", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "key", null: false
+    t.bigint "plan_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "value", null: false
+    t.index ["plan_id", "key"], name: "index_plan_limits_on_plan_id_and_key", unique: true
+    t.index ["plan_id"], name: "index_plan_limits_on_plan_id"
+  end
+
+  create_table "plans", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_plans_on_active"
+    t.index ["name"], name: "index_plans_on_name", unique: true
+  end
+
+  create_table "processed_webhook_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "event_id", null: false
+    t.string "event_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_processed_webhook_events_on_created_at"
+    t.index ["event_id"], name: "index_processed_webhook_events_on_event_id", unique: true
+  end
+
+  create_table "settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "key", null: false
+    t.datetime "updated_at", null: false
+    t.text "value"
+    t.index ["key"], name: "index_settings_on_key", unique: true
+  end
+
   create_table "token_blacklists", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "expires_at"
@@ -388,6 +472,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_000001) do
   add_foreign_key "app_ratings", "users"
   add_foreign_key "audit_logs", "users"
   add_foreign_key "device_tokens", "users"
+  add_foreign_key "financial_connections", "users"
   add_foreign_key "financial_goal_contributions", "financial_goals"
   add_foreign_key "financial_goal_contributions", "users"
   add_foreign_key "financial_goals", "households"
@@ -396,6 +481,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_000001) do
   add_foreign_key "financial_records", "financial_goals"
   add_foreign_key "financial_records", "households"
   add_foreign_key "financial_records", "users"
+  add_foreign_key "financial_syncs", "financial_connections"
   add_foreign_key "gamification_events", "users"
   add_foreign_key "household_invitations", "households"
   add_foreign_key "household_invitations", "users", column: "invited_by_id"
@@ -405,6 +491,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_000001) do
   add_foreign_key "imported_transactions", "financial_records", column: "duplicate_of_id"
   add_foreign_key "imported_transactions", "users"
   add_foreign_key "notification_alerts", "users"
+  add_foreign_key "plan_limits", "plans"
   add_foreign_key "whatsapp_messages", "notification_alerts"
   add_foreign_key "whatsapp_messages", "users"
 end
