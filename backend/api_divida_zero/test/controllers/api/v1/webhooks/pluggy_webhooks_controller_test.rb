@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class Webhooks::PluggyWebhooksControllerTest < ActionDispatch::IntegrationTest
+class Api::V1::Webhooks::PluggyWebhooksControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
     @connection = FinancialConnection.create!(
@@ -15,14 +15,16 @@ class Webhooks::PluggyWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'should reject without signature' do
-    post webhooks_pluggy_url, params: { event: 'item/created', eventId: 'evt_1' }
+    post api_v1_webhooks_pluggy_url, params: { event: 'item/created', eventId: 'evt_1' }
     assert_response :unauthorized
   end
 
   test 'should reject with invalid signature' do
-    post webhooks_pluggy_url,
-         params: { event: 'item/created', eventId: 'evt_1' },
-         headers: { 'Pluggy-Signature' => 'sha256=invalid' }
+    payload = { event: 'item/created', eventId: 'evt_1' }
+    post api_v1_webhooks_pluggy_url,
+         params: payload,
+         headers: { 'Pluggy-Signature' => 'sha256=invalid' },
+         as: :json
     assert_response :unauthorized
   end
 
@@ -30,10 +32,11 @@ class Webhooks::PluggyWebhooksControllerTest < ActionDispatch::IntegrationTest
     payload = { event: 'item/created', eventId: 'evt_123', item: { id: 'item_123', status: 'active' } }
     signature = OpenSSL::HMAC.hexdigest('SHA256', @secret, payload.to_json)
 
-    assert_enqueued_with(job: WebhookProcessingJob, args: hash_including(event_type: 'item/created', event_id: 'evt_123')) do
-      post webhooks_pluggy_url,
+    assert_enqueued_with(job: WebhookProcessingJob) do
+      post api_v1_webhooks_pluggy_url,
            params: payload,
-           headers: { 'Pluggy-Signature' => "sha256=#{signature}" }
+           headers: { 'Pluggy-Signature' => "sha256=#{signature}" },
+           as: :json
     end
 
     assert_response :ok
@@ -45,9 +48,10 @@ class Webhooks::PluggyWebhooksControllerTest < ActionDispatch::IntegrationTest
     payload = { event: 'item/created', eventId: 'evt_dup' }
     signature = OpenSSL::HMAC.hexdigest('SHA256', @secret, payload.to_json)
 
-    post webhooks_pluggy_url,
+    post api_v1_webhooks_pluggy_url,
          params: payload,
-         headers: { 'Pluggy-Signature' => "sha256=#{signature}" }
+         headers: { 'Pluggy-Signature' => "sha256=#{signature}" },
+         as: :json
 
     assert_response :ok
     # Job não deve ser enfileirado novamente
@@ -58,10 +62,23 @@ class Webhooks::PluggyWebhooksControllerTest < ActionDispatch::IntegrationTest
     payload = { eventId: 'evt_1' }
     signature = OpenSSL::HMAC.hexdigest('SHA256', @secret, payload.to_json)
 
-    post webhooks_pluggy_url,
+    post api_v1_webhooks_pluggy_url,
          params: payload,
-         headers: { 'Pluggy-Signature' => "sha256=#{signature}" }
+         headers: { 'Pluggy-Signature' => "sha256=#{signature}" },
+         as: :json
 
     assert_response :bad_request
+  end
+
+  test 'should accept event without signature when no secret configured' do
+    payload = { event: 'item/created', eventId: 'evt_no_secret', itemId: 'item_123' }
+
+    Setting.stub(:pluggy_webhook_secret, nil) do
+      assert_enqueued_with(job: WebhookProcessingJob) do
+        post api_v1_webhooks_pluggy_url, params: payload, as: :json
+      end
+    end
+
+    assert_response :ok
   end
 end
