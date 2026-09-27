@@ -11,7 +11,7 @@ module Api
         user = User.new(register_params)
         user.save!
 
-        WelcomeMailer.welcome(user).deliver_later
+        WelcomeMailer.welcome(user).deliver_later if EmailChannel.configured?
 
         render_auth_payload(user, status: :created)
       end
@@ -94,7 +94,7 @@ module Api
             reset_password_sent_at: Time.current
           )
 
-          PasswordResetMailer.reset_email(user, raw_token).deliver_later
+          PasswordResetMailer.reset_email(user, raw_token).deliver_later if EmailChannel.configured?
 
           response = { message: "Se o usuário existir, as instruções foram enviadas." }
           response[:dev_reset_token] = raw_token if Rails.env.development? || Rails.env.test?

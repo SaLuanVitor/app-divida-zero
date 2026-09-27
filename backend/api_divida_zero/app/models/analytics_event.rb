@@ -7,6 +7,10 @@ class AnalyticsEvent < ApplicationRecord
     onboarding_skipped
     onboarding_completed
     tutorial_reopened
+    tutorial_step_seen
+    tutorial_step_completed
+    tutorial_mission_completed
+    tutorial_skipped
     login_success
     record_created
     record_paid_or_received
