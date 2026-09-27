@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import Splash from '../screens/Splash';
 import Onboarding from '../screens/app/Onboarding';
 import ForcePasswordChange from '../screens/auth/ForcePasswordChange';
+import BankConnectScreen from '../screens/app/BankConnectScreen';
 import { getAppPreferences } from '../services/preferences';
 import { useAccessibility } from '../context/AccessibilityContext';
 
@@ -78,6 +79,16 @@ export const RootNavigator = () => {
             ) : (
                 <Stack.Screen name="Auth" component={AuthNavigator} />
             )}
+            {signed ? (
+                <Stack.Screen
+                    name="BankConnect"
+                    component={BankConnectScreen}
+                    options={{
+                        presentation: 'card',
+                        gestureEnabled: false,
+                    }}
+                />
+            ) : null}
         </Stack.Navigator>
     );
 };

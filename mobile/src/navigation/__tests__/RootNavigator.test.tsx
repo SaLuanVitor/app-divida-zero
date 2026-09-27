@@ -64,6 +64,14 @@ jest.mock('../../screens/auth/ForcePasswordChange', () => () => {
   return <Text>FORCE_PASSWORD_SCREEN</Text>;
 });
 
+// BankConnect vive no stack raiz (fora da tab bar) para o widget da Pluggy usar a
+// tela cheia. Como este teste cobre apenas o roteamento do auth guard, a tela e
+// mockada junto das demais, evitando exigir ThemeProvider e o modulo nativo.
+jest.mock('../../screens/app/BankConnectScreen', () => () => {
+  const { Text } = require('react-native');
+  return <Text>BANK_CONNECT_SCREEN</Text>;
+});
+
 describe('RootNavigator auth guard', () => {
   beforeEach(() => {
     jest.useFakeTimers();

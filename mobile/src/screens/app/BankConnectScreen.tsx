@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Landmark } from 'lucide-react-native';
 import { PluggyConnect } from 'react-native-pluggy-connect';
 import AppText from '../../components/AppText';
@@ -139,18 +140,56 @@ const BankConnectScreen = () => {
     return null;
   }
 
+  // O widget da Pluggy mede a viewport inteira e nao tem scroll proprio, entao
+  // ele precisa da tela cheia: fora da tab bar e apenas com os insets de safe area.
   return (
-    <PluggyConnect
-      connectToken={connectToken}
-      includeSandbox={false}
-      language="pt"
-      theme={darkMode ? 'dark' : 'light'}
-      onOpen={handleOnOpen}
-      onClose={handleOnClose}
-      onSuccess={handleOnSuccess}
-      onError={handleOnError}
-    />
+    <View style={styles.fullscreen}>
+      <PluggyConnect
+        connectToken={connectToken}
+        includeSandbox={false}
+        language="pt"
+        theme={darkMode ? 'dark' : 'light'}
+        onOpen={handleOnOpen}
+        onClose={handleOnClose}
+        onSuccess={handleOnSuccess}
+        onError={handleOnError}
+      />
+
+      {/*
+        Saida de emergencia: o widget cobre a tela toda e o botao de fechar dele
+        fica no topo. Este botao garante que o usuario nunca fique preso caso o
+        widget falhe em carregar.
+      */}
+      <SafeAreaView
+        edges={['top']}
+        style={styles.overlayHeader}
+        pointerEvents="box-none"
+      >
+        <TouchableOpacity
+          onPress={handleOnClose}
+          className="p-2 -ml-2"
+          accessibilityRole="button"
+          accessibilityLabel="Fechar conexao bancaria"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <ArrowLeft size={24} color={iconColor} />
+        </TouchableOpacity>
+      </SafeAreaView>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  fullscreen: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  overlayHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    paddingHorizontal: 16,
+  },
+});
 
 export default BankConnectScreen;
