@@ -3,6 +3,11 @@ module Api
     class TelegramWebhooksController < ApplicationController
       # O bot NAO e um chatbot: o objetivo e ENVIAR notificacoes (lembretes/resumo).
       # Este webhook existe apenas para permitir o vinculo da conta (deep link ?start=<token>).
+      #
+      # Aceitamos os comandos "iniciar" localizados (ex.: /iniciar em pt-BR, /empezar em es),
+      # alem do /start, porque o Telegram envia o comando traduzido conforme o idioma do app.
+      START_COMMANDS = %w[/start /iniciar /comecar /começar /empezar /comenzar].freeze
+
       def webhook
         update = JSON.parse(request.raw_post)
 
@@ -13,7 +18,14 @@ module Api
         username = (message["from"] || {})["username"].to_s.strip
         text = message["text"].to_s.strip
 
-        link_account(chat_id: chat_id, username: username, token: link_token_from(text)) if text.start_with?("/start")
+        if START_COMMANDS.any? { |cmd| text.start_with?(cmd) }
+          token = link_token_from(text)
+          if token.present?
+            link_account(chat_id: chat_id, username: username, token: token)
+          else
+            reply(chat_id, "Para vincular sua conta, volte ao app e toque em 'Vincular Telegram'. O link já traz o código de confirmação.")
+          end
+        end
 
         head :ok
       rescue JSON::ParserError
