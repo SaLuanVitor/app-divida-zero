@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { bankStatementsApi, ImportedTransaction, PendingGroup } from '../../services/bankStatements';
+import AppToast from '../../components/AppToast';
+
+type FeedbackState = { kind: 'success' | 'error'; title: string; message: string } | null;
 
 export default function BankReviewScreen({ navigation }: any) {
   const [groups, setGroups] = useState<PendingGroup[]>([]);
@@ -9,6 +12,11 @@ export default function BankReviewScreen({ navigation }: any) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
+
+  const pushFeedback = (kind: 'success' | 'error', title: string, message: string) => {
+    setFeedback({ kind, title, message });
+  };
 
   const loadTransactions = async () => {
     try {
@@ -17,7 +25,7 @@ export default function BankReviewScreen({ navigation }: any) {
       setGroups(res.data.groups);
       setTransactions(flat);
     } catch {
-      Alert.alert('Erro', 'Falha ao carregar transações.');
+      pushFeedback('error', 'Erro', 'Falha ao carregar transações.');
     } finally {
       setLoading(false);
     }
@@ -45,7 +53,7 @@ export default function BankReviewScreen({ navigation }: any) {
 
   const handleAccept = async () => {
     if (selected.size === 0) {
-      Alert.alert('Selecione', 'Selecione ao menos uma transação.');
+      pushFeedback('error', 'Selecione', 'Selecione ao menos uma transação.');
       return;
     }
     Alert.alert('Confirmar importação', `Importar ${selected.size} transações?`, [
@@ -56,11 +64,11 @@ export default function BankReviewScreen({ navigation }: any) {
           setAccepting(true);
           try {
             await bankStatementsApi.accept(Array.from(selected));
-            Alert.alert('Sucesso', `${selected.size} transações importadas!`);
+            pushFeedback('success', 'Sucesso', `${selected.size} transações importadas!`);
             setSelected(new Set());
             loadTransactions();
           } catch (error: any) {
-            Alert.alert('Erro', error?.response?.data?.error || 'Falha ao importar.');
+            pushFeedback('error', 'Erro', error?.response?.data?.error || 'Falha ao importar.');
           } finally {
             setAccepting(false);
           }
@@ -177,6 +185,15 @@ export default function BankReviewScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
       )}
+
+      <AppToast
+        visible={!!feedback}
+        kind={feedback?.kind ?? 'success'}
+        title={feedback?.title}
+        message={feedback?.message}
+        position="top"
+        onRequestClose={() => setFeedback(null)}
+      />
     </SafeAreaView>
   );
 }

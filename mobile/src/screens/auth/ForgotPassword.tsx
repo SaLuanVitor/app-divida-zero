@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Alert } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { Mail, ArrowLeft, KeyRound } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Input from '../../components/Input';
@@ -18,10 +18,12 @@ const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [infoMessage, setInfoMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleResetPassword = async () => {
         setInfoMessage('');
+        setErrorMessage('');
 
         if (!email.trim()) {
             setEmailError('Informe seu usuário.');
@@ -41,10 +43,9 @@ const ForgotPassword = () => {
                 : 'Se o usuário existir, enviaremos as instruções para redefinição.';
 
             setInfoMessage(message);
-            Alert.alert('Solicitação enviada', 'Agora você pode usar o token para redefinir a senha.');
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Falha ao solicitar recuperação de senha.';
-            Alert.alert('Não foi possível concluir', message);
+            setErrorMessage(message);
         } finally {
             setLoading(false);
         }
@@ -77,6 +78,12 @@ const ForgotPassword = () => {
             {infoMessage ? (
                 <View className="mb-4 rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
                     <AppText className="text-amber-800 dark:text-amber-300 text-sm font-medium">{infoMessage}</AppText>
+                </View>
+            ) : null}
+
+            {errorMessage ? (
+                <View className="mb-4 rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-4 py-3">
+                    <AppText className="text-red-700 dark:text-red-300 text-sm font-medium">{errorMessage}</AppText>
                 </View>
             ) : null}
 

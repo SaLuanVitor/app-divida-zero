@@ -1,6 +1,6 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Alert } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { ArrowLeft, Mail, KeyRound, Lock } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Input from '../../components/Input';
@@ -23,6 +23,7 @@ const ResetPassword = () => {
     const [emailError, setEmailError] = useState('');
     const [tokenError, setTokenError] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const [formError, setFormError] = useState('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -68,20 +69,17 @@ const ResetPassword = () => {
         if (!validate()) return;
 
         setLoading(true);
+        setFormError('');
         try {
             await resetPassword(email.trim(), token.trim(), newPassword);
-            Alert.alert('Senha atualizada', 'Sua senha foi redefinida com sucesso. Você será redirecionado para o login.', [
-                {
-                    text: 'Continuar',
-                    onPress: () => navigation.replace('Login', {
-                        prefillEmail: email.trim(),
-                        infoMessage: 'Senha redefinida. Entre com sua nova senha.',
-                    })
-                }
-            ]);
+
+            navigation.replace('Login', {
+                prefillEmail: email.trim(),
+                infoMessage: 'Senha redefinida. Entre com sua nova senha.',
+            });
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Falha ao redefinir a senha.';
-            Alert.alert('Não foi possível redefinir', message);
+            setFormError(message);
         } finally {
             setLoading(false);
         }
@@ -103,6 +101,12 @@ const ResetPassword = () => {
                 <AppText className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 text-center mb-2">Informe o token de recuperação</AppText>
                 <AppText className="text-sm text-slate-600 dark:text-slate-200 text-center">Use o token recebido para concluir a redefinição da senha.</AppText>
             </View>
+
+            {formError ? (
+                <View className="mb-4 rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-4 py-3">
+                    <AppText className="text-red-700 dark:text-red-300 text-sm font-medium">{formError}</AppText>
+                </View>
+            ) : null}
 
             <Input
                 label="Usuário"

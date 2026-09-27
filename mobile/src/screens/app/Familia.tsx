@@ -7,6 +7,7 @@ import AppTextInput from '../../components/AppTextInput';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import EmptyState from '../../components/EmptyState';
+import AppToast from '../../components/AppToast';
 import { useThemeMode } from '../../context/ThemeContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import useBackToProfile from '../../hooks/useBackToProfile';
@@ -25,6 +26,11 @@ const Familia = () => {
   const [leaving, setLeaving] = useState(false);
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
+  const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; title: string; message: string } | null>(null);
+
+  const pushFeedback = (kind: 'success' | 'error', title: string, message: string) => {
+    setFeedback({ kind, title, message });
+  };
 
   const loadHousehold = async () => {
     try {
@@ -74,7 +80,7 @@ const Familia = () => {
                   await leaveHousehold();
                   setHousehold(null);
                 } catch (error: any) {
-                  RNAlert.alert('Erro', error?.response?.data?.error || 'Não foi possível sair da família.');
+                  pushFeedback('error', 'Erro', error?.response?.data?.error || 'Não foi possível sair da família.');
                 } finally {
                   setLeaving(false);
                 }
@@ -131,7 +137,7 @@ const Familia = () => {
                     const created = await createHousehold(newName.trim());
                     setHousehold(created);
                   } catch (error: any) {
-                    RNAlert.alert('Erro', error?.response?.data?.error || 'Não foi possível criar a família.');
+                    pushFeedback('error', 'Erro', error?.response?.data?.error || 'Não foi possível criar a família.');
                   } finally {
                     setCreating(false);
                   }
@@ -162,6 +168,15 @@ const Familia = () => {
             </Card>
           )}
         </View>
+
+        <AppToast
+          visible={!!feedback}
+          kind={feedback?.kind ?? 'success'}
+          title={feedback?.title}
+          message={feedback?.message}
+          position="top"
+          onRequestClose={() => setFeedback(null)}
+        />
       </Layout>
     );
   }
@@ -269,6 +284,15 @@ const Familia = () => {
           </AppText>
         </TouchableOpacity>
       </View>
+
+      <AppToast
+        visible={!!feedback}
+        kind={feedback?.kind ?? 'success'}
+        title={feedback?.title}
+        message={feedback?.message}
+        position="top"
+        onRequestClose={() => setFeedback(null)}
+      />
     </Layout>
   );
 };

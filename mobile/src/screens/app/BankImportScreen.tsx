@@ -34,7 +34,7 @@ export default function BankImportScreen({ navigation }: any) {
 
       const file = result.assets[0];
       if (!file.name?.match(/\.(ofx|qfx|csv)$/i)) {
-        Alert.alert('Formato inválido', 'Use arquivos OFX, QFX ou CSV.');
+        setErrorMessage('Formato inválido. Use arquivos OFX, QFX ou CSV.');
         return;
       }
 
@@ -51,7 +51,7 @@ export default function BankImportScreen({ navigation }: any) {
       pollStatus(response.data.batch_id);
     } catch (error: any) {
       setUploading(false);
-      Alert.alert('Erro', error?.response?.data?.error || 'Falha ao enviar arquivo.');
+      setErrorMessage(error?.response?.data?.error || 'Falha ao enviar arquivo.');
     }
   };
 
@@ -73,17 +73,12 @@ export default function BankImportScreen({ navigation }: any) {
         } else if (res.data.status === 'error') {
           clearInterval(interval);
           setUploading(false);
-          setErrorMessage('Falha ao processar o extrato. Tente novamente com outro arquivo.');
-          Alert.alert(
-            'Erro no processamento',
-            'O servidor não conseguiu processar o extrato. Verifique se o arquivo está válido e tente novamente.'
-          );
+          setErrorMessage('O servidor não conseguiu processar o extrato. Verifique se o arquivo está válido e tente novamente.');
         }
       } catch {
         clearInterval(interval);
         setUploading(false);
         setErrorMessage('Não foi possível verificar o status do processamento. Tente novamente.');
-        Alert.alert('Erro', 'Falha ao consultar o status do processamento.');
       }
     }, 3000);
   };

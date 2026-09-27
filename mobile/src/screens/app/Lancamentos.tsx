@@ -1,7 +1,7 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AppTextInput from '../../components/AppTextInput';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Alert, ActivityIndicator, Keyboard, FlatList, useWindowDimensions } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Keyboard, FlatList, useWindowDimensions } from 'react-native';
 import { ArrowLeft, Landmark, Repeat, Wallet, CalendarDays, ChevronLeft, ChevronRight, Trophy, Target, Shield, Crown, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Layout from '../../components/Layout';
@@ -481,11 +481,11 @@ const Lancamentos = () => {
                     summary: normalizeGamificationSummary(result.xp_feedback.summary),
                 });
             } else {
-                Alert.alert('Registro criado', `${result.message}\nForam gerados ${result.created_count} registro(s).`);
+                setMilestoneMessage(`${result.message} Foram gerados ${result.created_count} registro(s).`);
             }
         } catch (error: any) {
             const message = error?.response?.data?.error ?? 'Não foi possível salvar o registro.';
-            Alert.alert('Erro ao salvar', message);
+            setFormError(message);
         } finally {
             setLoading(false);
         }
