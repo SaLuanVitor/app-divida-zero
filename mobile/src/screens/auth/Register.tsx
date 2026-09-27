@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import AppText from '../../components/AppText';
-import { View, TouchableOpacity, Alert } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { User, Lock, ArrowLeft, Sparkles } from 'lucide-react-native';
 import Layout from '../../components/Layout';
 import Input from '../../components/Input';
@@ -26,6 +26,7 @@ const Register = () => {
   const [loginError, setLoginError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
@@ -67,6 +68,7 @@ const Register = () => {
     const normalizedLogin = login.trim();
 
     setLoading(true);
+    setFormError('');
     try {
       await signUp(normalizedLogin, normalizedLogin, password);
 
@@ -100,12 +102,11 @@ const Register = () => {
       }
 
       if (backendCode === 'email_taken') {
-        Alert.alert('Usuário já cadastrado', backendMessage || 'Use outro login ou faça login com o usuário existente.');
+        setFormError(backendMessage || 'Use outro login ou faça login com o usuário existente.');
         return;
       }
 
-      const message = backendMessage ?? 'Falha ao criar conta. Tente novamente em instantes.';
-      Alert.alert('Não foi possível criar sua conta', message);
+      setFormError(backendMessage ?? 'Falha ao criar conta. Tente novamente em instantes.');
     } finally {
       setLoading(false);
     }
@@ -132,6 +133,12 @@ const Register = () => {
         </View>
 
         <View className="rounded-[34px] bg-white dark:bg-[#121212] border border-[#efe6dd] dark:border-slate-700 px-6 py-6">
+          {formError ? (
+            <View className="mb-4 rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-4 py-3">
+              <AppText className="text-red-700 dark:text-red-300 text-sm font-medium">{formError}</AppText>
+            </View>
+          ) : null}
+
           <Input
             label="Nome do usuário"
             placeholder="Como deseja ser chamado?"
@@ -139,6 +146,7 @@ const Register = () => {
             onChangeText={(value) => {
               setLogin(value);
               if (loginError) setLoginError('');
+              if (formError) setFormError('');
             }}
             icon={User}
             keyboardType="default"
@@ -157,6 +165,7 @@ const Register = () => {
               setPassword(value);
               if (passwordError) setPasswordError('');
               if (confirmPasswordError) setConfirmPasswordError('');
+              if (formError) setFormError('');
             }}
             icon={Lock}
             secureTextEntry
@@ -172,6 +181,7 @@ const Register = () => {
             onChangeText={(value) => {
               setConfirmPassword(value);
               if (confirmPasswordError) setConfirmPasswordError('');
+              if (formError) setFormError('');
             }}
             icon={Lock}
             secureTextEntry
