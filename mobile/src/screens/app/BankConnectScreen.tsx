@@ -11,6 +11,31 @@ import { financialConnectionsApi } from '../../services/financialConnections';
 
 type ConnectPhase = 'loading' | 'error' | 'ready' | 'success';
 
+/**
+ * O widget da Pluggy entrega codigos crus (ex.: TRIAL_CLIENT_ITEM_CREATE_NOT_ALLOWED).
+ * Sem traducao o usuario ve um codigo tecnico sem acao possivel. Os codigos abaixo
+ * sao os que bloqueiam a conexao de fato; o restante cai na mensagem generica.
+ */
+const PLUGGY_ERROR_MESSAGES: Record<string, string> = {
+  TRIAL_CLIENT_ITEM_CREATE_NOT_ALLOWED:
+    'Sua conta na Pluggy esta no modo de teste e so conecta o banco Sandbox. Para conectar bancos reais, ative um plano no painel da Pluggy.',
+  INVALID_CREDENTIALS: 'Usuario ou senha invalidos. Confira os dados e tente de novo.',
+  USER_AUTHORIZATION_NOT_GRANTED: 'Voce recusou a autorizacao no aplicativo do banco.',
+  USER_AUTHORIZATION_REVOKED: 'A autorizacao foi cancelada no aplicativo do banco. Conecte novamente.',
+  USER_INPUT_TIMEOUT: 'O tempo para concluir a autorizacao no banco acabou. Tente novamente.',
+  SITE_NOT_AVAILABLE: 'O banco esta instavel agora. Tente novamente em alguns minutos.',
+  ACCOUNT_LOCKED: 'Sua conta no banco esta bloqueada. Desbloqueie no app do banco e tente de novo.',
+  ACCOUNT_NEEDS_ACTION:
+    'O banco pede uma acao sua antes de liberar o acesso. Verifique o app do banco e tente novamente.',
+  CONNECTION_ERROR: 'Nao foi possivel falar com o banco agora. Tente novamente.',
+};
+
+const resolvePluggyError = (raw?: string): string => {
+  if (!raw) return 'Nao foi possivel conectar o banco.';
+  const match = PLUGGY_ERROR_MESSAGES[raw.trim().toUpperCase()];
+  return match ?? raw;
+};
+
 const BankConnectScreen = () => {
   const { darkMode } = useThemeMode();
   const goBackToProfile = useBackToProfile();
@@ -57,7 +82,7 @@ const BankConnectScreen = () => {
   const handleOnError = useCallback((error: { message: string }) => {
     setConnectToken(null);
     setPhase('error');
-    setErrorMessage(error?.message || 'Não foi possível conectar o banco.');
+    setErrorMessage(resolvePluggyError(error?.message));
   }, []);
 
   const handleOnClose = useCallback(() => {
@@ -142,11 +167,15 @@ const BankConnectScreen = () => {
 
   // O widget da Pluggy mede a viewport inteira e nao tem scroll proprio, entao
   // ele precisa da tela cheia: fora da tab bar e apenas com os insets de safe area.
+  //
+  // includeSandbox: a conta Pluggy em uso e trial e so aceita criar itens do
+  // conector Sandbox (Pluggy Bank). Sem ele, todo banco real falha com
+  // TRIAL_CLIENT_ITEM_CREATE_NOT_ALLOWED.
   return (
     <View style={styles.fullscreen}>
       <PluggyConnect
         connectToken={connectToken}
-        includeSandbox={false}
+        includeSandbox
         language="pt"
         theme={darkMode ? 'dark' : 'light'}
         onOpen={handleOnOpen}
